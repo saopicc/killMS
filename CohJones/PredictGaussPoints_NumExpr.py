@@ -53,14 +53,14 @@ class ClassPredict():
         for iCluster in ListDirection:
             ColOutDir=self.PredictDirSPW(iCluster)
             
-            print iCluster,ListDirection
-            print ColOutDir.shape
-            ColOutDir.fill(0)
-            print ColOutDir.shape
-            ColOutDir[:,:,0]=1
-            print ColOutDir.shape
-            ColOutDir[:,:,3]=1
-            print ColOutDir.shape
+            # print iCluster,ListDirection
+            # print ColOutDir.shape
+            # ColOutDir.fill(0)
+            # print ColOutDir.shape
+            # ColOutDir[:,:,0]=1
+            # print ColOutDir.shape
+            # ColOutDir[:,:,3]=1
+            # print ColOutDir.shape
 
             # Apply Jones
             if ApplyJones!=None:

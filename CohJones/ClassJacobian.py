@@ -7,10 +7,10 @@ import ClassSM
 
 
 def test():
-    VS=ClassVisServer.ClassVisServer("TEST/0000.MS/")
+    VS=ClassVisServer.ClassVisServer("../TEST/0000.MS/")
 
     MS=VS.MS
-    SM=ClassSM.ClassSM("TEST/ModelRandom00.txt.npy")
+    SM=ClassSM.ClassSM("../TEST/ModelRandom00.txt.npy")
     SM.Calc_LM(MS.rac,MS.decc)
 
 
@@ -20,9 +20,10 @@ def test():
     npol=4
     na=MS.na
     Gains=np.zeros((na,nd,npol),dtype=np.complex64)
-    Gains[:,:,0]=1
+    Gains[:,:,0]=1j
     Gains[:,:,-1]=1
     Gains+=np.random.randn(*Gains.shape)*0.5+1j*np.random.randn(*Gains.shape)
+    Gains=np.random.randn(*Gains.shape)+1j*np.random.randn(*Gains.shape)
     DATA=VS.GiveNextVis(0,50)
 
     # Apply Jones
@@ -30,7 +31,7 @@ def test():
     DATA["data"]=PM.predictKernelPolCluster(DATA,SM,ApplyJones=Gains)
     
     JM=ClassJacobian(SM)
-    Jacob= JM.GiveJacobianAntenna(DATA,Gains,15)[0][1]
+    Jacob= JM.GiveJacobianAntenna(DATA,Gains,10)[0][1]
 
     y=JM.Data[:,:,0,:].flatten()
 
@@ -74,11 +75,9 @@ class ClassJacobian():
         ThisGain=Gains[iAnt].copy()
         self.ThisGain=ThisGain
 
-        ListDicoData=[self.GiveData(DATA,iAnt,False), self.GiveData(DATA,iAnt,True)]
-        ListData=[ThisDATA["data"] for ThisDATA in ListDicoData]
-        self.Data=np.concatenate(ListData)
-        ListA1=[ThisDATA["A1"] for ThisDATA in ListDicoData]
-        self.A1=np.concatenate(ListA1)
+        self.DicoData=self.GiveData2(DATA,iAnt)
+        self.Data=self.DicoData["data"]
+        self.A1=self.DicoData["A1"]
 
         nrows,nchan,_=self.Data.shape
         self.Data=self.Data.reshape((nrows,nchan,2,2))
@@ -90,7 +89,9 @@ class ClassJacobian():
         
         for iPolBlock,Jacob in JacobList:
             for iDir in range(NDir):
-                K=np.concatenate([self.GiveKernel(DATA,iAnt,iDir,False), self.GiveKernel(DATA,iAnt,iDir,True)])
+                # K=self.GiveKernel(self.DicoData,iAnt,iDir,False)
+                K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir)
+
                 K_XX=K[:,:,0]
                 K_YY=K[:,:,3]
                 J0=Jacob[:,0,iDir,0]
@@ -140,26 +141,30 @@ class ClassJacobian():
 
         return DicoData
 
-    def GiveKernel(self,DATA,iAnt,iDir,revert):
+    def GiveData2(self,DATA,iAnt):
         DicoData={}
-        if not(revert):
-            ind=np.where(DATA['A0']==iAnt)[0]
-            DicoData["A0"]  = DATA['A0'][ind]
-            DicoData["A1"]  = DATA['A1'][ind]
-            DicoData["uvw"]   = DATA['uvw'][ind]
-        else:
-            ind=np.where(DATA['A1']==iAnt)[0]
-            DicoData["A1"]  = DATA['A0'][ind]
-            DicoData["A0"]  = DATA['A1'][ind]
-            DicoData["uvw"]   = -DATA['uvw'][ind]
-            
 
-        DicoData["flags"] = DATA['flags'][ind]
+        ind0=np.where(DATA['A0']==iAnt)[0]
+        ind1=np.where(DATA['A1']==iAnt)[0]
+
+        DicoData["A0"] = np.concatenate([DATA['A0'][ind0], DATA['A1'][ind1]])
+        DicoData["A1"] = np.concatenate([DATA['A1'][ind0], DATA['A0'][ind1]])
+
+
+        D0=DATA['data'][ind0]
+        D1=DATA['data'][ind1].conj()
+        c1=D1[:,:,1].copy()
+        c2=D1[:,:,2].copy()
+        D1[:,:,1]=c2
+        D1[:,:,2]=c1
+        DicoData["data"] = np.concatenate([D0, D1])
+        DicoData["uvw"]  = np.concatenate([DATA['uvw'][ind0], -DATA['uvw'][ind1]])
+
+        DicoData["flags"] = np.concatenate([DATA['flags'][ind0], DATA['flags'][ind1]])
         DicoData["freqs"]   = DATA['freqs']
-        
-        kernel=self.PM.predictKernelPolCluster(DicoData,self.SM,iDirection=iDir)
 
-        return kernel
+
+        return DicoData
 
             
 
