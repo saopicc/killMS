@@ -14,7 +14,7 @@ def testLM():
     SM=ClassSM.ClassSM("../TEST/ModelRandom00.txt.npy")
     rabeam,decbeam=SM.ClusterCat.ra,SM.ClusterCat.dec
     LofarBeam=("AE",5,rabeam,decbeam)
-    VS=ClassVisServer.ClassVisServer("../TEST/0000.MS/",LofarBeam=LofarBeam)
+    VS=ClassVisServer.ClassVisServer("../TEST/0000.MS/")#,LofarBeam=LofarBeam)
     MS=VS.MS
     SM.Calc_LM(MS.rac,MS.decc)
 
@@ -27,7 +27,7 @@ def testLM():
     Gains[:,:,0]=1
     Gains[:,:,-1]=1
     #Gains+=(np.random.randn(*Gains.shape)*0.5+1j*np.random.randn(*Gains.shape)
-    Gains=np.random.randn(*Gains.shape)+1j*np.random.randn(*Gains.shape)
+    #Gains=np.random.randn(*Gains.shape)+1j*np.random.randn(*Gains.shape)
     #GainsOrig=Gains.copy()
     ###############
     #GainsOrig=np.load("Rand.npz")["GainsOrig"]
@@ -157,6 +157,14 @@ class ClassJacobianAntenna():
         
         
 
+        # pylab.figure(2)
+        # pylab.clf()
+        # pylab.plot((z)[::11])
+        # pylab.plot((Jx)[::11])
+        # pylab.plot(zr[::11])
+        # pylab.draw()
+        # pylab.show(False)
+        # pylab.pause(0.1)
 
         # pylab.figure(2)
         # pylab.clf()
@@ -187,7 +195,7 @@ class ClassJacobianAntenna():
         for polIndex in range(self.NJacobBlocks):
             Gain=Gains[:,polIndex,:]
             Vec=np.dot(self.JHJinv,Gain.flatten())
-            Vec=Vec.reshape((nd,1,2))
+            Vec=Vec.reshape((nd,1,self.NJacobBlocks))
             G.append(Vec)
             
         Gout=np.concatenate(G,axis=1)
