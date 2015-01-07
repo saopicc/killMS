@@ -1,11 +1,6 @@
 # Region file format: DS9 version 4.1
 global color=green dashlist=8 3 width=1 font="helvetica 7 normal" select=1 highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1
-fk5;point(212.335417,51.702778) # text={c0s0.} point=circle 5 color=red width=2
-fk5;point(212.335417,52.202778) # text={c1s0.} point=circle 5 color=red width=2
-fk5;point(212.335417,52.702778) # text={c2s0.} point=circle 5 color=red width=2
-fk5;point(212.835417,51.702778) # text={c3s0.} point=circle 5 color=red width=2
-fk5;point(212.835417,52.202778) # text={c4s0.} point=circle 5 color=red width=2
-fk5;point(212.835417,52.702778) # text={c5s0.} point=circle 5 color=red width=2
-fk5;point(213.335417,51.702778) # text={c6s0.} point=circle 5 color=red width=2
-fk5;point(213.335417,52.202778) # text={c7s0.} point=circle 5 color=red width=2
-fk5;point(213.335417,52.702778) # text={c8s0.} point=circle 5 color=red width=2
+fk5;point(207.835417,47.202778) # text={c0s0.} point=circle 5 color=red width=2
+fk5;point(207.835417,57.202778) # text={c1s0.} point=circle 5 color=red width=2
+fk5;point(217.835417,47.202778) # text={c2s0.} point=circle 5 color=red width=2
+fk5;point(217.835417,57.202778) # text={c3s0.} point=circle 5 color=red width=2

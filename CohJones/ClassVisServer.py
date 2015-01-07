@@ -134,6 +134,16 @@ class ClassVisServer():
                 uvw=uvw[ind]
                 times=times[ind]
 
+
+        ind=np.where(A0!=A1)[0]
+
+        flags=flags[ind]
+        data=data[ind]
+        A0=A0[ind]
+        A1=A1[ind]
+        uvw=uvw[ind]
+        times=times[ind]
+
         # ## debug
         # ind=np.where((A0==0)&(A1==1))[0]
         # flags=flags[ind]
