@@ -7,13 +7,15 @@ log=MyLogger.getLogger("ClassVisServer")
 import NpShared
 import ClassTimeIt
 import ModColor
+import ModLinAlg
 
 class ClassVisServer():
     def __init__(self,MSName,
                  ColName="DATA",
                  TChunkSize=1,
                  PrefixShared="Default",
-                 DicoSelectOptions={}):
+                 DicoSelectOptions={},
+                 LofarBeam=None):
   
         self.ReInitChunkCount()
         self.TChunkSize=TChunkSize
@@ -25,7 +27,12 @@ class ClassVisServer():
         self.SharedNames=[]
         self.PrefixShared=None
         self.VisInSharedMem = (PrefixShared!=None)
-
+        self.LofarBeam=LofarBeam
+        self.ApplyBeam=False
+        if LofarBeam!=None:
+            self.BeamMode,self.DtBeamMin,self.BeamRAs,self.BeamDECs=LofarBeam
+            self.ApplyBeam=True
+            
         self.Init()
 
     def Init(self,PointingID=0):
@@ -36,6 +43,10 @@ class ClassVisServer():
         self.TimesInt=TimesInt
         self.NTChunk=len(self.TimesInt)-1
         self.MS=MS
+        if self.ApplyBeam:
+            useArrayFactor=("A" in self.BeamMode)
+            useElementBeam=("E" in self.BeamMode)
+            self.MS.LoadSR(useElementBeam=useElementBeam,useArrayFactor=useArrayFactor)
 
     def ReInitChunkCount(self):
         self.CurrentTimeChunk=0
@@ -61,7 +72,6 @@ class ClassVisServer():
 
 
 
-
         DATA={}
         for key in D.keys():
             if type(D[key])!=np.ndarray: continue
@@ -70,15 +80,18 @@ class ClassVisServer():
             else:
                 DATA[key]=D[key][ind]
 
-
         if self.VisInSharedMem:
             self.ClearSharedMemory()
             DATA=self.PutInShared(DATA)
             DATA["A0A1"]=(DATA["A0"],DATA["A1"])
 
+        if "DicoBeam" in D.keys():
+            DATA["DicoBeam"]=D["DicoBeam"]
+
 
 
         return DATA
+
 
 
 
@@ -93,6 +106,11 @@ class ClassVisServer():
 
         print>>log, "Reading next data chunk in [%5.2f, %5.2f] hours"%(self.TimesInt[iT0],self.TimesInt[iT1])
         MS.ReadData(t0=self.TimesInt[iT0],t1=self.TimesInt[iT1])
+
+
+
+
+        
         #print>>log, "    Rows= [%i, %i]"%(MS.ROW0,MS.ROW1)
         #print float(MS.ROW0)/MS.nbl,float(MS.ROW1)/MS.nbl
 
@@ -172,6 +190,34 @@ class ClassVisServer():
                      "infos":np.array([MS.na])
                      }
         
+
+        if self.ApplyBeam:
+            print>>log, "Update LOFAR beam .... "
+            DtBeamSec=self.DtBeamMin*60
+            tmin,tmax=np.min(times),np.max(times)
+            TimesBeam=np.arange(np.min(times),np.max(times),DtBeamSec).tolist()
+            if not(tmax in TimesBeam): TimesBeam.append(tmax)
+            TimesBeam=np.array(TimesBeam)
+            T0s=TimesBeam[:-1]
+            T1s=TimesBeam[1:]
+            Tm=(T0s+T1s)/2.
+            RA,DEC=self.BeamRAs,self.BeamDECs
+            NDir=RA.size
+            Beam=np.zeros((Tm.size,NDir,self.MS.na,self.MS.NSPWChan,2,2),np.complex64)
+            for itime in range(Tm.size):
+                ThisTime=Tm[itime]
+                Beam[itime]=self.MS.GiveBeam(ThisTime,self.BeamRAs,self.BeamDECs)
+            BeamH=ModLinAlg.BatchH(Beam)
+
+            DicoBeam={}
+            DicoBeam["t0"]=T0s
+            DicoBeam["t1"]=T1s
+            DicoBeam["tm"]=Tm
+            DicoBeam["Beam"]=Beam
+            DicoBeam["BeamH"]=BeamH
+            DicoDataOut["DicoBeam"]=DicoBeam
+            
+            print>>log, "       .... done Update LOFAR beam "
 
         #MyPickle.Save(DicoDataOut,"Pickle_All_%2.2i"%self.CountPickle)
         #self.CountPickle+=1

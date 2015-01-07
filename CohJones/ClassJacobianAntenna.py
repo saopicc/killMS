@@ -11,12 +11,12 @@ import pylab
 
 
 def testLM():
-    VS=ClassVisServer.ClassVisServer("../TEST/0000.MS/")
-
-    MS=VS.MS
     SM=ClassSM.ClassSM("../TEST/ModelRandom00.txt.npy")
+    rabeam,decbeam=SM.ClusterCat.ra,SM.ClusterCat.dec
+    LofarBeam=("AE",5,rabeam,decbeam)
+    VS=ClassVisServer.ClassVisServer("../TEST/0000.MS/",LofarBeam=LofarBeam)
+    MS=VS.MS
     SM.Calc_LM(MS.rac,MS.decc)
-
 
 
 
@@ -52,6 +52,7 @@ def testLM():
 
     DATA=VS.GiveNextVis(0,1000)
 
+
     # Apply Jones
     PM=ClassPredict(Precision="S")
     DATA["data"]=PM.predictKernelPolCluster(DATA,SM,ApplyJones=Gains)
@@ -61,7 +62,6 @@ def testLM():
     JM=ClassJacobianAntenna(SM,iAnt,PolMode=PolMode)
     JM.setDATA(DATA)
     JM.CalcKernelMatrix()
-
 
     if PolMode=="Scalar":
         Gains=Gains[:,:,0].reshape((na,nd,1))
@@ -74,7 +74,7 @@ def testLM():
     xtrue=JM.GiveSubVecGainAnt(Gains).flatten()
     x=Gains
     #################
-    Radd=np.random.randn(*(G[iAnt].shape))*0.3
+    Radd=np.random.randn(*(G[iAnt].shape))#*0.3
     #np.savez("Rand",Radd=Radd,GainsOrig=GainsOrig)
     #################
     #Radd=np.load("Rand.npz")["Radd"]
@@ -82,7 +82,7 @@ def testLM():
     G[iAnt]+=Radd
 
 
-
+    print "start"
     for i in range(10):
         xbef=G[iAnt].copy()
         x=JM.doLMStep2(G)
@@ -98,16 +98,16 @@ def testLM():
         pylab.draw()
         pylab.show(False)
 
-        pylab.figure(3)
-        pylab.clf()
-        pylab.subplot(1,3,1)
-        pylab.imshow(np.abs(JM.Jacob)[0:20],interpolation="nearest")
-        pylab.subplot(1,3,2)
-        pylab.imshow(np.abs(JM.JHJ),interpolation="nearest")
-        pylab.subplot(1,3,3)
-        pylab.imshow(np.abs(JM.JHJinv),interpolation="nearest")
-        pylab.draw()
-        pylab.show(False)
+        # pylab.figure(3)
+        # pylab.clf()
+        # pylab.subplot(1,3,1)
+        # pylab.imshow(np.abs(JM.Jacob)[0:20],interpolation="nearest")
+        # pylab.subplot(1,3,2)
+        # pylab.imshow(np.abs(JM.JHJ),interpolation="nearest")
+        # pylab.subplot(1,3,3)
+        # pylab.imshow(np.abs(JM.JHJinv),interpolation="nearest")
+        # pylab.draw()
+        # pylab.show(False)
 
     stop    
     
@@ -146,10 +146,11 @@ class ClassJacobianAntenna():
         Ga=self.GiveSubVecGainAnt(Gains)
         Jx=self.J_x(Ga)
         zr=z-Jx
-        JH_z_0=np.load("LM.npz")["JH_z"]
-        x1_0=np.load("LM.npz")["x1"]
-        z_0=np.load("LM.npz")["z"]
-        Jx_0=np.load("LM.npz")["Jx"]
+
+        # JH_z_0=np.load("LM.npz")["JH_z"]
+        # x1_0=np.load("LM.npz")["x1"]
+        # z_0=np.load("LM.npz")["z"]
+        # Jx_0=np.load("LM.npz")["Jx"]
 
         JH_z=self.JH_z(zr)
         x1 = (1./(1.+self.Lambda)) * self.JHJinv_x(JH_z)
@@ -341,7 +342,12 @@ class ClassJacobianAntenna():
         DicoData["flags"] = np.concatenate([DATA['flags'][ind0], DATA['flags'][ind1]])
         DicoData["freqs"]   = DATA['freqs']
 
+        DicoData["times"] = np.concatenate([DATA['times'][ind0], DATA['times'][ind1]])
+        DicoData["infos"] = DATA['infos']
 
+        
+        if "DicoBeam" in DATA.keys():
+            DicoData["DicoBeam"] = DATA["DicoBeam"]
 
         # DicoData["A0"] = np.concatenate([DATA['A0'][ind0]])
         # DicoData["A1"] = np.concatenate([DATA['A1'][ind0]])

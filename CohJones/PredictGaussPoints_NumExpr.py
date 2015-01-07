@@ -27,8 +27,10 @@ class ClassPredict():
         self.SourceCat=SM.SourceCat
 
         freq=DicoData["freqs"]
+        times=DicoData["times"]
         nf=freq.size
-        
+        na=DicoData["infos"][0]
+
         nrows=DicoData["A0"].size
         DataOut=np.zeros((nrows,nf,4),np.complex64)
         if nrows==0: return DataOut
@@ -42,13 +44,13 @@ class ClassPredict():
             ListDirection=range(SM.NDir)
 
 
+        A0=DicoData["A0"]
+        A1=DicoData["A1"]
         if ApplyJones!=None:
             na,NDir,_=ApplyJones.shape
             Jones=np.swapaxes(ApplyJones,0,1)
             Jones=Jones.reshape((NDir,na,4))
             JonesH=ModLinAlg.BatchH(Jones)
-            A0=DicoData["A0"]
-            A1=DicoData["A1"]
 
         for iCluster in ListDirection:
             ColOutDir=self.PredictDirSPW(iCluster)
@@ -70,6 +72,25 @@ class ClassPredict():
                 for ichan in range(nf):
                     ColOutDir[:,ichan,:]=ModLinAlg.BatchDot(J[A0,:],ColOutDir[:,ichan,:])
                     ColOutDir[:,ichan,:]=ModLinAlg.BatchDot(ColOutDir[:,ichan,:],JH[A1,:])
+
+            if "DicoBeam" in DicoData.keys():
+                D=DicoData["DicoBeam"]
+                Beam=D["Beam"]
+                BeamH=D["BeamH"]
+                lt0,lt1=D["t0"],D["t1"]
+                for it in range(lt0.size):
+                    t0,t1=lt0[it],lt1[it]
+                    ind=np.where((times>t0)&(times<t1))[0]
+                    if ind.size==0: continue
+                    data=ColOutDir[ind]
+                    A0sel=A0[ind]
+                    A1sel=A1[ind]
+                    for ichan in range(nf):
+                        J=Beam[it,iCluster,:,ichan,:,:].reshape((na,4))
+                        JH=Beam[it,iCluster,:,ichan,:,:].reshape((na,4))
+                        data[:,ichan,:]=ModLinAlg.BatchDot(J[A0sel,:],data[:,ichan,:])
+                        data[:,ichan,:]=ModLinAlg.BatchDot(data[:,ichan,:],JH[A1sel,:])
+                
 
             DataOut+=ColOutDir
 
