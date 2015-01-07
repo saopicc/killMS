@@ -27,7 +27,8 @@ class ClassMS():
         self.DelStationList=DelStationList
         self.ReadMSInfo(MSname,DoPrint=DoPrint)
         self.LFlaggedStations=[]
-        self.CurrentTimeHoursRange=None
+
+        self.CurrentChunkTimeRange_SinceT0_sec=None
         try:
             self.LoadLOFAR_ANTENNA_FIELD()
         except:
@@ -328,14 +329,22 @@ class ClassMS():
 
             t0=t0*3600.
             t1=t1*3600.
-            self.CurrentTimeHoursRange=(t0,t1)
+            self.CurrentChunkTimeRange_SinceT0_sec=(t0,t1)
             t0=t0+self.F_tstart            
             t1=t1+self.F_tstart
 
-            ind0=np.argmin(np.abs(t0-self.F_times))
-            ind1=np.argmin(np.abs(t1-self.F_times))
+            #ind0=np.argmin(np.abs(t0-self.F_times))
+            #ind1=np.argmin(np.abs(t1-self.F_times))
+
+            ind0=np.where((t0-self.F_times)<0)[0][0]
             row0=ind0*self.nbl
-            row1=ind1*self.nbl
+
+            ind1=np.where((t1-self.F_times)<0)[0]
+            if ind1.size==0:
+                row1=self.F_nrows
+            else:
+                ind1=ind1[0]
+                row1=ind1*self.nbl
 
         self.ROW0=row0
         self.ROW1=row1

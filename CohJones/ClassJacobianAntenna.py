@@ -8,8 +8,6 @@ import ModLinAlg
 import pylab
 
 
-
-
 def testLM():
     SM=ClassSM.ClassSM("../TEST/ModelRandom00.txt.npy")
     rabeam,decbeam=SM.ClusterCat.ra,SM.ClusterCat.dec
@@ -55,7 +53,7 @@ def testLM():
 
     # Apply Jones
     PM=ClassPredict(Precision="S")
-    DATA["data"]=PM.predictKernelPolCluster(DATA,SM,ApplyJones=Gains)
+    #DATA["data"]=PM.predictKernelPolCluster(DATA,SM,ApplyJones=Gains)
     
     ############################
     iAnt=0
@@ -85,7 +83,7 @@ def testLM():
     print "start"
     for i in range(10):
         xbef=G[iAnt].copy()
-        x=JM.doLMStep2(G)
+        x=JM.doLMStep(G)
         G[iAnt]=x
         
         pylab.figure(1)
@@ -132,15 +130,6 @@ class ClassJacobianAntenna():
         
     def doLMStep(self,Gains):
         z=self.GiveDataVec()
-        self.CalcJacobianAntenna(Gains)
-        JH_z=self.JH_z(z)
-        x1 = (1./(1.+self.Lambda)) * self.JHJinv_x(JH_z)
-        x0=self.GiveSubVecGainAnt(Gains.flatten()).flatten()
-        x1+=(self.Lambda/(1.+self.Lambda))*x0
-        return x1.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks))
-
-    def doLMStep2(self,Gains):
-        z=self.GiveDataVec()
 
         self.CalcJacobianAntenna(Gains)
         Ga=self.GiveSubVecGainAnt(Gains)
@@ -157,14 +146,15 @@ class ClassJacobianAntenna():
         
         
 
-        # pylab.figure(2)
-        # pylab.clf()
-        # pylab.plot((z)[::11])
-        # pylab.plot((Jx)[::11])
-        # pylab.plot(zr[::11])
-        # pylab.draw()
-        # pylab.show(False)
-        # pylab.pause(0.1)
+        # if self.iAnt==0:
+        #     pylab.figure(2)
+        #     pylab.clf()
+        #     pylab.plot((z)[::11])
+        #     pylab.plot((Jx)[::11])
+        #     pylab.plot(zr[::11])
+        #     pylab.draw()
+        #     pylab.show(False)
+        #     pylab.pause(0.1)
 
         # pylab.figure(2)
         # pylab.clf()
@@ -273,10 +263,8 @@ class ClassJacobianAntenna():
         self.Jacob=Jacob
         J=Jacob
         self.JHJ=np.dot(J.T.conj(),J)
-
-        #self.JHJinv=ModLinAlg.invSVD(self.JHJ)
-        self.JHJinv=np.linalg.inv(self.JHJ)
-
+        self.JHJinv=ModLinAlg.invSVD(self.JHJ)
+        # self.JHJinv=np.linalg.inv(self.JHJ)
         # self.JHJinv=np.diag(np.diag(self.JHJinv))
 
     def CalcKernelMatrix(self):

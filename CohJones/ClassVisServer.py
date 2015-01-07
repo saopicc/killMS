@@ -13,12 +13,14 @@ class ClassVisServer():
     def __init__(self,MSName,
                  ColName="DATA",
                  TChunkSize=1,
+                 TVisSizeMin=1,
                  PrefixShared="Default",
                  DicoSelectOptions={},
                  LofarBeam=None):
   
         self.ReInitChunkCount()
-        self.TChunkSize=TChunkSize
+        self.TMemChunkSize=TChunkSize
+        self.TVisSizeMin=TVisSizeMin
         self.MSName=MSName
         self.VisWeights=None
         self.CountPickle=0
@@ -29,45 +31,53 @@ class ClassVisServer():
         self.VisInSharedMem = (PrefixShared!=None)
         self.LofarBeam=LofarBeam
         self.ApplyBeam=False
-        if LofarBeam!=None:
-            self.BeamMode,self.DtBeamMin,self.BeamRAs,self.BeamDECs=LofarBeam
-            self.ApplyBeam=True
-            
         self.Init()
+
+    def SetBeam(self,LofarBeam):
+        self.BeamMode,self.DtBeamMin,self.BeamRAs,self.BeamDECs = LofarBeam
+        useArrayFactor=("A" in self.BeamMode)
+        useElementBeam=("E" in self.BeamMode)
+        self.MS.LoadSR(useElementBeam=useElementBeam,useArrayFactor=useArrayFactor)
+        self.ApplyBeam=True
 
     def Init(self,PointingID=0):
         #MSName=self.MDC.giveMS(PointingID).MSName
         MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False)
-        TimesInt=np.arange(0,MS.DTh,self.TChunkSize).tolist()
+        TimesInt=np.arange(0,MS.DTh,self.TMemChunkSize).tolist()
         if not(MS.DTh in TimesInt): TimesInt.append(MS.DTh)
         self.TimesInt=TimesInt
         self.NTChunk=len(self.TimesInt)-1
         self.MS=MS
-        if self.ApplyBeam:
-            useArrayFactor=("A" in self.BeamMode)
-            useElementBeam=("E" in self.BeamMode)
-            self.MS.LoadSR(useElementBeam=useElementBeam,useArrayFactor=useArrayFactor)
+
+        TimesVisMin=np.arange(0,MS.DTh*60.,self.TVisSizeMin).tolist()
+        if not(MS.DTh*60. in TimesVisMin): TimesVisMin.append(MS.DTh*60.)
+        self.TimesVisMin=np.array(TimesVisMin)
+        self.iCurrentVisTime=0
 
     def ReInitChunkCount(self):
-        self.CurrentTimeChunk=0
+        self.CurrentMemTimeChunk=0
 
-    def GiveNextVis(self,t0_sec,t1_sec):
+    def GiveNextVis(self,t0_sec=None,t1_sec=None):
+
+        if t0_sec==None:
+            if self.iCurrentVisTime+1==self.TimesVisMin.size: return None
+            t0_sec,t1_sec=60.*self.TimesVisMin[self.iCurrentVisTime],60.*self.TimesVisMin[self.iCurrentVisTime+1]
+            self.iCurrentVisTime+=1
+
         t0,t1=t0_sec,t1_sec
-
-
-        if self.MS.CurrentTimeHoursRange!=None:
-            its_t0,its_t1=self.MS.CurrentTimeHoursRange
+        self.CurrentVisTimes=t0_sec,t1_sec
+        if self.MS.CurrentChunkTimeRange_SinceT0_sec!=None:
+            its_t0,its_t1=self.MS.CurrentChunkTimeRange_SinceT0_sec
             if not((t0>=its_t0)&(t1<=its_t1)):
                 self.LoadNextVisChunk()
         else:
             self.LoadNextVisChunk()
-
-        t=self.ThisDataChunk["times"]
+        
         t0_MS=self.MS.F_tstart
         t0+=t0_MS
         t1+=t0_MS
 
-        ind=np.where((t>=t0)&(t<t1))[0]
+        ind=np.where((self.ThisDataChunk["times"]>=t0)&(self.ThisDataChunk["times"]<t1))[0]
         D=self.ThisDataChunk
 
 
@@ -88,7 +98,11 @@ class ClassVisServer():
         if "DicoBeam" in D.keys():
             DATA["DicoBeam"]=D["DicoBeam"]
 
-
+        #print
+        #print self.MS.ROW0,self.MS.ROW1
+        #t0=np.min(DATA["times"])-self.MS.F_tstart
+        #t1=np.max(DATA["times"])-self.MS.F_tstart
+        #self.TEST_TLIST+=sorted(list(set(DATA["times"].tolist())))
 
         return DATA
 
@@ -96,13 +110,13 @@ class ClassVisServer():
 
 
     def LoadNextVisChunk(self):
-        if self.CurrentTimeChunk==self.NTChunk:
+        if self.CurrentMemTimeChunk==self.NTChunk:
             print>>log, "Reached end of chunks"
             self.ReInitChunkCount()
             return None
         MS=self.MS
-        iT0,iT1=self.CurrentTimeChunk,self.CurrentTimeChunk+1
-        self.CurrentTimeChunk+=1
+        iT0,iT1=self.CurrentMemTimeChunk,self.CurrentMemTimeChunk+1
+        self.CurrentMemTimeChunk+=1
 
         print>>log, "Reading next data chunk in [%5.2f, %5.2f] hours"%(self.TimesInt[iT0],self.TimesInt[iT1])
         MS.ReadData(t0=self.TimesInt[iT0],t1=self.TimesInt[iT1])
@@ -116,19 +130,13 @@ class ClassVisServer():
 
         ###############################
         MS=self.MS
-        it0=0
-        it1=-1
-        row0=it0*MS.nbl
-        row1=it1*MS.nbl
-        if it1==-1:
-            row1=None
 
-        times=MS.times_all[row0:row1]
-        data=MS.data[row0:row1]
-        A0=MS.A0[row0:row1]
-        A1=MS.A1[row0:row1]
-        uvw=MS.uvw[row0:row1]
-        flags=MS.flag_all[row0:row1]
+        times=MS.times_all
+        data=MS.data
+        A0=MS.A0
+        A1=MS.A1
+        uvw=MS.uvw
+        flags=MS.flag_all
         freqs=MS.ChanFreq.flatten()
         nbl=MS.nbl
 
@@ -175,8 +183,7 @@ class ClassVisServer():
 
 
         
-        DicoDataOut={"itimes":(it0,it1),
-                     "times":times,#[ind],
+        DicoDataOut={"times":times,#[ind],
                      "freqs":freqs,
                      #"A0A1":(A0[ind],A1[ind]),
                      "A0A1":(A0,A1),
