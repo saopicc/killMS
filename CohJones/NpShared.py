@@ -24,10 +24,13 @@ def ListNames():
     ll=list(SharedArray.list())
     return [AR.name for AR in ll]
     
-def DelAll():
+def DelAll(key=None):
     ll=ListNames()
     for name in ll:
-        SharedArray.delete(name)
+        if key!=None:
+            if key in name: SharedArray.delete(name)
+        else:
+            SharedArray.delete(name)
 
 def GiveArray(Name):
     try:
@@ -40,7 +43,7 @@ def DicoToShared(Prefix,Dico):
     DicoOut={}
     for key in Dico.keys():
         if type(Dico[key])!=np.ndarray: continue
-        print "%s.%s"%(Prefix,key)
+        #print "%s.%s"%(Prefix,key)
         ThisKeyPrefix="%s.%s"%(Prefix,key)
         ar=Dico[key].copy()
         Shared=ToShared(ThisKeyPrefix,ar)

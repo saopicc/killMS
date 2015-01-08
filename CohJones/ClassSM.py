@@ -9,7 +9,7 @@ import ModSMFromNp
 
 
 class ClassSM():
-    def __init__(self,infile,infile_cluster="",killdirs=[],invert=False,solveFor=[],DoPrintCat=False,\
+    def __init__(self,infile,infile_cluster="",killdirs=[],invert=False,DoPrintCat=False,\
                      ReName=False,DoREG=False,SaveNp=False,NCluster=0,DoPlot=True,Tigger=False,\
                      FromExt=None,ClusterMethod=1,SelSource=False):
         self.ClusterMethod=ClusterMethod
@@ -192,6 +192,7 @@ class ClassSM():
 
         Cat.l,Cat.m=self.radec2lm_scalar(self.SourceCat.ra,self.SourceCat.dec,rac,decc)
         self.SourceCat=Cat
+        self.SourceCatKeepForSelector=self.SourceCat.copy()
         
 
     def MakeREG(self):
@@ -233,7 +234,7 @@ class ClassSM():
         self.NDir=len(self.Dirs)
         self.NSources=self.SourceCat.shape[0]
         selDir=np.array(sorted(list(set(self.SourceCat.Cluster.tolist()))))
-        self.WeightDir=self.WeightDirKeep[selDir].copy()
+        # self.WeightDir=self.WeightDirKeep[selDir].copy()
 
 
     def SelectSubCat(self,Selector):
@@ -243,7 +244,7 @@ class ClassSM():
         self.NDir=len(self.Dirs)
         self.NSources=self.SourceCat.shape[0]
         selDir=np.array(sorted(list(set(self.SourceCat.Cluster.tolist()))))
-        self.WeightDir=self.WeightDirKeep[selDir].copy()
+        # self.WeightDir=self.WeightDirKeep[selDir].copy()
 
 
         

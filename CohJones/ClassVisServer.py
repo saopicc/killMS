@@ -32,6 +32,7 @@ class ClassVisServer():
         self.LofarBeam=LofarBeam
         self.ApplyBeam=False
         self.Init()
+        self.LoadNextVisChunk()
 
     def SetBeam(self,LofarBeam):
         self.BeamMode,self.DtBeamMin,self.BeamRAs,self.BeamDECs = LofarBeam
@@ -60,7 +61,7 @@ class ClassVisServer():
     def GiveNextVis(self,t0_sec=None,t1_sec=None):
 
         if t0_sec==None:
-            if self.iCurrentVisTime+1==self.TimesVisMin.size: return None
+            if self.iCurrentVisTime+1==self.TimesVisMin.size: return "EndOfObservation"
             t0_sec,t1_sec=60.*self.TimesVisMin[self.iCurrentVisTime],60.*self.TimesVisMin[self.iCurrentVisTime+1]
             self.iCurrentVisTime+=1
 
@@ -69,9 +70,11 @@ class ClassVisServer():
         if self.MS.CurrentChunkTimeRange_SinceT0_sec!=None:
             its_t0,its_t1=self.MS.CurrentChunkTimeRange_SinceT0_sec
             if not((t0>=its_t0)&(t1<=its_t1)):
-                self.LoadNextVisChunk()
+                return "EndChunk"
+                # self.LoadNextVisChunk()
         else:
-            self.LoadNextVisChunk()
+            return False
+            # self.LoadNextVisChunk()
         
         t0_MS=self.MS.F_tstart
         t0+=t0_MS
@@ -142,33 +145,40 @@ class ClassVisServer():
 
 
 
+        #############################
+        ### data selection
+        #############################
 
-
-        for Field in self.DicoSelectOptions.keys():
-            if Field=="UVRangeKm":
-                d0,d1=Field
-                d0*=1e3
-                d1*=1e3
-                u,v,w=MS.uvw.T
-                duv=np.sqrt(u**2+v**2)
-                ind=np.where((duv<d0)|(duv>d1))[0]
+        # for Field in self.DicoSelectOptions.keys():
+        #     if Field=="UVRangeKm":
+        #         d0,d1=Field
+        #         d0*=1e3
+        #         d1*=1e3
+        #         u,v,w=MS.uvw.T
+        #         duv=np.sqrt(u**2+v**2)
+        #         ind=np.where((duv<d0)|(duv>d1))[0]
                 
-                flags=flags[ind]
-                data=data[ind]
-                A0=A0[ind]
-                A1=A1[ind]
-                uvw=uvw[ind]
-                times=times[ind]
+        #         flags=flags[ind]
+        #         data=data[ind]
+        #         A0=A0[ind]
+        #         A1=A1[ind]
+        #         uvw=uvw[ind]
+        #         times=times[ind]
+
+        # ind=np.where(A0!=A1)[0]
+        # flags=flags[ind,:,:].copy()
+        # data=data[ind,:,:].copy()
+        # A0=A0[ind].copy()
+        # A1=A1[ind].copy()
+        # uvw=uvw[ind,:].copy()
+        # times=times[ind].copy()
+
+        #############################
+        #############################
 
 
-        ind=np.where(A0!=A1)[0]
-        flags=flags[ind,:,:].copy()
-        data=data[ind,:,:].copy()
-        A0=A0[ind].copy()
-        A1=A1[ind].copy()
-        uvw=uvw[ind,:].copy()
-        times=times[ind].copy()
 
+        
         # ## debug
         # ind=np.where((A0==0)&(A1==1))[0]
         # flags=flags[ind]
@@ -244,7 +254,7 @@ class ClassVisServer():
         # DATA.keys()
         # ['uvw', 'MapBLSel', 'Weights', 'nbl', 'data', 'ROW_01', 'itimes', 'freqs', 'nf', 'times', 'A1', 'A0', 'flags', 'nt', 'A0A1']
 
-        self.ThisDataChunk=DATA
+        self.ThisDataChunk = DATA
 
 
 
@@ -256,7 +266,10 @@ class ClassVisServer():
 
 
     def ClearSharedMemory(self):
-        NpShared.DelAll()
+        NpShared.DelAll(self.PrefixShared)
+        NpShared.DelAll("DicoData")
+        NpShared.DelAll("KernelMat")
+
         # for Name in self.SharedNames:
         #     NpShared.DelArray(Name)
         self.SharedNames=[]
@@ -266,7 +279,7 @@ class ClassVisServer():
         DicoOut={}
         for key in Dico.keys():
             if type(Dico[key])!=np.ndarray: continue
-            print "%s.%s"%(self.PrefixShared,key)
+            #print "%s.%s"%(self.PrefixShared,key)
             Shared=NpShared.ToShared("%s.%s"%(self.PrefixShared,key),Dico[key])
             DicoOut[key]=Shared
             self.SharedNames.append("%s.%s"%(self.PrefixShared,key))

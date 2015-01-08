@@ -22,7 +22,7 @@ class ClassPredict():
             self.CType=np.complex64
             self.FType=np.float32
 
-    def predictKernelPolCluster(self,DicoData,SM,iDirection=None,ApplyJones=None):
+    def predictKernelPolCluster(self,DicoData,SM,iDirection=None,ApplyJones=None,ApplyTimeJones=None):
         self.DicoData=DicoData
         self.SourceCat=SM.SourceCat
 
@@ -30,20 +30,20 @@ class ClassPredict():
         times=DicoData["times"]
         nf=freq.size
         na=DicoData["infos"][0]
-
+        
         nrows=DicoData["A0"].size
         DataOut=np.zeros((nrows,nf,4),np.complex64)
         if nrows==0: return DataOut
-
+        
         self.freqs=freq
         self.wave=299792458./self.freqs
-
+        
         if iDirection!=None:
             ListDirection=[iDirection]
         else:
             ListDirection=range(SM.NDir)
-
-
+        
+        
         A0=DicoData["A0"]
         A1=DicoData["A1"]
         if ApplyJones!=None:
@@ -73,10 +73,11 @@ class ClassPredict():
                     ColOutDir[:,ichan,:]=ModLinAlg.BatchDot(J[A0,:],ColOutDir[:,ichan,:])
                     ColOutDir[:,ichan,:]=ModLinAlg.BatchDot(ColOutDir[:,ichan,:],JH[A1,:])
 
-            if "DicoBeam" in DicoData.keys():
-                D=DicoData["DicoBeam"]
+            if ApplyTimeJones!=None:#"DicoBeam" in DicoData.keys():
+                D=ApplyTimeJones#DicoData["DicoBeam"]
                 Beam=D["Beam"]
                 BeamH=D["BeamH"]
+
                 lt0,lt1=D["t0"],D["t1"]
                 for it in range(lt0.size):
                     t0,t1=lt0[it],lt1[it]

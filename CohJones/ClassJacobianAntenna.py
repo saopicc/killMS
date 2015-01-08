@@ -188,6 +188,7 @@ class ClassJacobianAntenna():
 
         x0=Ga.flatten()
         x1+=x0
+        del(self.Jacob)
         return x1.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks))
 
                                         
@@ -317,10 +318,11 @@ class ClassJacobianAntenna():
                 self.n4vis=n4vis
                 self.NJacobBlocks=1
             self.Data=self.Data.reshape((nrows,nchan,self.NJacobBlocks,self.NJacobBlocks))
-            print "Kernel From shared"
+            #print "Kernel From shared"
             return
         else:
-            print "COMPUTE KERNEL"
+            pass
+            #print "COMPUTE KERNEL"
 
         # GiveArray(Name)
 
@@ -347,8 +349,13 @@ class ClassJacobianAntenna():
         #self.K_XX=[]
         #self.K_YY=[]
 
+        ApplyTimeJones=None
+        if "DicoBeam" in self.DicoData.keys():
+            ApplyTimeJones=self.DicoData["DicoBeam"]
+
         for iDir in range(NDir):
-            K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir)
+            
+            K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones)
             K_XX=K[:,:,0]
             K_YY=K[:,:,3]
             if self.PolMode=="Scalar":
@@ -367,7 +374,7 @@ class ClassJacobianAntenna():
 
         DicoData=NpShared.SharedToDico(self.SharedDataDicoName)
         if DicoData==False:
-            print "COMPUTE DATA"
+            #print "COMPUTE DATA"
             DicoData={}
             ind0=np.where(DATA['A0']==iAnt)[0]
             ind1=np.where(DATA['A1']==iAnt)[0]
@@ -391,7 +398,8 @@ class ClassJacobianAntenna():
             DicoData["infos"] = DATA['infos']
             DicoData=NpShared.DicoToShared(self.SharedDataDicoName,DicoData)
         else:
-            print "DATA From shared"
+            pass
+            #print "DATA From shared"
             #print np.max(DicoData["A0"])
             #np.save("testA0",DicoData["A0"])
             #DicoData["A0"]=np.load("testA0.npy")

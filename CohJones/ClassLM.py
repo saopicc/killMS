@@ -15,19 +15,55 @@ import ModColor
 import NpShared
 from progressbar import ProgressBar
 
+from PredictGaussPoints_NumExpr import ClassPredict
+
 def test():
-    LM=ClassLM("../TEST/0000.MS","../TEST/ModelRandom00.txt.npy",PolMode="Scalar")
-    # LM=ClassLM("../TEST/0000.MS","../TEST/ModelRandom00.txt.npy",PolMode="HalfFull")
-    #  LM.doNextTimeSolve()
-    LM.doNextTimeSolve_Parallel()
-    return
-    #while LM.doNextTimeSolve(): continue
+
+
+    ReadColName="DATA"
+    WriteColName="CORRECTED_DATA"
+    SM=ClassSM.ClassSM("../TEST/ModelRandom00.txt.npy",
+                       killdirs=["c0s0."],invert=False)
+    
+    VS=ClassVisServer.ClassVisServer("../TEST/0000.MS",ColName=ReadColName,TVisSizeMin=10)
+    
+    #LM=ClassLM(VS,SM,PolMode="Scalar")
+    LM=ClassLM(VS,SM,PolMode="HalfFull")
+    # LM.doNextTimeSolve()
+    #LM.doNextTimeSolve_Parallel()
+    #return
+    PM=ClassPredict()
+    SM=LM.SM
+
+    while True:
+        Res=LM.doNextTimeSolve_Parallel()
+        if Res==True:
+            continue
+        else:
+            # substract
+            
+            Jones={}
+            Jones["t0"]=LM.Sols.t0
+            Jones["t1"]=LM.Sols.t1
+            nt,na,nd,_,_=LM.Sols.G.shape
+            G=np.swapaxes(LM.Sols.G,1,2).reshape((nt,nd,na,1,2,2))
+            Jones["Beam"]=G
+            Jones["BeamH"]=ModLinAlg.BatchH(G)
+
+            SM.SelectSubCat(SM.SourceCat.kill==1)
+            PredictData=PM.predictKernelPolCluster(LM.VS.ThisDataChunk,LM.SM,ApplyTimeJones=Jones)
+            SM.RestoreCat()
+
+            LM.VS.ThisDataChunk["data"]-=PredictData
+            LM.VS.MS.data=LM.VS.ThisDataChunk["data"]
+            LM.VS.MS.SaveVis(Col=WriteColName)
+
+        if Res=="EndOfObservation":
+            break
 
 class ClassLM():
 
-    def __init__(self,MSName,SMName,BeamProps=None,PolMode="HalfFull",Lambda=1,NIter=20):
-        VS=ClassVisServer.ClassVisServer(MSName,TVisSizeMin=10)
-        SM=ClassSM.ClassSM(SMName)
+    def __init__(self,VS,SM,BeamProps=None,PolMode="HalfFull",Lambda=1,NIter=20):
         self.Lambda=Lambda
         if BeamProps!=None:
             rabeam,decbeam=SM.ClusterCat.ra,SM.ClusterCat.dec
@@ -71,9 +107,12 @@ class ClassLM():
     
     def doNextTimeSolve_Parallel(self):
         DATA=self.VS.GiveNextVis()
-        if DATA==None:
+        if DATA=="EndOfObservation":
             print>>log, ModColor.Str("Reached end of data")
-            return False
+            return "EndOfObservation"
+        if DATA=="EndChunk":
+            print>>log, ModColor.Str("Reached end of data chunk")
+            return "EndChunk"
         self.DATA=DATA
 
         t0,t1=self.VS.CurrentVisTimes
@@ -92,12 +131,9 @@ class ClassLM():
         e=EventList[0]
 
 
-        NJobs=0
-        for i in range(self.NIter):
-            
-            for iAnt in ListAntSolve:
-                NJobs+=1
-                work_queue.put((iAnt))
+        NJobs=len(ListAntSolve)
+        for iAnt in ListAntSolve:
+             work_queue.put((iAnt))
 
         result_queue = multiprocessing.Queue()
 
@@ -111,12 +147,14 @@ class ClassLM():
         pylab.draw()
         pylab.show(False)
 
-
+        import ClassTimeIt
+        T=ClassTimeIt.ClassTimeIt()
         for ii in range(NCPU):
-            workerlist.append(WorkerAntennaLM(work_queue, result_queue,self.SM,self.PolMode,self.Lambda,args=(e,)))
+            
+            W=WorkerAntennaLM(work_queue, result_queue,self.SM,self.PolMode,self.Lambda)#,args=(e,))
+            workerlist.append(W)
             workerlist[ii].start()
             # time.sleep(2)
-
 
         #print ModColor.Str(" Pealing in [%-.2f->%-.2f h]"%(T0,T1),Bold=False)
         toolbar_width = 50
@@ -124,36 +162,42 @@ class ClassLM():
         #pBAR= ProgressBar('white', block='=', empty=' ',Title="Solving")
         #pBAR.render(0, '%i/%i' % (0,NJobs-1.))
 
-        e=EventList[0]
-        time.sleep(3)
-        e.set()
+        #e=EventList[0]
+        #time.sleep(3)
+        #e.set()
 
         results = []
         lold=len(results)
-        ii=0
-        while len(results) < NJobs:
-            iAnt,G = result_queue.get()
-            self.G[iAnt][:]=G[:]
-            results.append(iAnt)#result)
-            if len(results)>lold:
-                lold=len(results)
-                #pBAR.render(int(100* float(lold) / (NJobs-1.)), '%i/%i' % (lold,NJobs-1.))
-                
-            # if ii/10.==1:
-            #     pylab.plot(np.abs(self.G.flatten()))
-            #     pylab.draw()
-            #     ii=0
-            # ii+=1
+        iResult=0
+        for LMIter in range(self.NIter):
+            while iResult < NJobs:
+                iAnt,G = result_queue.get()
+                self.G[iAnt][:]=G[:]
+                iResult+=1
+            iResult=0
+            # pylab.plot(np.abs(self.G.flatten()))
+            # pylab.ylim(-2,2)
+            # pylab.draw()
+            for iAnt in ListAntSolve:
+                work_queue.put((iAnt))
             
+            # if len(results)>lold:
+            #     lold=len(results)
+            #     #pBAR.render(int(100* float(lold) / (NJobs-1.)), '%i/%i' % (lold,NJobs-1.))
+                
+            # # if ii/10.==1:
+            # #     pylab.plot(np.abs(self.G.flatten()))
+            # #     pylab.draw()
+            # #     ii=0
+            # # ii+=1
 
 
+ 
         for ii in range(NCPU):
             workerlist[ii].shutdown()
             workerlist[ii].terminate()
             workerlist[ii].join()
 
-        pylab.plot(np.abs(self.G.flatten()))
-        pylab.draw()
         if self.PolMode=="Scalar":
             self.Sols.G[self.iCurrentSol][:,:,0,0]=self.G[:,:,0,0]
             self.Sols.G[self.iCurrentSol][:,:,1,1]=self.G[:,:,0,0]
@@ -247,7 +291,7 @@ class WorkerAntennaLM(multiprocessing.Process):
         self.SM=SM
         self.PolMode=PolMode
         self.Lambda=Lambda
-        self.e,=kwargs["args"]
+        #self.e,=kwargs["args"]
 
     def shutdown(self):
         self.exit.set()
@@ -257,7 +301,7 @@ class WorkerAntennaLM(multiprocessing.Process):
                 iAnt = self.work_queue.get()
             except:
                 break
-            self.e.wait()
+            #self.e.wait()
 
             JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Lambda=self.Lambda)
             JM.setDATA_Shared()
