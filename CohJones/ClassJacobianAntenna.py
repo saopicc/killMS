@@ -7,7 +7,6 @@ import ClassSM
 import ModLinAlg
 import pylab
 
-
 def testLM():
     SM=ClassSM.ClassSM("../TEST/ModelRandom00.txt.npy")
     rabeam,decbeam=SM.ClusterCat.ra,SM.ClusterCat.dec
@@ -110,6 +109,7 @@ def testLM():
     stop    
     
 
+import NpShared
 
 class ClassJacobianAntenna():
     def __init__(self,SM,iAnt,PolMode="HalfFull",Lambda=1):
@@ -117,6 +117,7 @@ class ClassJacobianAntenna():
         self.PM=ClassPredict(Precision="S")
         self.SM=SM
         self.iAnt=iAnt
+        self.SharedDataDicoName="DicoData.%2.2i"%self.iAnt
         self.HasKernelMatrix=False
         self.Lambda=Lambda
     
@@ -128,9 +129,20 @@ class ClassJacobianAntenna():
     def setDATA(self,DATA):
         self.DATA=DATA
         
+    def setDATA_Shared(self):
+        # SharedNames=["SharedVis.freqs","SharedVis.times","SharedVis.A1","SharedVis.A0","SharedVis.flags","SharedVis.infos","SharedVis.uvw","SharedVis.data"]
+        # self.DATA={}
+        # for SharedName in SharedNames:
+        #     key=SharedNames.split(".")[1]
+        #     self.DATA[key]=NpShared.GiveArray(SharedName)
+        self.DATA=NpShared.SharedToDico("SharedVis")
+           
+            
+        
     def doLMStep(self,Gains):
+        if not(self.HasKernelMatrix):
+            self.CalcKernelMatrix()
         z=self.GiveDataVec()
-
         self.CalcJacobianAntenna(Gains)
         Ga=self.GiveSubVecGainAnt(Gains)
         Jx=self.J_x(Ga)
@@ -224,14 +236,14 @@ class ClassJacobianAntenna():
         return y
 
 
-    def CalcJacobianAntenna(self,Gains):
+    def CalcJacobianAntenna(self,GainsIn):
         if not(self.HasKernelMatrix): stop
         iAnt=self.iAnt
         NDir=self.NDir
         n4vis=self.n4vis
         na=self.na
         
-        Gains=Gains.copy().reshape((na,NDir,self.NJacobBlocks,self.NJacobBlocks))
+        Gains=GainsIn.reshape((na,NDir,self.NJacobBlocks,self.NJacobBlocks))
         Jacob=np.zeros((n4vis,self.NJacobBlocks,NDir,self.NJacobBlocks),np.complex64)
 
         for iDir in range(NDir):
@@ -282,25 +294,58 @@ class ClassJacobianAntenna():
         self.DicoData=self.GiveData(DATA,iAnt)
         self.Data=self.DicoData["data"]
         self.A1=self.DicoData["A1"]
-
+        # print "AntMax1",self.SharedDataDicoName,np.max(self.A1)
+        # print self.DicoData["A1"]
+        # print "AntMax0",self.SharedDataDicoName,np.max(self.DicoData["A0"])
+        # print self.DicoData["A0"]
         nrows,nchan,_=self.Data.shape
-
-
         n4vis=nrows*nchan
         self.n4vis=n4vis
+        
+        KernelSharedName="KernelMat.%2.2i"%self.iAnt
+        self.KernelMat=NpShared.GiveArray(KernelSharedName)
+        if self.KernelMat!=None:
+            self.HasKernelMatrix=True
+            if self.PolMode=="HalfFull":
+                self.K_XX=self.KernelMat[0]
+                self.K_YY=self.KernelMat[1]
+                self.NJacobBlocks=2
+            elif self.PolMode=="Scalar":
+                n4vis=self.Data.size
+                self.K_XX=self.KernelMat[0]
+                self.K_YY=self.K_XX
+                self.n4vis=n4vis
+                self.NJacobBlocks=1
+            self.Data=self.Data.reshape((nrows,nchan,self.NJacobBlocks,self.NJacobBlocks))
+            print "Kernel From shared"
+            return
+        else:
+            print "COMPUTE KERNEL"
+
+        # GiveArray(Name)
+
         if self.PolMode=="HalfFull":
-            KernelMatrix=np.zeros((n4vis,NDir,2),np.complex64)
+            #self.K_XX=np.zeros((NDir,n4vis/nchan,nchan),np.complex64)
+            #self.K_YY=np.zeros((NDir,n4vis/nchan,nchan),np.complex64)
+            self.KernelMat=NpShared.zeros(KernelSharedName,(2,NDir,n4vis/nchan,nchan),dtype=np.complex64)
+            self.K_XX=self.KernelMat[0]
+            self.K_YY=self.KernelMat[1]
+            # KernelMatrix=NpShared.zeros(KernelSharedName,(n4vis,NDir,2),dtype=np.complex64)
             self.NJacobBlocks=2
         elif self.PolMode=="Scalar":
             n4vis=self.Data.size
-            KernelMatrix=np.zeros((n4vis,NDir,1),np.complex64)
+            # KernelMatrix_XX=np.zeros((NDir,n4vis,nchan),np.complex64)
+            # KernelMatrix=NpShared.zeros(KernelSharedName,(n4vis,NDir,1),dtype=np.complex64)
+            self.KernelMat=NpShared.zeros(KernelSharedName,(1,NDir,n4vis/nchan,nchan),dtype=np.complex64)
+            self.K_XX=self.KernelMat[0]
+            self.K_YY=self.K_XX
             self.n4vis=n4vis
             self.NJacobBlocks=1
 
         self.Data=self.Data.reshape((nrows,nchan,self.NJacobBlocks,self.NJacobBlocks))
             
-        self.K_XX=[]
-        self.K_YY=[]
+        #self.K_XX=[]
+        #self.K_YY=[]
 
         for iDir in range(NDir):
             K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir)
@@ -310,38 +355,52 @@ class ClassJacobianAntenna():
                 K_XX=(K_XX+K_YY)/2.
                 K_YY=K_XX
 
-            self.K_XX.append(K_XX)
-            self.K_YY.append(K_YY)
+            self.K_XX[iDir,:,:]=K_XX
+            self.K_YY[iDir,:,:]=K_YY
+
+            #self.K_XX.append(K_XX)
+            #self.K_YY.append(K_YY)
         self.HasKernelMatrix=True
 
 
     def GiveData(self,DATA,iAnt):
-        DicoData={}
 
-        ind0=np.where(DATA['A0']==iAnt)[0]
-        ind1=np.where(DATA['A1']==iAnt)[0]
+        DicoData=NpShared.SharedToDico(self.SharedDataDicoName)
+        if DicoData==False:
+            print "COMPUTE DATA"
+            DicoData={}
+            ind0=np.where(DATA['A0']==iAnt)[0]
+            ind1=np.where(DATA['A1']==iAnt)[0]
+            DicoData["A0"] = np.concatenate([DATA['A0'][ind0], DATA['A1'][ind1]])
+            DicoData["A1"] = np.concatenate([DATA['A1'][ind0], DATA['A0'][ind1]])
+            D0=DATA['data'][ind0]
+            D1=DATA['data'][ind1].conj()
+            c1=D1[:,:,1].copy()
+            c2=D1[:,:,2].copy()
+            D1[:,:,1]=c2
+            D1[:,:,2]=c1
+            DicoData["data"] = np.concatenate([D0, D1])
+            if self.PolMode=="Scalar":
+                nr,nch,_=DicoData["data"].shape
+                d=(DicoData["data"][:,:,0]+DicoData["data"][:,:,-1])/2
+                DicoData["data"] = d.reshape((nr,nch,1))
+            DicoData["uvw"]  = np.concatenate([DATA['uvw'][ind0], -DATA['uvw'][ind1]])
+            DicoData["flags"] = np.concatenate([DATA['flags'][ind0], DATA['flags'][ind1]])
+            DicoData["freqs"]   = DATA['freqs']
+            DicoData["times"] = np.concatenate([DATA['times'][ind0], DATA['times'][ind1]])
+            DicoData["infos"] = DATA['infos']
+            DicoData=NpShared.DicoToShared(self.SharedDataDicoName,DicoData)
+        else:
+            print "DATA From shared"
+            #print np.max(DicoData["A0"])
+            #np.save("testA0",DicoData["A0"])
+            #DicoData["A0"]=np.load("testA0.npy")
+            #DicoData=NpShared.SharedToDico(self.SharedDataDicoName)
+            #print np.max(DicoData["A0"])
+            #print
 
-        DicoData["A0"] = np.concatenate([DATA['A0'][ind0], DATA['A1'][ind1]])
-        DicoData["A1"] = np.concatenate([DATA['A1'][ind0], DATA['A0'][ind1]])
-        D0=DATA['data'][ind0]
-        D1=DATA['data'][ind1].conj()
-        c1=D1[:,:,1].copy()
-        c2=D1[:,:,2].copy()
-        D1[:,:,1]=c2
-        D1[:,:,2]=c1
-        DicoData["data"] = np.concatenate([D0, D1])
-        if self.PolMode=="Scalar":
-            nr,nch,_=DicoData["data"].shape
-            d=(DicoData["data"][:,:,0]+DicoData["data"][:,:,-1])/2
-            DicoData["data"] = d.reshape((nr,nch,1))
-        DicoData["uvw"]  = np.concatenate([DATA['uvw'][ind0], -DATA['uvw'][ind1]])
-        DicoData["flags"] = np.concatenate([DATA['flags'][ind0], DATA['flags'][ind1]])
-        DicoData["freqs"]   = DATA['freqs']
+            #stop
 
-        DicoData["times"] = np.concatenate([DATA['times'][ind0], DATA['times'][ind1]])
-        DicoData["infos"] = DATA['infos']
-
-        
         if "DicoBeam" in DATA.keys():
             DicoData["DicoBeam"] = DATA["DicoBeam"]
 
@@ -352,6 +411,7 @@ class ClassJacobianAntenna():
         # DicoData["uvw"]  = np.concatenate([DATA['uvw'][ind0]])
         # DicoData["flags"] = np.concatenate([DATA['flags'][ind0]])
         # DicoData["freqs"]   = DATA['freqs']
+
 
         return DicoData
 

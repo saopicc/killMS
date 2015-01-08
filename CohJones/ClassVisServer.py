@@ -14,7 +14,7 @@ class ClassVisServer():
                  ColName="DATA",
                  TChunkSize=1,
                  TVisSizeMin=1,
-                 PrefixShared="Default",
+                 PrefixShared="SharedVis",
                  DicoSelectOptions={},
                  LofarBeam=None):
   
@@ -27,7 +27,7 @@ class ClassVisServer():
         self.ColName=ColName
         self.DicoSelectOptions=DicoSelectOptions
         self.SharedNames=[]
-        self.PrefixShared=None
+        self.PrefixShared=PrefixShared
         self.VisInSharedMem = (PrefixShared!=None)
         self.LofarBeam=LofarBeam
         self.ApplyBeam=False
@@ -162,13 +162,12 @@ class ClassVisServer():
 
 
         ind=np.where(A0!=A1)[0]
-
-        flags=flags[ind]
-        data=data[ind]
-        A0=A0[ind]
-        A1=A1[ind]
-        uvw=uvw[ind]
-        times=times[ind]
+        flags=flags[ind,:,:].copy()
+        data=data[ind,:,:].copy()
+        A0=A0[ind].copy()
+        A1=A1[ind].copy()
+        uvw=uvw[ind,:].copy()
+        times=times[ind].copy()
 
         # ## debug
         # ind=np.where((A0==0)&(A1==1))[0]
@@ -183,12 +182,14 @@ class ClassVisServer():
 
 
         
-        DicoDataOut={"times":times,#[ind],
+        DicoDataOut={"times":times,
                      "freqs":freqs,
                      #"A0A1":(A0[ind],A1[ind]),
-                     "A0A1":(A0,A1),
-                     "uvw":uvw,#[ind],
-                     "flags":flags,#[ind],
+                     #"A0A1":(A0,A1),
+                     "A0":A0,
+                     "A1":A1,
+                     "uvw":uvw,
+                     "flags":flags,
                      "nbl":nbl,
                      "na":MS.na,
                      "data":data,
@@ -231,9 +232,9 @@ class ClassVisServer():
 
         DATA=DicoDataOut
 
-        A0,A1=DATA["A0A1"]
-        DATA["A0"]=A0
-        DATA["A1"]=A1
+        #A0,A1=DATA["A0A1"]
+        #DATA["A0"]=A0
+        #DATA["A1"]=A1
 
         ##############################################
         
@@ -255,8 +256,9 @@ class ClassVisServer():
 
 
     def ClearSharedMemory(self):
-        for Name in self.SharedNames:
-            NpShared.DelArray(Name)
+        NpShared.DelAll()
+        # for Name in self.SharedNames:
+        #     NpShared.DelArray(Name)
         self.SharedNames=[]
 
     def PutInShared(self,Dico):
@@ -264,6 +266,7 @@ class ClassVisServer():
         DicoOut={}
         for key in Dico.keys():
             if type(Dico[key])!=np.ndarray: continue
+            print "%s.%s"%(self.PrefixShared,key)
             Shared=NpShared.ToShared("%s.%s"%(self.PrefixShared,key),Dico[key])
             DicoOut[key]=Shared
             self.SharedNames.append("%s.%s"%(self.PrefixShared,key))
