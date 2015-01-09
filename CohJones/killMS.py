@@ -3,7 +3,7 @@
 import optparse
 import sys
 import MyPickle
-#import logo
+import logo
 
 sys.path=[name for name in sys.path if not(("pyrap" in name)&("/usr/local/lib/" in name))]
 
@@ -36,6 +36,8 @@ import ClassVisServer
 from PredictGaussPoints_NumExpr import ClassPredict
 import ModLinAlg
 
+import MyLogger
+log=MyLogger.getLogger("killMS")
 
 def read_options():
     desc="""CohJones Questions and suggestions: cyril.tasse@obspm.fr"""
@@ -57,7 +59,7 @@ def read_options():
     group.add_option('--NCPU',help=' Number of cores to use for the calibration of the Tikhonov output. Default is %default ',default="6")
     group.add_option('--niter',help=' Number of iterations for the solve. Default is %default ',default="20")
     #group.add_option('--doSmearing',help='Takes time and frequency smearing if enabled. Default is %default ',default="0")
-    #group.add_option('--SolvePolMode',help=' Polarisation mode (I/All). Default is %default',default="I")
+    group.add_option('--PolMode',help=' Polarisation mode (Scalar/HalfFull). Default is %default',default="Scalar")
     #group.add_option('--ChanSels',help=' Channel selection. Default is %default',default="")
     #group.add_option('--BLFlags',help=' Baselines To be flagged. Default is %default',default="")
     group.add_option('--Restore',help=' Restore BACKUP in CORRECTED. Default is %default',default="0")
@@ -122,31 +124,37 @@ def main(options=None):
     SM=ClassSM.ClassSM(options.SkyModel,
                        killdirs=kills,invert=invert)
     
-    VS=ClassVisServer.ClassVisServer(options.ms,ColName=ReadColName,TVisSizeMin=10)
+    VS=ClassVisServer.ClassVisServer(options.ms,ColName=ReadColName,
+                                     TVisSizeMin=delta_time,TChunkSize=TChunk)
     
 
-    LM=ClassLM(VS,SM,PolMode="HalfFull")
+    # LM=ClassLM(VS,SM,PolMode="HalfFull")
+    LM=ClassLM(VS,SM,PolMode=options.PolMode,
+               NIter=niterin,NCPU=NCPU)
 
     PM=ClassPredict()
     SM=LM.SM
 
     while True:
         Res=LM.setNextData()
-        print Res
+
         if Res==True:
-            if not(SubOnly):
-                LM.doNextTimeSolve_Parallel()
+            # if not(SubOnly):
+            #     LM.doNextTimeSolve_Parallel()
+            LM.doNextTimeSolve_Parallel()
             continue
         else:
             # substract
             
+            Sols=LM.GiveSols()
             Jones={}
-            Jones["t0"]=LM.Sols.t0
-            Jones["t1"]=LM.Sols.t1
-            nt,na,nd,_,_=LM.Sols.G.shape
-            G=np.swapaxes(LM.Sols.G,1,2).reshape((nt,nd,na,1,2,2))
+            Jones["t0"]=Sols.t0
+            Jones["t1"]=Sols.t1
+            nt,na,nd,_,_=Sols.G.shape
+            G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
             Jones["Beam"]=G
             Jones["BeamH"]=ModLinAlg.BatchH(G)
+            Jones["ChanMap"]=np.zeros((VS.MS.NSPWChan,)).tolist()
 
             SM.SelectSubCat(SM.SourceCat.kill==1)
             PredictData=PM.predictKernelPolCluster(LM.VS.ThisDataChunk,LM.SM,ApplyTimeJones=Jones)
@@ -156,8 +164,11 @@ def main(options=None):
             LM.VS.MS.data=LM.VS.ThisDataChunk["data"]
             LM.VS.MS.SaveVis(Col=WriteColName)
 
-        if Res=="EndOfObservation":
-            break
+        if Res=="EndChunk":
+            Load=VS.LoadNextVisChunk()
+            if Load=="EndOfObservation":
+                break
+
 
 
 
@@ -188,5 +199,5 @@ if __name__=="__main__":
     if options.Restore=="1":
         Restore(options)
     else:
-        #logo.print_logo()
+        logo.print_logo()
         main(options=options)

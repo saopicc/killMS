@@ -79,6 +79,8 @@ class ClassPredict():
                 BeamH=D["BeamH"]
 
                 lt0,lt1=D["t0"],D["t1"]
+
+
                 for it in range(lt0.size):
                     t0,t1=lt0[it],lt1[it]
                     ind=np.where((times>t0)&(times<t1))[0]
@@ -86,7 +88,12 @@ class ClassPredict():
                     data=ColOutDir[ind]
                     A0sel=A0[ind]
                     A1sel=A1[ind]
-                    for ichan in range(nf):
+
+                    if "ChanMap" in ApplyTimeJones.keys():
+                        ChanMap=ApplyTimeJones["ChanMap"]
+                    else:
+                        ChanMap=range(nf)
+                    for ichan in ChanMap:
                         J=Beam[it,iCluster,:,ichan,:,:].reshape((na,4))
                         JH=Beam[it,iCluster,:,ichan,:,:].reshape((na,4))
                         data[:,ichan,:]=ModLinAlg.BatchDot(J[A0sel,:],data[:,ichan,:])

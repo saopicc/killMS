@@ -6,6 +6,7 @@ import ClassVisServer
 import ClassSM
 import ModLinAlg
 import pylab
+import ClassTimeIt
 
 def testLM():
     SM=ClassSM.ClassSM("../TEST/ModelRandom00.txt.npy")
@@ -144,13 +145,21 @@ class ClassJacobianAntenna():
             
         
     def doLMStep(self,Gains):
+        #print
+        T=ClassTimeIt.ClassTimeIt("doLMStep")
+        T.disable()
         if not(self.HasKernelMatrix):
             self.CalcKernelMatrix()
+            T.timeit("CalcKernelMatrix")
         z=self.DicoData["data_flat"]#self.GiveDataVec()
         self.CalcJacobianAntenna(Gains)
+        T.timeit("CalcJacobianAntenna")
         Ga=self.GiveSubVecGainAnt(Gains)
+        T.timeit("GiveSubVecGainAnt")
         Jx=self.J_x(Ga)
+        T.timeit("Jx")
         zr=z-Jx
+        T.timeit("resid")
 
         # JH_z_0=np.load("LM.npz")["JH_z"]
         # x1_0=np.load("LM.npz")["x1"]
@@ -158,32 +167,35 @@ class ClassJacobianAntenna():
         # Jx_0=np.load("LM.npz")["Jx"]
 
         JH_z=self.JH_z(zr)
+        T.timeit("JH_z")
         x1 = (1./(1.+self.Lambda)) * self.JHJinv_x(JH_z)
+        T.timeit("self.JHJinv_x")
         
         
-
-        if self.iAnt==0:
-            pylab.figure(2)
-            pylab.clf()
-            pylab.plot((z)[::11])
-            pylab.plot((Jx)[::11])
-            pylab.plot(zr[::11])
-            pylab.draw()
-            pylab.show(False)
-            pylab.pause(0.1)
-
-        # pylab.figure(2)
-        # pylab.clf()
-        # #pylab.plot((z)[::11])
-        # #pylab.plot((Jx-Jx_0)[::11])
-        # #pylab.plot(zr[::11])
-        # #pylab.plot(JH_z.flatten())
-        # #pylab.plot(JH_z_0.flatten())
-        # pylab.plot(x1.flatten())
-        # pylab.plot(x1_0.flatten())
-        # pylab.draw()
-        # pylab.show(False)
-        # pylab.pause(0.1)
+        
+        # if self.iAnt==5:
+        #     f=(self.DicoData["flags_flat"]==0)
+        #     pylab.figure(2)
+        #     pylab.clf()
+        #     pylab.plot((z[f]))#[::11])
+        #     pylab.plot((Jx[f]))#[::11])
+        #     pylab.plot(zr[f])#[::11])
+        #     pylab.draw()
+        #     pylab.show(False)
+        #     pylab.pause(0.1)
+        #     stop
+        # # pylab.figure(2)
+        # # pylab.clf()
+        # # #pylab.plot((z)[::11])
+        # # #pylab.plot((Jx-Jx_0)[::11])
+        # # #pylab.plot(zr[::11])
+        # # #pylab.plot(JH_z.flatten())
+        # # #pylab.plot(JH_z_0.flatten())
+        # # pylab.plot(x1.flatten())
+        # # pylab.plot(x1_0.flatten())
+        # # pylab.draw()
+        # # pylab.show(False)
+        # # pylab.pause(0.1)
 
         # stop
         # # np.savez("LM",JH_z=JH_z,x1=x1,z=z,Jx=Jx)
@@ -193,6 +205,8 @@ class ClassJacobianAntenna():
         x0=Ga.flatten()
         x1+=x0
         del(self.Jacob)
+        T.timeit("rest")
+
         return x1.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks))
 
                                         
@@ -216,20 +230,22 @@ class ClassJacobianAntenna():
         Gains=Gains.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks))
         for polIndex in range(self.NJacobBlocks):
             Gain=Gains[:,polIndex,:]
-            flags=self.DicoData["flags_flat"][polIndex]
-            J=Jacob[flags==0]
+            #flags=self.DicoData["flags_flat"][polIndex]
+            J=Jacob#[flags==0]
             z.append(np.dot(J,Gain.flatten()))
-        z=np.concatenate(z)
+        z=np.array(z)
         return z
 
     def JH_z(self,zin):
-        z=zin.reshape((self.NJacobBlocks,zin.size/self.NJacobBlocks))
+        #z=zin.reshape((self.NJacobBlocks,zin.size/self.NJacobBlocks))
         #z=zin.reshape((1,zin.size))
         Jacob=self.Jacob
         Gains=np.zeros((self.NDir,self.NJacobBlocks,self.NJacobBlocks),np.complex64)
         for polIndex in range(self.NJacobBlocks):
-            ThisZ=z[polIndex]
+            
             flags=self.DicoData["flags_flat"][polIndex]
+            ThisZ=zin[polIndex][flags==0]#self.DicoData["flags_flat"[polIndex]
+            
             J=Jacob[flags==0]
 
             Gain=np.dot(J.T.conj(),ThisZ.flatten())
@@ -327,7 +343,7 @@ class ClassJacobianAntenna():
                 self.K_YY=self.KernelMat[1]
                 self.NJacobBlocks=2
             elif self.PolMode=="Scalar":
-                n4vis=self.Data.size
+                #n4vis=self.DicoData["data_flat"].size
                 self.K_XX=self.KernelMat[0]
                 self.K_YY=self.K_XX
                 self.n4vis=n4vis
@@ -351,7 +367,8 @@ class ClassJacobianAntenna():
             # KernelMatrix=NpShared.zeros(KernelSharedName,(n4vis,NDir,2),dtype=np.complex64)
             self.NJacobBlocks=2
         elif self.PolMode=="Scalar":
-            n4vis=self.Data.size
+            #n4vis=self.Data.size
+            n4vis=self.DicoData["data_flat"].size
             # KernelMatrix_XX=np.zeros((NDir,n4vis,nchan),np.complex64)
             # KernelMatrix=NpShared.zeros(KernelSharedName,(n4vis,NDir,1),dtype=np.complex64)
             self.KernelMat=NpShared.zeros(KernelSharedName,(1,NDir,n4vis/nchan,nchan),dtype=np.complex64)
@@ -404,7 +421,14 @@ class ClassJacobianAntenna():
             D1[:,:,2]=c1
             DicoData["data"] = np.concatenate([D0, D1])
             DicoData["uvw"]  = np.concatenate([DATA['uvw'][ind0], -DATA['uvw'][ind1]])
-            DicoData["flags"] = np.concatenate([DATA['flags'][ind0], DATA['flags'][ind1]])
+
+            D0=DATA['flags'][ind0]
+            D1=DATA['flags'][ind1].conj()
+            c1=D1[:,:,1].copy()
+            c2=D1[:,:,2].copy()
+            D1[:,:,1]=c2
+            D1[:,:,2]=c1
+            DicoData["flags"] = np.concatenate([D0, D1])
 
             if self.PolMode=="Scalar":
                 nr,nch,_=DicoData["data"].shape
@@ -425,7 +449,7 @@ class ClassJacobianAntenna():
 
             DicoData["flags_flat"]=np.rollaxis(DicoData["flags"],2).reshape(self.NJacobBlocks,nr*nch*self.NJacobBlocks)
             DicoData["data_flat"]=np.rollaxis(DicoData["data"],2).reshape(self.NJacobBlocks,nr*nch*self.NJacobBlocks)
-            DicoData["data_flat"]=DicoData["data_flat"][DicoData["flags_flat"]==0]
+            #DicoData["data_flat"]=DicoData["data_flat"][DicoData["flags_flat"]==0]
 
             del(DicoData["data"])
 

@@ -7,6 +7,8 @@ import os
 import pyrap.quanta as qa
 import pyrap.measures as pm
 import ephem
+import MyLogger
+log=MyLogger.getLogger("ClassMS")
 
 class ClassMS():
     def __init__(self,MSname,Col="DATA",zero_flag=True,ReOrder=False,EqualizeFlag=False,DoPrint=True,DoReadData=True,
@@ -147,7 +149,7 @@ class ClassMS():
 
     def LoadLOFAR_ANTENNA_FIELD(self):
         t=table("%s/LOFAR_ANTENNA_FIELD"%self.MSName,ack=False)
-        print ModColor.Str(" ... Loading LOFAR_ANTENNA_FIELD table...")
+        print>>log, ModColor.Str(" ... Loading LOFAR_ANTENNA_FIELD table...")
         na,NTiles,dummy=t.getcol("ELEMENT_OFFSET").shape
 
         try:
@@ -199,7 +201,7 @@ class ClassMS():
 
         #ListStrSel=["RT9-RTA", "RTA-RTB", "RTC-RTD", "RT6-RT7", "RT5"]
 
-        print ModColor.Str("  ... Building BL-mapping for %s"%str(ListStrSel))
+        print>>log, ModColor.Str("  ... Building BL-mapping for %s"%str(ListStrSel))
 
         if row1==None:
             row0=0
@@ -634,7 +636,7 @@ class ClassMS():
     def SaveVis(self,vis=None,Col="CORRECTED_DATA",spw=0,DoPrint=True):
         if vis==None:
             vis=self.data
-        if DoPrint: print "  Writting data in column %s"%ModColor.Str(Col,col="green")
+        if DoPrint: print>>log, "Writting data in column %s"%ModColor.Str(Col,col="green")
         table_all=table(self.MSName,ack=False,readonly=False)
 
         if self.swapped:

@@ -8,6 +8,7 @@ import NpShared
 import ClassTimeIt
 import ModColor
 import ModLinAlg
+MyLogger.setSilent(["NpShared"])
 
 class ClassVisServer():
     def __init__(self,MSName,
@@ -32,7 +33,14 @@ class ClassVisServer():
         self.LofarBeam=LofarBeam
         self.ApplyBeam=False
         self.Init()
+
+        self.dTimesVisMin=self.TVisSizeMin
+        self.CurrentVisTimes_SinceStart_Sec=0.,0.
+        self.iCurrentVisTime=0
+
         self.LoadNextVisChunk()
+
+        #self.TEST_TLIST=[]
 
     def SetBeam(self,LofarBeam):
         self.BeamMode,self.DtBeamMin,self.BeamRAs,self.BeamDECs = LofarBeam
@@ -51,41 +59,46 @@ class ClassVisServer():
         self.NTChunk=len(self.TimesInt)-1
         self.MS=MS
 
-        TimesVisMin=np.arange(0,MS.DTh*60.,self.TVisSizeMin).tolist()
-        if not(MS.DTh*60. in TimesVisMin): TimesVisMin.append(MS.DTh*60.)
-        self.TimesVisMin=np.array(TimesVisMin)
-        self.iCurrentVisTime=0
+        #TimesVisMin=np.arange(0,MS.DTh*60.,self.TVisSizeMin).tolist()
+        #if not(MS.DTh*60. in TimesVisMin): TimesVisMin.append(MS.DTh*60.)
+        #self.TimesVisMin=np.array(TimesVisMin)
+
 
     def ReInitChunkCount(self):
         self.CurrentMemTimeChunk=0
 
-    def GiveNextVis(self,t0_sec=None,t1_sec=None):
+    def GiveNextVis(self):
 
-        if t0_sec==None:
-            if self.iCurrentVisTime+1==self.TimesVisMin.size: return "EndOfObservation"
-            t0_sec,t1_sec=60.*self.TimesVisMin[self.iCurrentVisTime],60.*self.TimesVisMin[self.iCurrentVisTime+1]
-            self.iCurrentVisTime+=1
+        #print>>log, "GiveNextVis"
 
-        t0,t1=t0_sec,t1_sec
-        self.CurrentVisTimes=t0_sec,t1_sec
-        if self.MS.CurrentChunkTimeRange_SinceT0_sec!=None:
-            its_t0,its_t1=self.MS.CurrentChunkTimeRange_SinceT0_sec
-            if not((t0>=its_t0)&(t1<=its_t1)):
-                return "EndChunk"
-                # self.LoadNextVisChunk()
-        else:
-            return False
-            # self.LoadNextVisChunk()
+        t0_bef,t1_bef=self.CurrentVisTimes_SinceStart_Sec
+        t0_sec,t1_sec=t1_bef,t1_bef+60.*self.dTimesVisMin
+
+        its_t0,its_t1=self.MS.CurrentChunkTimeRange_SinceT0_sec
+        t1_sec=np.min([its_t1,t1_sec])
+
+        self.iCurrentVisTime+=1
+        self.CurrentVisTimes_SinceStart_Minutes = t0_sec/60.,t1_sec/60.
+        self.CurrentVisTimes_SinceStart_Sec     = t0_sec,t1_sec
+
+        #print>>log,("(t0_sec,t1_sec,t1_bef,t1_bef+60.*self.dTimesVisMin)",t0_sec,t1_sec,t1_bef,t1_bef+60.*self.dTimesVisMin)
+        #print>>log,("(its_t0,its_t1)",its_t0,its_t1)
+        #print>>log,("self.CurrentVisTimes_SinceStart_Minutes",self.CurrentVisTimes_SinceStart_Minutes)
+
+        if (t0_sec>=its_t1):
+            return "EndChunk"
+
+        
+
         
         t0_MS=self.MS.F_tstart
-        t0+=t0_MS
-        t1+=t0_MS
+        t0_sec+=t0_MS
+        t1_sec+=t0_MS
+        self.CurrentVisTimes_MS_Sec=t0_sec,t1_sec
 
-        ind=np.where((self.ThisDataChunk["times"]>=t0)&(self.ThisDataChunk["times"]<t1))[0]
         D=self.ThisDataChunk
-
-
-
+        # time selection
+        ind=np.where((self.ThisDataChunk["times"]>=t0_sec)&(self.ThisDataChunk["times"]<t1_sec))[0]
         DATA={}
         for key in D.keys():
             if type(D[key])!=np.ndarray: continue
@@ -93,6 +106,51 @@ class ClassVisServer():
                 DATA[key]=D[key]
             else:
                 DATA[key]=D[key][ind]
+
+
+        #############################
+        ### data selection
+        #############################
+        flags=DATA["flags"]
+        uvw=DATA["uvw"]
+        data=DATA["data"]
+        A0=DATA["A0"]
+        A1=DATA["A1"]
+        times=DATA["times"]
+
+        for Field in self.DicoSelectOptions.keys():
+            if Field=="UVRangeKm":
+                d0,d1=Field
+                d0*=1e3
+                d1*=1e3
+                u,v,w=uvw.T
+                duv=np.sqrt(u**2+v**2)
+                ind=np.where((duv<d0)|(duv>d1))[0]
+                
+                flags=flags[ind]
+                data=data[ind]
+                A0=A0[ind]
+                A1=A1[ind]
+                uvw=uvw[ind]
+                times=times[ind]
+
+        ind=np.where(A0!=A1)[0]
+        flags=flags[ind,:,:]
+        data=data[ind,:,:]
+        A0=A0[ind]
+        A1=A1[ind]
+        uvw=uvw[ind,:]
+        times=times[ind]
+
+        DATA["flags"]=flags
+        DATA["uvw"]=uvw
+        DATA["data"]=data
+        DATA["A0"]=A0
+        DATA["A1"]=A1
+        DATA["times"]=times
+
+
+
 
         if self.VisInSharedMem:
             self.ClearSharedMemory()
@@ -115,9 +173,9 @@ class ClassVisServer():
 
     def LoadNextVisChunk(self):
         if self.CurrentMemTimeChunk==self.NTChunk:
-            print>>log, "Reached end of chunks"
+            print>>log, ModColor.Str("Reached end of observations")
             self.ReInitChunkCount()
-            return None
+            return "EndOfObservation"
         MS=self.MS
         iT0,iT1=self.CurrentMemTimeChunk,self.CurrentMemTimeChunk+1
         self.CurrentMemTimeChunk+=1
@@ -144,35 +202,14 @@ class ClassVisServer():
         freqs=MS.ChanFreq.flatten()
         nbl=MS.nbl
 
+        # flags.fill(0)
+
+        # f=(np.random.rand(*flags.shape)>0.5)
+        # flags[f]=1
+        # data[flags]=1e6
 
 
-        #############################
-        ### data selection
-        #############################
 
-        # for Field in self.DicoSelectOptions.keys():
-        #     if Field=="UVRangeKm":
-        #         d0,d1=Field
-        #         d0*=1e3
-        #         d1*=1e3
-        #         u,v,w=MS.uvw.T
-        #         duv=np.sqrt(u**2+v**2)
-        #         ind=np.where((duv<d0)|(duv>d1))[0]
-                
-        #         flags=flags[ind]
-        #         data=data[ind]
-        #         A0=A0[ind]
-        #         A1=A1[ind]
-        #         uvw=uvw[ind]
-        #         times=times[ind]
-
-        # ind=np.where(A0!=A1)[0]
-        # flags=flags[ind,:,:].copy()
-        # data=data[ind,:,:].copy()
-        # A0=A0[ind].copy()
-        # A1=A1[ind].copy()
-        # uvw=uvw[ind,:].copy()
-        # times=times[ind].copy()
 
         #############################
         #############################
@@ -256,7 +293,7 @@ class ClassVisServer():
         # ['uvw', 'MapBLSel', 'Weights', 'nbl', 'data', 'ROW_01', 'itimes', 'freqs', 'nf', 'times', 'A1', 'A0', 'flags', 'nt', 'A0A1']
 
         self.ThisDataChunk = DATA
-
+        return "LoadOK"
 
 
     def GiveAllUVW(self):
@@ -276,7 +313,6 @@ class ClassVisServer():
         self.SharedNames=[]
 
     def PutInShared(self,Dico):
-        print>>log, ModColor.Str("Sharing data: start [prefix = %s]"%self.PrefixShared)
         DicoOut={}
         for key in Dico.keys():
             if type(Dico[key])!=np.ndarray: continue
@@ -284,6 +320,6 @@ class ClassVisServer():
             Shared=NpShared.ToShared("%s.%s"%(self.PrefixShared,key),Dico[key])
             DicoOut[key]=Shared
             self.SharedNames.append("%s.%s"%(self.PrefixShared,key))
-        print>>log, ModColor.Str("Sharing data: done")
+
         return DicoOut
 
