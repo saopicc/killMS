@@ -188,7 +188,7 @@ class ClassJacobianAntenna():
 
         x0=Ga.flatten()
         x1+=x0
-        del(self.Jacob)
+
         return x1.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks))
 
                                         

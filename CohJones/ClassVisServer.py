@@ -44,6 +44,7 @@ class ClassVisServer():
     def Init(self,PointingID=0):
         #MSName=self.MDC.giveMS(PointingID).MSName
         MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False)
+        MS.PutBackupCol()
         TimesInt=np.arange(0,MS.DTh,self.TMemChunkSize).tolist()
         if not(MS.DTh in TimesInt): TimesInt.append(MS.DTh)
         self.TimesInt=TimesInt

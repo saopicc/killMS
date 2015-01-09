@@ -14,7 +14,7 @@ log=MyLogger.getLogger("ClassLM")
 import ModColor
 import NpShared
 from progressbar import ProgressBar
-
+            
 from PredictGaussPoints_NumExpr import ClassPredict
 
 def test():
@@ -36,8 +36,10 @@ def test():
     SM=LM.SM
 
     while True:
-        Res=LM.doNextTimeSolve_Parallel()
+        Res=LM.setNextData()
         if Res==True:
+            #LM.doNextTimeSolve_Parallel()
+            LM.doNextTimeSolve()
             continue
         else:
             # substract
@@ -83,7 +85,7 @@ class ClassLM():
         self.NSols=self.VS.TimesVisMin.size-1
         na=self.VS.MS.na
         nd=self.SM.NDir
-        self.Sols=np.zeros((self.NSols,),dtype=[("t0",float),("t1",float),("G",np.complex64,(na,nd,2,2))])
+        self.Sols=np.zeros((self.NSols,),dtype=[("t0",np.float64),("t1",np.float64),("G",np.complex64,(na,nd,2,2))])
         self.Sols=self.Sols.view(np.recarray)
         self.iCurrentSol=0
         
@@ -99,13 +101,7 @@ class ClassLM():
         self.G=G
         self.G+=np.random.randn(*self.G.shape)*1
 
-
-    # #################################
-    # ###        Parallel           ###
-    # #################################
-    
-    
-    def doNextTimeSolve_Parallel(self):
+    def setNextData(self):
         DATA=self.VS.GiveNextVis()
         if DATA=="EndOfObservation":
             print>>log, ModColor.Str("Reached end of data")
@@ -114,6 +110,15 @@ class ClassLM():
             print>>log, ModColor.Str("Reached end of data chunk")
             return "EndChunk"
         self.DATA=DATA
+        return True
+
+    # #################################
+    # ###        Parallel           ###
+    # #################################
+    
+    
+    
+    def doNextTimeSolve_Parallel(self):
 
         t0,t1=self.VS.CurrentVisTimes
         self.Sols.t0[self.iCurrentSol]=t0
