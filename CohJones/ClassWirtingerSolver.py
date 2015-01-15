@@ -330,11 +330,11 @@ class ClassWirtingerSolver():
                 pBAR.render(int(100* float(NDone) / (NTotJobs-1.)), '%4i/%i' % (NDone-1,NTotJobs-1.))
             iResult=0
             
-            pylab.clf()
-            pylab.plot(np.abs(self.G.flatten()))
-            pylab.ylim(-2,2)
-            pylab.draw()
-            pylab.show(False)
+            # pylab.clf()
+            # pylab.plot(np.abs(self.G.flatten()))
+            # pylab.ylim(-2,2)
+            # pylab.draw()
+            # pylab.show(False)
 
             for iAnt in ListAntSolve:
                 work_queue.put((iAnt))

@@ -59,7 +59,7 @@ def read_options():
     opt.add_option_group(group)
     
     group = optparse.OptionGroup(opt, "* Algorithm options", "Default values should give reasonable results, but all of them have noticeable influence on the results")
-    group.add_option('--timestep',help='Time interval for a solution [minutes]. Default is %default. ',default=30)
+    group.add_option('--dt',help='Time interval for a solution [minutes]. Default is %default. ',default=30)
     group.add_option('--NCPU',help=' Number of cores to use. Default is %default ',default=NCPU_default)
     group.add_option('--niter',help=' Number of iterations for the solve. Default is %default ',default="20")
     #group.add_option('--doSmearing',help='Takes time and frequency smearing if enabled. Default is %default ',default="0")
@@ -127,7 +127,7 @@ def main(options=None):
     ######################################
 
     NpShared.DelAll()
-    ReadColName="DATA"#options.InCol
+    ReadColName=options.InCol
     WriteColName="CORRECTED_DATA"
 
     SM=ClassSM.ClassSM(options.SkyModel,
@@ -189,7 +189,7 @@ def main(options=None):
                 break
 
 
-
+    NpShared.DelAll()
 
     
 
