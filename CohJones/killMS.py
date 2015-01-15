@@ -30,14 +30,17 @@ import os
 import numpy as np
 import pickle
 import ClassSM
-from ClassLM import ClassLM
+from ClassWirtingerSolver import ClassWirtingerSolver
+
 import ClassTimeIt
 import ClassVisServer
 from PredictGaussPoints_NumExpr import ClassPredict
 import ModLinAlg
-
+import NpShared
 import MyLogger
 log=MyLogger.getLogger("killMS")
+import multiprocessing
+NCPU_default=str(int(0.75*multiprocessing.cpu_count()))
 
 def read_options():
     desc="""CohJones Questions and suggestions: cyril.tasse@obspm.fr"""
@@ -48,7 +51,8 @@ def read_options():
     group.add_option('--SkyModel',help='List of targets [no default]',default='')
     opt.add_option_group(group)
     
-    # group = optparse.OptionGroup(opt, "* Data selection options", "ColName is set to DATA column by default, and other parameters select all the data.")
+    group = optparse.OptionGroup(opt, "* Algorithm type")
+    group.add_option('--SolverType',help='Name of the solver to use (CohJones/KAFCA)',default="CohJones")
     group = optparse.OptionGroup(opt, "* Data selection options")
     group.add_option('--kills',help='Name or number index of sources to kill',default="")
     group.add_option('--invert',help='Invert the selected sources to kill',default="0")
@@ -56,7 +60,7 @@ def read_options():
     
     group = optparse.OptionGroup(opt, "* Algorithm options", "Default values should give reasonable results, but all of them have noticeable influence on the results")
     group.add_option('--timestep',help='Time interval for a solution [minutes]. Default is %default. ',default=30)
-    group.add_option('--NCPU',help=' Number of cores to use for the calibration of the Tikhonov output. Default is %default ',default="6")
+    group.add_option('--NCPU',help=' Number of cores to use. Default is %default ',default=NCPU_default)
     group.add_option('--niter',help=' Number of iterations for the solve. Default is %default ',default="20")
     #group.add_option('--doSmearing',help='Takes time and frequency smearing if enabled. Default is %default ',default="0")
     group.add_option('--PolMode',help=' Polarisation mode (Scalar/HalfFull). Default is %default',default="Scalar")
@@ -65,12 +69,13 @@ def read_options():
     group.add_option('--Restore',help=' Restore BACKUP in CORRECTED. Default is %default',default="0")
     #group.add_option('--LOFARBeamParms',help='Applying the LOFAR beam parameters [Mode[A,AE,E],TimeStep]. Default is %default',default="")
     group.add_option('--LOFARBeamParms',help='Not Working yet',default="")
-
+    
     group.add_option('--TChunk',help=' Time Chunk in hours. Default is %default',default="15")
     group.add_option('--SubOnly',help=' Only substract the skymodel. Default is %default',default="0")
     group.add_option('--DoBar',help=' Draw progressbar. Default is %default',default="1")
     group.add_option('--InCol',help=' Column to work on. Default is %default',default="CORRECTED_DATA_BACKUP")
-    group.add_option('--ApplyCal',help=' Apply direction averaged gains to residual data. Default is %default',default="0")
+    group.add_option('--ApplyCal',help=' Apply direction averaged gains to residual data in the mentioned direction. \
+    If ApplyCal=-1 takes the mean gain over directions. Default is %default',default="No")
     
 
 
@@ -102,6 +107,10 @@ def main(options=None):
         print "Give a numpy sky model!"
         exit()
 
+    ApplyCal=None
+    if options.ApplyCal!="No":
+        ApplyCal=int(options.ApplyCal)
+
     TChunk=float(options.TChunk)
     delta_time=float(options.timestep)
     niterin=int(options.niter)
@@ -117,7 +126,7 @@ def main(options=None):
 
     ######################################
 
-        
+    NpShared.DelAll()
     ReadColName="DATA"#options.InCol
     WriteColName="CORRECTED_DATA"
 
@@ -125,13 +134,15 @@ def main(options=None):
                        killdirs=kills,invert=invert)
     
     VS=ClassVisServer.ClassVisServer(options.ms,ColName=ReadColName,
-                                     TVisSizeMin=delta_time,TChunkSize=TChunk)
+                                     TVisSizeMin=delta_time,TChunkSize=TChunk
+                                     ,AddNoiseJy=10.)
     
 
     # LM=ClassLM(VS,SM,PolMode="HalfFull")
-    LM=ClassLM(VS,SM,PolMode=options.PolMode,
-               NIter=niterin,NCPU=NCPU)
-
+    LM=ClassWirtingerSolver(VS,SM,PolMode=options.PolMode,
+                            NIter=niterin,NCPU=NCPU,
+                            SolverType=options.SolverType)
+    LM.InitSol(TestMode=False)
     PM=ClassPredict()
     SM=LM.SM
 
@@ -142,6 +153,7 @@ def main(options=None):
             # if not(SubOnly):
             #     LM.doNextTimeSolve_Parallel()
             LM.doNextTimeSolve_Parallel()
+            # LM.doNextTimeSolve()
             continue
         else:
             # substract
@@ -161,7 +173,14 @@ def main(options=None):
             SM.RestoreCat()
 
             LM.VS.ThisDataChunk["data"]-=PredictData
+            if ApplyCal!=None:
+                PM.ApplyCal(LM.VS.ThisDataChunk,Jones,ApplyCal)
+
+
             LM.VS.MS.data=LM.VS.ThisDataChunk["data"]
+
+            
+
             LM.VS.MS.SaveVis(Col=WriteColName)
 
         if Res=="EndChunk":

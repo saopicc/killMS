@@ -22,6 +22,44 @@ class ClassPredict():
             self.CType=np.complex64
             self.FType=np.float32
 
+    def ApplyCal(self,DicoData,ApplyTimeJones,iCluster):
+        D=ApplyTimeJones
+        Beam=D["Beam"]
+        BeamH=D["BeamH"]
+        lt0,lt1=D["t0"],D["t1"]
+        ColOutDir=DicoData["data"]
+        A0=DicoData["A0"]
+        A1=DicoData["A1"]
+        times=DicoData["times"]
+        na=DicoData["infos"][0]
+        for it in range(lt0.size):
+            t0,t1=lt0[it],lt1[it]
+            ind=np.where((times>t0)&(times<t1))[0]
+            if ind.size==0: continue
+            data=ColOutDir[ind]
+            A0sel=A0[ind]
+            A1sel=A1[ind]
+            
+            if "ChanMap" in ApplyTimeJones.keys():
+                ChanMap=ApplyTimeJones["ChanMap"]
+            else:
+                ChanMap=range(nf)
+            for ichan in ChanMap:
+                if iCluster!=-1:
+                    J0=Beam[it,iCluster,:,ichan,:,:].reshape((na,4))
+                    JH0=BeamH[it,iCluster,:,ichan,:,:].reshape((na,4))
+                else:
+                    J0=np.mean(Beam[it,:,:,ichan,:,:],axis=1).reshape((na,4))
+                    JH0=np.mean(BeamH[it,:,:,ichan,:,:],axis=1).reshape((na,4))
+                    
+                J=ModLinAlg.BatchInverse(J0)
+                JH=ModLinAlg.BatchInverse(JH0)
+
+                data[:,ichan,:]=ModLinAlg.BatchDot(J[A0sel,:],data[:,ichan,:])
+                data[:,ichan,:]=ModLinAlg.BatchDot(data[:,ichan,:],JH[A1sel,:])
+
+
+
     def predictKernelPolCluster(self,DicoData,SM,iDirection=None,ApplyJones=None,ApplyTimeJones=None):
         self.DicoData=DicoData
         self.SourceCat=SM.SourceCat
@@ -95,7 +133,7 @@ class ClassPredict():
                         ChanMap=range(nf)
                     for ichan in ChanMap:
                         J=Beam[it,iCluster,:,ichan,:,:].reshape((na,4))
-                        JH=Beam[it,iCluster,:,ichan,:,:].reshape((na,4))
+                        JH=BeamH[it,iCluster,:,ichan,:,:].reshape((na,4))
                         data[:,ichan,:]=ModLinAlg.BatchDot(J[A0sel,:],data[:,ichan,:])
                         data[:,ichan,:]=ModLinAlg.BatchDot(data[:,ichan,:],JH[A1sel,:])
                 

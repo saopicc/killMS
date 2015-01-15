@@ -25,10 +25,10 @@ def test():
     SM=ClassSM.ClassSM("../TEST/ModelRandom00.txt.npy",
                        killdirs=["c0s0."],invert=False)
     
-    VS=ClassVisServer.ClassVisServer("../TEST/0000.MS",ColName=ReadColName,TVisSizeMin=2,TChunkSize=1)
+    VS=ClassVisServer.ClassVisServer("../TEST/0000.MS",ColName=ReadColName,TVisSizeMin=2,TChunkSize=.1,AddNoiseJy=10.)
     
-   # LM=ClassLM(VS,SM,PolMode="Scalar",NIter=1)#20)
-    LM=ClassLM(VS,SM,PolMode="HalfFull",NIter=10)
+    #LM=ClassWirtingerSolver(VS,SM,PolMode="Scalar",NIter=1,SolverType="EKF")#20)
+    LM=ClassWirtingerSolver(VS,SM,PolMode="HalfFull",NIter=10,SolverType="KAFCA")#"CohJones")#"KAFCA")
     # LM.doNextTimeSolve()
     #LM.doNextTimeSolve_Parallel()
     #return
@@ -41,8 +41,8 @@ def test():
         Res=LM.setNextData()
         if Res==True:
             #print Res,VS.CurrentVisTimes_SinceStart_Minutes
-            #LM.doNextTimeSolve_Parallel()
-            LM.doNextTimeSolve()
+            LM.doNextTimeSolve_Parallel()
+            # LM.doNextTimeSolve()
             continue
         else:
             # substract
@@ -69,20 +69,19 @@ def test():
                 break
 
 
-    
-    import pylab
-    t=np.array(VS.TEST_TLIST)
-    dt=t[1::]-t[0:-1]
-    pylab.clf()
-    pylab.plot(dt)
-    
-    pylab.draw()
-    pylab.show(False)
+        
+    # import pylab
+    # t=np.array(VS.TEST_TLIST)
+    # dt=t[1::]-t[0:-1]
+    # pylab.clf()
+    # pylab.plot(dt)
+    # pylab.draw()
+    # pylab.show(False)
 
-class ClassLM():
+class ClassWirtingerSolver():
 
     def __init__(self,VS,SM,BeamProps=None,PolMode="HalfFull",
-                 Lambda=1,NIter=20,NCPU=6):
+                 Lambda=1,NIter=20,NCPU=6,SolverType="CohJones"):
         self.Lambda=Lambda
         self.NCPU=NCPU
         if BeamProps!=None:
@@ -100,6 +99,9 @@ class ClassLM():
         self.NIter=NIter
         self.SolsList=[]
         self.iCurrentSol=0
+        self.SolverType=SolverType
+        if SolverType=="KAFCA":
+           self.NIter=1
 
     def AppendEmptySol(self):
         #### Solutions
@@ -114,7 +116,7 @@ class ClassLM():
         self.SolsArray=self.SolsArray.view(np.recarray)
         return self.SolsArray
 
-    def InitSol(self):
+    def InitSol(self,TestMode=True):
         na=self.VS.MS.na
         nd=self.SM.NDir
         sigP=0.1
@@ -129,6 +131,8 @@ class ClassLM():
             
         self.G=G
         self.G+=np.random.randn(*self.G.shape)*sigP
+        if TestMode:
+            self.G+=np.random.randn(*self.G.shape)*sigP
         #self.G[5]+=np.random.randn(*self.G[5].shape)*sigP
 
         #self.G[5,0,1,0]=1
@@ -137,7 +141,9 @@ class ClassLM():
         self.P=P
         Npars=self.G[0].size
 
-        self.rms=1.
+
+        self.G=NpShared.ToShared("SharedGains",self.G)
+        self.P=NpShared.ToShared("SharedCovariance",self.P)
 
     def setNextData(self):
         DATA=self.VS.GiveNextVis()
@@ -151,8 +157,18 @@ class ClassLM():
         self.DATA=DATA
 
         ## simul
-        d=self.DATA["data"]
-        self.DATA["data"]+=(self.rms/np.sqrt(2.))*(np.random.randn(*d.shape)+1j*np.random.randn(*d.shape))
+        #d=self.DATA["data"]
+        #self.DATA["data"]+=(self.rms/np.sqrt(2.))*(np.random.randn(*d.shape)+1j*np.random.randn(*d.shape))
+
+        self.DATA["data"].shape
+        Dpol=self.DATA["data"][:,:,1:3]
+        Fpol=self.DATA["flags"][:,:,1:3]
+        self.rms=np.std(Dpol[Fpol==0])
+        self.rms=np.max([self.rms,1e-2])
+        #self.rms=np.min(self.rmsPol)
+        
+        rms=self.rms*1000
+        #print>>log, "Estimated rms = %7.2f mJy"%(rms)
 
         #np.savez("EKF.npz",data=self.DATA["data"],G=self.G)
         #stop
@@ -197,10 +213,12 @@ class ClassLM():
             Pnew=self.P.copy()
             for iAnt in self.DicoJM.keys():
                 JM=self.DicoJM[iAnt]
-                #x=JM.doLMStep(self.G)
+                if self.SolverType=="CohJones":
+                    x=JM.doLMStep(self.G)
 
-                x,P=JM.doEKFStep(self.G,self.P,self.rms)
-                Pnew[iAnt]=P
+                if self.SolverType=="KAFCA":
+                    x,P=JM.doEKFStep(self.G,self.P,self.rms)
+                    Pnew[iAnt]=P
 
                 Gnew[iAnt]=x
 
@@ -248,9 +266,6 @@ class ClassLM():
         self.SolsList[self.iCurrentSol].t0=t0
         self.SolsList[self.iCurrentSol].t1=t1
 
-        if self.G==None:
-            self.InitSol()
-            self.G=NpShared.ToShared("SharedGains",self.G)
 
 
 
@@ -283,7 +298,7 @@ class ClassLM():
         T=ClassTimeIt.ClassTimeIt()
         for ii in range(NCPU):
             
-            W=WorkerAntennaLM(work_queue, result_queue,self.SM,self.PolMode,self.Lambda)#,args=(e,))
+            W=WorkerAntennaLM(work_queue, result_queue,self.SM,self.PolMode,self.Lambda,self.SolverType,self.rms)#,args=(e,))
             workerlist.append(W)
             workerlist[ii].start()
             # time.sleep(2)
@@ -306,16 +321,20 @@ class ClassLM():
         NDone=0
         for LMIter in range(self.NIter):
             while iResult < NJobs:
-                iAnt,G = result_queue.get()
+                iAnt,G,P = result_queue.get()
                 self.G[iAnt][:]=G[:]
+                if P!=None:
+                    self.P[iAnt,:]=P[:]
                 iResult+=1
                 NDone+=1
                 pBAR.render(int(100* float(NDone) / (NTotJobs-1.)), '%4i/%i' % (NDone-1,NTotJobs-1.))
             iResult=0
-
-            # pylab.plot(np.abs(self.G.flatten()))
-            # pylab.ylim(-2,2)
-            # pylab.draw()
+            
+            pylab.clf()
+            pylab.plot(np.abs(self.G.flatten()))
+            pylab.ylim(-2,2)
+            pylab.draw()
+            pylab.show(False)
 
             for iAnt in ListAntSolve:
                 work_queue.put((iAnt))
@@ -369,7 +388,7 @@ import multiprocessing
 class WorkerAntennaLM(multiprocessing.Process):
     def __init__(self,
                  work_queue,
-                 result_queue,SM,PolMode,Lambda,**kwargs):
+                 result_queue,SM,PolMode,Lambda,SolverType,rms,**kwargs):
         multiprocessing.Process.__init__(self)
         self.work_queue = work_queue
         self.result_queue = result_queue
@@ -378,6 +397,8 @@ class WorkerAntennaLM(multiprocessing.Process):
         self.SM=SM
         self.PolMode=PolMode
         self.Lambda=Lambda
+        self.SolverType=SolverType
+        self.rms=rms
         #self.e,=kwargs["args"]
 
     def shutdown(self):
@@ -394,5 +415,10 @@ class WorkerAntennaLM(multiprocessing.Process):
             JM.setDATA_Shared()
 
             G=NpShared.GiveArray("SharedGains")
-            x=JM.doLMStep(G)
-            self.result_queue.put([iAnt,x])
+            P=NpShared.GiveArray("SharedCovariance")
+            if self.SolverType=="CohJones":
+                x=JM.doLMStep(G)
+                self.result_queue.put([iAnt,x,None])
+            elif self.SolverType=="KAFCA":
+                x,Pout=JM.doEKFStep(G,P,self.rms)
+                self.result_queue.put([iAnt,x,Pout])

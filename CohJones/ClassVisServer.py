@@ -17,8 +17,10 @@ class ClassVisServer():
                  TVisSizeMin=1,
                  PrefixShared="SharedVis",
                  DicoSelectOptions={},
-                 LofarBeam=None):
+                 LofarBeam=None,
+                 AddNoiseJy=None):
   
+        self.AddNoiseJy=AddNoiseJy
         self.ReInitChunkCount()
         self.TMemChunkSize=TChunkSize
         self.TVisSizeMin=TVisSizeMin
@@ -99,6 +101,8 @@ class ClassVisServer():
         D=self.ThisDataChunk
         # time selection
         ind=np.where((self.ThisDataChunk["times"]>=t0_sec)&(self.ThisDataChunk["times"]<t1_sec))[0]
+        if ind.shape[0]==0:
+            return "EndChunk"
         DATA={}
         for key in D.keys():
             if type(D[key])!=np.ndarray: continue
@@ -228,7 +232,8 @@ class ClassVisServer():
         # ##
 
 
-
+        if self.AddNoiseJy!=None:
+            data+=(self.AddNoiseJy/np.sqrt(2.))*(np.random.randn(*data.shape)+1j*np.random.randn(*data.shape))
         
         DicoDataOut={"times":times,
                      "freqs":freqs,
