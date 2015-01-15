@@ -27,8 +27,8 @@ def test():
     
     VS=ClassVisServer.ClassVisServer("../TEST/0000.MS",ColName=ReadColName,TVisSizeMin=2,TChunkSize=1)
     
-    LM=ClassLM(VS,SM,PolMode="Scalar",NIter=1)#20)
-    #LM=ClassLM(VS,SM,PolMode="HalfFull")
+   # LM=ClassLM(VS,SM,PolMode="Scalar",NIter=1)#20)
+    LM=ClassLM(VS,SM,PolMode="HalfFull",NIter=10)
     # LM.doNextTimeSolve()
     #LM.doNextTimeSolve_Parallel()
     #return
@@ -123,15 +123,21 @@ class ClassLM():
             P=(sigP**2)*np.array([np.diag(np.ones((nd,),np.complex128)) for iAnt in range(na)])
         else:
             G=np.zeros((na,nd,2,2),np.complex128)
-            P=(sigP**2)*np.array([np.diag(np.ones((nd*2*2),np.complex128)) for iAnt in range(na)])
             G[:,:,0,0]=1
             G[:,:,1,1]=1
+            P=(sigP**2)*np.array([np.diag(np.ones((nd*2*2),np.complex128)) for iAnt in range(na)])
+            
         self.G=G
         self.G+=np.random.randn(*self.G.shape)*sigP
+        #self.G[5]+=np.random.randn(*self.G[5].shape)*sigP
+
+        #self.G[5,0,1,0]=1
+
+        #self.G.fill(1)
         self.P=P
         Npars=self.G[0].size
 
-        self.rms=5.
+        self.rms=1.
 
     def setNextData(self):
         DATA=self.VS.GiveNextVis()
@@ -147,6 +153,13 @@ class ClassLM():
         ## simul
         d=self.DATA["data"]
         self.DATA["data"]+=(self.rms/np.sqrt(2.))*(np.random.randn(*d.shape)+1j*np.random.randn(*d.shape))
+
+        #np.savez("EKF.npz",data=self.DATA["data"],G=self.G)
+        #stop
+        
+        # D=np.load("EKF.npz")
+        # self.DATA["data"]=D["data"]
+        # self.G=D["G"]
 
         return True
 
@@ -180,8 +193,8 @@ class ClassLM():
 
 
         for i in range(self.NIter):
-            Gnew=np.zeros_like(self.G)
-            Pnew=np.zeros_like(self.P)
+            Gnew=self.G.copy()
+            Pnew=self.P.copy()
             for iAnt in self.DicoJM.keys():
                 JM=self.DicoJM[iAnt]
                 #x=JM.doLMStep(self.G)
@@ -203,6 +216,8 @@ class ClassLM():
             pylab.show(False)
             self.G[:]=Gnew[:]
             self.P[:]=Pnew[:]
+
+
 
         # if self.PolMode=="Scalar":
         #     self.Sols.G[self.iCurrentSol][0][:,:,0,0]=self.G[:,:,0,0]
