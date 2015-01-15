@@ -159,15 +159,46 @@ def BatchDot2(A,B):
 
     return C
 
+def testInvertSVD():
+    import pylab
+    A=np.random.randn(10,10)+1j*np.random.randn(10,10)
+    A0=np.linalg.inv(A)
+    A1=invSVD(A)
+    A2=A0-A1
+    pylab.clf()
+    pylab.subplot(3,2,1)
+    pylab.imshow(A0.real,interpolation="nearest")
+    pylab.colorbar()
+    pylab.subplot(3,2,2)
+    pylab.imshow(A0.imag,interpolation="nearest")
+    pylab.colorbar()
+    pylab.subplot(3,2,3)
+    pylab.imshow(A1.real,interpolation="nearest")
+    pylab.colorbar()
+    pylab.subplot(3,2,4)
+    pylab.imshow(A1.imag,interpolation="nearest")
+    pylab.colorbar()
 
+    pylab.subplot(3,2,5)
+    pylab.imshow(A2.real,interpolation="nearest")
+    pylab.colorbar()
+    pylab.subplot(3,2,6)
+    pylab.imshow(A2.imag,interpolation="nearest")
+    pylab.colorbar()
+    pylab.draw()
+    pylab.show(False)
+    pylab.pause(0.1)        
+    
 
 
 def invSVD(A):
     u,s,v=np.linalg.svd(A+np.random.randn(*A.shape)*(1e-6*A.max()))
     #s[s<0.]=1.e-6
     s[s<1.e-6*s.max()]=1.e-6*s.max()
-    ssq=np.diag(1./s)
-    Asq=np.dot(np.dot(v.T,ssq),u.T)
+    ssq=(1./s)
+    #Asq=np.conj(np.dot(np.dot(v.T,ssq),u.T))
+    v0=v.T*ssq.reshape(1,ssq.size)
+    Asq=np.conj(np.dot(v0,u.T))
     return Asq
 
 def SVDw(A):

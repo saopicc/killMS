@@ -32,7 +32,7 @@ class ClassPredict():
         na=DicoData["infos"][0]
         
         nrows=DicoData["A0"].size
-        DataOut=np.zeros((nrows,nf,4),np.complex64)
+        DataOut=np.zeros((nrows,nf,4),self.CType)
         if nrows==0: return DataOut
         
         self.freqs=freq
@@ -145,7 +145,7 @@ class ClassPredict():
         fQ=SourceCat.Q.reshape((NSource,1,1))
         fU=SourceCat.U.reshape((NSource,1,1))
         fV=SourceCat.V.reshape((NSource,1,1))
-        Sky=np.zeros((NSource,1,1,4),np.complex64)
+        Sky=np.zeros((NSource,1,1,4),self.CType)
         Sky[:,:,:,0]=(fI+fQ);
         Sky[:,:,:,1]=(fU+1j*fV);
         Sky[:,:,:,2]=(fU-1j*fV);

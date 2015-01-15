@@ -48,7 +48,7 @@ def testLM():
     
 
 
-    DATA=VS.GiveNextVis(0,1000)
+    DATA=VS.GiveNextVis()
 
 
     # Apply Jones
@@ -113,9 +113,17 @@ def testLM():
 import NpShared
 
 class ClassJacobianAntenna():
-    def __init__(self,SM,iAnt,PolMode="HalfFull",Lambda=1):
+    def __init__(self,SM,iAnt,PolMode="HalfFull",Lambda=1,Precision="S"):
         self.PolMode=PolMode
-        self.PM=ClassPredict(Precision="S")
+        #self.PM=ClassPredict(Precision="S")
+        self.PM=ClassPredict(Precision=Precision)
+        if Precision=="D":
+            self.CType=np.complex128
+            self.FType=np.float64
+        if Precision=="S":
+            self.CType=np.complex64
+            self.FType=np.float32
+            
         self.SM=SM
         self.iAnt=iAnt
         self.SharedDataDicoName="DicoData.%2.2i"%self.iAnt
@@ -141,6 +149,130 @@ class ClassJacobianAntenna():
         #     key=SharedNames.split(".")[1]
         #     self.DATA[key]=NpShared.GiveArray(SharedName)
         self.DATA=NpShared.SharedToDico("SharedVis")
+
+
+    def PrepareJHJ(self,Pa,rms):
+        Pinv=ModLinAlg.invSVD(Pa)
+        self.JHJ=[]
+        for ipol in range(self.NJacobBlocks):
+            JHJ*=self.JHJ*(1./rms**2)
+            JHJ+=Pinv
+            JHJinv=ModLinAlg.invSVD(self.JHJ)
+        #self.JHJinv=np.linalg.inv(self.JHJ)
+        #print np.max(self.JHJinv1-self.JHJinv)
+        #self.JHJinv=self.JHJinv1
+
+    def AugmentPa(self,Pa_in):
+        Pa=np.zeros((self.NDir*self.NJacobBlocks,self.NDir*self.NJacobBlocks),self.CType)
+        for ipol in range(self.NJacobBlocks):
+            for ipol in range(self.NJacobBlocks):
+                Pa[ipol::self.NJacobBlocks,ipol::self.NJacobBlocks]=Pa_in[:,:]
+        return Pa
+
+    def ApplyK_vec(self,zr,rms,Pa):
+        JH_z=self.JH_z(zr)
+
+
+        # pylab.figure(1)
+        # pylab.clf()
+        # incr=1
+        # pylab.subplot(2,1,1)
+        # pylab.plot((z.flatten())[::incr].real)
+        # pylab.plot((Jx.flatten())[::incr].real)
+        # pylab.plot(zr.flatten()[::incr].real)
+        # pylab.subplot(2,1,2)
+        # pylab.plot((z.flatten())[::incr].imag)
+        # pylab.plot((Jx.flatten())[::incr].imag)
+        # pylab.plot(zr.flatten()[::incr].imag)
+        # pylab.draw()
+        # pylab.show(False)
+        # pylab.pause(0.1)
+        # stop
+
+
+        # pylab.figure(1)
+        # pylab.clf()
+        # incr=1
+        # pylab.subplot(2,1,1)
+        # pylab.imshow(np.abs(self.JHJ))
+        # pylab.subplot(2,1,2)
+        # pylab.imshow(np.abs(self.JHJinv))
+        # pylab.draw()
+        # pylab.show(False)
+        # pylab.pause(0.1)
+        # stop
+        
+
+
+
+        x1 = self.JHJinv_x(JH_z)
+        z1=self.J_x(x1)/rms**2
+        zr-=z1
+        x2=self.JH_z(zr)
+        x3=[]
+        for ipol in range(self.NJacobBlocks):
+            x3.append(np.dot(Pa,x2[:,ipol,:].flatten())/rms**2)
+        x3=np.concatenate(x3,axis=1)
+
+        return x3
+        
+    def doEKFStep(self,Gains,P,rms):
+        T=ClassTimeIt.ClassTimeIt("EKF")
+        if not(self.HasKernelMatrix):
+            self.CalcKernelMatrix()
+            T.timeit("CalcKernelMatrix")
+        z=self.DicoData["data_flat"]#self.GiveDataVec()
+        self.CalcJacobianAntenna(Gains)
+        T.timeit("Jacob")
+
+        Ga=self.GiveSubVecGainAnt(Gains)
+
+        Jx=self.J_x(Ga)
+        T.timeit("J_x")
+
+
+        
+        Pa=P[self.iAnt]
+        #Pa=self.AugmentPa(Pa)
+        T.timeit("AugmentPa")
+
+        self.PrepareJHJ(Pa,rms)
+        T.timeit("PrepareJHJ")
+        #rms=self.DATA["rms"]
+
+        zr=(z-Jx)
+        T.timeit("zr")
+        x3=self.ApplyK_vec(zr,rms,Pa)
+        T.timeit("ApplyK_vec")
+        x0=Ga.flatten()
+        x4=x3+x0
+
+        npars=Pa.shape[0]
+        T.timeit("Add")
+        Pa_new=np.zeros_like(Pa)
+        for iPar in range(npars):
+            J_Px=self.J_x(Pa[:,iPar])
+            xP=self.ApplyK_vec(J_Px,rms,Pa)
+            Pa_new[:,iPar]=xP
+        T.timeit("Pa")
+        Pa_new= Pa-Pa_new#(np.diag(np.diag(Pa-Pa_new)))#Pa-Pa_new#np.abs(np.diag(np.diag(Pa-Pa_new)))
+        Pa_new+=np.diag(np.ones((Pa_new.shape[0],)))*0.005**2
+        #Pa_new2=np.abs(Pa_new)
+        del(self.Jacob,self.JHJ,self.JHJinv)
+
+        # pylab.clf()
+        # pylab.subplot(1,2,1)
+        # pylab.plot(Pa)
+        # pylab.subplot(1,2,2)
+        # pylab.plot(Pa_new)
+        # pylab.draw()
+        # pylab.show()
+
+        #pylab.plot(Pa_new2)
+        
+
+
+        return x4.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks)),Pa_new
            
             
         
@@ -168,6 +300,8 @@ class ClassJacobianAntenna():
 
         JH_z=self.JH_z(zr)
         T.timeit("JH_z")
+        #self.JHJinv=ModLinAlg.invSVD(self.JHJ)
+        self.JHJinv=np.linalg.inv(self.JHJ)
         x1 = (1./(1.+self.Lambda)) * self.JHJinv_x(JH_z)
         T.timeit("self.JHJinv_x")
         
@@ -229,10 +363,12 @@ class ClassJacobianAntenna():
         Jacob=self.Jacob
         Gains=Gains.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks))
         for polIndex in range(self.NJacobBlocks):
-            Gain=Gains[:,polIndex,:]
+            
+            Gain=Gains[:,polIndex,:].flatten()
+
             #flags=self.DicoData["flags_flat"][polIndex]
             J=Jacob#[flags==0]
-            z.append(np.dot(J,Gain.flatten()))
+            z.append(np.dot(J,Gain))
         z=np.array(z)
         return z
 
@@ -240,7 +376,7 @@ class ClassJacobianAntenna():
         #z=zin.reshape((self.NJacobBlocks,zin.size/self.NJacobBlocks))
         #z=zin.reshape((1,zin.size))
         Jacob=self.Jacob
-        Gains=np.zeros((self.NDir,self.NJacobBlocks,self.NJacobBlocks),np.complex64)
+        Gains=np.zeros((self.NDir,self.NJacobBlocks,self.NJacobBlocks),self.CType)
         for polIndex in range(self.NJacobBlocks):
             
             flags=self.DicoData["flags_flat"][polIndex]
@@ -276,7 +412,7 @@ class ClassJacobianAntenna():
         na=self.na
         
         Gains=GainsIn.reshape((na,NDir,self.NJacobBlocks,self.NJacobBlocks))
-        Jacob=np.zeros((n4vis,self.NJacobBlocks,NDir,self.NJacobBlocks),np.complex64)
+        Jacob=np.zeros((n4vis,self.NJacobBlocks,NDir,self.NJacobBlocks),self.CType)
 
         for iDir in range(NDir):
             G=Gains[self.A1,iDir].conj()
@@ -307,7 +443,6 @@ class ClassJacobianAntenna():
         self.Jacob=Jacob
         J=Jacob
         self.JHJ=np.dot(J.T.conj(),J)
-        self.JHJinv=ModLinAlg.invSVD(self.JHJ)
         # self.JHJinv=np.linalg.inv(self.JHJ)
         # self.JHJinv=np.diag(np.diag(self.JHJinv))
 
@@ -361,7 +496,7 @@ class ClassJacobianAntenna():
         if self.PolMode=="HalfFull":
             #self.K_XX=np.zeros((NDir,n4vis/nchan,nchan),np.complex64)
             #self.K_YY=np.zeros((NDir,n4vis/nchan,nchan),np.complex64)
-            self.KernelMat=NpShared.zeros(KernelSharedName,(2,NDir,n4vis/nchan,nchan),dtype=np.complex64)
+            self.KernelMat=NpShared.zeros(KernelSharedName,(2,NDir,n4vis/nchan,nchan),dtype=self.CType)
             self.K_XX=self.KernelMat[0]
             self.K_YY=self.KernelMat[1]
             # KernelMatrix=NpShared.zeros(KernelSharedName,(n4vis,NDir,2),dtype=np.complex64)
@@ -371,7 +506,7 @@ class ClassJacobianAntenna():
             n4vis=self.DicoData["data_flat"].size
             # KernelMatrix_XX=np.zeros((NDir,n4vis,nchan),np.complex64)
             # KernelMatrix=NpShared.zeros(KernelSharedName,(n4vis,NDir,1),dtype=np.complex64)
-            self.KernelMat=NpShared.zeros(KernelSharedName,(1,NDir,n4vis/nchan,nchan),dtype=np.complex64)
+            self.KernelMat=NpShared.zeros(KernelSharedName,(1,NDir,n4vis/nchan,nchan),dtype=self.CType)
             self.K_XX=self.KernelMat[0]
             self.K_YY=self.K_XX
             self.n4vis=n4vis

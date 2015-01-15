@@ -25,15 +25,17 @@ def test():
     SM=ClassSM.ClassSM("../TEST/ModelRandom00.txt.npy",
                        killdirs=["c0s0."],invert=False)
     
-    VS=ClassVisServer.ClassVisServer("../TEST/0000.MS",ColName=ReadColName,TVisSizeMin=5,TChunkSize=.1)
+    VS=ClassVisServer.ClassVisServer("../TEST/0000.MS",ColName=ReadColName,TVisSizeMin=2,TChunkSize=1)
     
-    LM=ClassLM(VS,SM,PolMode="Scalar")
+    LM=ClassLM(VS,SM,PolMode="Scalar",NIter=1)#20)
     #LM=ClassLM(VS,SM,PolMode="HalfFull")
     # LM.doNextTimeSolve()
     #LM.doNextTimeSolve_Parallel()
     #return
     PM=ClassPredict()
     SM=LM.SM
+    LM.InitSol()
+
 
     while True:
         Res=LM.setNextData()
@@ -115,14 +117,21 @@ class ClassLM():
     def InitSol(self):
         na=self.VS.MS.na
         nd=self.SM.NDir
+        sigP=0.1
         if self.PolMode=="Scalar":
-            G=np.ones((na,nd,1,1),np.complex64)
+            G=np.ones((na,nd,1,1),np.complex128)
+            P=(sigP**2)*np.array([np.diag(np.ones((nd,),np.complex128)) for iAnt in range(na)])
         else:
-            G=np.zeros((na,nd,2,2),np.complex64)
+            G=np.zeros((na,nd,2,2),np.complex128)
+            P=(sigP**2)*np.array([np.diag(np.ones((nd*2*2),np.complex128)) for iAnt in range(na)])
             G[:,:,0,0]=1
             G[:,:,1,1]=1
         self.G=G
-        self.G+=np.random.randn(*self.G.shape)*1
+        self.G+=np.random.randn(*self.G.shape)*sigP
+        self.P=P
+        Npars=self.G[0].size
+
+        self.rms=5.
 
     def setNextData(self):
         DATA=self.VS.GiveNextVis()
@@ -132,8 +141,85 @@ class ClassLM():
         if DATA=="EndChunk":
             print>>log, ModColor.Str("Reached end of data chunk")
             return "EndChunk"
+
         self.DATA=DATA
+
+        ## simul
+        d=self.DATA["data"]
+        self.DATA["data"]+=(self.rms/np.sqrt(2.))*(np.random.randn(*d.shape)+1j*np.random.randn(*d.shape))
+
         return True
+
+    #################################
+    ##          Serial             ## 
+    #################################
+
+    def doNextTimeSolve(self):
+        # DATA=self.VS.GiveNextVis()
+        # if DATA==None:
+        #     print>>log, ModColor.Str("Reached end of data")
+        #     return False
+        # self.DATA=DATA
+
+        self.AppendEmptySol()
+        t0,t1=self.VS.CurrentVisTimes_MS_Sec
+        self.SolsList[self.iCurrentSol].t0=t0
+        self.SolsList[self.iCurrentSol].t1=t1
+
+
+        if self.G==None:
+            self.InitSol()
+
+        ListAntSolve=range(self.VS.MS.na)
+        self.DicoJM={}
+        for iAnt in ListAntSolve:
+            JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Lambda=self.Lambda,Precision="D")
+            #JM.setDATA(DATA)
+            JM.setDATA_Shared()
+            self.DicoJM[iAnt]=JM
+
+
+        for i in range(self.NIter):
+            Gnew=np.zeros_like(self.G)
+            Pnew=np.zeros_like(self.P)
+            for iAnt in self.DicoJM.keys():
+                JM=self.DicoJM[iAnt]
+                #x=JM.doLMStep(self.G)
+
+                x,P=JM.doEKFStep(self.G,self.P,self.rms)
+                Pnew[iAnt]=P
+
+                Gnew[iAnt]=x
+
+            sig=np.sqrt(np.array([np.diag(Pnew[i]) for iAnt in range(self.VS.MS.na)]).flatten())
+            pylab.figure(1)
+            pylab.clf()
+            pylab.plot(np.abs(Gnew.flatten()))
+            pylab.plot(np.abs(Gnew.flatten())+sig,color="black",ls="--")
+            pylab.plot(np.abs(Gnew.flatten())-sig,color="black",ls="--")
+            pylab.plot(np.abs(self.G.flatten()))
+            pylab.ylim(0,2)
+            pylab.draw()
+            pylab.show(False)
+            self.G[:]=Gnew[:]
+            self.P[:]=Pnew[:]
+
+        # if self.PolMode=="Scalar":
+        #     self.Sols.G[self.iCurrentSol][0][:,:,0,0]=self.G[:,:,0,0]
+        #     self.Sols.G[self.iCurrentSol][:,:,1,1]=self.G[:,:,0,0]
+        # else:
+        #     self.Sols.G[self.iCurrentSol][:]=self.G[:]
+
+        if self.PolMode=="Scalar":
+            self.SolsList[self.iCurrentSol].G[0][:,:,0,0]=self.G[:,:,0,0]
+            self.SolsList[self.iCurrentSol].G[0][:,:,1,1]=self.G[:,:,0,0]
+        else:
+            self.SolsList[self.iCurrentSol].G[0][:]=self.G[:]
+            
+        self.iCurrentSol+=1
+        return True
+
+
 
     # #################################
     # ###        Parallel           ###
@@ -150,6 +236,8 @@ class ClassLM():
         if self.G==None:
             self.InitSol()
             self.G=NpShared.ToShared("SharedGains",self.G)
+
+
 
         ListAntSolve=range(self.VS.MS.na)
 
@@ -257,62 +345,6 @@ class ClassLM():
     #     workerlist[ii].join()
 
 
-    #################################
-    ##          Serial             ## 
-    #################################
-
-    def doNextTimeSolve(self):
-        # DATA=self.VS.GiveNextVis()
-        # if DATA==None:
-        #     print>>log, ModColor.Str("Reached end of data")
-        #     return False
-        # self.DATA=DATA
-
-        self.AppendEmptySol()
-        t0,t1=self.VS.CurrentVisTimes_MS_Sec
-        self.SolsList[self.iCurrentSol].t0=t0
-        self.SolsList[self.iCurrentSol].t1=t1
-
-
-        if self.G==None:
-            self.InitSol()
-
-        ListAntSolve=range(self.VS.MS.na)
-        self.DicoJM={}
-        for iAnt in ListAntSolve:
-            JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Lambda=self.Lambda)
-            #JM.setDATA(DATA)
-            JM.setDATA_Shared()
-            self.DicoJM[iAnt]=JM
-
-        for i in range(self.NIter):
-            for iAnt in self.DicoJM.keys():
-                JM=self.DicoJM[iAnt]
-                x=JM.doLMStep(self.G)
-                self.G[iAnt]=x
-
-            pylab.figure(1)
-            pylab.clf()
-            pylab.plot(np.abs(self.G.flatten()))
-            pylab.ylim(-2,2)
-            pylab.draw()
-            pylab.show(False)
-
-
-        # if self.PolMode=="Scalar":
-        #     self.Sols.G[self.iCurrentSol][0][:,:,0,0]=self.G[:,:,0,0]
-        #     self.Sols.G[self.iCurrentSol][:,:,1,1]=self.G[:,:,0,0]
-        # else:
-        #     self.Sols.G[self.iCurrentSol][:]=self.G[:]
-
-        if self.PolMode=="Scalar":
-            self.SolsList[self.iCurrentSol].G[0][:,:,0,0]=self.G[:,:,0,0]
-            self.SolsList[self.iCurrentSol].G[0][:,:,1,1]=self.G[:,:,0,0]
-        else:
-            self.SolsList[self.iCurrentSol].G[0][:]=self.G[:]
-            
-        self.iCurrentSol+=1
-        return True
 
 
 
