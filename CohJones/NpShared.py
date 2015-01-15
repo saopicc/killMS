@@ -1,4 +1,4 @@
-import SharedArray
+import sharedarray.SharedArray as SharedArray
 import ModColor
 import numpy as np
 import MyLogger
