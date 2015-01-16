@@ -22,13 +22,13 @@ def test():
 
     ReadColName="DATA"
     WriteColName="CORRECTED_DATA"
-    SM=ClassSM.ClassSM("../TEST/ModelRandom00.txt.npy",
+    SM=ClassSM.ClassSM("/media/tasse/data/HyperCal2/test/ModelRandom00.txt.npy",
                        killdirs=["c0s0."],invert=False)
     
-    VS=ClassVisServer.ClassVisServer("../TEST/0000.MS",ColName=ReadColName,TVisSizeMin=2,TChunkSize=.1,AddNoiseJy=10.)
+    VS=ClassVisServer.ClassVisServer("/media/6B5E-87D0/MS/SimulTec/Pointing00/MS/0000.MS",ColName=ReadColName,TVisSizeMin=2,TChunkSize=.1,AddNoiseJy=10.)
     
     #LM=ClassWirtingerSolver(VS,SM,PolMode="Scalar",NIter=1,SolverType="EKF")#20)
-    LM=ClassWirtingerSolver(VS,SM,PolMode="HalfFull",NIter=10,SolverType="KAFCA")#"CohJones")#"KAFCA")
+    LM=ClassWirtingerSolver(VS,SM,PolMode="Scalar",NIter=10,SolverType="KAFCA")#"CohJones")#"KAFCA")
     # LM.doNextTimeSolve()
     #LM.doNextTimeSolve_Parallel()
     #return
@@ -41,8 +41,8 @@ def test():
         Res=LM.setNextData()
         if Res==True:
             #print Res,VS.CurrentVisTimes_SinceStart_Minutes
-            LM.doNextTimeSolve_Parallel()
-            # LM.doNextTimeSolve()
+            # LM.doNextTimeSolve_Parallel()
+            LM.doNextTimeSolve()
             continue
         else:
             # substract
@@ -327,7 +327,7 @@ class ClassWirtingerSolver():
                     self.P[iAnt,:]=P[:]
                 iResult+=1
                 NDone+=1
-                pBAR.render(int(100* float(NDone) / (NTotJobs-1.)), '%4i/%i' % (NDone-1,NTotJobs-1.))
+                pBAR.render(int(100* float(NDone-1) / (NTotJobs-1.)), '%4i/%i' % (NDone-1,NTotJobs-1.))
             iResult=0
             
             # pylab.clf()

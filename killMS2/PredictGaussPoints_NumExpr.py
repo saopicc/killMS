@@ -34,7 +34,7 @@ class ClassPredict():
         na=DicoData["infos"][0]
         for it in range(lt0.size):
             t0,t1=lt0[it],lt1[it]
-            ind=np.where((times>t0)&(times<t1))[0]
+            ind=np.where((times>=t0)&(times<t1))[0]
             if ind.size==0: continue
             data=ColOutDir[ind]
             A0sel=A0[ind]
@@ -79,7 +79,7 @@ class ClassPredict():
         if iDirection!=None:
             ListDirection=[iDirection]
         else:
-            ListDirection=range(SM.NDir)
+            ListDirection=SM.Dirs#range(SM.NDir)
         
         
         A0=DicoData["A0"]
@@ -92,7 +92,8 @@ class ClassPredict():
 
         for iCluster in ListDirection:
             ColOutDir=self.PredictDirSPW(iCluster)
-            
+            if ColOutDir==None: continue
+
             # print iCluster,ListDirection
             # print ColOutDir.shape
             # ColOutDir.fill(0)
@@ -121,7 +122,7 @@ class ClassPredict():
 
                 for it in range(lt0.size):
                     t0,t1=lt0[it],lt1[it]
-                    ind=np.where((times>t0)&(times<t1))[0]
+                    ind=np.where((times>=t0)&(times<t1))[0]
                     if ind.size==0: continue
                     data=ColOutDir[ind]
                     A0sel=A0[ind]
@@ -148,6 +149,7 @@ class ClassPredict():
 
         ind0=np.where(self.SourceCat.Cluster==idir)[0]
         NSource=ind0.size
+        if NSource==0: return None
         SourceCat=self.SourceCat[ind0]
         freq=self.freqs
         pi=np.pi
@@ -227,7 +229,7 @@ class ClassPredict():
             uvp=ne.evaluate("const*((U*SminCos-V*SminSin)**2+(U*SmajSin+V*SmajCos)**2)")
             #KernelPha=ne.evaluate("KernelPha+uvp")
             KernelPha[indGauss,:,:,:]+=uvp[:,:,:,:]
-            print "CACA"
+
 
 
         LogF=np.log(f)

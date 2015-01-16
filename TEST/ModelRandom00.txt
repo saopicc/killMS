@@ -1,3 +1,0 @@
-# (Name, Type, Ra, Dec, I, Q, U, V, ReferenceFrequency='7.38000e+07', SpectralIndex='[]', MajorAxis, MinorAxis, Orientation) = format
-000, POINT, 14:06:31.855,  +53.57.29.823, 50.0, 0.0, 0.0, 0.0, 7.38000e+07, [0], 0, 0.00000e+00, 0.0
-001, POINT, 14:06:59.936,  +51.02.25.414, 50.0, 0.0, 0.0, 0.0, 7.38000e+07, [0], 0, 0.00000e+00, 0.0

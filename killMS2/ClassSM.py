@@ -187,8 +187,9 @@ class ClassSM():
     def Calc_LM(self,rac,decc):
         import RecArrayOps
         Cat=self.SourceCat
-        Cat=RecArrayOps.AppendField(Cat,('l',float))
-        Cat=RecArrayOps.AppendField(Cat,('m',float))
+        if not("l" in Cat.dtype.fields.keys()):
+            Cat=RecArrayOps.AppendField(Cat,('l',float))
+            Cat=RecArrayOps.AppendField(Cat,('m',float))
 
         Cat.l,Cat.m=self.radec2lm_scalar(self.SourceCat.ra,self.SourceCat.dec,rac,decc)
         self.SourceCat=Cat

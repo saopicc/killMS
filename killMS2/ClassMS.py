@@ -338,7 +338,7 @@ class ClassMS():
             #ind0=np.argmin(np.abs(t0-self.F_times))
             #ind1=np.argmin(np.abs(t1-self.F_times))
 
-            ind0=np.where((t0-self.F_times)<0)[0][0]
+            ind0=np.where((t0-self.F_times)<=0)[0][0]
             row0=ind0*self.nbl
 
             ind1=np.where((t1-self.F_times)<0)[0]

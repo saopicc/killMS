@@ -112,7 +112,7 @@ def main(options=None):
         ApplyCal=int(options.ApplyCal)
 
     TChunk=float(options.TChunk)
-    delta_time=float(options.timestep)
+    delta_time=float(options.dt)
     niterin=int(options.niter)
     NCPU=int(options.NCPU)
     SubOnly=(int(options.SubOnly)==1)
@@ -134,8 +134,10 @@ def main(options=None):
                        killdirs=kills,invert=invert)
     
     VS=ClassVisServer.ClassVisServer(options.ms,ColName=ReadColName,
-                                     TVisSizeMin=delta_time,TChunkSize=TChunk
-                                     ,AddNoiseJy=10.)
+                                     TVisSizeMin=delta_time,
+                                     TChunkSize=TChunk)
+
+
     
 
     # LM=ClassLM(VS,SM,PolMode="HalfFull")
@@ -153,6 +155,7 @@ def main(options=None):
             # if not(SubOnly):
             #     LM.doNextTimeSolve_Parallel()
             LM.doNextTimeSolve_Parallel()
+
             # LM.doNextTimeSolve()
             continue
         else:
@@ -172,7 +175,21 @@ def main(options=None):
             PredictData=PM.predictKernelPolCluster(LM.VS.ThisDataChunk,LM.SM,ApplyTimeJones=Jones)
             SM.RestoreCat()
 
+
+            # import pylab
+            # pylab.clf()
+            # nbl=1#LM.VS.MS.nbl
+            # a=LM.VS.ThisDataChunk["data"][1::nbl,:,:].flatten().real
+            # b=PredictData[1::nbl,:,:].flatten().real
+            # pylab.plot(a)
+            # pylab.plot(b)
+            # pylab.plot(a-b)
+            # pylab.draw()
+            # pylab.show(False)
+            # stop
+
             LM.VS.ThisDataChunk["data"]-=PredictData
+
             if ApplyCal!=None:
                 PM.ApplyCal(LM.VS.ThisDataChunk,Jones,ApplyCal)
 
@@ -196,6 +213,7 @@ def main(options=None):
 
 
 def Restore(options=None):
+    import ClassMS
     if options==None:
         f = open("last_killMS.obj",'rb')
         options = pickle.load(f)
