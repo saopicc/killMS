@@ -1,14 +1,15 @@
 import numpy as np
 from pyrap.tables import table
-from rad2hmsdms import rad2hmsdms
-import ModColor
-import reformat
+from Other.rad2hmsdms import rad2hmsdms
+from Other import ModColor
+from Other import reformat
 import os
 import pyrap.quanta as qa
 import pyrap.measures as pm
 import ephem
-import MyLogger
+from Other import MyLogger
 log=MyLogger.getLogger("ClassMS")
+from Other import ClassTimeIt
 
 class ClassMS():
     def __init__(self,MSname,Col="DATA",zero_flag=True,ReOrder=False,EqualizeFlag=False,DoPrint=True,DoReadData=True,
@@ -497,7 +498,6 @@ class ClassMS():
         
 
     def ReadMSInfo(self,MSname,DoPrint=True):
-        import ClassTimeIt
         T=ClassTimeIt.ClassTimeIt()
         T.enableIncr()
         T.disable()

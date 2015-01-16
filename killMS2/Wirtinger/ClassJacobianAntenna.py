@@ -1,12 +1,12 @@
 import numpy as np
-import NpShared
-from PredictGaussPoints_NumExpr import ClassPredict
+from Array import NpShared
+from Sky.PredictGaussPoints_NumExpr import ClassPredict
 
-import ClassVisServer
-import ClassSM
-import ModLinAlg
+from Data import ClassVisServer
+from Sky import ClassSM
+from Array import ModLinAlg
 import pylab
-import ClassTimeIt
+from Other import ClassTimeIt
 
 def testLM():
     SM=ClassSM.ClassSM("../TEST/ModelRandom00.txt.npy")
@@ -110,7 +110,6 @@ def testLM():
     stop    
     
 
-import NpShared
 
 class ClassJacobianAntenna():
     def __init__(self,SM,iAnt,PolMode="HalfFull",Lambda=1,Precision="S"):

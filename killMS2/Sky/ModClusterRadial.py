@@ -1,5 +1,5 @@
 import numpy as np
-import ModColor
+from Other import ModColor
 
 def init(n=1000):
     global x,y,s,ns

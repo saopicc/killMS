@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import optparse
+from Sky import ClassSM
 
 
 
@@ -30,7 +31,6 @@ if __name__=="__main__":
         matplotlib.use('agg')
 
 
-    import ClassSM
     SM=ClassSM.ClassSM(options.SkyModel,ReName=True,
                        DoREG=True,SaveNp=True,
                        NCluster=NCluster,DoPlot=DoPlot,

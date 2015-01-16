@@ -1,10 +1,15 @@
 import csv
 import numpy as np
-import rad2hmsdms
-import ModColor
 import ModTigger
 import ModSMFromNp
 
+from Other import rad2hmsdms
+from Other import ModColor
+from Array import RecArrayOps
+import ModCluster
+import ModClusterRadial
+from pyrap.images import image
+import scipy.linalg
 
 
 
@@ -185,7 +190,6 @@ class ClassSM():
 
 
     def Calc_LM(self,rac,decc):
-        import RecArrayOps
         Cat=self.SourceCat
         if not("l" in Cat.dtype.fields.keys()):
             Cat=RecArrayOps.AppendField(Cat,('l',float))
@@ -264,7 +268,6 @@ class ClassSM():
         x,y=self.radec2lm_scalar(x,y)
         
         if self.ClusterMethod==2:
-            import ModCluster
             self.SourceCat.Cluster=0
             DictNode=ModCluster.tessel(x,y,s,nk,DoPlot=DoPlot)
             iK=0
@@ -277,7 +280,6 @@ class ClassSM():
 
         if self.ClusterMethod==3:
             self.SourceCat.Cluster=0
-            import ModClusterRadial
             DictNode=ModClusterRadial.RadialCluster(x,y,s,nk,DoPlot=DoPlot)
             iK=0
             self.NDir=len(DictNode.keys())
@@ -385,7 +387,6 @@ class ClassSM():
             (KK[keys[ind]]).append(i)
 
         if DoPlot:
-            import ModCluster
             pylab.clf()
             Dx=Dy=0.01
             extent=(np.min(x)-Dx,np.max(x)+Dx,np.min(y)-Dy,np.max(y)+Dy)
@@ -422,8 +423,6 @@ class ClassSM():
 
 
     def CorrPA(self,imin):
-        from pyrap.images import image
-        import scipy.linalg
         R2arc=1.#3600*180/np.pi
 
         im=image(imin)

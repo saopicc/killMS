@@ -1,13 +1,13 @@
 import numpy as np
 import ClassMS
 from pyrap.tables import table
-import MyLogger
+from Other import MyLogger
 log=MyLogger.getLogger("ClassVisServer")
 # import MyPickle
-import NpShared
-import ClassTimeIt
-import ModColor
-import ModLinAlg
+from Array import NpShared
+from Other import ClassTimeIt
+from Other import ModColor
+from Array import ModLinAlg
 MyLogger.setSilent(["NpShared"])
 
 class ClassVisServer():

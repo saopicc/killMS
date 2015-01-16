@@ -1,21 +1,21 @@
 
 from ClassJacobianAntenna import ClassJacobianAntenna
 import numpy as np
-import NpShared
-from PredictGaussPoints_NumExpr import ClassPredict
+from Array import NpShared
 
-import ClassVisServer
-import ClassSM
-import ModLinAlg
+from Data import ClassVisServer
+from Sky import ClassSM
+from Array import ModLinAlg
 import pylab
 
-import MyLogger
+from Other import MyLogger
 log=MyLogger.getLogger("ClassLM")
-import ModColor
-import NpShared
-from progressbar import ProgressBar
+from Other import ModColor
+
+from Other.progressbar import ProgressBar
             
-from PredictGaussPoints_NumExpr import ClassPredict
+from Sky.PredictGaussPoints_NumExpr import ClassPredict
+from Other import ClassTimeIt
 
 def test():
 
@@ -294,7 +294,6 @@ class ClassWirtingerSolver():
         # pylab.draw()
         # pylab.show(False)
 
-        import ClassTimeIt
         T=ClassTimeIt.ClassTimeIt()
         for ii in range(NCPU):
             

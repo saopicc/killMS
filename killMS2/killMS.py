@@ -2,8 +2,9 @@
 
 import optparse
 import sys
-import MyPickle
-import logo
+from Other import MyPickle
+from Other import logo
+from Other import ModColor
 
 sys.path=[name for name in sys.path if not(("pyrap" in name)&("/usr/local/lib/" in name))]
 
@@ -16,7 +17,6 @@ sys.path=[name for name in sys.path if not(("pyrap" in name)&("/usr/local/lib/" 
 #stop
 
 
-import ModColor
 if "nocol" in sys.argv:
     print "nocol"
     ModColor.silent=1
@@ -29,15 +29,15 @@ import time
 import os
 import numpy as np
 import pickle
-import ClassSM
-from ClassWirtingerSolver import ClassWirtingerSolver
+from Sky import ClassSM
+from Wirtinger.ClassWirtingerSolver import ClassWirtingerSolver
 
-import ClassTimeIt
-import ClassVisServer
-from PredictGaussPoints_NumExpr import ClassPredict
-import ModLinAlg
-import NpShared
-import MyLogger
+from Other import ClassTimeIt
+from Data import ClassVisServer
+from Sky.PredictGaussPoints_NumExpr import ClassPredict
+from Array import ModLinAlg
+from Array import NpShared
+from Other import MyLogger
 log=MyLogger.getLogger("killMS")
 import multiprocessing
 NCPU_default=str(int(0.75*multiprocessing.cpu_count()))
