@@ -5,6 +5,9 @@ import sys
 from Other import MyPickle
 from Other import logo
 from Other import ModColor
+from Other import MyLogger
+log=MyLogger.getLogger("killMS")
+MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
 
 sys.path=[name for name in sys.path if not(("pyrap" in name)&("/usr/local/lib/" in name))]
 
@@ -37,12 +40,12 @@ from Data import ClassVisServer
 from Sky.PredictGaussPoints_NumExpr import ClassPredict
 from Array import ModLinAlg
 from Array import NpShared
-from Other import MyLogger
-log=MyLogger.getLogger("killMS")
+
 import multiprocessing
 NCPU_default=str(int(0.75*multiprocessing.cpu_count()))
 
 def read_options():
+    logo.print_logo()
     desc="""CohJones Questions and suggestions: cyril.tasse@obspm.fr"""
     
     opt = optparse.OptionParser(usage='Usage: %prog --ms=somename.MS <options>',version='%prog version 1.0',description=desc)
@@ -52,10 +55,10 @@ def read_options():
     opt.add_option_group(group)
     
     group = optparse.OptionGroup(opt, "* Visibilities options")
-    group.add_option('--TChunk',help=' Time Chunk in hours. Default is %default',default="15")
+    group.add_option('--TChunk',help=' Time Chunk in hours. Default is %default',default=15)
     group.add_option('--InCol',help=' Column to work on. Default is %default',default="CORRECTED_DATA_BACKUP")
     group.add_option('--OutCol',help=' Column to write to. Default is %default',default="CORRECTED_DATA")
-    group.add_option('--LOFARBeamParms',help='Not Working yet',default="")
+    group.add_option('--LOFARBeam',help='(Mode, Time): Mode can be AE, E, or A for "Array factor" and "Element beam". Time is the estimation time step',default="")
     opt.add_option_group(group)
 
     group = optparse.OptionGroup(opt, "* Source selection options")
@@ -71,10 +74,16 @@ def read_options():
     
     group = optparse.OptionGroup(opt, "* Algorithm options", "Default values should give reasonable results, but all of them have noticeable influence on the results")
     group.add_option('--SolverType',help='Name of the solver to use (CohJones/KAFCA)',default="CohJones")
-    group.add_option('--NCPU',help=' Number of cores to use. Default is %default ',default=NCPU_default)
+    group.add_option('--NCPU',type="int",help=' Number of cores to use. Default is %default ',default=NCPU_default)
     group.add_option('--PolMode',help=' Polarisation mode (Scalar/HalfFull). Default is %default',default="Scalar")
-    group.add_option('--dt',help='Time interval for a solution [minutes]. Default is %default. ',default=30)
-    group.add_option('--niter',help=' Number of iterations for the solve. Default is %default ',default="20")
+    group.add_option('--dt',type="float",help='Time interval for a solution [minutes]. Default is %default. ',default=30)
+    group.add_option('--niter',type="int",help=' Number of iterations for the solve. Default is %default ',default=20)
+    opt.add_option_group(group)
+    
+    group = optparse.OptionGroup(opt, "* KAFCA additional options")
+    group.add_option('--InitLM',type="int",help='Initialise Kalman filter with Levenberg Maquardt. Default is %default',default=1)
+    group.add_option('--InitLM_dt',type="float",help='Time interval in minutes. Default is %default',default=5)
+    group.add_option('--CovP',type="float",help='Initial Covariance in fraction of the gain amplitude. Default is %default',default=0.1)
     opt.add_option_group(group)
     
     
@@ -83,6 +92,36 @@ def read_options():
     f = open("last_killMS.obj","wb")
     pickle.dump(options,f)
     
+def PrintOptions(options):
+    print ModColor.Str(" killMS configuration")
+    print "   - MS Name: %s"%ModColor.Str(options.ms,col="green")
+    print "   - Reading %s, and writting to %s"%(ModColor.Str(options.InCol,col="green"),ModColor.Str(options.OutCol,col="green"))
+
+
+    
+    # print options.TChunk
+    if options.LOFARBeam!="":
+        mode,DT=options.LOFARBeam.split(",")
+        print "   - LOFAR beam in %s mode with DT=%s"%(mode,DT)
+
+    #print options.kills
+    #print options.invert
+    #print options.SubOnly
+    
+    print "   - Apply calibration: %s"%(options.ApplyCal)
+
+
+    print "   - Algorithm %s in %s mode [%i CPU]"%(ModColor.Str(options.SolverType,col="green") ,ModColor.Str(options.PolMode,col="green"),options.NCPU)
+    print "   - Solution time interval %5.2f min."%options.dt
+
+    if options.SolverType=="CohJones":
+        print "   - Number of iterations %i"%options.niter
+    if options.SolverType=="KAFCA":
+        print "   - Covariance %5.1f of the initial gain amplitude"%float(options.CovP)
+        if options.InitLM==1:
+            print "   - Initialise using Levenberg-Maquardt with dt=%5.1f"%float(options.InitLM_dt)
+
+    print
 
 def main(options=None):
     
@@ -91,6 +130,8 @@ def main(options=None):
         f = open("last_killMS.obj",'rb')
         options = pickle.load(f)
     
+
+    PrintOptions(options)
     ApplyCal=(options.ApplyCal=="1")
 
     if options.ms=="":
@@ -108,11 +149,15 @@ def main(options=None):
         ApplyCal=int(options.ApplyCal)
 
     TChunk=float(options.TChunk)
-    delta_time=float(options.dt)
+    dt=float(options.dt)
+    dtInit=float(options.InitLM_dt)
     niterin=int(options.niter)
     NCPU=int(options.NCPU)
     SubOnly=(int(options.SubOnly)==1)
     invert=(options.invert=="1")
+    options.InitLM=(int(options.InitLM)==1)
+
+
     
     if options.kills!="":
         kills=options.kills.split(",")
@@ -130,34 +175,60 @@ def main(options=None):
                        killdirs=kills,invert=invert)
     
     VS=ClassVisServer.ClassVisServer(options.ms,ColName=ReadColName,
-                                     TVisSizeMin=delta_time,
+                                     TVisSizeMin=dt,
                                      TChunkSize=TChunk)
+    print VS.MS
+    VS.LoadNextVisChunk()
+    BeamProps=None
+    if options.LOFARBeam!="":
+        Mode,sTimeMin=options.LOFARBeam.split(",")
+        TimeMin=float(sTimeMin)
+        BeamProps=Mode,TimeMin
 
-
-    
-
-    # LM=ClassLM(VS,SM,PolMode="HalfFull")
-    LM=ClassWirtingerSolver(VS,SM,PolMode=options.PolMode,
-                            NIter=niterin,NCPU=NCPU,
-                            SolverType=options.SolverType)
-    LM.InitSol(TestMode=False)
+    Solver=ClassWirtingerSolver(VS,SM,PolMode=options.PolMode,
+                                BeamProps=BeamProps,
+                                NIter=niterin,NCPU=NCPU,
+                                SolverType=options.SolverType)
+    Solver.InitSol(TestMode=False)
     PM=ClassPredict()
-    SM=LM.SM
+    SM=Solver.SM
+
+
+    if (options.InitLM) & (options.SolverType=="KAFCA"):
+        
+        print>>log, ModColor.Str("Initialising Kalman filter with Levenberg-Maquardt estimate")
+        VSInit=ClassVisServer.ClassVisServer(options.ms,ColName=ReadColName,
+                                             TVisSizeMin=dtInit,
+                                             TChunkSize=TChunk)
+        
+        VSInit.LoadNextVisChunk()
+        SolverInit=ClassWirtingerSolver(VSInit,SM,PolMode=options.PolMode,
+                                        NIter=niterin,NCPU=NCPU,
+                                        SolverType="CohJones")
+        Res=SolverInit.setNextData()
+        SolverInit.InitSol(TestMode=False)
+        SolverInit.doNextTimeSolve_Parallel()
+        Solver.InitSol(G=SolverInit.G,TestMode=False)
+        Solver.InitCovariance(FromG=True,sigP=options.CovP)
+
+
+
 
     while True:
-        Res=LM.setNextData()
+        Res=Solver.setNextData()
 
         if Res==True:
             # if not(SubOnly):
-            #     LM.doNextTimeSolve_Parallel()
-            LM.doNextTimeSolve_Parallel()
+            #     Solver.doNextTimeSolve_Parallel()
 
-            # LM.doNextTimeSolve()
+            Solver.doNextTimeSolve_Parallel()
+
+            # Solver.doNextTimeSolve()
             continue
         else:
             # substract
             
-            Sols=LM.GiveSols()
+            Sols=Solver.GiveSols()
             Jones={}
             Jones["t0"]=Sols.t0
             Jones["t1"]=Sols.t1
@@ -168,14 +239,14 @@ def main(options=None):
             Jones["ChanMap"]=np.zeros((VS.MS.NSPWChan,)).tolist()
 
             SM.SelectSubCat(SM.SourceCat.kill==1)
-            PredictData=PM.predictKernelPolCluster(LM.VS.ThisDataChunk,LM.SM,ApplyTimeJones=Jones)
+            PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
             SM.RestoreCat()
 
 
             # import pylab
             # pylab.clf()
-            # nbl=1#LM.VS.MS.nbl
-            # a=LM.VS.ThisDataChunk["data"][1::nbl,:,:].flatten().real
+            # nbl=1#Solver.VS.MS.nbl
+            # a=Solver.VS.ThisDataChunk["data"][1::nbl,:,:].flatten().real
             # b=PredictData[1::nbl,:,:].flatten().real
             # pylab.plot(a)
             # pylab.plot(b)
@@ -184,17 +255,17 @@ def main(options=None):
             # pylab.show(False)
             # stop
 
-            LM.VS.ThisDataChunk["data"]-=PredictData
+            Solver.VS.ThisDataChunk["data"]-=PredictData
 
             if ApplyCal!=None:
-                PM.ApplyCal(LM.VS.ThisDataChunk,Jones,ApplyCal)
+                PM.ApplyCal(Solver.VS.ThisDataChunk,Jones,ApplyCal)
 
 
-            LM.VS.MS.data=LM.VS.ThisDataChunk["data"]
+            Solver.VS.MS.data=Solver.VS.ThisDataChunk["data"]
 
             
 
-            LM.VS.MS.SaveVis(Col=WriteColName)
+            Solver.VS.MS.SaveVis(Col=WriteColName)
 
         if Res=="EndChunk":
             Load=VS.LoadNextVisChunk()
@@ -208,29 +279,10 @@ def main(options=None):
 
 
 
-def Restore(options=None):
-    import ClassMS
-    if options==None:
-        f = open("last_killMS.obj",'rb')
-        options = pickle.load(f)
-    MS=ClassMS.ClassMS(options.ms)
-    MS.Restore()
-
-#     KalmanKill.set_chanOptions(options)
-#     #KalmanKill.zero_chans(options)
 
 if __name__=="__main__":
     read_options()
     f = open("last_killMS.obj",'rb')
     options = pickle.load(f)
-    if options.DoBar=="0":
-        from progressbar import ProgressBar
-        ProgressBar.silent=1
-    # else:
-    #     os.system('clear')
 
-    if options.Restore=="1":
-        Restore(options)
-    else:
-        logo.print_logo()
-        main(options=options)
+    main(options=options)

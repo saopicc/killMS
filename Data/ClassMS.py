@@ -126,7 +126,7 @@ class ClassMS():
         import lofar.stationresponse as lsr
         f=self.ChanFreq.flatten()
         if f.shape[0]>1:
-            t=table(self.MSName+"/SPECTRAL_WINDOW/",readonly=False)
+            t=table(self.MSName+"/SPECTRAL_WINDOW/",ack=False,readonly=False)
             c=t.getcol("CHAN_WIDTH")
             c.fill(np.abs((f[0:-1]-f[1::])[0]))
             t.putcol("CHAN_WIDTH",c)
@@ -150,7 +150,7 @@ class ClassMS():
 
     def LoadLOFAR_ANTENNA_FIELD(self):
         t=table("%s/LOFAR_ANTENNA_FIELD"%self.MSName,ack=False)
-        print>>log, ModColor.Str(" ... Loading LOFAR_ANTENNA_FIELD table...")
+        #print>>log, ModColor.Str(" ... Loading LOFAR_ANTENNA_FIELD table...")
         na,NTiles,dummy=t.getcol("ELEMENT_OFFSET").shape
 
         try:
@@ -611,22 +611,25 @@ class ClassMS():
         # self.StrRADEC=(rad2hmsdms(self.rarad,Type="ra").replace(" ",":")\
         #                ,rad2hmsdms(self.decrad,Type="dec").replace(" ","."))
 
-        if DoPrint==True:
-            print ModColor.Str(" MS PROPERTIES: ")
-            print "   - File Name: %s"%ModColor.Str(self.MSName,col="green")
-            print "   - Column Name: %s"%ModColor.Str(str(self.ColName),col="green")
-            print "   - Pointing center: (ra, dec)=(%s, %s) "%(rad2hmsdms(self.rarad,Type="ra").replace(" ",":")\
-                                                                   ,rad2hmsdms(self.decrad,Type="dec").replace(" ","."))
-            print "   - Frequency = %s MHz"%str(reffreq/1e6)
-            print "   - Wavelength = ",wavelength," meters"
-            print "   - Time bin = %4.1f seconds"%(self.dt)
-            print "   - Total Integration time = %6.2f hours"%((F_time_all[-1]-F_time_all[0])/3600.)
-            print "   - Number of antenna  = ",na
-            print "   - Number of baseline = ",nbl
-            print "   - Number of SPW = ",NSPW
-            print "   - Number of channels = ",Nchan
-            print 
 
+    def __str__(self):
+        ll=[]
+        ll.append(ModColor.Str(" MS PROPERTIES: "))
+        ll.append("   - File Name: %s"%ModColor.Str(self.MSName,col="green"))
+        ll.append("   - Column Name: %s"%ModColor.Str(str(self.ColName),col="green"))
+        ll.append("   - Pointing center: (ra, dec)=(%s, %s) "%(rad2hmsdms(self.rarad,Type="ra").replace(" ",":")\
+                                                               ,rad2hmsdms(self.decrad,Type="dec").replace(" ",".")))
+        ll.append("   - Frequency = %s MHz"%str(self.reffreq/1e6))
+        ll.append("   - Wavelength = %5.2f meters"%(np.mean(self.wavelength_chan)))
+        ll.append("   - Time bin = %4.1f seconds"%(self.dt))
+        ll.append("   - Total Integration time = %6.2f hours"%self.DTh)
+        ll.append("   - Number of antenna  = %i"%self.na)
+        ll.append("   - Number of baseline = %i"%self.nbl)
+        ll.append("   - Number of SPW = %i"%self.NSPW)
+        ll.append("   - Number of channels = %i"%self.Nchan)
+        
+        ss="\n".join(ll)+"\n"
+        return ss
 
     def radec2lm_scalar(self,ra,dec):
         l = np.cos(dec) * np.sin(ra - self.rarad)

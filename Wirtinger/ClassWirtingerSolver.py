@@ -100,6 +100,7 @@ class ClassWirtingerSolver():
         self.SolsList=[]
         self.iCurrentSol=0
         self.SolverType=SolverType
+        self.rms=None
         if SolverType=="KAFCA":
            self.NIter=1
 
@@ -116,34 +117,42 @@ class ClassWirtingerSolver():
         self.SolsArray=self.SolsArray.view(np.recarray)
         return self.SolsArray
 
-    def InitSol(self,TestMode=True):
+    def InitSol(self,G=None,TestMode=True):
         na=self.VS.MS.na
         nd=self.SM.NDir
-        sigP=0.1
-        if self.PolMode=="Scalar":
-            G=np.ones((na,nd,1,1),np.complex128)
-            P=(sigP**2)*np.array([np.diag(np.ones((nd,),np.complex128)) for iAnt in range(na)])
-        else:
-            G=np.zeros((na,nd,2,2),np.complex128)
-            G[:,:,0,0]=1
-            G[:,:,1,1]=1
-            P=(sigP**2)*np.array([np.diag(np.ones((nd*2*2),np.complex128)) for iAnt in range(na)])
+
+        if G==None:
+            if self.PolMode=="Scalar":
+                G=np.ones((na,nd,1,1),np.complex128)
+            else:
+                G=np.zeros((na,nd,2,2),np.complex128)
+                G[:,:,0,0]=1
+                G[:,:,1,1]=1
             
         self.G=G
-        self.G+=np.random.randn(*self.G.shape)*sigP
         if TestMode:
             self.G+=np.random.randn(*self.G.shape)*sigP
-        #self.G[5]+=np.random.randn(*self.G[5].shape)*sigP
-
-        #self.G[5,0,1,0]=1
-
-        #self.G.fill(1)
-        self.P=P
-        Npars=self.G[0].size
-
 
         self.G=NpShared.ToShared("SharedGains",self.G)
+        self.InitCovariance()
+
+    def InitCovariance(self,FromG=False,sigP=0.1):
+        if self.SolverType!="KAFCA": return
+        na=self.VS.MS.na
+        nd=self.SM.NDir
+
+        if FromG==False:
+            if self.PolMode=="Scalar":
+                P=(sigP**2)*np.array([np.diag(np.ones((nd,),np.complex128)) for iAnt in range(na)])
+            else:
+                P=(sigP**2)*np.array([np.diag(np.ones((nd*2*2),np.complex128)) for iAnt in range(na)])
+        else:
+            P=(sigP**2)*np.array([np.complex128(np.diag(np.abs(self.G[iAnt]).flatten())) for iAnt in range(na)])
+
+
+        self.P=P
         self.P=NpShared.ToShared("SharedCovariance",self.P)
+        
 
     def setNextData(self):
         DATA=self.VS.GiveNextVis()
@@ -154,15 +163,14 @@ class ClassWirtingerSolver():
             print>>log, ModColor.Str("Reached end of data chunk")
             return "EndChunk"
 
-        self.DATA=DATA
 
         ## simul
         #d=self.DATA["data"]
         #self.DATA["data"]+=(self.rms/np.sqrt(2.))*(np.random.randn(*d.shape)+1j*np.random.randn(*d.shape))
 
-        self.DATA["data"].shape
-        Dpol=self.DATA["data"][:,:,1:3]
-        Fpol=self.DATA["flags"][:,:,1:3]
+        DATA["data"].shape
+        Dpol=DATA["data"][:,:,1:3]
+        Fpol=DATA["flags"][:,:,1:3]
         self.rms=np.std(Dpol[Fpol==0])
         self.rms=np.max([self.rms,1e-2])
         #self.rms=np.min(self.rmsPol)
@@ -184,11 +192,6 @@ class ClassWirtingerSolver():
     #################################
 
     def doNextTimeSolve(self):
-        # DATA=self.VS.GiveNextVis()
-        # if DATA==None:
-        #     print>>log, ModColor.Str("Reached end of data")
-        #     return False
-        # self.DATA=DATA
 
         self.AppendEmptySol()
         t0,t1=self.VS.CurrentVisTimes_MS_Sec

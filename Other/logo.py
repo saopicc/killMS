@@ -1,5 +1,6 @@
 import getpass
 import os
+from Other import ModColor
 
 def print_logo():
     
@@ -22,4 +23,15 @@ def print_logo():
     print
 
 
-                                                                 
+
+    # print """      """
+    # print """                              /\ """
+    # print """        %s           ____/ / """%ModColor.Str("killMS")
+    # print """          _             / ___ \ """
+    # print """          \\_!_________(_/_/ \ \ """
+    # print """          <#|=====|______ / /__/ """
+    # print """         / C|=====|---' \__/ """
+    # print """        /   |-|-|~ """
+    # print """       /    /---' """
+    # print """      /    / """
+    # print """     |_____|     """

@@ -40,7 +40,7 @@ class ClassVisServer():
         self.CurrentVisTimes_SinceStart_Sec=0.,0.
         self.iCurrentVisTime=0
 
-        self.LoadNextVisChunk()
+        # self.LoadNextVisChunk()
 
         #self.TEST_TLIST=[]
 

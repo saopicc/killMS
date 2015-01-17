@@ -20,16 +20,16 @@ def read_options():
 
     group = optparse.OptionGroup(opt, "* Data-related options", "Won't work if not specified.")
     group.add_option('--ms',help='Input MS to draw [no default]',default='')
-    group.add_option('--Operation',help='BACKUP: create backup',default='BACKUP')
-    group.add_option('--TChunk',help='Time chunk in hours',default=15)
+    group.add_option('--Operation',help='BACKUP: create backup | COPY: copy one column to another Default is %default',default='BACKUP')
+    group.add_option('--TChunk',help='Time chunk in hours, default is %default',default=15)
     opt.add_option_group(group)
 
     group = optparse.OptionGroup(opt, "* BACKUP options")
-    group.add_option('--Col',help='Column to backup',default='CORRECTED_DATA')
+    group.add_option('--Col',help='Column to backup, default is %default',default='CORRECTED_DATA')
     opt.add_option_group(group)
     
     group = optparse.OptionGroup(opt, "* COPY options")
-    group.add_option('--InOutCol',help='Column to copy',default='CORRECTED_DATA_BACKUP,CORRECTED_DATA')
+    group.add_option('--InOutCol',help='Column to copy, default is %default',default='CORRECTED_DATA_BACKUP,CORRECTED_DATA')
     opt.add_option_group(group)
     
     options, arguments = opt.parse_args()

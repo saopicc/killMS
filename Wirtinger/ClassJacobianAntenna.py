@@ -310,8 +310,13 @@ class ClassJacobianAntenna():
 
         npars=Pa.shape[0]
         T.timeit("Add")
+
+        ##################
+
         Pa_new=np.zeros_like(Pa)
 
+
+        
         for iPar in range(npars):
             J_Px=self.J_x(Pa[iPar,:])
             xP=self.ApplyK_vec(J_Px,rms,Pa)
@@ -319,6 +324,7 @@ class ClassJacobianAntenna():
         T.timeit("Pa")
         Pa_new= Pa-Pa_new#(np.diag(np.diag(Pa-Pa_new)))#Pa-Pa_new#np.abs(np.diag(np.diag(Pa-Pa_new)))
         Pa_new+=np.diag(np.ones((Pa_new.shape[0],)))*0.001**2
+
         #Pa_new2=np.abs(Pa_new)
         del(self.Jacob)
         #Pa_new[npars/2::,0:npars]=0
