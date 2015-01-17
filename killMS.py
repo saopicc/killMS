@@ -51,34 +51,30 @@ def read_options():
     group.add_option('--SkyModel',help='List of targets [no default]',default='')
     opt.add_option_group(group)
     
-    group = optparse.OptionGroup(opt, "* Algorithm type")
-    group.add_option('--SolverType',help='Name of the solver to use (CohJones/KAFCA)',default="CohJones")
-    group = optparse.OptionGroup(opt, "* Data selection options")
+    group = optparse.OptionGroup(opt, "* Visibilities options")
+    group.add_option('--TChunk',help=' Time Chunk in hours. Default is %default',default="15")
+    group.add_option('--InCol',help=' Column to work on. Default is %default',default="CORRECTED_DATA_BACKUP")
+    group.add_option('--OutCol',help=' Column to write to. Default is %default',default="CORRECTED_DATA")
+    group.add_option('--LOFARBeamParms',help='Not Working yet',default="")
+    opt.add_option_group(group)
+
+    group = optparse.OptionGroup(opt, "* Source selection options")
     group.add_option('--kills',help='Name or number index of sources to kill',default="")
     group.add_option('--invert',help='Invert the selected sources to kill',default="0")
     opt.add_option_group(group)
     
-    group = optparse.OptionGroup(opt, "* Algorithm options", "Default values should give reasonable results, but all of them have noticeable influence on the results")
-    group.add_option('--dt',help='Time interval for a solution [minutes]. Default is %default. ',default=30)
-    group.add_option('--NCPU',help=' Number of cores to use. Default is %default ',default=NCPU_default)
-    group.add_option('--niter',help=' Number of iterations for the solve. Default is %default ',default="20")
-    #group.add_option('--doSmearing',help='Takes time and frequency smearing if enabled. Default is %default ',default="0")
-    group.add_option('--PolMode',help=' Polarisation mode (Scalar/HalfFull). Default is %default',default="Scalar")
-    #group.add_option('--ChanSels',help=' Channel selection. Default is %default',default="")
-    #group.add_option('--BLFlags',help=' Baselines To be flagged. Default is %default',default="")
-    group.add_option('--Restore',help=' Restore BACKUP in CORRECTED. Default is %default',default="0")
-    #group.add_option('--LOFARBeamParms',help='Applying the LOFAR beam parameters [Mode[A,AE,E],TimeStep]. Default is %default',default="")
-    group.add_option('--LOFARBeamParms',help='Not Working yet',default="")
-    
-    group.add_option('--TChunk',help=' Time Chunk in hours. Default is %default',default="15")
+    group = optparse.OptionGroup(opt, "* Solution options")
     group.add_option('--SubOnly',help=' Only substract the skymodel. Default is %default',default="0")
-    group.add_option('--DoBar',help=' Draw progressbar. Default is %default',default="1")
-    group.add_option('--InCol',help=' Column to work on. Default is %default',default="CORRECTED_DATA_BACKUP")
     group.add_option('--ApplyCal',help=' Apply direction averaged gains to residual data in the mentioned direction. \
     If ApplyCal=-1 takes the mean gain over directions. Default is %default',default="No")
+    opt.add_option_group(group)
     
-
-
+    group = optparse.OptionGroup(opt, "* Algorithm options", "Default values should give reasonable results, but all of them have noticeable influence on the results")
+    group.add_option('--SolverType',help='Name of the solver to use (CohJones/KAFCA)',default="CohJones")
+    group.add_option('--NCPU',help=' Number of cores to use. Default is %default ',default=NCPU_default)
+    group.add_option('--PolMode',help=' Polarisation mode (Scalar/HalfFull). Default is %default',default="Scalar")
+    group.add_option('--dt',help='Time interval for a solution [minutes]. Default is %default. ',default=30)
+    group.add_option('--niter',help=' Number of iterations for the solve. Default is %default ',default="20")
     opt.add_option_group(group)
     
     
@@ -127,8 +123,8 @@ def main(options=None):
     ######################################
 
     NpShared.DelAll()
-    ReadColName=options.InCol
-    WriteColName="CORRECTED_DATA"
+    ReadColName  = options.InCol
+    WriteColName = options.OutCol
 
     SM=ClassSM.ClassSM(options.SkyModel,
                        killdirs=kills,invert=invert)

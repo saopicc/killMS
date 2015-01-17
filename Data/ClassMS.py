@@ -719,10 +719,10 @@ class ClassMS():
         backnameFlag="FLAG_BACKUP"
         t=table(self.MSName,readonly=False,ack=False)
         if backname in t.colnames():
-            print "  Copying ",backname," to CORRECTED_DATA"
+            print>>log, "  Copying ",backname," to CORRECTED_DATA"
             #t.putcol("CORRECTED_DATA",t.getcol(backname))
             self.CopyCol(backname,"CORRECTED_DATA")
-            print "  Copying ",backnameFlag," to FLAG"
+            print>>log, "  Copying ",backnameFlag," to FLAG"
             self.CopyCol(backnameFlag,"FLAG")
             #t.putcol(,t.getcol(backnameFlag))
         t.close()
@@ -741,15 +741,15 @@ class ClassMS():
     def CopyCol(self,Colin,Colout):
         t=table(self.MSName,readonly=False,ack=False)
         if self.TimeChunkSize==None:
-            print "  ... Copying column %s to %s"%(Colin,Colout)
+            print>>log, "  ... Copying column %s to %s"%(Colin,Colout)
             t.putcol(Colout,t.getcol(Colin))
         else:
-            print "  ... Copying column %s to %s"%(Colin,Colout)
+            print>>log, "  ... Copying column %s to %s"%(Colin,Colout)
             TimesInt=np.arange(0,self.DTh,self.TimeChunkSize).tolist()
             if not(self.DTh in TimesInt): TimesInt.append(self.DTh)
             for i in range(len(TimesInt)-1):
                 t0,t1=TimesInt[i],TimesInt[i+1]
-                print t0,t1
+                print>>log, "      ... Copy in [%5.2f,%5.2f] hours"%( t0,t1)
                 t0=t0*3600.+self.F_tstart
                 t1=t1*3600.+self.F_tstart
                 ind0=np.argmin(np.abs(t0-self.F_times))
@@ -761,37 +761,38 @@ class ClassMS():
         t.close()
 
         
-    def PutBackupCol(self,back="CORRECTED_DATA"):
-        backname="%s_BACKUP"%back
+    def PutBackupCol(self,incol="CORRECTED_DATA"):
+        backname="%s_BACKUP"%incol
         backnameFlag="FLAG_BACKUP"
         self.PutCasaCols()
         t=table(self.MSName,readonly=False,ack=False)
         JustAdded=False
         if not(backname in t.colnames()):
-            print "  Putting column ",backname," in MS"
+            print>>log, "  Putting column ",backname," in MS"
             desc=t.getcoldesc("CORRECTED_DATA")
             desc["name"]=backname
             desc['comment']=desc['comment'].replace(" ","_")
             t.addcols(desc)
-            print "  Copying CORRECTED_DATA in CORRECTED_DATA_BACKUP"
-            self.CopyCol("CORRECTED_DATA",backname)
-            #t.putcol(backname,t.getcol("CORRECTED_DATA"))
+            print>>log, "  Copying %s in %s"%(incol,backname)
+            self.CopyCol(incol,backname)
+        else:
+            print>>log, "  Column %s already there"%(backname)
+
         if not(backnameFlag in t.colnames()):
             desc=t.getcoldesc("FLAG")
             desc["name"]=backnameFlag
             desc['comment']=desc['comment'].replace(" ","_")
             t.addcols(desc)
             self.CopyCol("FLAG",backnameFlag)
-            #t.putcol(backnameFlag,t.getcol("FLAG"))
+
             JustAdded=True
-        #else:
-            #print "  Column %s already there..."%backname
+
         t.close()
         return JustAdded
 
     def PutNewCol(self,Name,LikeCol="CORRECTED_DATA"):
         if not(Name in self.ColNames):
-            print "  Putting column %s in MS, with format of %s"%(Name,LikeCol)
+            print>>log, "  Putting column %s in MS, with format of %s"%(Name,LikeCol)
             t=table(self.MSName,readonly=False,ack=False)
             desc=t.getcoldesc(LikeCol)
             desc["name"]=Name
