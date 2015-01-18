@@ -130,8 +130,7 @@ class ClassWirtingerSolver():
                 G[:,:,1,1]=1
             
         self.G=G
-        if TestMode:
-            self.G+=np.random.randn(*self.G.shape)*sigP
+
 
         self.G=NpShared.ToShared("SharedGains",self.G)
         self.InitCovariance()
@@ -149,6 +148,10 @@ class ClassWirtingerSolver():
         else:
             P=(sigP**2)*np.array([np.complex128(np.diag(np.abs(self.G[iAnt]).flatten())) for iAnt in range(na)])
 
+        # TestMode=False
+        # if TestMode:
+        #     self.G+=np.random.randn(*self.G.shape)*sigP
+        # self.G+=np.random.randn(*self.G.shape)#*sigP
 
         self.P=P
         self.P=NpShared.ToShared("SharedCovariance",self.P)
@@ -332,11 +335,17 @@ class ClassWirtingerSolver():
                 pBAR.render(int(100* float(NDone-1) / (NTotJobs-1.)), '%4i/%i' % (NDone-1,NTotJobs-1.))
             iResult=0
             
+            # sig=np.sqrt(np.array([np.diag(self.P[i]) for iAnt in range(self.VS.MS.na)]).flatten())
             # pylab.clf()
-            # pylab.plot(np.abs(self.G.flatten()))
-            # pylab.ylim(-2,2)
+            # #pylab.plot(np.abs(self.G.flatten()))
+            # #pylab.plot(np.abs(self.G.flatten())+sig,ls=":")
+            # #pylab.plot(np.abs(self.G.flatten())-sig,ls=":")
+            # pylab.plot(sig)
+
+            # pylab.ylim(0,0.1)
             # pylab.draw()
             # pylab.show(False)
+            # pylab.pause(0.1)
 
             for iAnt in ListAntSolve:
                 work_queue.put((iAnt))
