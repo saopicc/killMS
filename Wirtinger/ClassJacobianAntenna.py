@@ -157,58 +157,22 @@ class ClassJacobianAntenna():
         return PaPol
 
     def PrepareJHJ_EKF(self,Pa_in,rms):
-        self.L_JHJ=[]
         self.L_JHJinv=[]
-        
-        #print "np inv"
         for ipol in range(self.NJacobBlocks):
             PaPol=self.GivePaPol(Pa_in,ipol)
             Pinv=ModLinAlg.invSVD(PaPol)
-
-            #PaPol=np.diag(np.max(PaPol)*np.ones((PaPol.shape[0],),np.complex128))
-            #Pinv=np.linalg.inv(PaPol)
-            #Pinv=ModLinAlg.invSVD(PaPol)
-            
             JHJ=self.JHJ*(1./rms**2)
-
             JHJ+=Pinv
-            #JHJ=Pinv
             JHJinv=ModLinAlg.invSVD(JHJ)
-            #JHJinv=np.linalg.inv(JHJ)
-            #self.L_JHJ.append(JHJ)
             self.L_JHJinv.append(JHJinv)
 
-            
-        # pylab.figure(1)
-        # pylab.clf()
-        # pylab.subplot(2,2,1)
-        # pylab.imshow(self.L_JHJinv[0].real,interpolation="nearest")
-        # pylab.subplot(2,2,2)
-        # pylab.imshow(self.L_JHJinv[1].real,interpolation="nearest")
-        # pylab.subplot(2,2,3)
-        # pylab.imshow(self.L_JHJinv[0].imag,interpolation="nearest")
-        # pylab.subplot(2,2,4)
-        # pylab.imshow(self.L_JHJinv[1].imag,interpolation="nearest")
-        # pylab.draw()
-        # pylab.show(False)
-        # pylab.pause(0.1)
-        # # stop
 
 
     def PrepareJHJ_LM(self):
-
         self.L_JHJinv=[]
-        
         JHJinv=ModLinAlg.invSVD(self.JHJ)
         for ipol in range(self.NJacobBlocks):
             self.L_JHJinv.append(JHJinv)
-
-    # def AugmentPa(self,Pa_in):
-    #     Pa=np.zeros((self.NDir*self.NJacobBlocks,self.NDir*self.NJacobBlocks),self.CType)
-    #     for ipol in range(self.NJacobBlocks):
-    #         for ipol in range(self.NJacobBlocks):
-    #             Pa[ipol::self.NJacobBlocks,ipol::self.NJacobBlocks]=Pa_in[:,:]
-    #     return Pa
 
     def ApplyK_vec(self,zr,rms,Pa):
         JH_z=self.JH_z(zr)
@@ -262,16 +226,26 @@ class ClassJacobianAntenna():
         #x3=np.swapaxes(x3,1,2)
 
         return x3
+    
+    def EvolveStep(self,Gains,P):
+
+        Pa=P[self.iAnt]
+        G=Gains[self.iAnt]
+
         
-    def doEKFStep(self,Gains,P,rms):
+    def doEKFStep(self,Gains,P,evP,rms):
         T=ClassTimeIt.ClassTimeIt("EKF")
         T.disable()
         if not(self.HasKernelMatrix):
             self.CalcKernelMatrix()
             T.timeit("CalcKernelMatrix")
         z=self.DicoData["data_flat"]#self.GiveDataVec()
+
+
         self.CalcJacobianAntenna(Gains)
         T.timeit("Jacob")
+
+        
 
         Ga=self.GiveSubVecGainAnt(Gains)
         
@@ -280,71 +254,52 @@ class ClassJacobianAntenna():
 
         
         Pa=P[self.iAnt]
-        #Pa=self.AugmentPa(Pa)
-        #T.timeit("AugmentPa")
+        evPa=evP[self.iAnt]
 
         self.PrepareJHJ_EKF(Pa,rms)
-        #self.PrepareJHJ_LM()
         T.timeit("PrepareJHJ")
-        #rms=self.DATA["rms"]
 
+        # estimate x
         zr=(z-Jx)
-        # if self.iAnt==5:
-        #     f=(self.DicoData["flags_flat"]==0)
-        #     pylab.figure(2)
-        #     pylab.clf()
-        #     pylab.plot((z[f]))#[::11])
-        #     pylab.plot((Jx[f]))#[::11])
-        #     pylab.plot(zr[f])#[::11])
-        #     pylab.draw()
-        #     pylab.show(False)
-        #     pylab.pause(0.1)
-
-
         T.timeit("zr")
         x3=self.ApplyK_vec(zr,rms,Pa)
         T.timeit("ApplyK_vec")
         x0=Ga.flatten()
-
         x4=x0+x3.flatten()
 
-        npars=Pa.shape[0]
-        T.timeit("Add")
-
+        # estimate P
+        Pa_new1=np.dot(evPa,Pa)
         ##################
 
-        Pa_new=np.zeros_like(Pa)
-
-
         
-        for iPar in range(npars):
-            J_Px=self.J_x(Pa[iPar,:])
-            xP=self.ApplyK_vec(J_Px,rms,Pa)
-            Pa_new[iPar,:]=xP.flatten()
-        T.timeit("Pa")
-        Pa_new= Pa-Pa_new#(np.diag(np.diag(Pa-Pa_new)))#Pa-Pa_new#np.abs(np.diag(np.diag(Pa-Pa_new)))
-        Pa_new+=np.diag(np.ones((Pa_new.shape[0],)))*0.001**2
+        # for iPar in range(Pa.shape[0]):
+        #     J_Px=self.J_x(Pa[iPar,:])
+        #     xP=self.ApplyK_vec(J_Px,rms,Pa)
+        #     evPa[iPar,:]=xP.flatten()
+        # evPa= Pa-evPa
 
-        #Pa_new2=np.abs(Pa_new)
         del(self.Jacob)
-        #Pa_new[npars/2::,0:npars]=0
-        #Pa_new[0:npars,npars/2::]=0
-        #Pa_new= np.abs(np.diag(np.diag(Pa-Pa_new)))
-        # pylab.clf()
-        # pylab.subplot(1,2,1)
-        # pylab.imshow(Pa_new.real,interpolation="nearest")
-        # # pylab.plot(Pa)
-        # pylab.subplot(1,2,2)
-        # pylab.imshow(Pa_new.imag,interpolation="nearest")
-        # # pylab.plot(Pa_new)
-        # pylab.draw()
-        # pylab.show(False)
+        return x4.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks)),Pa_new1
 
-        #pylab.plot(Pa_new2)
-        
+    def CalcMatrixEvolveCov(self,Gains,P,rms):
+        if not(self.HasKernelMatrix):
+            self.CalcKernelMatrix()
+        self.CalcJacobianAntenna(Gains)
+        Pa=P[self.iAnt]
+        self.PrepareJHJ_EKF(Pa,rms)
+        NPars=Pa.shape[0]
+        PaOnes=np.diag(np.ones((NPars,),self.CType))
 
+        evPa=np.zeros_like(Pa)
 
-        return x4.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks)),Pa_new
+        for iPar in range(Pa.shape[0]):
+            J_Px=self.J_x(PaOnes[iPar,:])
+            xP=self.ApplyK_vec(J_Px,rms,Pa)
+            evPa[iPar,:]=xP.flatten()
+
+        #evPa= PaOnes-evPa#(np.diag(np.diag(Pa-Pa_new)))#Pa-Pa_new#np.abs(np.diag(np.diag(Pa-Pa_new)))
+        evPa=np.diag(np.diag(evPa))
+        return evPa
            
             
         

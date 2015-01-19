@@ -56,6 +56,7 @@ def DicoToShared(Prefix,Dico):
 
     return DicoOut
 
+
 def SharedToDico(Prefix):
 
     print>>log, ModColor.Str("SharedToDico: start [prefix = %s]"%Prefix)

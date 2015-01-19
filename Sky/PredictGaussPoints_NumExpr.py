@@ -44,13 +44,15 @@ class ClassPredict():
                 ChanMap=ApplyTimeJones["ChanMap"]
             else:
                 ChanMap=range(nf)
-            for ichan in ChanMap:
+
+            for ichan in range(len(ChanMap)):
+                JChan=ChanMap[ichan]
                 if iCluster!=-1:
-                    J0=Beam[it,iCluster,:,ichan,:,:].reshape((na,4))
-                    JH0=BeamH[it,iCluster,:,ichan,:,:].reshape((na,4))
+                    J0=Beam[it,iCluster,:,JChan,:,:].reshape((na,4))
+                    JH0=BeamH[it,iCluster,:,JChan,:,:].reshape((na,4))
                 else:
-                    J0=np.mean(Beam[it,:,:,ichan,:,:],axis=1).reshape((na,4))
-                    JH0=np.mean(BeamH[it,:,:,ichan,:,:],axis=1).reshape((na,4))
+                    J0=np.mean(Beam[it,:,:,JChan,:,:],axis=1).reshape((na,4))
+                    JH0=np.mean(BeamH[it,:,:,JChan,:,:],axis=1).reshape((na,4))
                     
                 J=ModLinAlg.BatchInverse(J0)
                 JH=ModLinAlg.BatchInverse(JH0)
@@ -58,6 +60,7 @@ class ClassPredict():
                 data[:,ichan,:]=ModLinAlg.BatchDot(J[A0sel,:],data[:,ichan,:])
                 data[:,ichan,:]=ModLinAlg.BatchDot(data[:,ichan,:],JH[A1sel,:])
 
+            ColOutDir[ind]=data[:]
 
 
     def predictKernelPolCluster(self,DicoData,SM,iDirection=None,ApplyJones=None,ApplyTimeJones=None):
@@ -132,12 +135,15 @@ class ClassPredict():
                         ChanMap=ApplyTimeJones["ChanMap"]
                     else:
                         ChanMap=range(nf)
-                    for ichan in ChanMap:
-                        J=Beam[it,iCluster,:,ichan,:,:].reshape((na,4))
-                        JH=BeamH[it,iCluster,:,ichan,:,:].reshape((na,4))
+
+                    for ichan in range(len(ChanMap)):
+                        JChan=ChanMap[ichan]
+                        J=Beam[it,iCluster,:,JChan,:,:].reshape((na,4))
+                        JH=BeamH[it,iCluster,:,JChan,:,:].reshape((na,4))
                         data[:,ichan,:]=ModLinAlg.BatchDot(J[A0sel,:],data[:,ichan,:])
                         data[:,ichan,:]=ModLinAlg.BatchDot(data[:,ichan,:],JH[A1sel,:])
-                
+                    ColOutDir[ind]=data[:]
+
 
             DataOut+=ColOutDir
 

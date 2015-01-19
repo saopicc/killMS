@@ -9,13 +9,16 @@ from Array import ModLinAlg
 import pylab
 
 from Other import MyLogger
-log=MyLogger.getLogger("ClassLM")
+log=MyLogger.getLogger("ClassWirtingerSolver")
 from Other import ModColor
 
 from Other.progressbar import ProgressBar
             
 from Sky.PredictGaussPoints_NumExpr import ClassPredict
 from Other import ClassTimeIt
+from Other import Counter
+from ClassEvolve import ClassModelEvolution
+
 
 def test():
 
@@ -25,24 +28,28 @@ def test():
     SM=ClassSM.ClassSM("/media/tasse/data/HyperCal2/test/ModelRandom00.txt.npy",
                        killdirs=["c0s0."],invert=False)
     
-    VS=ClassVisServer.ClassVisServer("/media/6B5E-87D0/MS/SimulTec/Pointing00/MS/0000.MS",ColName=ReadColName,TVisSizeMin=2,TChunkSize=.1,AddNoiseJy=10.)
+    VS=ClassVisServer.ClassVisServer("/media/6B5E-87D0/MS/SimulTec/Pointing00/MS/0000.MS",ColName=ReadColName,
+                                     TVisSizeMin=2,
+                                     TChunkSize=.1)
     
     #LM=ClassWirtingerSolver(VS,SM,PolMode="Scalar",NIter=1,SolverType="EKF")#20)
-    LM=ClassWirtingerSolver(VS,SM,PolMode="Scalar",NIter=10,SolverType="KAFCA")#"CohJones")#"KAFCA")
+    LM=ClassWirtingerSolver(VS,SM,PolMode="Scalar",NIter=10,SolverType="KAFCA",evP_StepStart=3, evP_Step=10)#"CohJones")#"KAFCA")
+    # LM=ClassWirtingerSolver(VS,SM,PolMode="Scalar",NIter=10,SolverType="CohJones")#"KAFCA")
     # LM.doNextTimeSolve()
-    #LM.doNextTimeSolve_Parallel()
-    #return
+    # LM.doNextTimeSolve_Parallel()
+    # return
     PM=ClassPredict()
     SM=LM.SM
     LM.InitSol()
 
+    VS.LoadNextVisChunk()
 
     while True:
         Res=LM.setNextData()
         if Res==True:
             #print Res,VS.CurrentVisTimes_SinceStart_Minutes
-            # LM.doNextTimeSolve_Parallel()
-            LM.doNextTimeSolve()
+            LM.doNextTimeSolve_Parallel()
+            #LM.doNextTimeSolve()
             continue
         else:
             # substract
@@ -80,8 +87,13 @@ def test():
 
 class ClassWirtingerSolver():
 
-    def __init__(self,VS,SM,BeamProps=None,PolMode="HalfFull",
-                 Lambda=1,NIter=20,NCPU=6,SolverType="CohJones"):
+    def __init__(self,VS,SM,
+                 BeamProps=None,
+                 PolMode="HalfFull",
+                 Lambda=1,NIter=20,
+                 NCPU=6,
+                 SolverType="CohJones",
+                 evP_StepStart=0, evP_Step=1):
         self.Lambda=Lambda
         self.NCPU=NCPU
         if BeamProps!=None:
@@ -97,45 +109,81 @@ class ClassWirtingerSolver():
         self.PolMode=PolMode
         self.G=None
         self.NIter=NIter
-        self.SolsList=[]
+        #self.SolsList=[]
         self.iCurrentSol=0
         self.SolverType=SolverType
         self.rms=None
         if SolverType=="KAFCA":
            self.NIter=1
 
-    def AppendEmptySol(self):
-        #### Solutions
-        # self.NSols=self.VS.TimesVisMin.size-1
-        na=self.VS.MS.na
-        nd=self.SM.NDir
-        Sol=np.zeros((1,),dtype=[("t0",np.float64),("t1",np.float64),("G",np.complex64,(na,nd,2,2))])
-        self.SolsList.append(Sol.view(np.recarray))
+        self.EvolvePStepStart,EvolvePStep=evP_StepStart,evP_Step
+        self.CounterEvolveP=Counter.Counter(EvolvePStep)
+        self.ThisStep=0
+
+    # def AppendEmptySol(self):
+    #     #### Solutions
+    #     # self.NSols=self.VS.TimesVisMin.size-1
+    #     na=self.VS.MS.na
+    #     nd=self.SM.NDir
+    #     Sol=np.zeros((1,),dtype=[("t0",np.float64),("t1",np.float64),("G",np.complex64,(na,nd,2,2))])
+    #     self.SolsList.append(Sol.view(np.recarray))
 
     def GiveSols(self):
-        self.SolsArray=np.concatenate(self.SolsList)
-        self.SolsArray=self.SolsArray.view(np.recarray)
-        return self.SolsArray
+        self.SolsArray_Full.t0[:]=self.SolsArray_t0[:]
+        self.SolsArray_Full.t1[:]=self.SolsArray_t1[:]
+        if self.PolMode=="Scalar":
+            self.SolsArray_Full.G[:,:,:,0,0]=self.SolsArray_G[:,:,:,0,0]
+            self.SolsArray_Full.G[:,:,:,1,1]=self.SolsArray_G[:,:,:,0,0]
+        else:                
+            self.SolsArray_Full.G[:]=self.SolsArray_G[:]
+
+        return self.SolsArray_Full
 
     def InitSol(self,G=None,TestMode=True):
         na=self.VS.MS.na
         nd=self.SM.NDir
+        
 
         if G==None:
             if self.PolMode=="Scalar":
+                npol=1
                 G=np.ones((na,nd,1,1),np.complex128)
             else:
+                npol=2
                 G=np.zeros((na,nd,2,2),np.complex128)
                 G[:,:,0,0]=1
                 G[:,:,1,1]=1
-            
+
+        
+        
         self.G=G
+        _,_,npol,_=self.G.shape
+        #self.G+=np.random.randn(*self.G.shape)*0.1#sigP
+
+        NSols=1.5*int(self.VS.MS.DTh/(self.VS.TVisSizeMin/60.))
+        
+        
+
+        self.SolsArray_t0=np.zeros((NSols,),dtype=np.float64)
+        self.SolsArray_t1=np.zeros((NSols,),dtype=np.float64)
+        self.SolsArray_tm=np.zeros((NSols,),dtype=np.float64)
+        self.SolsArray_done=np.zeros((NSols,),dtype=np.bool8)
+        self.SolsArray_G=np.zeros((NSols,na,nd,npol,npol),dtype=np.complex64)
+
+        self.SolsArray_t0=NpShared.ToShared("SolsArray_t0",self.SolsArray_t0)
+        self.SolsArray_t1=NpShared.ToShared("SolsArray_t1",self.SolsArray_t1)
+        self.SolsArray_tm=NpShared.ToShared("SolsArray_tm",self.SolsArray_tm)
+        self.SolsArray_done=NpShared.ToShared("SolsArray_done",self.SolsArray_done)
+        self.SolsArray_G=NpShared.ToShared("SolsArray_G",self.SolsArray_G)
+
+        self.SolsArray_Full=np.zeros((NSols,),dtype=[("t0",np.float64),("t1",np.float64),("G",np.complex64,(na,nd,2,2))])
+        self.SolsArray_Full=self.SolsArray_Full.view(np.recarray)
 
 
         self.G=NpShared.ToShared("SharedGains",self.G)
         self.InitCovariance()
 
-    def InitCovariance(self,FromG=False,sigP=0.1):
+    def InitCovariance(self,FromG=False,sigP=0.1,sigQ=0.01):
         if self.SolverType!="KAFCA": return
         na=self.VS.MS.na
         nd=self.SM.NDir
@@ -143,18 +191,28 @@ class ClassWirtingerSolver():
         if FromG==False:
             if self.PolMode=="Scalar":
                 P=(sigP**2)*np.array([np.diag(np.ones((nd,),np.complex128)) for iAnt in range(na)])
+                Q=(sigQ**2)*np.array([np.diag(np.ones((nd,),np.complex128)) for iAnt in range(na)])
             else:
                 P=(sigP**2)*np.array([np.diag(np.ones((nd*2*2),np.complex128)) for iAnt in range(na)])
+                Q=(sigQ**2)*np.array([np.diag(np.ones((nd*2*2),np.complex128)) for iAnt in range(na)])
         else:
-            P=(sigP**2)*np.array([np.complex128(np.diag(np.abs(self.G[iAnt]).flatten())) for iAnt in range(na)])
+            
+            P=(sigP**2)*np.array([np.mean(np.abs(self.G[iAnt]))*np.diag(np.ones((nd*2*2),np.complex128)) for iAnt in range(na)])
+            Q=(sigQ**2)*np.array([np.mean(np.abs(self.G[iAnt]))*np.diag(np.ones((nd*2*2),np.complex128)) for iAnt in range(na)])
+            #P=(sigP**2)*np.array([np.complex128(np.diag(np.abs(self.G[iAnt]).flatten())) for iAnt in range(na)])
+            #Q=(sigQ**2)*np.array([np.complex128(np.diag(np.abs(self.G[iAnt]).flatten())) for iAnt in range(na)])
 
         # TestMode=False
         # if TestMode:
         #     self.G+=np.random.randn(*self.G.shape)*sigP
-        # self.G+=np.random.randn(*self.G.shape)#*sigP
+        # self.G+=np.random.randn(*self.G.shape)*sigP
 
         self.P=P
+        self.Q=Q
+        self.evP=np.zeros_like(P)
         self.P=NpShared.ToShared("SharedCovariance",self.P)
+        self.Q=NpShared.ToShared("SharedCovariance_Q",self.Q)
+        self.evP=NpShared.ToShared("SharedEvolveCovariance",self.evP)
         
 
     def setNextData(self):
@@ -196,10 +254,12 @@ class ClassWirtingerSolver():
 
     def doNextTimeSolve(self):
 
-        self.AppendEmptySol()
+        #self.AppendEmptySol()
         t0,t1=self.VS.CurrentVisTimes_MS_Sec
-        self.SolsList[self.iCurrentSol].t0=t0
-        self.SolsList[self.iCurrentSol].t1=t1
+        self.SolsArray_t0[self.iCurrentSol]=t0
+        self.SolsArray_t1[self.iCurrentSol]=t1
+        tm=(t0+t1)/2.
+        self.SolsArray_tm[self.iCurrentSol]=tm
 
 
         if self.G==None:
@@ -207,6 +267,8 @@ class ClassWirtingerSolver():
 
         ListAntSolve=range(self.VS.MS.na)
         self.DicoJM={}
+
+
         for iAnt in ListAntSolve:
             JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Lambda=self.Lambda,Precision="D")
             #JM.setDATA(DATA)
@@ -214,32 +276,63 @@ class ClassWirtingerSolver():
             self.DicoJM[iAnt]=JM
 
 
+            
+
+
+        if (self.CounterEvolveP())&(self.SolverType=="KAFCA")&(self.iCurrentSol>self.EvolvePStepStart):
+            for iAnt in self.DicoJM.keys():
+                JM=self.DicoJM[iAnt]
+                self.evP[iAnt]=JM.CalcMatrixEvolveCov(self.G,self.P,self.rms)
+
+        elif (self.SolverType=="KAFCA")&(self.iCurrentSol<=self.EvolvePStepStart):
+            for iAnt in self.DicoJM.keys():
+                JM=self.DicoJM[iAnt]
+                self.evP[iAnt]=JM.CalcMatrixEvolveCov(self.G,self.P,self.rms)
+            
+
         for i in range(self.NIter):
             Gnew=self.G.copy()
-            Pnew=self.P.copy()
+            if self.SolverType=="KAFCA":
+                Pnew=self.P.copy()
             for iAnt in self.DicoJM.keys():
                 JM=self.DicoJM[iAnt]
                 if self.SolverType=="CohJones":
                     x=JM.doLMStep(self.G)
 
                 if self.SolverType=="KAFCA":
-                    x,P=JM.doEKFStep(self.G,self.P,self.rms)
+                    EM=ClassModelEvolution(iAnt,
+                                           StepStart=3,
+                                           WeigthScale=1,
+                                           DoEvolve=False,
+                                           BufferNPoints=3,
+                                           sigQ=0.01)
+
+                    x,P=JM.doEKFStep(self.G,self.P,self.evP,self.rms)
+
+                    Pa=EM.Evolve0(x,P)
+                    if Pa!=None:
+                        P=Pa
+                        # self.G[iAnt]=Ga
+                        # self.P[iAnt]=Pa
+
+
                     Pnew[iAnt]=P
 
                 Gnew[iAnt]=x
-
-            sig=np.sqrt(np.array([np.diag(Pnew[i]) for iAnt in range(self.VS.MS.na)]).flatten())
+                
             pylab.figure(1)
             pylab.clf()
             pylab.plot(np.abs(Gnew.flatten()))
-            pylab.plot(np.abs(Gnew.flatten())+sig,color="black",ls="--")
-            pylab.plot(np.abs(Gnew.flatten())-sig,color="black",ls="--")
+            if self.SolverType=="KAFCA":
+                sig=np.sqrt(np.array([np.diag(Pnew[i]) for iAnt in range(self.VS.MS.na)]).flatten())
+                pylab.plot(np.abs(Gnew.flatten())+sig,color="black",ls="--")
+                pylab.plot(np.abs(Gnew.flatten())-sig,color="black",ls="--")
+                self.P[:]=Pnew[:]
             pylab.plot(np.abs(self.G.flatten()))
             pylab.ylim(0,2)
             pylab.draw()
             pylab.show(False)
             self.G[:]=Gnew[:]
-            self.P[:]=Pnew[:]
 
 
 
@@ -249,11 +342,17 @@ class ClassWirtingerSolver():
         # else:
         #     self.Sols.G[self.iCurrentSol][:]=self.G[:]
 
-        if self.PolMode=="Scalar":
-            self.SolsList[self.iCurrentSol].G[0][:,:,0,0]=self.G[:,:,0,0]
-            self.SolsList[self.iCurrentSol].G[0][:,:,1,1]=self.G[:,:,0,0]
-        else:
-            self.SolsList[self.iCurrentSol].G[0][:]=self.G[:]
+        # if self.PolMode=="Scalar":
+        #     self.SolsArray_done[self.iCurrentSol]=1
+        #     self.SolsArray_G[self.iCurrentSol][:,:,0,0]=self.G[:,:,0,0]
+        #     self.SolsArray_G[self.iCurrentSol][:,:,1,1]=self.G[:,:,0,0]
+        # else:
+        #     self.SolsArray_done[self.iCurrentSol]=1
+        #     self.SolsArray_G[self.iCurrentSol][:]=self.G[:]
+
+        self.SolsArray_done[self.iCurrentSol]=1
+        self.SolsArray_G[self.iCurrentSol][:]=self.G[:]
+
             
         self.iCurrentSol+=1
         return True
@@ -267,10 +366,13 @@ class ClassWirtingerSolver():
     
     
     def doNextTimeSolve_Parallel(self):
-        self.AppendEmptySol()
+
         t0,t1=self.VS.CurrentVisTimes_MS_Sec
-        self.SolsList[self.iCurrentSol].t0=t0
-        self.SolsList[self.iCurrentSol].t1=t1
+        self.SolsArray_t0[self.iCurrentSol]=t0
+        self.SolsArray_t1[self.iCurrentSol]=t1
+        tm=(t0+t1)/2.
+        self.SolsArray_tm[self.iCurrentSol]=tm
+        
 
 
 
@@ -299,11 +401,36 @@ class ClassWirtingerSolver():
         # pylab.ylim(-2,2)
         # pylab.draw()
         # pylab.show(False)
+        
+        T=ClassTimeIt.ClassTimeIt()
+        T.disable()
+        # if self.SolverType=="KAFCA":
+        #     for iAnt in ListAntSolve:
+        #         EM=ClassModelEvolution(iAnt,
+        #                                StepStart=3,
+        #                                WeigthScale=2,
+        #                                DoEvolve=False,#True,
+        #                                order=1,
+        #                                sigQ=0.01)
+        #         Ga,Pa=EM(self.G,self.P,tm)
+        #         if Ga!=None:
+        #             self.G[iAnt]=Ga
+        #             self.P[iAnt]=Pa
+        #     T.timeit("evolve")
+                    
+
+        DoCalcEvP=False
+        if (self.CounterEvolveP())&(self.SolverType=="KAFCA")&(self.iCurrentSol>self.EvolvePStepStart):
+            DoCalcEvP=True
+        elif (self.SolverType=="KAFCA")&(self.iCurrentSol<=self.EvolvePStepStart):
+            DoCalcEvP=True
+
 
         T=ClassTimeIt.ClassTimeIt()
+        T.disable()
         for ii in range(NCPU):
             
-            W=WorkerAntennaLM(work_queue, result_queue,self.SM,self.PolMode,self.Lambda,self.SolverType,self.rms)#,args=(e,))
+            W=WorkerAntennaLM(work_queue, result_queue,self.SM,self.PolMode,self.Lambda,self.SolverType,self.rms,DoCalcEvP,tm)#,args=(e,))
             workerlist.append(W)
             workerlist[ii].start()
             # time.sleep(2)
@@ -314,8 +441,10 @@ class ClassWirtingerSolver():
 
         t0_min,t1_min=self.VS.CurrentVisTimes_SinceStart_Minutes
         pBAR= ProgressBar('white', width=30, block='=', empty=' ',Title="Solving in [%.1f, %.1f] min"%(t0_min,t1_min), TitleSize=50)
-        pBAR.render(0, '%i/%i' % (0,NTotJobs-1.))
+        #pBAR.disable()
 
+        NDone=0
+        pBAR.render(int(100* float(NDone+1-1) / (NTotJobs-1.)), '%4i/%i' % (NDone+1-1,NTotJobs-1.))
         #e=EventList[0]
         #time.sleep(3)
         #e.set()
@@ -323,7 +452,9 @@ class ClassWirtingerSolver():
 
         lold=0
         iResult=0
-        NDone=0
+
+        T.timeit("stuff")
+
         for LMIter in range(self.NIter):
             while iResult < NJobs:
                 iAnt,G,P = result_queue.get()
@@ -334,15 +465,14 @@ class ClassWirtingerSolver():
                 NDone+=1
                 pBAR.render(int(100* float(NDone-1) / (NTotJobs-1.)), '%4i/%i' % (NDone-1,NTotJobs-1.))
             iResult=0
-            
-            # sig=np.sqrt(np.array([np.diag(self.P[i]) for iAnt in range(self.VS.MS.na)]).flatten())
-            # pylab.clf()
-            # #pylab.plot(np.abs(self.G.flatten()))
-            # #pylab.plot(np.abs(self.G.flatten())+sig,ls=":")
-            # #pylab.plot(np.abs(self.G.flatten())-sig,ls=":")
-            # pylab.plot(sig)
 
-            # pylab.ylim(0,0.1)
+            # pylab.clf()
+            # pylab.plot(np.abs(self.G.flatten()))
+            # if self.SolverType=="KAFCA":
+            #     sig=np.sqrt(np.array([np.diag(self.P[i]) for iAnt in range(self.VS.MS.na)]).flatten())
+            #     pylab.plot(np.abs(self.G.flatten())+sig,color="black",ls="--")
+            #     pylab.plot(np.abs(self.G.flatten())-sig,color="black",ls="--")
+            # pylab.ylim(0,2)
             # pylab.draw()
             # pylab.show(False)
             # pylab.pause(0.1)
@@ -355,6 +485,7 @@ class ClassWirtingerSolver():
             # #     pylab.draw()
             # #     ii=0
             # # ii+=1
+        T.timeit("ekf")
 
 
  
@@ -363,12 +494,14 @@ class ClassWirtingerSolver():
             workerlist[ii].terminate()
             workerlist[ii].join()
 
-        if self.PolMode=="Scalar":
-            self.SolsList[self.iCurrentSol].G[0][:,:,0,0]=self.G[:,:,0,0]
-            self.SolsList[self.iCurrentSol].G[0][:,:,1,1]=self.G[:,:,0,0]
-        else:
-            self.SolsList[self.iCurrentSol].G[0][:]=self.G[:]
+        # if self.PolMode=="Scalar":
+        #     self.SolsList[self.iCurrentSol].G[0][:,:,0,0]=self.G[:,:,0,0]
+        #     self.SolsList[self.iCurrentSol].G[0][:,:,1,1]=self.G[:,:,0,0]
+        # else:
+        #     self.SolsList[self.iCurrentSol].G[0][:]=self.G[:]
             
+        self.SolsArray_done[self.iCurrentSol]=1
+        self.SolsArray_G[self.iCurrentSol][:]=self.G[:]
         self.iCurrentSol+=1
         return True
 
@@ -399,7 +532,7 @@ import multiprocessing
 class WorkerAntennaLM(multiprocessing.Process):
     def __init__(self,
                  work_queue,
-                 result_queue,SM,PolMode,Lambda,SolverType,rms,**kwargs):
+                 result_queue,SM,PolMode,Lambda,SolverType,rms,DoCalcEvP,ThisTime,**kwargs):
         multiprocessing.Process.__init__(self)
         self.work_queue = work_queue
         self.result_queue = result_queue
@@ -410,6 +543,8 @@ class WorkerAntennaLM(multiprocessing.Process):
         self.Lambda=Lambda
         self.SolverType=SolverType
         self.rms=rms
+        self.DoCalcEvP=DoCalcEvP
+        self.ThisTime=ThisTime
         #self.e,=kwargs["args"]
 
     def shutdown(self):
@@ -427,9 +562,35 @@ class WorkerAntennaLM(multiprocessing.Process):
 
             G=NpShared.GiveArray("SharedGains")
             P=NpShared.GiveArray("SharedCovariance")
+            evP=NpShared.GiveArray("SharedEvolveCovariance")
+
             if self.SolverType=="CohJones":
                 x=JM.doLMStep(G)
                 self.result_queue.put([iAnt,x,None])
             elif self.SolverType=="KAFCA":
-                x,Pout=JM.doEKFStep(G,P,self.rms)
+                if self.DoCalcEvP:
+                    evP[iAnt]=JM.CalcMatrixEvolveCov(G,P,self.rms)
+                        
+                # EM=ClassModelEvolution(iAnt,
+                #                        StepStart=3,
+                #                        WeigthScale=2,
+                #                        DoEvolve=False,
+                #                        order=1,
+                #                        sigQ=0.01)
+                EM=ClassModelEvolution(iAnt,
+                                       StepStart=3,
+                                       WeigthScale=1,
+                                       DoEvolve=False,
+                                       BufferNPoints=3,
+                                       sigQ=0.01)
+                # Ga,Pa=EM.Evolve0(G,P,self.ThisTime)
+                # if Ga!=None:
+                #     G[iAnt]=Ga
+                #     P[iAnt]=Pa
+
+                x,Pout=JM.doEKFStep(G,P,evP,self.rms)
+                Pa=EM.Evolve0(x,Pout)
+                if Pa!=None:
+                    Pout=Pa
+
                 self.result_queue.put([iAnt,x,Pout])

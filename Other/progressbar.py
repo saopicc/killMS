@@ -53,6 +53,7 @@ class ProgressBar(object):
         self.HasRendered=False
         self.t0=None
         self.HeaderSize=HeaderSize
+        self.disableTag=False
 
     def format(self,strin,Size,side=0,TitleIn=None):
         if TitleIn==None:
@@ -69,6 +70,9 @@ class ProgressBar(object):
         if side==2:
             strin="%s %s %s"%(Title,"."*(Size-len(self.TitleIn)-len(strin)),strin)
         return strin
+
+    def disable(self):
+        self.disableTag=True
 
     def GiveStrMinSec(self):
         t1=timemod.time()
@@ -89,7 +93,7 @@ class ProgressBar(object):
         percent -- the progress percentage %
         message -- message string (optional)
         """
-        
+        if self.disableTag: return
         if self.silent==1: return
         import terminal
 

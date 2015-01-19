@@ -77,13 +77,17 @@ def read_options():
     group.add_option('--NCPU',type="int",help=' Number of cores to use. Default is %default ',default=NCPU_default)
     group.add_option('--PolMode',help=' Polarisation mode (Scalar/HalfFull). Default is %default',default="Scalar")
     group.add_option('--dt',type="float",help='Time interval for a solution [minutes]. Default is %default. ',default=30)
-    group.add_option('--niter',type="int",help=' Number of iterations for the solve. Default is %default ',default=20)
+    group.add_option('--NIter',type="int",help=' Number of iterations for the solve. Default is %default ',default=20)
     opt.add_option_group(group)
     
     group = optparse.OptionGroup(opt, "* KAFCA additional options")
     group.add_option('--InitLM',type="int",help='Initialise Kalman filter with Levenberg Maquardt. Default is %default',default=1)
     group.add_option('--InitLM_dt',type="float",help='Time interval in minutes. Default is %default',default=5)
-    group.add_option('--CovP',type="float",help='Initial Covariance in fraction of the gain amplitude. Default is %default',default=0.1)
+    group.add_option('--CovP',type="float",help='Initial prior Covariance in fraction of the initial gain amplitude. Default is %default',default=0.1) 
+    group.add_option('--CovQ',type="float",help='Intrinsic process Covariance in fraction of the initial gain amplitude. Default is %default',default=0.01) 
+    group.add_option('--evP_Step',type="int",help='Start calculation evP every evP_Step after that step. Default is %default',default=0)
+    group.add_option('--evP_StepStart',type="int",help='Calcule (I-KJ) matrix every evP_Step steps. Default is %default',default=1)
+
     opt.add_option_group(group)
     
     
@@ -115,7 +119,7 @@ def PrintOptions(options):
     print "   - Solution time interval %5.2f min."%options.dt
 
     if options.SolverType=="CohJones":
-        print "   - Number of iterations %i"%options.niter
+        print "   - Number of iterations %i"%options.NIter
     if options.SolverType=="KAFCA":
         print "   - Covariance %5.1f of the initial gain amplitude"%float(options.CovP)
         if options.InitLM==1:
@@ -151,7 +155,6 @@ def main(options=None):
     TChunk=float(options.TChunk)
     dt=float(options.dt)
     dtInit=float(options.InitLM_dt)
-    niterin=int(options.niter)
     NCPU=int(options.NCPU)
     SubOnly=(int(options.SubOnly)==1)
     invert=(options.invert=="1")
@@ -178,7 +181,6 @@ def main(options=None):
                                      TVisSizeMin=dt,
                                      TChunkSize=TChunk)
     print VS.MS
-    VS.LoadNextVisChunk()
     BeamProps=None
     if options.LOFARBeam!="":
         Mode,sTimeMin=options.LOFARBeam.split(",")
@@ -187,8 +189,9 @@ def main(options=None):
 
     Solver=ClassWirtingerSolver(VS,SM,PolMode=options.PolMode,
                                 BeamProps=BeamProps,
-                                NIter=niterin,NCPU=NCPU,
-                                SolverType=options.SolverType)
+                                NIter=options.NIter,NCPU=NCPU,
+                                SolverType=options.SolverType,
+                                evP_Step=options.evP_Step,evP_StepStart=options.evP_StepStart)
     Solver.InitSol(TestMode=False)
     PM=ClassPredict()
     SM=Solver.SM
@@ -203,16 +206,17 @@ def main(options=None):
         
         VSInit.LoadNextVisChunk()
         SolverInit=ClassWirtingerSolver(VSInit,SM,PolMode=options.PolMode,
-                                        NIter=niterin,NCPU=NCPU,
+                                        NIter=options.NIter,NCPU=NCPU,
                                         SolverType="CohJones")
         Res=SolverInit.setNextData()
         SolverInit.InitSol(TestMode=False)
         SolverInit.doNextTimeSolve_Parallel()
         Solver.InitSol(G=SolverInit.G,TestMode=False)
-        Solver.InitCovariance(FromG=True,sigP=options.CovP)
+        Solver.InitCovariance(FromG=True,sigP=options.CovP,sigQ=options.CovQ)
 
 
 
+    VS.LoadNextVisChunk()
 
     while True:
         Res=Solver.setNextData()
