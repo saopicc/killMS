@@ -225,22 +225,30 @@ def main(options=None):
 
         Solver.doNextTimeSolve_Parallel()
         # substract
-        Sols=Solver.GiveSols()
-        Jones={}
-        Jones["t0"]=Sols.t0
-        Jones["t1"]=Sols.t1
-        nt,na,nd,_,_=Sols.G.shape
-        G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
-        Jones["Beam"]=G
-        Jones["BeamH"]=ModLinAlg.BatchH(G)
-        Jones["ChanMap"]=np.zeros((VS.MS.NSPWChan,)).tolist()
+        ind=np.where(SM.SourceCat.kill==1)[0]
         
-        SM.SelectSubCat(SM.SourceCat.kill==1)
-        PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
-        SM.RestoreCat()
-        Solver.VS.ThisDataChunk["data"]-=PredictData
+        if ind.size>0:
+            print>>log, ModColor.Str("Substract sources ... ",col="green")
+            SM.SelectSubCat(SM.SourceCat.kill==1)
+            Sols=Solver.GiveSols()
+            Jones={}
+            Jones["t0"]=Sols.t0
+            Jones["t1"]=Sols.t1
+            nt,na,nd,_,_=Sols.G.shape
+            G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
+            Jones["Beam"]=G
+            Jones["BeamH"]=ModLinAlg.BatchH(G)
+            Jones["ChanMap"]=np.zeros((VS.MS.NSPWChan,)).tolist()
+        
+            PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
+            Solver.VS.ThisDataChunk["data"]-=PredictData
+            SM.RestoreCat()
+
+
         if ApplyCal!=None:
+            print>>log, ModColor.Str("Apply calibration in direction: %i"%ApplyCal,col="green")
             PM.ApplyCal(Solver.VS.ThisDataChunk,Jones,ApplyCal)
+
         Solver.VS.MS.data=Solver.VS.ThisDataChunk["data"]
         Solver.VS.MS.SaveVis(Col=WriteColName)
 
