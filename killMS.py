@@ -216,65 +216,33 @@ def main(options=None):
 
 
 
-    VS.LoadNextVisChunk()
-
+    
     while True:
-        Res=Solver.setNextData()
 
-        if Res==True:
-            # if not(SubOnly):
-            #     Solver.doNextTimeSolve_Parallel()
+        Load=VS.LoadNextVisChunk()
+        if Load=="EndOfObservation":
+            break
 
-            Solver.doNextTimeSolve_Parallel()
-
-            # Solver.doNextTimeSolve()
-            continue
-        else:
-            # substract
-            
-            Sols=Solver.GiveSols()
-            Jones={}
-            Jones["t0"]=Sols.t0
-            Jones["t1"]=Sols.t1
-            nt,na,nd,_,_=Sols.G.shape
-            G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
-            Jones["Beam"]=G
-            Jones["BeamH"]=ModLinAlg.BatchH(G)
-            Jones["ChanMap"]=np.zeros((VS.MS.NSPWChan,)).tolist()
-
-            SM.SelectSubCat(SM.SourceCat.kill==1)
-            PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
-            SM.RestoreCat()
-
-
-            # import pylab
-            # pylab.clf()
-            # nbl=1#Solver.VS.MS.nbl
-            # a=Solver.VS.ThisDataChunk["data"][1::nbl,:,:].flatten().real
-            # b=PredictData[1::nbl,:,:].flatten().real
-            # pylab.plot(a)
-            # pylab.plot(b)
-            # pylab.plot(a-b)
-            # pylab.draw()
-            # pylab.show(False)
-            # stop
-
-            Solver.VS.ThisDataChunk["data"]-=PredictData
-
-            if ApplyCal!=None:
-                PM.ApplyCal(Solver.VS.ThisDataChunk,Jones,ApplyCal)
-
-
-            Solver.VS.MS.data=Solver.VS.ThisDataChunk["data"]
-
-            
-
-            Solver.VS.MS.SaveVis(Col=WriteColName)
-
-        if Res=="EndChunk":
-            Load=VS.LoadNextVisChunk()
-            if Load=="EndOfObservation":
-                break
+        Solver.doNextTimeSolve_Parallel()
+        # substract
+        Sols=Solver.GiveSols()
+        Jones={}
+        Jones["t0"]=Sols.t0
+        Jones["t1"]=Sols.t1
+        nt,na,nd,_,_=Sols.G.shape
+        G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
+        Jones["Beam"]=G
+        Jones["BeamH"]=ModLinAlg.BatchH(G)
+        Jones["ChanMap"]=np.zeros((VS.MS.NSPWChan,)).tolist()
+        
+        SM.SelectSubCat(SM.SourceCat.kill==1)
+        PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
+        SM.RestoreCat()
+        Solver.VS.ThisDataChunk["data"]-=PredictData
+        if ApplyCal!=None:
+            PM.ApplyCal(Solver.VS.ThisDataChunk,Jones,ApplyCal)
+        Solver.VS.MS.data=Solver.VS.ThisDataChunk["data"]
+        Solver.VS.MS.SaveVis(Col=WriteColName)
 
 
     NpShared.DelAll()

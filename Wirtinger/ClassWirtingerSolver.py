@@ -367,11 +367,6 @@ class ClassWirtingerSolver():
     
     def doNextTimeSolve_Parallel(self):
 
-        t0,t1=self.VS.CurrentVisTimes_MS_Sec
-        self.SolsArray_t0[self.iCurrentSol]=t0
-        self.SolsArray_t1[self.iCurrentSol]=t1
-        tm=(t0+t1)/2.
-        self.SolsArray_tm[self.iCurrentSol]=tm
         
 
 
@@ -380,112 +375,106 @@ class ClassWirtingerSolver():
         ListAntSolve=range(self.VS.MS.na)
 
         work_queue = multiprocessing.Queue()
-        EventList=[multiprocessing.Event() for i in range(self.NIter)]
-        e=EventList[0]
-
-
-        NJobs=len(ListAntSolve)
-        for iAnt in ListAntSolve:
-             work_queue.put((iAnt))
-
         result_queue = multiprocessing.Queue()
+
+
+
 
         workerlist=[]
         NCPU=self.NCPU
 
         import time
         
-        # pylab.figure(1)
-        # pylab.clf()
-        # pylab.plot(np.abs(self.G.flatten()))
-        # pylab.ylim(-2,2)
-        # pylab.draw()
-        # pylab.show(False)
         
         T=ClassTimeIt.ClassTimeIt()
         T.disable()
-        # if self.SolverType=="KAFCA":
-        #     for iAnt in ListAntSolve:
-        #         EM=ClassModelEvolution(iAnt,
-        #                                StepStart=3,
-        #                                WeigthScale=2,
-        #                                DoEvolve=False,#True,
-        #                                order=1,
-        #                                sigQ=0.01)
-        #         Ga,Pa=EM(self.G,self.P,tm)
-        #         if Ga!=None:
-        #             self.G[iAnt]=Ga
-        #             self.P[iAnt]=Pa
-        #     T.timeit("evolve")
                     
 
-        DoCalcEvP=False
-        if (self.CounterEvolveP())&(self.SolverType=="KAFCA")&(self.iCurrentSol>self.EvolvePStepStart):
-            DoCalcEvP=True
-        elif (self.SolverType=="KAFCA")&(self.iCurrentSol<=self.EvolvePStepStart):
-            DoCalcEvP=True
 
 
         T=ClassTimeIt.ClassTimeIt()
         T.disable()
         for ii in range(NCPU):
-            
-            W=WorkerAntennaLM(work_queue, result_queue,self.SM,self.PolMode,self.Lambda,self.SolverType,self.rms,DoCalcEvP,tm)#,args=(e,))
+             
+            W=WorkerAntennaLM(work_queue, result_queue,self.SM,self.PolMode,self.Lambda,self.SolverType,self.rms)#,args=(e,))
             workerlist.append(W)
             workerlist[ii].start()
-            # time.sleep(2)
-
-        #print ModColor.Str(" Pealing in [%-.2f->%-.2f h]"%(T0,T1),Bold=False)
-
-        NTotJobs=NJobs*self.NIter
-
-        t0_min,t1_min=self.VS.CurrentVisTimes_SinceStart_Minutes
-        pBAR= ProgressBar('white', width=30, block='=', empty=' ',Title="Solving in [%.1f, %.1f] min"%(t0_min,t1_min), TitleSize=50)
-        #pBAR.disable()
-
-        NDone=0
-        pBAR.render(int(100* float(NDone+1-1) / (NTotJobs-1.)), '%4i/%i' % (NDone+1-1,NTotJobs-1.))
-        #e=EventList[0]
-        #time.sleep(3)
-        #e.set()
 
 
-        lold=0
-        iResult=0
 
-        T.timeit("stuff")
+        ##############################
 
-        for LMIter in range(self.NIter):
-            while iResult < NJobs:
-                iAnt,G,P = result_queue.get()
-                self.G[iAnt][:]=G[:]
-                if P!=None:
-                    self.P[iAnt,:]=P[:]
-                iResult+=1
-                NDone+=1
-                pBAR.render(int(100* float(NDone-1) / (NTotJobs-1.)), '%4i/%i' % (NDone-1,NTotJobs-1.))
+        while True:
+            Res=self.setNextData()
+            if Res=="EndChunk": break
+            
+            t0,t1=self.VS.CurrentVisTimes_MS_Sec
+            self.SolsArray_t0[self.iCurrentSol]=t0
+            self.SolsArray_t1[self.iCurrentSol]=t1
+            tm=(t0+t1)/2.
+            self.SolsArray_tm[self.iCurrentSol]=tm
+
+
+
+            NJobs=len(ListAntSolve)
+            NTotJobs=NJobs*self.NIter
+
+            t0_min,t1_min=self.VS.CurrentVisTimes_SinceStart_Minutes
+            pBAR= ProgressBar('white', width=30, block='=', empty=' ',Title="Solving in [%.1f, %.1f] min"%(t0_min,t1_min), TitleSize=50)
+            #pBAR.disable()
+
+            NDone=0
+            pBAR.render(int(100* float(NDone+1-1) / (NTotJobs-1.)), '%4i/%i' % (NDone+1-1,NTotJobs-1.))
+
+
+
+            lold=0
             iResult=0
 
-            # pylab.clf()
-            # pylab.plot(np.abs(self.G.flatten()))
-            # if self.SolverType=="KAFCA":
-            #     sig=np.sqrt(np.array([np.diag(self.P[i]) for iAnt in range(self.VS.MS.na)]).flatten())
-            #     pylab.plot(np.abs(self.G.flatten())+sig,color="black",ls="--")
-            #     pylab.plot(np.abs(self.G.flatten())-sig,color="black",ls="--")
-            # pylab.ylim(0,2)
-            # pylab.draw()
-            # pylab.show(False)
-            # pylab.pause(0.1)
+            T.timeit("stuff")
 
-            for iAnt in ListAntSolve:
-                work_queue.put((iAnt))
+
+
+            for LMIter in range(self.NIter):
+
+                # for EKF
+                DoCalcEvP=False
+                if (self.CounterEvolveP())&(self.SolverType=="KAFCA")&(self.iCurrentSol>self.EvolvePStepStart):
+                    DoCalcEvP=True
+                elif (self.SolverType=="KAFCA")&(self.iCurrentSol<=self.EvolvePStepStart):
+                    DoCalcEvP=True
+                #########
+
+                for iAnt in ListAntSolve:
+                    work_queue.put((iAnt,DoCalcEvP,tm))
+ 
+                while iResult < NJobs:
+                    iAnt,G,P = result_queue.get()
+                    self.G[iAnt][:]=G[:]
+                    if P!=None:
+                        self.P[iAnt,:]=P[:]
+                    iResult+=1
+                    NDone+=1
+                    pBAR.render(int(100* float(NDone-1) / (NTotJobs-1.)), '%4i/%i' % (NDone-1,NTotJobs-1.))
+
+                iResult=0
+
+                # pylab.clf()
+                # pylab.plot(np.abs(self.G.flatten()))
+                # if self.SolverType=="KAFCA":
+                #     sig=np.sqrt(np.array([np.diag(self.P[i]) for iAnt in range(self.VS.MS.na)]).flatten())
+                #     pylab.plot(np.abs(self.G.flatten())+sig,color="black",ls="--")
+                #     pylab.plot(np.abs(self.G.flatten())-sig,color="black",ls="--")
+                # pylab.ylim(0,2)
+                # pylab.draw()
+                # pylab.show(False)
+                # pylab.pause(0.1)
+                
             
-            # # if ii/10.==1:
-            # #     pylab.plot(np.abs(self.G.flatten()))
-            # #     pylab.draw()
-            # #     ii=0
-            # # ii+=1
-        T.timeit("ekf")
+            self.SolsArray_done[self.iCurrentSol]=1
+            self.SolsArray_G[self.iCurrentSol][:]=self.G[:]
+            self.iCurrentSol+=1
+
 
 
  
@@ -494,33 +483,12 @@ class ClassWirtingerSolver():
             workerlist[ii].terminate()
             workerlist[ii].join()
 
-        # if self.PolMode=="Scalar":
-        #     self.SolsList[self.iCurrentSol].G[0][:,:,0,0]=self.G[:,:,0,0]
-        #     self.SolsList[self.iCurrentSol].G[0][:,:,1,1]=self.G[:,:,0,0]
-        # else:
-        #     self.SolsList[self.iCurrentSol].G[0][:]=self.G[:]
             
-        self.SolsArray_done[self.iCurrentSol]=1
-        self.SolsArray_G[self.iCurrentSol][:]=self.G[:]
-        self.iCurrentSol+=1
         return True
 
 
 
  
-    # results = []
-    # lold=len(results)
-    # while len(results) < len(jobs):
-    #     result = result_queue.get()
-    #     results.append(result)
-    #     if len(results)>lold:
-    #         lold=len(results)
-    #         pBAR.render(int(100* float(lold) / (len(ss)-1.)), '%i/%i' % (lold,len(ss)-1.))
-
-    # for ii in range(NCPU):
-    #     workerlist[ii].shutdown()
-    #     workerlist[ii].terminate()
-    #     workerlist[ii].join()
 
 
 
@@ -532,7 +500,7 @@ import multiprocessing
 class WorkerAntennaLM(multiprocessing.Process):
     def __init__(self,
                  work_queue,
-                 result_queue,SM,PolMode,Lambda,SolverType,rms,DoCalcEvP,ThisTime,**kwargs):
+                 result_queue,SM,PolMode,Lambda,SolverType,rms,**kwargs):
         multiprocessing.Process.__init__(self)
         self.work_queue = work_queue
         self.result_queue = result_queue
@@ -543,8 +511,8 @@ class WorkerAntennaLM(multiprocessing.Process):
         self.Lambda=Lambda
         self.SolverType=SolverType
         self.rms=rms
-        self.DoCalcEvP=DoCalcEvP
-        self.ThisTime=ThisTime
+        #self.DoCalcEvP=DoCalcEvP
+        #self.ThisTime=ThisTime
         #self.e,=kwargs["args"]
 
     def shutdown(self):
@@ -552,7 +520,7 @@ class WorkerAntennaLM(multiprocessing.Process):
     def run(self):
         while not self.kill_received:
             try:
-                iAnt = self.work_queue.get()
+                iAnt,DoCalcEvP,ThisTime = self.work_queue.get()
             except:
                 break
             #self.e.wait()
@@ -568,7 +536,7 @@ class WorkerAntennaLM(multiprocessing.Process):
                 x=JM.doLMStep(G)
                 self.result_queue.put([iAnt,x,None])
             elif self.SolverType=="KAFCA":
-                if self.DoCalcEvP:
+                if DoCalcEvP:
                     evP[iAnt]=JM.CalcMatrixEvolveCov(G,P,self.rms)
                         
                 # EM=ClassModelEvolution(iAnt,
@@ -577,12 +545,14 @@ class WorkerAntennaLM(multiprocessing.Process):
                 #                        DoEvolve=False,
                 #                        order=1,
                 #                        sigQ=0.01)
+
                 EM=ClassModelEvolution(iAnt,
                                        StepStart=3,
                                        WeigthScale=1,
                                        DoEvolve=False,
                                        BufferNPoints=3,
                                        sigQ=0.01)
+
                 # Ga,Pa=EM.Evolve0(G,P,self.ThisTime)
                 # if Ga!=None:
                 #     G[iAnt]=Ga
