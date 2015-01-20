@@ -197,6 +197,8 @@ class ClassVisServer():
         ###############################
         MS=self.MS
 
+        self.TimeMemChunkRange_sec=MS.times_all[0],MS.times_all[-1]
+
         times=MS.times_all
         data=MS.data
         A0=MS.A0

@@ -404,6 +404,14 @@ class ClassWirtingerSolver():
 
         ##############################
 
+        T0,T1=self.VS.TimeMemChunkRange_sec[0],self.VS.TimeMemChunkRange_sec[1]
+        DT=(T1-T0)/3600.
+        pBAR= ProgressBar('white', width=30, block='=', empty=' ',Title="Solving ", TitleSize=50)
+
+
+        pBAR.render(0, '%4i/%i' % (0,DT))
+        
+
         while True:
             Res=self.setNextData()
             if Res=="EndChunk": break
@@ -413,19 +421,13 @@ class ClassWirtingerSolver():
             self.SolsArray_t1[self.iCurrentSol]=t1
             tm=(t0+t1)/2.
             self.SolsArray_tm[self.iCurrentSol]=tm
-
+            
 
 
             NJobs=len(ListAntSolve)
             NTotJobs=NJobs*self.NIter
 
-            t0_min,t1_min=self.VS.CurrentVisTimes_SinceStart_Minutes
-            pBAR= ProgressBar('white', width=30, block='=', empty=' ',Title="Solving in [%.1f, %.1f] min"%(t0_min,t1_min), TitleSize=50)
-            #pBAR.disable()
-
-            NDone=0
-            pBAR.render(int(100* float(NDone+1-1) / (NTotJobs-1.)), '%4i/%i' % (NDone+1-1,NTotJobs-1.))
-
+        
 
 
             lold=0
@@ -454,10 +456,9 @@ class ClassWirtingerSolver():
                     if P!=None:
                         self.P[iAnt,:]=P[:]
                     iResult+=1
-                    NDone+=1
-                    pBAR.render(int(100* float(NDone-1) / (NTotJobs-1.)), '%4i/%i' % (NDone-1,NTotJobs-1.))
 
                 iResult=0
+
 
                 # pylab.clf()
                 # pylab.plot(np.abs(self.G.flatten()))
@@ -469,6 +470,12 @@ class ClassWirtingerSolver():
                 # pylab.draw()
                 # pylab.show(False)
                 # pylab.pause(0.1)
+
+
+
+            dt=float(t1-T0)/3600.
+            intPercent=int(100*  dt / DT)
+            pBAR.render(intPercent, '%4i/%i' % (float(t1-T0),DT))
                 
             
             self.SolsArray_done[self.iCurrentSol]=1
