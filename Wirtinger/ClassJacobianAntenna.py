@@ -290,6 +290,8 @@ class ClassJacobianAntenna():
 
         # estimate x
         zr=(z-Jx)
+        f=(self.DicoData["flags_flat"]==0)
+        self.rmsFromData=np.std(zr[f])
 
         # if self.iAnt==5:
         #     #self.DicoData["flags_flat"].fill(0)

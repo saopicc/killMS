@@ -116,6 +116,7 @@ class ClassWirtingerSolver():
         self.iCurrentSol=0
         self.SolverType=SolverType
         self.rms=None
+        self.rmsFromData=None
         if SolverType=="KAFCA":
            self.NIter=1
 
@@ -234,10 +235,13 @@ class ClassWirtingerSolver():
         #d=self.DATA["data"]
         #self.DATA["data"]+=(self.rms/np.sqrt(2.))*(np.random.randn(*d.shape)+1j*np.random.randn(*d.shape))
 
-        DATA["data"].shape
-        Dpol=DATA["data"][:,:,1:3]
-        Fpol=DATA["flags"][:,:,1:3]
-        self.rms=np.std(Dpol[Fpol==0])/np.sqrt(2.)
+        if self.rmsFromData!=None:
+            self.rms=self.rmsFromData
+        else:
+            DATA["data"].shape
+            Dpol=DATA["data"][:,:,1:3]
+            Fpol=DATA["flags"][:,:,1:3]
+            self.rms=np.std(Dpol[Fpol==0])/np.sqrt(2.)
         # stop
         #self.rms=np.max([self.rms,0.01])
         #self.rms=np.min(self.rmsPol)
@@ -453,7 +457,7 @@ class ClassWirtingerSolver():
                     work_queue.put((iAnt,DoCalcEvP,tm,self.rms))
  
                 while iResult < NJobs:
-                    iAnt,G,P = result_queue.get()
+                    iAnt,G,P,self.rmsFromData = result_queue.get()
                     self.G[iAnt][:]=G[:]
                     if P!=None:
                         self.P[iAnt,:]=P[:]
@@ -545,7 +549,7 @@ class WorkerAntennaLM(multiprocessing.Process):
 
             if self.SolverType=="CohJones":
                 x=JM.doLMStep(G)
-                self.result_queue.put([iAnt,x,None])
+                self.result_queue.put([iAnt,x,None,None])
             elif self.SolverType=="KAFCA":
                 if DoCalcEvP:
                     evP[iAnt]=JM.CalcMatrixEvolveCov(G,P,rms)
@@ -570,9 +574,10 @@ class WorkerAntennaLM(multiprocessing.Process):
                 #     P[iAnt]=Pa
 
                 x,Pout=JM.doEKFStep(G,P,evP,rms)
+                rmsFromData=JM.rmsFromData
                 Pa=EM.Evolve0(x,Pout)
 
                 if Pa!=None:
                     Pout=Pa
 
-                self.result_queue.put([iAnt,x,Pout])
+                self.result_queue.put([iAnt,x,Pout,rmsFromData])
