@@ -321,7 +321,7 @@ class ClassJacobianAntenna():
 
         T.timeit("ApplyK_vec")
         x0=Ga.flatten()
-        x4=x0+0.5*x3.flatten()
+        x4=x0+x3.flatten()
 
         # estimate P
         Pa_new1=np.dot(evPa,Pa)
