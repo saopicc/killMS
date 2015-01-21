@@ -435,7 +435,7 @@ class ClassJacobianAntenna():
         x1+=x0
         del(self.Jacob)
         T.timeit("rest")
-
+        print np.mean(x1),x1.size,ind.size
         return x1.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks))
 
                                         
