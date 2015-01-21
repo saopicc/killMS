@@ -458,6 +458,7 @@ class ClassWirtingerSolver():
                     DoCalcEvP=True
                 #########
 
+                Gold=self.G.copy()
                 for iAnt in ListAntSolve:
                     work_queue.put((iAnt,DoCalcEvP,tm,self.rms))
  
@@ -481,6 +482,7 @@ class ClassWirtingerSolver():
                     AntPlot=np.array(ListAntSolve)
                     pylab.clf()
                     pylab.plot(np.abs(self.G[AntPlot].flatten()))
+                    pylab.plot(np.abs(Gold[AntPlot].flatten()))
                     if self.SolverType=="KAFCA":
                         sig=np.sqrt(np.abs(np.array([np.diag(self.P[i]) for i in ListAntSolve]))).flatten()
                         pylab.plot(np.abs(self.G[AntPlot].flatten())+sig,color="black",ls="--")
