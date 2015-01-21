@@ -122,6 +122,7 @@ class ClassVisServer():
         A1=DATA["A1"]
         times=DATA["times"]
 
+
         for Field in self.DicoSelectOptions.keys():
             if Field=="UVRangeKm":
                 d0,d1=Field
@@ -137,6 +138,17 @@ class ClassVisServer():
                 A1=A1[ind]
                 uvw=uvw[ind]
                 times=times[ind]
+
+        for A in self.FlagAntNumber:
+            ind=np.where((A0!=A)&(A1!=A))[0]
+            flags=flags[ind]
+            data=data[ind]
+            A0=A0[ind]
+            A1=A1[ind]
+            uvw=uvw[ind]
+            times=times[ind]
+        
+            
 
         ind=np.where(A0!=A1)[0]
         flags=flags[ind,:,:]
@@ -215,7 +227,19 @@ class ClassVisServer():
         # data[flags]=1e6
 
 
-
+        MS=self.MS
+        self.ThresholdFlag=0.9
+        self.FlagAntNumber=[]
+        for A in range(MS.na):
+            ind=np.where((MS.A0==A)|(MS.A1==A))[0]
+            fA=MS.flag_all[ind].ravel()
+            nf=np.count_nonzero(fA)
+            Frac=nf/float(fA.size)
+            if Frac>self.ThresholdFlag:
+                print>>log, "I found that antenna %i has ~%4.1f%s of flagged data (more than %4.1f%s)"%(A,Frac*100,"%",self.ThresholdFlag*100,"%")
+                self.FlagAntNumber.append(A)
+                
+            
 
         #############################
         #############################

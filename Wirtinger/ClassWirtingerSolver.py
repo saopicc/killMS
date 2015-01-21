@@ -93,7 +93,8 @@ class ClassWirtingerSolver():
                  Lambda=1,NIter=20,
                  NCPU=6,
                  SolverType="CohJones",
-                 evP_StepStart=0, evP_Step=1):
+                 evP_StepStart=0, evP_Step=1,
+                 DoPlot=False):
         self.Lambda=Lambda
         self.NCPU=NCPU
         if BeamProps!=None:
@@ -101,7 +102,7 @@ class ClassWirtingerSolver():
             Mode,TimeMin=BeamProps
             LofarBeam=(Mode,TimeMin,rabeam,decbeam)
             VS.SetBeam(LofarBeam)
-
+        self.DoPlot=DoPlot
         MS=VS.MS
         SM.Calc_LM(MS.rac,MS.decc)
         self.SM=SM
@@ -254,107 +255,94 @@ class ClassWirtingerSolver():
 
     def doNextTimeSolve(self):
 
-        #self.AppendEmptySol()
-        t0,t1=self.VS.CurrentVisTimes_MS_Sec
-        self.SolsArray_t0[self.iCurrentSol]=t0
-        self.SolsArray_t1[self.iCurrentSol]=t1
-        tm=(t0+t1)/2.
-        self.SolsArray_tm[self.iCurrentSol]=tm
 
 
         if self.G==None:
             self.InitSol()
 
-        ListAntSolve=range(self.VS.MS.na)
+        ListAntSolve=[i for i in range(self.VS.MS.na) if not(i in self.VS.FlagAntNumber)]
         self.DicoJM={}
 
 
-        for iAnt in ListAntSolve:
-            JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Lambda=self.Lambda,Precision="D")
-            #JM.setDATA(DATA)
-            JM.setDATA_Shared()
-            self.DicoJM[iAnt]=JM
 
 
+        while True:
+            Res=self.setNextData()
+            if Res=="EndChunk": break
+            
+            t0,t1=self.VS.CurrentVisTimes_MS_Sec
+            self.SolsArray_t0[self.iCurrentSol]=t0
+            self.SolsArray_t1[self.iCurrentSol]=t1
+            tm=(t0+t1)/2.
+            self.SolsArray_tm[self.iCurrentSol]=tm
+          
+            for iAnt in ListAntSolve:
+                JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Lambda=self.Lambda,Precision="D")
+                JM.setDATA_Shared()
+                self.DicoJM[iAnt]=JM
+
+
+            if (self.CounterEvolveP())&(self.SolverType=="KAFCA")&(self.iCurrentSol>self.EvolvePStepStart):
+                for iAnt in self.DicoJM.keys():
+                    JM=self.DicoJM[iAnt]
+                    self.evP[iAnt]=JM.CalcMatrixEvolveCov(self.G,self.P,self.rms)
+
+            elif (self.SolverType=="KAFCA")&(self.iCurrentSol<=self.EvolvePStepStart):
+                for iAnt in self.DicoJM.keys():
+                    JM=self.DicoJM[iAnt]
+                    self.evP[iAnt]=JM.CalcMatrixEvolveCov(self.G,self.P,self.rms)
             
 
-
-        if (self.CounterEvolveP())&(self.SolverType=="KAFCA")&(self.iCurrentSol>self.EvolvePStepStart):
-            for iAnt in self.DicoJM.keys():
-                JM=self.DicoJM[iAnt]
-                self.evP[iAnt]=JM.CalcMatrixEvolveCov(self.G,self.P,self.rms)
-
-        elif (self.SolverType=="KAFCA")&(self.iCurrentSol<=self.EvolvePStepStart):
-            for iAnt in self.DicoJM.keys():
-                JM=self.DicoJM[iAnt]
-                self.evP[iAnt]=JM.CalcMatrixEvolveCov(self.G,self.P,self.rms)
-            
-
-        for i in range(self.NIter):
-            Gnew=self.G.copy()
-            if self.SolverType=="KAFCA":
-                Pnew=self.P.copy()
-            for iAnt in self.DicoJM.keys():
-                JM=self.DicoJM[iAnt]
-                if self.SolverType=="CohJones":
-                    x=JM.doLMStep(self.G)
-
+            for i in range(self.NIter):
+                Gnew=self.G.copy()
                 if self.SolverType=="KAFCA":
-                    EM=ClassModelEvolution(iAnt,
-                                           StepStart=3,
-                                           WeigthScale=1,
-                                           DoEvolve=False,
-                                           BufferNPoints=3,
-                                           sigQ=0.01)
+                    Pnew=self.P.copy()
+                for iAnt in self.DicoJM.keys():
+                    JM=self.DicoJM[iAnt]
+                    if self.SolverType=="CohJones":
+                        x=JM.doLMStep(self.G)
 
-                    x,P=JM.doEKFStep(self.G,self.P,self.evP,self.rms)
+                    if self.SolverType=="KAFCA":
+                        EM=ClassModelEvolution(iAnt,
+                                               StepStart=3,
+                                               WeigthScale=1,
+                                               DoEvolve=False,
+                                               BufferNPoints=3,
+                                               sigQ=0.01)
 
-                    Pa=EM.Evolve0(x,P)
-                    if Pa!=None:
-                        P=Pa
-                        # self.G[iAnt]=Ga
-                        # self.P[iAnt]=Pa
+                        x,P=JM.doEKFStep(self.G,self.P,self.evP,self.rms)
+
+                        Pa=EM.Evolve0(x,P)
+                        if Pa!=None:
+                            P=Pa
 
 
-                    Pnew[iAnt]=P
+                        Pnew[iAnt]=P
 
-                Gnew[iAnt]=x
+                    Gnew[iAnt]=x
                 
-            pylab.figure(1)
-            pylab.clf()
-            pylab.plot(np.abs(Gnew.flatten()))
-            if self.SolverType=="KAFCA":
-                sig=np.sqrt(np.array([np.diag(Pnew[i]) for iAnt in range(self.VS.MS.na)]).flatten())
-                pylab.plot(np.abs(Gnew.flatten())+sig,color="black",ls="--")
-                pylab.plot(np.abs(Gnew.flatten())-sig,color="black",ls="--")
-                self.P[:]=Pnew[:]
-            pylab.plot(np.abs(self.G.flatten()))
-            pylab.ylim(0,2)
-            pylab.draw()
-            pylab.show(False)
-            self.G[:]=Gnew[:]
+
+                pylab.figure(1)
+                pylab.clf()
+                pylab.plot(np.abs(Gnew.flatten()))
+                if self.SolverType=="KAFCA":
+                    sig=np.sqrt(np.array([np.diag(Pnew[i]) for iAnt in range(self.VS.MS.na)]).flatten())
+                    pylab.plot(np.abs(Gnew.flatten())+sig,color="black",ls="--")
+                    pylab.plot(np.abs(Gnew.flatten())-sig,color="black",ls="--")
+                    self.P[:]=Pnew[:]
+                pylab.plot(np.abs(self.G.flatten()))
+                #pylab.ylim(0,2)
+                pylab.draw()
+                pylab.show(False)
+                self.G[:]=Gnew[:]
 
 
 
-        # if self.PolMode=="Scalar":
-        #     self.Sols.G[self.iCurrentSol][0][:,:,0,0]=self.G[:,:,0,0]
-        #     self.Sols.G[self.iCurrentSol][:,:,1,1]=self.G[:,:,0,0]
-        # else:
-        #     self.Sols.G[self.iCurrentSol][:]=self.G[:]
-
-        # if self.PolMode=="Scalar":
-        #     self.SolsArray_done[self.iCurrentSol]=1
-        #     self.SolsArray_G[self.iCurrentSol][:,:,0,0]=self.G[:,:,0,0]
-        #     self.SolsArray_G[self.iCurrentSol][:,:,1,1]=self.G[:,:,0,0]
-        # else:
-        #     self.SolsArray_done[self.iCurrentSol]=1
-        #     self.SolsArray_G[self.iCurrentSol][:]=self.G[:]
-
-        self.SolsArray_done[self.iCurrentSol]=1
-        self.SolsArray_G[self.iCurrentSol][:]=self.G[:]
+            self.SolsArray_done[self.iCurrentSol]=1
+            self.SolsArray_G[self.iCurrentSol][:]=self.G[:]
 
             
-        self.iCurrentSol+=1
+            self.iCurrentSol+=1
         return True
 
 
@@ -372,7 +360,7 @@ class ClassWirtingerSolver():
 
 
 
-        ListAntSolve=range(self.VS.MS.na)
+        ListAntSolve=[i for i in range(self.VS.MS.na) if not(i in self.VS.FlagAntNumber)]
 
         work_queue = multiprocessing.Queue()
         result_queue = multiprocessing.Queue()
@@ -460,16 +448,17 @@ class ClassWirtingerSolver():
                 iResult=0
 
 
-                # pylab.clf()
-                # pylab.plot(np.abs(self.G.flatten()))
-                # if self.SolverType=="KAFCA":
-                #     sig=np.sqrt(np.array([np.diag(self.P[i]) for iAnt in range(self.VS.MS.na)]).flatten())
-                #     pylab.plot(np.abs(self.G.flatten())+sig,color="black",ls="--")
-                #     pylab.plot(np.abs(self.G.flatten())-sig,color="black",ls="--")
-                # pylab.ylim(0,2)
-                # pylab.draw()
-                # pylab.show(False)
-                # pylab.pause(0.1)
+                if self.DoPlot:
+                    pylab.clf()
+                    pylab.plot(np.abs(self.G.flatten()))
+                    if self.SolverType=="KAFCA":
+                        sig=np.sqrt(np.array([np.diag(self.P[i]) for iAnt in range(self.VS.MS.na)]).flatten())
+                        pylab.plot(np.abs(self.G.flatten())+sig,color="black",ls="--")
+                        pylab.plot(np.abs(self.G.flatten())-sig,color="black",ls="--")
+                    #pylab.ylim(0,2)
+                    pylab.draw()
+                    pylab.show(False)
+                    pylab.pause(0.1)
 
 
 

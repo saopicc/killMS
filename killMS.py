@@ -68,6 +68,7 @@ def read_options():
     
     group = optparse.OptionGroup(opt, "* Solution options")
     group.add_option('--SubOnly',help=' Only substract the skymodel. Default is %default',default="0")
+    group.add_option('--DoPlot',type=int,help=' Plot the solutions, for debugging. Default is %default',default=0)
     group.add_option('--ApplyCal',help=' Apply direction averaged gains to residual data in the mentioned direction. \
     If ApplyCal=-1 takes the mean gain over directions. Default is %default',default="No")
     opt.add_option_group(group)
@@ -77,9 +78,13 @@ def read_options():
     group.add_option('--NCPU',type="int",help=' Number of cores to use. Default is %default ',default=NCPU_default)
     group.add_option('--PolMode',help=' Polarisation mode (Scalar/HalfFull). Default is %default',default="Scalar")
     group.add_option('--dt',type="float",help='Time interval for a solution [minutes]. Default is %default. ',default=30)
-    group.add_option('--NIter',type="int",help=' Number of iterations for the solve. Default is %default ',default=20)
     opt.add_option_group(group)
     
+    group = optparse.OptionGroup(opt, "* CohJones additional options")
+    group.add_option('--NIter',type="int",help=' Number of iterations for the solve. Default is %default ',default=20)
+    group.add_option('--Lambda',type="float",help=' Lambda parameter. Default is %default ',default=1)
+    opt.add_option_group(group)
+
     group = optparse.OptionGroup(opt, "* KAFCA additional options")
     group.add_option('--InitLM',type="int",help='Initialise Kalman filter with Levenberg Maquardt. Default is %default',default=1)
     group.add_option('--InitLM_dt',type="float",help='Time interval in minutes. Default is %default',default=5)
@@ -92,7 +97,7 @@ def read_options():
     
     
     options, arguments = opt.parse_args()
-    
+    options.DoPlot=(options.DoPlot==1)
     f = open("last_killMS.obj","wb")
     pickle.dump(options,f)
     
@@ -191,7 +196,9 @@ def main(options=None):
                                 BeamProps=BeamProps,
                                 NIter=options.NIter,NCPU=NCPU,
                                 SolverType=options.SolverType,
-                                evP_Step=options.evP_Step,evP_StepStart=options.evP_StepStart)
+                                evP_Step=options.evP_Step,evP_StepStart=options.evP_StepStart,
+                                DoPlot=options.DoPlot,
+                                Lambda=options.Lambda)
     Solver.InitSol(TestMode=False)
     PM=ClassPredict()
     SM=Solver.SM
@@ -224,6 +231,7 @@ def main(options=None):
             break
 
         Solver.doNextTimeSolve_Parallel()
+        #Solver.doNextTimeSolve()
         # substract
         ind=np.where(SM.SourceCat.kill==1)[0]
         
