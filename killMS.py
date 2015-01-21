@@ -267,7 +267,7 @@ def main(options=None):
         Solver.InitSol(G=SolverInit.G,TestMode=False)
         Solver.InitCovariance(FromG=True,sigP=options.CovP,sigQ=options.CovQ)
         rms=TrueMeanRMSAnt*gscale
-        Solver.SetRmsFromExt(rms)
+        Solver.SetRmsFromExt(rms/5.)
         print rms
 
 
