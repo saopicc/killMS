@@ -371,6 +371,15 @@ class ClassJacobianAntenna():
         T.timeit("PrepareJHJ_L")
 
         Ga=self.GiveSubVecGainAnt(Gains)
+
+
+        f=(self.DicoData["flags_flat"]==0)
+        ind=np.where(f)[0]
+        Ga=self.GiveSubVecGainAnt(Gains)
+        if ind.size==0:
+            return Ga.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks))
+
+
         T.timeit("GiveSubVecGainAnt")
         Jx=self.J_x(Ga)
         T.timeit("Jx")
