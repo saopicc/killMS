@@ -154,7 +154,7 @@ class ClassWirtingerSolver():
                 G=np.zeros((na,nd,2,2),np.complex128)
                 G[:,:,0,0]=1
                 G[:,:,1,1]=1
-
+            self.HasFirstGuessed=False
         
         
         self.G=G
@@ -425,9 +425,14 @@ class ClassWirtingerSolver():
 
             T.timeit("stuff")
 
+            if not(self.HasFirstGuessed):
+                NIter=30
+                self.HasFirstGuessed=True
+            else:
+                NIter=self.NIter
+            
 
-
-            for LMIter in range(self.NIter):
+            for LMIter in range(NIter):
 
                 # for EKF
                 DoCalcEvP=False
