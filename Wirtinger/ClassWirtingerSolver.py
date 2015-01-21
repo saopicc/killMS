@@ -235,10 +235,10 @@ class ClassWirtingerSolver():
         #d=self.DATA["data"]
         #self.DATA["data"]+=(self.rms/np.sqrt(2.))*(np.random.randn(*d.shape)+1j*np.random.randn(*d.shape))
 
+        self.rms=-1
         if self.rmsFromData!=None:
             self.rms=self.rmsFromData
         else:
-            DATA["data"].shape
             Dpol=DATA["data"][:,:,1:3]
             Fpol=DATA["flags"][:,:,1:3]
             self.rms=np.std(Dpol[Fpol==0])/np.sqrt(2.)
@@ -246,8 +246,7 @@ class ClassWirtingerSolver():
         #self.rms=np.max([self.rms,0.01])
         #self.rms=np.min(self.rmsPol)
 
-
-        #print>>log, "Estimated rms = %15.7f mJy"%(self.rms*1000)
+#        print>>log, "Estimated rms = %15.7f mJy"%(self.rms*1000)
         
         #np.savez("EKF.npz",data=self.DATA["data"],G=self.G)
         #stop
@@ -409,7 +408,7 @@ class ClassWirtingerSolver():
 
         pBAR= ProgressBar('white', width=50, block='=', empty=' ',Title="Solving ", HeaderSize=10,TitleSize=13)
         if not(self.DoPBar): pBAR.disable()
-
+        pBAR.disable()
         pBAR.render(0, '%4i/%i' % (0,nt))
         NDone=0
         
@@ -456,13 +455,19 @@ class ClassWirtingerSolver():
                 for iAnt in ListAntSolve:
                     work_queue.put((iAnt,DoCalcEvP,tm,self.rms))
  
+                rmsFromDataList=[]
                 while iResult < NJobs:
-                    iAnt,G,P,self.rmsFromData = result_queue.get()
+                    iAnt,G,P,rmsFromData = result_queue.get()
+                    if rmsFromData!=None:
+                        rmsFromDataList.append(rmsFromData)
+                    
                     self.G[iAnt][:]=G[:]
                     if P!=None:
                         self.P[iAnt,:]=P[:]
                     iResult+=1
 
+                if len(rmsFromDataList)>0:
+                    self.rmsFromData=np.min(rmsFromDataList)
                 iResult=0
 
 

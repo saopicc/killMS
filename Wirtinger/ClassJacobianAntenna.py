@@ -270,19 +270,24 @@ class ClassJacobianAntenna():
             T.timeit("CalcKernelMatrix")
         z=self.DicoData["data_flat"]#self.GiveDataVec()
 
-
+        f=(self.DicoData["flags_flat"]==0)
+        ind=np.where(f)[0]
+        Pa=P[self.iAnt]
+        Ga=self.GiveSubVecGainAnt(Gains)
+        self.rmsFromData=None
+        if ind.size==0:
+            return Ga.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks)),Pa
+        
         self.CalcJacobianAntenna(Gains)
         T.timeit("Jacob")
 
         
 
-        Ga=self.GiveSubVecGainAnt(Gains)
         
         Jx=self.J_x(Ga)
         T.timeit("J_x")
 
         
-        Pa=P[self.iAnt]
         evPa=evP[self.iAnt]
 
         self.PrepareJHJ_EKF(Pa,rms)
@@ -290,9 +295,13 @@ class ClassJacobianAntenna():
 
         # estimate x
         zr=(z-Jx)
-        f=(self.DicoData["flags_flat"]==0)
+        
         self.rmsFromData=np.std(zr[f])
-
+        # if np.isnan(self.rmsFromData):
+        #     print zr
+        #     print zr[f]
+        #     print self.rmsFromData
+        #     stop
         # if self.iAnt==5:
         #     #self.DicoData["flags_flat"].fill(0)
         #     f=(self.DicoData["flags_flat"]==0)

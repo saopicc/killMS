@@ -248,8 +248,8 @@ class ClassVisServer():
         #############################
         #############################
 
-
-
+        ind=np.where(np.isnan(data))
+        flags[ind]=1
         
         # ## debug
         # ind=np.where((A0==0)&(A1==1))[0]
