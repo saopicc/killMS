@@ -220,24 +220,28 @@ class ClassVisServer():
         freqs=MS.ChanFreq.flatten()
         nbl=MS.nbl
 
-        # flags.fill(0)
+        #flags.fill(0)
 
-        # f=(np.random.rand(*flags.shape)>0.5)
-        # flags[f]=1
-        # data[flags]=1e6
+        f=(np.random.rand(*flags.shape)>0.5)
+        flags[f]=1
+        data[flags]=1e6
+
+        # iAFlag=12
+        # ind=np.where((A0==iAFlag)|(A1==iAFlag))[0]
+        # flags[ind,:,:]=1
 
 
-        MS=self.MS
-        self.ThresholdFlag=0.9
+        # MS=self.MS
+        # self.ThresholdFlag=0.9
         self.FlagAntNumber=[]
-        for A in range(MS.na):
-            ind=np.where((MS.A0==A)|(MS.A1==A))[0]
-            fA=MS.flag_all[ind].ravel()
-            nf=np.count_nonzero(fA)
-            Frac=nf/float(fA.size)
-            if Frac>self.ThresholdFlag:
-                print>>log, "I found that antenna %i has ~%4.1f%s of flagged data (more than %4.1f%s)"%(A,Frac*100,"%",self.ThresholdFlag*100,"%")
-                self.FlagAntNumber.append(A)
+        # for A in range(MS.na):
+        #     ind=np.where((MS.A0==A)|(MS.A1==A))[0]
+        #     fA=MS.flag_all[ind].ravel()
+        #     nf=np.count_nonzero(fA)
+        #     Frac=nf/float(fA.size)
+        #     if Frac>self.ThresholdFlag:
+        #         print>>log, "I found that antenna %i has ~%4.1f%s of flagged data (more than %4.1f%s)"%(A,Frac*100,"%",self.ThresholdFlag*100,"%")
+        #         self.FlagAntNumber.append(A)
                 
             
 

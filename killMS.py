@@ -230,8 +230,8 @@ def main(options=None):
         if Load=="EndOfObservation":
             break
 
-        Solver.doNextTimeSolve_Parallel()
-        # Solver.doNextTimeSolve()
+        # Solver.doNextTimeSolve_Parallel()
+        Solver.doNextTimeSolve()
         # substract
         ind=np.where(SM.SourceCat.kill==1)[0]
         

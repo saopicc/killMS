@@ -158,10 +158,19 @@ class ClassJacobianAntenna():
 
     def PrepareJHJ_EKF(self,Pa_in,rms):
         self.L_JHJinv=[]
+        pylab.figure(1)
+        pylab.clf()
+        incr=1
+        # pylab.imshow(np.abs(self.JHJ),interpolation="nearest")
+        # pylab.draw()
+        # pylab.show(False)
+        # pylab.pause(0.1)
+
         for ipol in range(self.NJacobBlocks):
             PaPol=self.GivePaPol(Pa_in,ipol)
             Pinv=ModLinAlg.invSVD(PaPol)
-            JHJ=self.JHJ*(1./rms**2)
+            
+            JHJ=self.L_JHJ[ipol]*(1./rms**2)
             JHJ+=Pinv
             JHJinv=ModLinAlg.invSVD(JHJ)
             self.L_JHJinv.append(JHJinv)
@@ -170,8 +179,9 @@ class ClassJacobianAntenna():
 
     def PrepareJHJ_LM(self):
         self.L_JHJinv=[]
-        JHJinv=ModLinAlg.invSVD(self.JHJ)
         for ipol in range(self.NJacobBlocks):
+            JHJinv=ModLinAlg.invSVD(self.L_JHJ[ipol])
+            #JHJinv=ModLinAlg.invSVD(self.JHJ)
             self.L_JHJinv.append(JHJinv)
 
     def ApplyK_vec(self,zr,rms,Pa):
@@ -212,6 +222,25 @@ class ClassJacobianAntenna():
 
         x1 = self.JHJinv_x(JH_z)
         z1=self.J_x(x1)/rms**2
+
+        # if self.iAnt==5:
+        #     pylab.figure(1)
+        #     pylab.clf()
+        #     incr=1
+        #     f=(self.DicoData["flags_flat"]==0)
+        #     pylab.subplot(2,1,1)
+        #     pylab.plot((z1[f].flatten())[::incr].real)
+        #     pylab.plot((zr[f].flatten())[::incr].real)
+        #     pylab.plot((z1-zr)[f].flatten()[::incr].real)
+        #     pylab.subplot(2,1,2)
+        #     pylab.plot((z1[f].flatten())[::incr].imag)
+        #     pylab.plot((zr[f].flatten())[::incr].imag)
+        #     pylab.plot((z1-zr)[f].flatten()[::incr].imag)
+        #     pylab.draw()
+        #     pylab.show(False)
+        #     pylab.pause(0.1)
+
+
         zr-=z1
         x2=self.JH_z(zr)
         x3=[]
@@ -261,8 +290,24 @@ class ClassJacobianAntenna():
 
         # estimate x
         zr=(z-Jx)
+
+        if self.iAnt==5:
+            #self.DicoData["flags_flat"].fill(0)
+            f=(self.DicoData["flags_flat"]==0)
+            pylab.figure(2)
+            pylab.clf()
+            pylab.plot((z[f]))#[::11])#[::11])
+            pylab.plot((Jx[f]))#[::11])#[::11])
+            pylab.plot(zr[f])#[::11])#[::11])
+            pylab.draw()
+            pylab.show(False)
+            pylab.pause(0.1)
+
+
+
         T.timeit("zr")
         x3=self.ApplyK_vec(zr,rms,Pa)
+        print x3
         T.timeit("ApplyK_vec")
         x0=Ga.flatten()
         x4=x0+x3.flatten()
@@ -270,8 +315,6 @@ class ClassJacobianAntenna():
         # estimate P
         Pa_new1=np.dot(evPa,Pa)
         ##################
-
-        
         # for iPar in range(Pa.shape[0]):
         #     J_Px=self.J_x(Pa[iPar,:])
         #     xP=self.ApplyK_vec(J_Px,rms,Pa)
@@ -337,16 +380,18 @@ class ClassJacobianAntenna():
         
         
         
-        # if self.iAnt==5:
+        # if True:#self.iAnt==5:
         #     f=(self.DicoData["flags_flat"]==0)
+            
         #     pylab.figure(2)
         #     pylab.clf()
-        #     pylab.plot((z[f])[::11])#[::11])
-        #     pylab.plot((Jx[f])[::11])#[::11])
-        #     pylab.plot(zr[f][::11])#[::11])
+        #     pylab.plot((z[f]))#[::11])#[::11])
+        #     pylab.plot((Jx[f]))#[::11])#[::11])
+        #     pylab.plot(zr[f])#[::11])#[::11])
         #     pylab.draw()
         #     pylab.show(False)
         #     pylab.pause(0.1)
+        #     stop
 
         # # pylab.figure(2)
         # # pylab.clf()
@@ -472,7 +517,14 @@ class ClassJacobianAntenna():
         Jacob.shape=(n4vis*self.NJacobBlocks,NDir*self.NJacobBlocks)
         self.Jacob=Jacob
         J=Jacob
-        self.JHJ=np.dot(J.T.conj(),J)
+
+#        self.JHJ=np.dot(J.T.conj(),J)
+
+        self.L_JHJ=[]
+        for polIndex in range(self.NJacobBlocks):
+            flags=self.DicoData["flags_flat"][polIndex]
+            J=Jacob[flags==0]
+            self.L_JHJ.append(np.dot(J.T.conj(),J))
         # self.JHJinv=np.linalg.inv(self.JHJ)
         # self.JHJinv=np.diag(np.diag(self.JHJinv))
 

@@ -164,7 +164,7 @@ class ClassWirtingerSolver():
         self.G=G
         #self.G*=0.001
         _,_,npol,_=self.G.shape
-        #self.G+=np.random.randn(*self.G.shape)*0.1#sigP
+        self.G+=np.random.randn(*self.G.shape)*0.1#sigP
 
         NSols=1.5*int(self.VS.MS.DTh/(self.VS.TVisSizeMin/60.))
         
@@ -211,10 +211,6 @@ class ClassWirtingerSolver():
             #P=(sigP**2)*np.array([np.complex128(np.diag(np.abs(self.G[iAnt]).flatten())) for iAnt in range(na)])
             #Q=(sigQ**2)*np.array([np.complex128(np.diag(np.abs(self.G[iAnt]).flatten())) for iAnt in range(na)])
 
-        # TestMode=False
-        # if TestMode:
-        #     self.G+=np.random.randn(*self.G.shape)*sigP
-        # self.G+=np.random.randn(*self.G.shape)*sigP
 
         self.P=P
         self.Q=Q
@@ -241,13 +237,13 @@ class ClassWirtingerSolver():
         DATA["data"].shape
         Dpol=DATA["data"][:,:,1:3]
         Fpol=DATA["flags"][:,:,1:3]
-        self.rms=np.std(Dpol[Fpol==0])
+        self.rms=np.std(Dpol[Fpol==0])/np.sqrt(2.)
         # stop
         #self.rms=np.max([self.rms,0.01])
         #self.rms=np.min(self.rmsPol)
 
-        rms=self.rms*1000
-        print>>log, "Estimated rms = %15.7f mJy"%(rms)
+
+        print>>log, "Estimated rms = %15.7f mJy"%(self.rms*1000)
 
         #np.savez("EKF.npz",data=self.DATA["data"],G=self.G)
         #stop
@@ -284,7 +280,7 @@ class ClassWirtingerSolver():
             self.SolsArray_t1[self.iCurrentSol]=t1
             tm=(t0+t1)/2.
             self.SolsArray_tm[self.iCurrentSol]=tm
-          
+
             for iAnt in ListAntSolve:
                 JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Lambda=self.Lambda,Precision="D")
                 JM.setDATA_Shared()
@@ -309,6 +305,7 @@ class ClassWirtingerSolver():
                 for iAnt in self.DicoJM.keys():
                     JM=self.DicoJM[iAnt]
                     if self.SolverType=="CohJones":
+
                         x=JM.doLMStep(self.G)
 
                     if self.SolverType=="KAFCA":
@@ -340,7 +337,7 @@ class ClassWirtingerSolver():
                     pylab.plot(np.abs(Gnew.flatten())-sig,color="black",ls="--")
                     self.P[:]=Pnew[:]
                 pylab.plot(np.abs(self.G.flatten()))
-                #pylab.ylim(0,2)
+                pylab.ylim(0,2)
                 pylab.draw()
                 pylab.show(False)
                 self.G[:]=Gnew[:]
