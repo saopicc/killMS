@@ -215,6 +215,7 @@ def main(options=None):
         SolverInit=ClassWirtingerSolver(VSInit,SM,PolMode=options.PolMode,
                                         NIter=options.NIter,NCPU=NCPU,
                                         SolverType="CohJones",
+                                        #DoPlot=options.DoPlot,
                                         DoPBar=False)
         SolverInit.InitSol(TestMode=False)
         SolverInit.doNextTimeSolve_Parallel(OnlyOne=True)
@@ -230,8 +231,8 @@ def main(options=None):
         if Load=="EndOfObservation":
             break
 
-        # Solver.doNextTimeSolve_Parallel()
-        Solver.doNextTimeSolve()
+        Solver.doNextTimeSolve_Parallel()
+        #Solver.doNextTimeSolve()
         # substract
         ind=np.where(SM.SourceCat.kill==1)[0]
         

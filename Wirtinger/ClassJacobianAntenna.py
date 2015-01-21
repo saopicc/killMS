@@ -291,26 +291,26 @@ class ClassJacobianAntenna():
         # estimate x
         zr=(z-Jx)
 
-        if self.iAnt==5:
-            #self.DicoData["flags_flat"].fill(0)
-            f=(self.DicoData["flags_flat"]==0)
-            pylab.figure(2)
-            pylab.clf()
-            pylab.plot((z[f]))#[::11])#[::11])
-            pylab.plot((Jx[f]))#[::11])#[::11])
-            pylab.plot(zr[f])#[::11])#[::11])
-            pylab.draw()
-            pylab.show(False)
-            pylab.pause(0.1)
+        # if self.iAnt==5:
+        #     #self.DicoData["flags_flat"].fill(0)
+        #     f=(self.DicoData["flags_flat"]==0)
+        #     pylab.figure(2)
+        #     pylab.clf()
+        #     pylab.plot((z[f]))#[::11])#[::11])
+        #     pylab.plot((Jx[f]))#[::11])#[::11])
+        #     pylab.plot(zr[f])#[::11])#[::11])
+        #     pylab.draw()
+        #     pylab.show(False)
+        #     pylab.pause(0.1)
 
 
 
         T.timeit("zr")
         x3=self.ApplyK_vec(zr,rms,Pa)
-        print x3
+
         T.timeit("ApplyK_vec")
         x0=Ga.flatten()
-        x4=x0+x3.flatten()
+        x4=x0+0.5*x3.flatten()
 
         # estimate P
         Pa_new1=np.dot(evPa,Pa)

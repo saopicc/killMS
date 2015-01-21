@@ -164,8 +164,8 @@ class ClassWirtingerSolver():
         self.G=G
         #self.G*=0.001
         _,_,npol,_=self.G.shape
-        self.G+=np.random.randn(*self.G.shape)*0.1#sigP
-
+        #self.G+=np.random.randn(*self.G.shape)*0.1#sigP
+        
         NSols=1.5*int(self.VS.MS.DTh/(self.VS.TVisSizeMin/60.))
         
         
@@ -206,8 +206,8 @@ class ClassWirtingerSolver():
                 Q=(sigQ**2)*np.array([np.diag(np.ones((nd*2*2),np.complex128)) for iAnt in range(na)])
         else:
 
-            P=(sigP**2)*np.array([np.max(np.mean(self.G[iAnt]))**2*np.diag(np.ones((nd*npol*npol),np.complex128)) for iAnt in range(na)])
-            Q=(sigQ**2)*np.array([np.max(np.mean(self.G[iAnt]))**2*np.diag(np.ones((nd*npol*npol),np.complex128)) for iAnt in range(na)])
+            P=(sigP**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*np.diag(np.ones((nd*npol*npol),np.complex128)) for iAnt in range(na)])
+            Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*np.diag(np.ones((nd*npol*npol),np.complex128)) for iAnt in range(na)])
             #P=(sigP**2)*np.array([np.complex128(np.diag(np.abs(self.G[iAnt]).flatten())) for iAnt in range(na)])
             #Q=(sigQ**2)*np.array([np.complex128(np.diag(np.abs(self.G[iAnt]).flatten())) for iAnt in range(na)])
 
@@ -243,8 +243,8 @@ class ClassWirtingerSolver():
         #self.rms=np.min(self.rmsPol)
 
 
-        print>>log, "Estimated rms = %15.7f mJy"%(self.rms*1000)
-
+        #print>>log, "Estimated rms = %15.7f mJy"%(self.rms*1000)
+        
         #np.savez("EKF.npz",data=self.DATA["data"],G=self.G)
         #stop
         
@@ -405,7 +405,7 @@ class ClassWirtingerSolver():
 
         pBAR= ProgressBar('white', width=50, block='=', empty=' ',Title="Solving ", HeaderSize=10,TitleSize=13)
         if not(self.DoPBar): pBAR.disable()
-        pBAR.disable()
+
         pBAR.render(0, '%4i/%i' % (0,nt))
         NDone=0
         
@@ -432,12 +432,12 @@ class ClassWirtingerSolver():
 
             T.timeit("stuff")
 
-            if not(self.HasFirstGuessed):
-                NIter=30
+            if (not(self.HasFirstGuessed))&(self.SolverType=="CohJones"):
+                NIter=15
                 self.HasFirstGuessed=True
             else:
                 NIter=self.NIter
-            
+
 
             for LMIter in range(NIter):
 
@@ -463,12 +463,13 @@ class ClassWirtingerSolver():
 
 
                 if self.DoPlot:
+                    AntPlot=np.array(ListAntSolve)
                     pylab.clf()
-                    pylab.plot(np.abs(self.G.flatten()))
+                    pylab.plot(np.abs(self.G[AntPlot].flatten()))
                     if self.SolverType=="KAFCA":
-                        sig=np.sqrt(np.array([np.diag(self.P[i]) for iAnt in range(self.VS.MS.na)]).flatten())
-                        pylab.plot(np.abs(self.G.flatten())+sig,color="black",ls="--")
-                        pylab.plot(np.abs(self.G.flatten())-sig,color="black",ls="--")
+                        sig=np.sqrt(np.abs(np.array([np.diag(self.P[i]) for i in ListAntSolve]))).flatten()
+                        pylab.plot(np.abs(self.G[AntPlot].flatten())+sig,color="black",ls="--")
+                        pylab.plot(np.abs(self.G[AntPlot].flatten())-sig,color="black",ls="--")
                     #pylab.ylim(0,2)
                     pylab.draw()
                     pylab.show(False)

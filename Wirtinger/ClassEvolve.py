@@ -54,17 +54,17 @@ class ClassModelEvolution():
             g_t=G[:,iPar]
             ThisG=Gin.ravel()[iPar]
             #ratio=1.+np.std(g_t)
-            ratio=1.+(ThisG-np.mean(g_t))
+            ratio=(ThisG-np.mean(g_t))
             F[iPar]=ratio#/np.sqrt(2.)
 
 
         
         PaOut=np.zeros_like(Pa)
         # Q=np.diag(np.ones((PaOut.shape[0],)))*(self.sigQ**2)
-        
+
+
         PaOut=F.reshape((NPars,1))*Pa*F.reshape((1,NPars)).conj()+Q
         # print F
-        # print Pa
         # print Q
         # stop
         return PaOut
