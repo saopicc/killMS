@@ -123,7 +123,7 @@ class ClassWirtingerSolver():
         self.EvolvePStepStart,EvolvePStep=evP_StepStart,evP_Step
         self.CounterEvolveP=Counter.Counter(EvolvePStep)
         self.ThisStep=0
-
+        self.rmsFromExt=None
     # def AppendEmptySol(self):
     #     #### Solutions
     #     # self.NSols=self.VS.TimesVisMin.size-1
@@ -238,6 +238,8 @@ class ClassWirtingerSolver():
         self.rms=-1
         if self.rmsFromData!=None:
             self.rms=self.rmsFromData
+        elif self.rmsFromExt!=None:
+            self.rms=self.rmsFromExt
         else:
             Dpol=DATA["data"][:,:,1:3]
             Fpol=DATA["flags"][:,:,1:3]
@@ -256,6 +258,10 @@ class ClassWirtingerSolver():
         # self.G=D["G"]
 
         return True
+
+    def SetRmsFromExt(self,rms):
+        self.rmsFromExt=rms
+        
 
     #################################
     ##          Serial             ## 
