@@ -11,13 +11,22 @@ import sys
 import time as timemod
 import ModColor
 
+def test():
+    pBAR= ProgressBar('white', width=50, block='=', empty=' ',Title="Solving ", HeaderSize=10,TitleSize=13)
+    nt=10
+    for NDone in range(nt):
+        f=int(100.*NDone/float(nt-1))
+        pBAR.render(f, '%4i/%i' % (NDone,nt-1))
+        timemod.sleep(0.2)
+
 
 class ProgressBar(object):
     """Terminal progress bar class"""
     #TEMPLATE = ('  %(title)s %(percent)3.2i%% [%(color)s%(progress)s%(normal)s%(empty)s] %(message)s\n')
     #TEMPLATE = ('  %(message)s [%(color)s%(progress)s%(normal)s%(empty)s] %(percent)3.2i%% \n')
     #TEMPLATE = ('  %(header)s [%(color)s%(progress)s%(normal)s%(empty)s] %(percent)3.2i%% %(time)s \n')
-    TEMPLATE = ('  %(title)s %(header)s [%(color)s%(progress)s%(normal)s%(empty)s] %(percent)3.2i%% %(time)s \n')
+    TEMPLATE = ('  %(title)s%(header)s [%(color)s%(progress)s%(normal)s%(empty)s] %(percent)3.2i%% %(time)s \n')
+
     PADDING = 7
     silent=0
     
@@ -48,8 +57,8 @@ class ProgressBar(object):
         self.TitleSize=TitleSize
         Title=ModColor.Str(Title,col="blue",Bold=False)
         self.TitleIn=Title
-        self.Title=self.format(Title,self.TitleSize)
-
+        self.Title=Title#self.format(Title,self.TitleSize)
+        
         self.HasRendered=False
         self.t0=None
         self.HeaderSize=HeaderSize
@@ -128,6 +137,7 @@ class ProgressBar(object):
             self.clear()
         self.progress = (bar_width * percent) / 100
 
+
         DicoData={
             'title': self.Title,
             'percent': percent,
@@ -137,10 +147,12 @@ class ProgressBar(object):
             'empty': self.empty * (bar_width - self.progress),
             'message': message,
             'time': StrTime,
-            'header': self.format(message,self.HeaderSize,2,TitleIn="")
+            'header': self.format(message,self.HeaderSize,1,TitleIn="")
         }
         data = self.TEMPLATE % DicoData
-
+        # print DicoData
+        # print data
+        # stop
         sys.stdout.write(data)
         sys.stdout.flush()
         # The number of lines printed

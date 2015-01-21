@@ -393,13 +393,15 @@ class ClassWirtingerSolver():
         ##############################
 
         T0,T1=self.VS.TimeMemChunkRange_sec[0],self.VS.TimeMemChunkRange_sec[1]
-        DT=(T1-T0)/3600.
-        pBAR= ProgressBar('white', width=30, block='=', empty=' ',Title="Solving ", TitleSize=50)
-
-
-        pBAR.render(0, '%4i/%i' % (0,DT))
+        DT=(T1-T0)
+        dt=self.VS.TVisSizeMin*60.
+        nt=int(DT/float(dt))+1
         
 
+        pBAR= ProgressBar('white', width=50, block='=', empty=' ',Title="Solving ", HeaderSize=10,TitleSize=13)
+        pBAR.render(0, '%4i/%i' % (0,nt))
+        NDone=0
+        
         while True:
             Res=self.setNextData()
             if Res=="EndChunk": break
@@ -461,10 +463,10 @@ class ClassWirtingerSolver():
                     pylab.pause(0.1)
 
 
+            NDone+=1
+            intPercent=int(100*  NDone / float(nt))
 
-            dt=float(t1-T0)/3600.
-            intPercent=int(100*  dt / DT)
-            pBAR.render(intPercent, '%4i/%i' % (float(t1-T0),DT))
+            pBAR.render(intPercent, '%4i/%i' % (NDone,nt))
                 
             
             self.SolsArray_done[self.iCurrentSol]=1
