@@ -181,7 +181,7 @@ def main(options=None):
 
     SM=ClassSM.ClassSM(options.SkyModel,
                        killdirs=kills,invert=invert)
-    
+    #SM.SourceCat.I*=1000**2
     VS=ClassVisServer.ClassVisServer(options.ms,ColName=ReadColName,
                                      TVisSizeMin=dt,
                                      TChunkSize=TChunk)
@@ -214,10 +214,10 @@ def main(options=None):
         VSInit.LoadNextVisChunk()
         SolverInit=ClassWirtingerSolver(VSInit,SM,PolMode=options.PolMode,
                                         NIter=options.NIter,NCPU=NCPU,
-                                        SolverType="CohJones")
-        Res=SolverInit.setNextData()
+                                        SolverType="CohJones",
+                                        DoPBar=False)
         SolverInit.InitSol(TestMode=False)
-        SolverInit.doNextTimeSolve_Parallel()
+        SolverInit.doNextTimeSolve_Parallel(OnlyOne=True)
         Solver.InitSol(G=SolverInit.G,TestMode=False)
         Solver.InitCovariance(FromG=True,sigP=options.CovP,sigQ=options.CovQ)
 
@@ -231,7 +231,7 @@ def main(options=None):
             break
 
         Solver.doNextTimeSolve_Parallel()
-        #Solver.doNextTimeSolve()
+        # Solver.doNextTimeSolve()
         # substract
         ind=np.where(SM.SourceCat.kill==1)[0]
         

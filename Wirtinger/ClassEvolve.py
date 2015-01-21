@@ -19,7 +19,10 @@ class ClassModelEvolution():
     def Evolve0(self,Gin,Pa):
         done=NpShared.GiveArray("SolsArray_done")
         indDone=np.where(done==1)[0]
-
+        Q=NpShared.GiveArray("SharedCovariance_Q")[self.iAnt]
+        #print indDone.size
+        #print "mean",np.mean(Q)
+        if indDone.size==0: return Pa+Q
         t0=NpShared.GiveArray("SolsArray_t0")[indDone]
         t1=NpShared.GiveArray("SolsArray_t1")[indDone]
         tm=NpShared.GiveArray("SolsArray_tm")[indDone]
@@ -30,7 +33,7 @@ class ClassModelEvolution():
         
         nt,nd,npol,_=G.shape
 
-        if nt<=self.StepStart: return None
+        #if nt<=self.StepStart: return None
 
         if nt>self.BufferNPoints:
             G=G[-self.BufferNPoints::,:,:,:]
@@ -55,14 +58,15 @@ class ClassModelEvolution():
             F[iPar]=ratio#/np.sqrt(2.)
 
 
-
-
+        
         PaOut=np.zeros_like(Pa)
         # Q=np.diag(np.ones((PaOut.shape[0],)))*(self.sigQ**2)
-        Q=NpShared.GiveArray("SharedCovariance_Q")[self.iAnt]
         
         PaOut=F.reshape((NPars,1))*Pa*F.reshape((1,NPars)).conj()+Q
-
+        # print F
+        # print Pa
+        # print Q
+        # stop
         return PaOut
         
 

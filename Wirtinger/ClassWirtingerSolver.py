@@ -94,9 +94,11 @@ class ClassWirtingerSolver():
                  NCPU=6,
                  SolverType="CohJones",
                  evP_StepStart=0, evP_Step=1,
-                 DoPlot=False):
+                 DoPlot=False,
+                 DoPBar=True):
         self.Lambda=Lambda
         self.NCPU=NCPU
+        self.DoPBar=DoPBar
         if BeamProps!=None:
             rabeam,decbeam=SM.ClusterCat.ra,SM.ClusterCat.dec
             Mode,TimeMin=BeamProps
@@ -145,6 +147,7 @@ class ClassWirtingerSolver():
         nd=self.SM.NDir
         
 
+
         if G==None:
             if self.PolMode=="Scalar":
                 npol=1
@@ -155,9 +158,11 @@ class ClassWirtingerSolver():
                 G[:,:,0,0]=1
                 G[:,:,1,1]=1
             self.HasFirstGuessed=False
-        
-        
+
+        else:
+            self.HasFirstGuessed=True
         self.G=G
+        #self.G*=0.001
         _,_,npol,_=self.G.shape
         #self.G+=np.random.randn(*self.G.shape)*0.1#sigP
 
@@ -189,6 +194,9 @@ class ClassWirtingerSolver():
         na=self.VS.MS.na
         nd=self.SM.NDir
 
+        
+        _,_,npol,_=self.G.shape
+        
         if FromG==False:
             if self.PolMode=="Scalar":
                 P=(sigP**2)*np.array([np.diag(np.ones((nd,),np.complex128)) for iAnt in range(na)])
@@ -197,9 +205,9 @@ class ClassWirtingerSolver():
                 P=(sigP**2)*np.array([np.diag(np.ones((nd*2*2),np.complex128)) for iAnt in range(na)])
                 Q=(sigQ**2)*np.array([np.diag(np.ones((nd*2*2),np.complex128)) for iAnt in range(na)])
         else:
-            
-            P=(sigP**2)*np.array([np.mean(np.abs(self.G[iAnt]))*np.diag(np.ones((nd*2*2),np.complex128)) for iAnt in range(na)])
-            Q=(sigQ**2)*np.array([np.mean(np.abs(self.G[iAnt]))*np.diag(np.ones((nd*2*2),np.complex128)) for iAnt in range(na)])
+
+            P=(sigP**2)*np.array([np.max(np.mean(self.G[iAnt]))**2*np.diag(np.ones((nd*npol*npol),np.complex128)) for iAnt in range(na)])
+            Q=(sigQ**2)*np.array([np.max(np.mean(self.G[iAnt]))**2*np.diag(np.ones((nd*npol*npol),np.complex128)) for iAnt in range(na)])
             #P=(sigP**2)*np.array([np.complex128(np.diag(np.abs(self.G[iAnt]).flatten())) for iAnt in range(na)])
             #Q=(sigQ**2)*np.array([np.complex128(np.diag(np.abs(self.G[iAnt]).flatten())) for iAnt in range(na)])
 
@@ -214,7 +222,7 @@ class ClassWirtingerSolver():
         self.P=NpShared.ToShared("SharedCovariance",self.P)
         self.Q=NpShared.ToShared("SharedCovariance_Q",self.Q)
         self.evP=NpShared.ToShared("SharedEvolveCovariance",self.evP)
-        
+
 
     def setNextData(self):
         DATA=self.VS.GiveNextVis()
@@ -234,11 +242,12 @@ class ClassWirtingerSolver():
         Dpol=DATA["data"][:,:,1:3]
         Fpol=DATA["flags"][:,:,1:3]
         self.rms=np.std(Dpol[Fpol==0])
-        self.rms=np.max([self.rms,1e-2])
+        # stop
+        #self.rms=np.max([self.rms,0.01])
         #self.rms=np.min(self.rmsPol)
-        
+
         rms=self.rms*1000
-        #print>>log, "Estimated rms = %7.2f mJy"%(rms)
+        print>>log, "Estimated rms = %15.7f mJy"%(rms)
 
         #np.savez("EKF.npz",data=self.DATA["data"],G=self.G)
         #stop
@@ -304,7 +313,7 @@ class ClassWirtingerSolver():
 
                     if self.SolverType=="KAFCA":
                         EM=ClassModelEvolution(iAnt,
-                                               StepStart=3,
+                                               StepStart=0,
                                                WeigthScale=1,
                                                DoEvolve=False,
                                                BufferNPoints=3,
@@ -353,7 +362,7 @@ class ClassWirtingerSolver():
     
     
     
-    def doNextTimeSolve_Parallel(self):
+    def doNextTimeSolve_Parallel(self,OnlyOne=False):
 
         
 
@@ -379,12 +388,11 @@ class ClassWirtingerSolver():
                     
 
 
-
         T=ClassTimeIt.ClassTimeIt()
         T.disable()
         for ii in range(NCPU):
              
-            W=WorkerAntennaLM(work_queue, result_queue,self.SM,self.PolMode,self.Lambda,self.SolverType,self.rms)#,args=(e,))
+            W=WorkerAntennaLM(work_queue, result_queue,self.SM,self.PolMode,self.Lambda,self.SolverType)#,args=(e,))
             workerlist.append(W)
             workerlist[ii].start()
 
@@ -399,6 +407,8 @@ class ClassWirtingerSolver():
         
 
         pBAR= ProgressBar('white', width=50, block='=', empty=' ',Title="Solving ", HeaderSize=10,TitleSize=13)
+        if not(self.DoPBar): pBAR.disable()
+        pBAR.disable()
         pBAR.render(0, '%4i/%i' % (0,nt))
         NDone=0
         
@@ -443,7 +453,7 @@ class ClassWirtingerSolver():
                 #########
 
                 for iAnt in ListAntSolve:
-                    work_queue.put((iAnt,DoCalcEvP,tm))
+                    work_queue.put((iAnt,DoCalcEvP,tm,self.rms))
  
                 while iResult < NJobs:
                     iAnt,G,P = result_queue.get()
@@ -477,7 +487,8 @@ class ClassWirtingerSolver():
             self.SolsArray_done[self.iCurrentSol]=1
             self.SolsArray_G[self.iCurrentSol][:]=self.G[:]
             self.iCurrentSol+=1
-
+            
+            if OnlyOne: break
 
 
  
@@ -503,7 +514,7 @@ import multiprocessing
 class WorkerAntennaLM(multiprocessing.Process):
     def __init__(self,
                  work_queue,
-                 result_queue,SM,PolMode,Lambda,SolverType,rms,**kwargs):
+                 result_queue,SM,PolMode,Lambda,SolverType,**kwargs):
         multiprocessing.Process.__init__(self)
         self.work_queue = work_queue
         self.result_queue = result_queue
@@ -513,7 +524,6 @@ class WorkerAntennaLM(multiprocessing.Process):
         self.PolMode=PolMode
         self.Lambda=Lambda
         self.SolverType=SolverType
-        self.rms=rms
         #self.DoCalcEvP=DoCalcEvP
         #self.ThisTime=ThisTime
         #self.e,=kwargs["args"]
@@ -523,7 +533,7 @@ class WorkerAntennaLM(multiprocessing.Process):
     def run(self):
         while not self.kill_received:
             try:
-                iAnt,DoCalcEvP,ThisTime = self.work_queue.get()
+                iAnt,DoCalcEvP,ThisTime,rms = self.work_queue.get()
             except:
                 break
             #self.e.wait()
@@ -540,7 +550,7 @@ class WorkerAntennaLM(multiprocessing.Process):
                 self.result_queue.put([iAnt,x,None])
             elif self.SolverType=="KAFCA":
                 if DoCalcEvP:
-                    evP[iAnt]=JM.CalcMatrixEvolveCov(G,P,self.rms)
+                    evP[iAnt]=JM.CalcMatrixEvolveCov(G,P,rms)
                         
                 # EM=ClassModelEvolution(iAnt,
                 #                        StepStart=3,
@@ -550,7 +560,7 @@ class WorkerAntennaLM(multiprocessing.Process):
                 #                        sigQ=0.01)
 
                 EM=ClassModelEvolution(iAnt,
-                                       StepStart=3,
+                                       StepStart=0,
                                        WeigthScale=1,
                                        DoEvolve=False,
                                        BufferNPoints=3,
@@ -561,8 +571,9 @@ class WorkerAntennaLM(multiprocessing.Process):
                 #     G[iAnt]=Ga
                 #     P[iAnt]=Pa
 
-                x,Pout=JM.doEKFStep(G,P,evP,self.rms)
+                x,Pout=JM.doEKFStep(G,P,evP,rms)
                 Pa=EM.Evolve0(x,Pout)
+
                 if Pa!=None:
                     Pout=Pa
 
