@@ -41,6 +41,7 @@ def read_options():
     opt = optparse.OptionParser(usage='Usage: %prog --ms=somename.MS <options>',version='%prog version 1.0',description=desc)
     group = optparse.OptionGroup(opt, "* Data-related options", "Won't work if not specified.")
     group.add_option('--SolsFile',help='Input Solutions list [no default]',default='')
+    group.add_option('--DoResid',type='int',help=' [no default]',default=0)
     opt.add_option_group(group)
     
     options, arguments = opt.parse_args()
@@ -86,51 +87,74 @@ def main(options=None):
         f = open(NameSave,'rb')
         options = pickle.load(f)
 
-    SolsDico=np.load(options.SolsFile)
-    Sols=SolsDico["Sols"]
-    StationNames=SolsDico["StationNames"]
-    Sols=Sols.view(np.recarray)
-    ind=np.where(Sols.t1!=0)[0]
-    Sols=Sols[ind]
-    tm=(Sols.t1+Sols.t0)/2.
-    t0=tm[0]
-    tm-=t0
+    FilesList=options.SolsFile.split(",")
+    LSols=[]
+    nSol=len(FilesList)
+    for FileName in FilesList:
+        SolsDico=np.load(FileName)
+        Sols=SolsDico["Sols"]
+        Sols=Sols.view(np.recarray)
+        ind=np.where(Sols.t1!=0)[0]
+        Sols=Sols[ind]
+        tm=(Sols.t1+Sols.t0)/2.
+        t0=tm[0]
+        tm-=t0
+        
+        nt,na,nd,_,_=Sols.G.shape
+        nx,ny=GiveNXNYPanels(na)
+        LSols.append(Sols)
+        StationNames=SolsDico["StationNames"]
 
-    nt,na,nd,_,_=Sols.G.shape
-    nx,ny=GiveNXNYPanels(na)
+    if options.DoResid==1:
+        LSols[1].G=LSols[1].G-LSols[0].G
+        # LSols=[LSols[0]]
+        # nSol=1
+
+    Lls=["-","--"]
+    LcolAmp=["black","blue"]
+    LcolPha=["gray","red"]
+
     pylab.figure(1,figsize=(13,8))
     iAnt=0
     for iDir in range(nd):
-        G=Sols.G[:,:,iDir,:,:]
-        G=NormMatrices(G)
-        ampMinMax=0,np.max(np.abs(G))
+        for iSol in range(nSol):
+            Sols=LSols[iSol]
+            G=Sols.G[:,:,iDir,:,:]
+            Sols.G[:,:,iDir,:,:]=NormMatrices(G)
+            
+        ampMinMax=0,np.max(np.abs(LSols[0].G))
+
         pylab.clf()
         for i in range(nx):
             for j in range(ny):
                 if iAnt>=na:continue
-                J=G[:,iAnt,:,:]
-                if iAnt>1:
-                    ax=pylab.subplot(nx,ny,iAnt+1,sharex=ax,sharey=ax)
+                if iAnt>=1:
+                    ax=pylab.subplot(nx,ny,iAnt+1,sharex=axRef,sharey=axRef)
                 else:
-                    ax=pylab.subplot(nx,ny,iAnt+1)
-                ax.plot(tm,np.abs(J[:,0,1]),color="gray")
-                ax.plot(tm,np.abs(J[:,1,0]),color="gray")
-                ax.plot(tm,np.abs(J[:,1,1]),color="black")
-                ax.plot(tm,np.abs(J[:,0,0]),color="black")
-                ax.set_ylim(ampMinMax)
-                ax.set_xticks([])
-                ax.set_yticks([])
-
+                    axRef=pylab.subplot(nx,ny,iAnt+1)
+                    ax=axRef
                 ax2 = ax.twinx()
-                # ax.plot(tm,np.angle(J[:,0,1]),color="blue")
-                # ax.plot(tm,np.angle(J[:,1,0]),color="blue")
-                ax2.plot(tm,np.angle(J[:,1,1]),color="blue",alpha=0.5)
-                ax2.plot(tm,np.angle(J[:,0,0]),color="blue",alpha=0.5)
-                ax2.set_ylim(-np.pi,np.pi)
-                ax2.set_xticks([])
-                ax2.set_yticks([])
-                #print StationNames[iAnt]
                 pylab.title(StationNames[iAnt], fontsize=9)
+                for iSol in range(nSol):
+                    Sols=LSols[iSol]
+                    G=Sols.G[:,:,iDir,:,:]
+                    J=G[:,iAnt,:,:]
+                    ax.plot(tm,np.abs(J[:,0,1]),color=LcolAmp[iSol],alpha=0.5)
+                    ax.plot(tm,np.abs(J[:,1,0]),color=LcolAmp[iSol],alpha=0.5)
+                    ax.plot(tm,np.abs(J[:,1,1]),color=LcolAmp[iSol],alpha=0.5)
+                    ax.plot(tm,np.abs(J[:,0,0]),color=LcolAmp[iSol],alpha=0.5)
+                    ax.set_ylim(ampMinMax)
+                    ax.set_xticks([])
+                    ax.set_yticks([])
+    
+                    # ax.plot(tm,np.angle(J[:,0,1]),color="blue")
+                    # ax.plot(tm,np.angle(J[:,1,0]),color="blue")
+                    ax2.plot(tm,np.angle(J[:,1,1]),color=LcolPha[iSol],alpha=0.5)
+                    ax2.plot(tm,np.angle(J[:,0,0]),color=LcolPha[iSol],alpha=0.5)
+                    ax2.set_ylim(-np.pi,np.pi)
+                    ax2.set_xticks([])
+                    ax2.set_yticks([])
+                    #print StationNames[iAnt]
                 iAnt+=1
         pylab.suptitle('Direction %i'%iDir)
         pylab.tight_layout(pad=3., w_pad=0.5, h_pad=2.0)
