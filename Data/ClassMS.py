@@ -355,7 +355,6 @@ class ClassMS():
         nRowRead=self.nRowRead
 
         table_all=table(self.MSName,ack=False,readonly=False)
-        self.ColNames=table_all.colnames()
         SPW=table_all.getcol('DATA_DESC_ID',row0,nRowRead)
         A0=table_all.getcol('ANTENNA1',row0,nRowRead)[SPW==self.ListSPW[0]]
         A1=table_all.getcol('ANTENNA2',row0,nRowRead)[SPW==self.ListSPW[0]]
@@ -515,6 +514,7 @@ class ClassMS():
 
 
         table_all=table(MSname,ack=False,readonly=False)
+        self.ColNames=table_all.colnames()
         SPW=table_all.getcol('DATA_DESC_ID')
         if self.SelectSPW!=None:
             self.ListSPW=self.SelectSPW

@@ -364,20 +364,20 @@ class ClassJacobianAntenna():
         if not(self.HasKernelMatrix):
             self.CalcKernelMatrix()
             T.timeit("CalcKernelMatrix")
+
+        Ga=self.GiveSubVecGainAnt(Gains)
+        f=(self.DicoData["flags_flat"]==0)
+        ind=np.where(f)[0]
+        if ind.size==0:
+            return Ga.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks))
+
+
         z=self.DicoData["data_flat"]#self.GiveDataVec()
         self.CalcJacobianAntenna(Gains)
         T.timeit("CalcJacobianAntenna")
         self.PrepareJHJ_LM()
         T.timeit("PrepareJHJ_L")
 
-        Ga=self.GiveSubVecGainAnt(Gains)
-
-
-        f=(self.DicoData["flags_flat"]==0)
-        ind=np.where(f)[0]
-        Ga=self.GiveSubVecGainAnt(Gains)
-        if ind.size==0:
-            return Ga.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks))
 
 
         T.timeit("GiveSubVecGainAnt")
@@ -435,7 +435,7 @@ class ClassJacobianAntenna():
         x1+=x0
         del(self.Jacob)
         T.timeit("rest")
-        print self.iAnt,np.mean(x1),x1.size,ind.size
+        # print self.iAnt,np.mean(x1),x1.size,ind.size
         return x1.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks))
 
                                         

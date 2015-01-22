@@ -186,6 +186,13 @@ def main(options=None):
                                      TVisSizeMin=dt,
                                      TChunkSize=TChunk)
     print VS.MS
+    if not(WriteColName in VS.MS.ColNames):
+        print>>log, "Column %s not in MS "%WriteColName
+        exit()
+    if not(ReadColName in VS.MS.ColNames):
+        print>>log, "Column %s not in MS "%ReadColName
+        exit()
+
     BeamProps=None
     if options.LOFARBeam!="":
         Mode,sTimeMin=options.LOFARBeam.split(",")
@@ -259,16 +266,20 @@ def main(options=None):
         Mean_rmsAnt=np.mean(rmsAnt)
         Thr=5
         indFlag=np.where((rmsAnt-Mean_rmsAnt)/Mean_rmsAnt>Thr)[0]
-        print indFlag
 
+        if indFlag.size>0:
+            Stations=np.array(SolverInit.VS.MS.StationNames)
+            print>>log, "Antenna %s have abnormal noise (Numbers %s)"%(str(Stations[indFlag]),str(indFlag))
+        
         indTake=np.where((rmsAnt-Mean_rmsAnt)/Mean_rmsAnt<Thr)[0]
         gscale=np.mean(np.abs(G[:,:,indTake,:,0,0]))
         TrueMeanRMSAnt=np.mean(rmsAnt[indTake])
         Solver.InitSol(G=SolverInit.G,TestMode=False)
         Solver.InitCovariance(FromG=True,sigP=options.CovP,sigQ=options.CovQ)
         rms=TrueMeanRMSAnt*gscale
-        Solver.SetRmsFromExt(rms/5.)
-        print rms
+        Solver.SetRmsFromExt(rms)
+        print>>log, "Estimated rms: %f Jy"%(rms)
+        
 
 
     
@@ -308,7 +319,11 @@ def main(options=None):
         Solver.VS.MS.data=Solver.VS.ThisDataChunk["data"]
         Solver.VS.MS.SaveVis(Col=WriteColName)
     
-
+    FileName="killMS.%s.sols.npz"%options.SolverType
+    print>>log, "Save Solutions in file: %s"%FileName
+    Sols=Solver.GiveSols()
+    StationNames=np.array(Solver.VS.MS.StationNames)
+    np.savez(FileName,Sols=Sols,StationNames=StationNames)
     NpShared.DelAll()
 
     

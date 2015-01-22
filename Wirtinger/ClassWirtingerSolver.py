@@ -133,15 +133,16 @@ class ClassWirtingerSolver():
     #     self.SolsList.append(Sol.view(np.recarray))
 
     def GiveSols(self):
-        self.SolsArray_Full.t0[:]=self.SolsArray_t0[:]
-        self.SolsArray_Full.t1[:]=self.SolsArray_t1[:]
+        ind=np.where(self.SolsArray_done==1)[0]
+        self.SolsArray_Full.t0[0:ind.size]=self.SolsArray_t0[0:ind.size]
+        self.SolsArray_Full.t1[0:ind.size]=self.SolsArray_t1[0:ind.size]
         if self.PolMode=="Scalar":
-            self.SolsArray_Full.G[:,:,:,0,0]=self.SolsArray_G[:,:,:,0,0]
-            self.SolsArray_Full.G[:,:,:,1,1]=self.SolsArray_G[:,:,:,0,0]
+            self.SolsArray_Full.G[0:ind.size,:,:,0,0]=self.SolsArray_G[0:ind.size,:,:,0,0]
+            self.SolsArray_Full.G[0:ind.size,:,:,1,1]=self.SolsArray_G[0:ind.size,:,:,0,0]
         else:                
-            self.SolsArray_Full.G[:]=self.SolsArray_G[:]
+            self.SolsArray_Full.G[0:ind.size]=self.SolsArray_G[0:ind.size]
 
-        return self.SolsArray_Full
+        return self.SolsArray_Full[0:ind.size]
 
     def InitSol(self,G=None,TestMode=True):
         na=self.VS.MS.na
@@ -417,11 +418,13 @@ class ClassWirtingerSolver():
         #pBAR.disable()
         pBAR.render(0, '%4i/%i' % (0,nt))
         NDone=0
-        
+        #ii=0
         while True:
             Res=self.setNextData()
             if Res=="EndChunk": break
-            
+            #ii+=1
+            #print ii
+            #if ii<58: continue
             t0,t1=self.VS.CurrentVisTimes_MS_Sec
             self.SolsArray_t0[self.iCurrentSol]=t0
             self.SolsArray_t1[self.iCurrentSol]=t1
@@ -448,6 +451,7 @@ class ClassWirtingerSolver():
                 NIter=self.NIter
 
 
+            Gold=self.G.copy()
             for LMIter in range(NIter):
 
                 # for EKF
@@ -458,7 +462,6 @@ class ClassWirtingerSolver():
                     DoCalcEvP=True
                 #########
 
-                Gold=self.G.copy()
                 for iAnt in ListAntSolve:
                     work_queue.put((iAnt,DoCalcEvP,tm,self.rms))
  

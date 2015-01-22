@@ -20,7 +20,7 @@ def read_options():
 
     group = optparse.OptionGroup(opt, "* Data-related options", "Won't work if not specified.")
     group.add_option('--ms',help='Input MS to draw [no default]',default='')
-    group.add_option('--Operation',help='BACKUP: create backup | COPY: copy one column to another Default is %default',default='BACKUP')
+    group.add_option('--Operation',help='BACKUP: create backup | COPY: copy one column to another | CasaCols: Put casa columns in MS. Default is %default',default='CasaCols')
     group.add_option('--TChunk',help='Time chunk in hours, default is %default',default=15)
     opt.add_option_group(group)
 
@@ -40,6 +40,10 @@ def read_options():
 def PutBackupCols(options):
     MS=ClassMS.ClassMS(options.ms,DoReadData=False,TimeChunkSize=options.TChunk)
     MS.PutBackupCol(incol=options.Col)
+
+def PutCasaCols(options):
+    MS=ClassMS.ClassMS(options.ms,DoReadData=False,TimeChunkSize=options.TChunk)
+    MS.PutCasaCols()
     
 
 def Copy(options=None):
@@ -54,6 +58,8 @@ if __name__=="__main__":
 
     if options.Operation=="BACKUP":
         PutBackupCols(options)
+    elif options.Operation=="CasaCols":
+        PutCasaCols(options)
     elif options.Operation=="COPY":
         Copy(options)
 

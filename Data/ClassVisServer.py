@@ -240,7 +240,8 @@ class ClassVisServer():
             nf=np.count_nonzero(fA)
             Frac=nf/float(fA.size)
             if Frac>self.ThresholdFlag:
-                print>>log, "I found that antenna %i has ~%4.1f%s of flagged data (more than %4.1f%s)"%(A,Frac*100,"%",self.ThresholdFlag*100,"%")
+                print>>log, "I found that antenna %i has ~%4.1f%s of flagged data (more than %4.1f%s)"%\
+                    (A,Frac*100,"%",self.ThresholdFlag*100,"%")
                 self.FlagAntNumber.append(A)
                 
             
