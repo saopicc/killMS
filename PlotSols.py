@@ -43,6 +43,7 @@ def read_options():
     group.add_option('--SolsFile',help='Input Solutions list [no default]',default='')
     group.add_option('--DoResid',type="int",help='No [no default]',default=-1)
     group.add_option('--PlotMode',type='int',help=' [no default]',default=0)
+    group.add_option('--DirList',help=' [no default]',default="")
     opt.add_option_group(group)
     
     options, arguments = opt.parse_args()
@@ -88,6 +89,8 @@ def main(options=None):
         f = open(NameSave,'rb')
         options = pickle.load(f)
 
+
+
     FilesList=options.SolsFile.split(",")
     LSols=[]
     nSol=len(FilesList)
@@ -126,15 +129,21 @@ def main(options=None):
         Sresid=LSols[1].copy()
         LSols.append(Sresid)
 
-    pylab.figure(1,figsize=(13,8))
-    iAnt=0
-    for iDir in range(nd):
+    if options.DirList!="":
+        DirList=options.DirList.split(',')
+        DirList=[int(i) for i in DirList]
+    else:
+        DirList=range(nd)
+
+    for iDir in DirList:
+        pylab.figure(0,figsize=(13,8))
+        iAnt=0
         for iSol in range(nSol):
             Sols=LSols[iSol]
             G=Sols.G[:,:,iDir,:,:]
             Sols.G[:,:,iDir,:,:]=NormMatrices(G)
             
-        ampMax=np.max(np.abs(LSols[0].G))
+        ampMax=np.max(np.median(np.abs(LSols[0].G),axis=1))
         if options.PlotMode==0:
             op0=np.abs
             op1=np.angle
@@ -190,7 +199,8 @@ def main(options=None):
         pylab.tight_layout(pad=3., w_pad=0.5, h_pad=2.0)
         pylab.draw()
         pylab.show()
-
+        #pylab.pause(0.1)
+        #time.sleep(1)
 
 
 if __name__=="__main__":

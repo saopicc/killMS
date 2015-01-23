@@ -52,6 +52,7 @@ def read_options():
     group = optparse.OptionGroup(opt, "* Data-related options", "Won't work if not specified.")
     group.add_option('--ms',help='Input MS to draw [no default]',default='')
     group.add_option('--SkyModel',help='List of targets [no default]',default='')
+    group.add_option('--ClearSHM',help='Clear shared memory with given ID [no default]',default='')
     opt.add_option_group(group)
     
     group = optparse.OptionGroup(opt, "* Visibilities options")
@@ -68,7 +69,8 @@ def read_options():
     
     group = optparse.OptionGroup(opt, "* Solution options")
     group.add_option('--SubOnly',help=' Only substract the skymodel. Default is %default',default="0")
-    group.add_option('--DoPlot',type=int,help=' Plot the solutions, for debugging. Default is %default',default=0)
+    group.add_option('--DoPlot',type="int",help=' Plot the solutions, for debugging. Default is %default',default=0)
+    group.add_option('--DoSub',type="int",help=' Substact selected sources. Default is %default',default=1)
     group.add_option('--ApplyCal',help=' Apply direction averaged gains to residual data in the mentioned direction. \
     If ApplyCal=-1 takes the mean gain over directions. Default is %default',default="No")
     opt.add_option_group(group)
@@ -101,7 +103,7 @@ def read_options():
     f = open("last_killMS.obj","wb")
     pickle.dump(options,f)
     
-def PrintOptions(options):
+def PrintOptions(options,IdSharedMem):
     print ModColor.Str(" killMS configuration")
     print "   - MS Name: %s"%ModColor.Str(options.ms,col="green")
     print "   - Reading %s, and writting to %s"%(ModColor.Str(options.InCol,col="green"),ModColor.Str(options.OutCol,col="green"))
@@ -130,6 +132,7 @@ def PrintOptions(options):
         if options.InitLM==1:
             print "   - Initialise using Levenberg-Maquardt with dt=%5.1f"%float(options.InitLM_dt)
 
+    print "   - IdSharedMem %s"%(IdSharedMem)
     print
 
 def main(options=None):
@@ -140,7 +143,8 @@ def main(options=None):
         options = pickle.load(f)
     
 
-    PrintOptions(options)
+    IdSharedMem=str(int(np.random.rand(1)[0]*100000))+"."
+    PrintOptions(options,IdSharedMem)
     ApplyCal=(options.ApplyCal=="1")
 
     if options.ms=="":
@@ -175,7 +179,6 @@ def main(options=None):
 
     ######################################
 
-    IdSharedMem=str(int(np.random.rand(1)[0]*100000))+"."
     NpShared.DelAll(IdSharedMem)
     ReadColName  = options.InCol
     WriteColName = options.OutCol
@@ -282,7 +285,7 @@ def main(options=None):
         Solver.SetRmsFromExt(rms)
         print>>log, "Estimated rms: %f Jy"%(rms)
         
-
+    DoSubstract=(options.DoSub==1)
 
     
     while True:
@@ -297,9 +300,7 @@ def main(options=None):
         # substract
         ind=np.where(SM.SourceCat.kill==1)[0]
         
-        if ind.size>0:
-            print>>log, ModColor.Str("Substract sources ... ",col="green")
-            SM.SelectSubCat(SM.SourceCat.kill==1)
+        if (ind.size>0)&((DoSubstract)|(ApplyCal!=None)):
             Sols=Solver.GiveSols()
             Jones={}
             Jones["t0"]=Sols.t0
@@ -309,18 +310,21 @@ def main(options=None):
             Jones["Beam"]=G
             Jones["BeamH"]=ModLinAlg.BatchH(G)
             Jones["ChanMap"]=np.zeros((VS.MS.NSPWChan,)).tolist()
-        
-            PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
-            Solver.VS.ThisDataChunk["data"]-=PredictData
-            SM.RestoreCat()
+            
+            if DoSubstract:
+                print>>log, ModColor.Str("Substract sources ... ",col="green")
+                SM.SelectSubCat(SM.SourceCat.kill==1)
+                PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
+                Solver.VS.ThisDataChunk["data"]-=PredictData
+                SM.RestoreCat()
 
 
-        if ApplyCal!=None:
-            print>>log, ModColor.Str("Apply calibration in direction: %i"%ApplyCal,col="green")
-            PM.ApplyCal(Solver.VS.ThisDataChunk,Jones,ApplyCal)
+            if ApplyCal!=None:
+                print>>log, ModColor.Str("Apply calibration in direction: %i"%ApplyCal,col="green")
+                PM.ApplyCal(Solver.VS.ThisDataChunk,Jones,ApplyCal)
 
-        Solver.VS.MS.data=Solver.VS.ThisDataChunk["data"]
-        Solver.VS.MS.SaveVis(Col=WriteColName)
+            Solver.VS.MS.data=Solver.VS.ThisDataChunk["data"]
+            Solver.VS.MS.SaveVis(Col=WriteColName)
     
     FileName="killMS.%s.sols.npz"%options.SolverType
     print>>log, "Save Solutions in file: %s"%FileName
@@ -338,5 +342,7 @@ if __name__=="__main__":
     read_options()
     f = open("last_killMS.obj",'rb')
     options = pickle.load(f)
-
-    main(options=options)
+    if options.ClearSHM!="":
+        NpShared.DelAll(options.ClearSHM)
+    else:
+        main(options=options)
