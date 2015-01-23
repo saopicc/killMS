@@ -276,7 +276,7 @@ def main(options=None):
         TrueMeanRMSAnt=np.mean(rmsAnt[indTake])
         Solver.InitSol(G=SolverInit.G,TestMode=False)
         Solver.InitCovariance(FromG=True,sigP=options.CovP,sigQ=options.CovQ)
-        rms=TrueMeanRMSAnt*gscale
+        rms=TrueMeanRMSAnt*gscale**2
         Solver.SetRmsFromExt(rms)
         print>>log, "Estimated rms: %f Jy"%(rms)
         
