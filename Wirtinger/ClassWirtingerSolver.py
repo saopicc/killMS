@@ -326,7 +326,7 @@ class ClassWirtingerSolver():
                                                WeigthScale=1,
                                                DoEvolve=True,
                                                BufferNPoints=10,
-                                               sigQ=0.01)
+                                               sigQ=0.01,IdSharedMem=self.IdSharedMem)
 
                         x,P=JM.doEKFStep(self.G,self.P,self.evP,self.rms)
 
@@ -586,7 +586,7 @@ class WorkerAntennaLM(multiprocessing.Process):
                                        WeigthScale=0.5,
                                        DoEvolve=True,
                                        BufferNPoints=10,
-                                       sigQ=0.01)
+                                       sigQ=0.01,IdSharedMem=self.IdSharedMem)
 
                 # Ga,Pa=EM.Evolve0(G,P,self.ThisTime)
                 # if Ga!=None:

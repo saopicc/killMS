@@ -5,7 +5,7 @@ import pylab
 from Array import NpShared
 
 class ClassModelEvolution():
-    def __init__(self,iAnt,WeightType="exp",WeigthScale=1,order=1,StepStart=10,BufferNPoints=10,sigQ=0.01,DoEvolve=True):
+    def __init__(self,iAnt,WeightType="exp",WeigthScale=1,order=1,StepStart=10,BufferNPoints=10,sigQ=0.01,DoEvolve=True,IdSharedMem=""):
         self.WeightType=WeightType 
         self.WeigthScale=WeigthScale*60. #in min
         self.order=order
@@ -14,21 +14,21 @@ class ClassModelEvolution():
         self.BufferNPoints=BufferNPoints
         self.sigQ=sigQ
         self.DoEvolve=DoEvolve
-    
+        self.IdSharedMem=IdSharedMem
 
     def Evolve0(self,Gin,Pa):
-        done=NpShared.GiveArray("SolsArray_done")
+        done=NpShared.GiveArray("%sSolsArray_done"%self.IdSharedMem)
         indDone=np.where(done==1)[0]
-        Q=NpShared.GiveArray("SharedCovariance_Q")[self.iAnt]
+        Q=NpShared.GiveArray("%sSharedCovariance_Q"%self.IdSharedMem)[self.iAnt]
         #print indDone.size
         #print "mean",np.mean(Q)
         if indDone.size<2: return Pa+Q
-        t0=NpShared.GiveArray("SolsArray_t0")[indDone]
-        t1=NpShared.GiveArray("SolsArray_t1")[indDone]
-        tm=NpShared.GiveArray("SolsArray_tm")[indDone]
+        t0=NpShared.GiveArray("%sSolsArray_t0"%self.IdSharedMem)[indDone]
+        t1=NpShared.GiveArray("%sSolsArray_t1"%self.IdSharedMem)[indDone]
+        tm=NpShared.GiveArray("%sSolsArray_tm"%self.IdSharedMem)[indDone]
 
 
-        G=NpShared.GiveArray("SolsArray_G")[indDone][:,self.iAnt,:,:,:]
+        G=NpShared.GiveArray("%sSolsArray_G"%self.IdSharedMem)[indDone][:,self.iAnt,:,:,:]
 
         
         nt,nd,npol,_=G.shape
@@ -75,15 +75,15 @@ class ClassModelEvolution():
 
 
     def Evolve(self,Pa,CurrentTime):
-        done=NpShared.GiveArray("SolsArray_done")
+        done=NpShared.GiveArray("%sSolsArray_done"%self.IdSharedMem)
         indDone=np.where(done==1)[0]
 
-        t0=NpShared.GiveArray("SolsArray_t0")[indDone]
-        t1=NpShared.GiveArray("SolsArray_t1")[indDone]
-        tm=NpShared.GiveArray("SolsArray_tm")[indDone]
+        t0=NpShared.GiveArray("%sSolsArray_t0"%self.IdSharedMem)[indDone]
+        t1=NpShared.GiveArray("%sSolsArray_t1"%self.IdSharedMem)[indDone]
+        tm=NpShared.GiveArray("%sSolsArray_tm"%self.IdSharedMem)[indDone]
 
 
-        G=NpShared.GiveArray("SolsArray_G")[indDone][:,self.iAnt,:,:,:]
+        G=NpShared.GiveArray("%sSolsArray_G"%self.IdSharedMem)[indDone][:,self.iAnt,:,:,:]
 
         
         nt,nd,npol,_=G.shape

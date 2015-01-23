@@ -116,7 +116,7 @@ def main(options=None):
     Lcol0=["black","black","blue"]
     Lcol1=["gray","gray","red"]
     Lalpha0=[1,1,1]
-    Lalpha1=[1,1,1]
+    Lalpha1=[0.5,0.5,0.5]
     # off-diag terms
     Lls_off=["-","--",":"]
     Lcol0_off=["black","black","blue"]
