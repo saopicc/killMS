@@ -41,7 +41,7 @@ def read_options():
     opt = optparse.OptionParser(usage='Usage: %prog --ms=somename.MS <options>',version='%prog version 1.0',description=desc)
     group = optparse.OptionGroup(opt, "* Data-related options", "Won't work if not specified.")
     group.add_option('--SolsFile',help='Input Solutions list [no default]',default='')
-    group.add_option('--DoResid',type='int',help=' [no default]',default=0)
+    group.add_option('--DoResid',type="int",help='No [no default]',default=-1)
     group.add_option('--PlotMode',type='int',help=' [no default]',default=0)
     opt.add_option_group(group)
     
@@ -100,7 +100,7 @@ def main(options=None):
         tm=(Sols.t1+Sols.t0)/2.
         t0=tm[0]
         tm-=t0
-        
+        Sols.t0=tm
         nt,na,nd,_,_=Sols.G.shape
         nx,ny=GiveNXNYPanels(na)
         LSols.append(Sols)
@@ -109,11 +109,20 @@ def main(options=None):
         # LSols=[LSols[0]]
         # nSol=1
 
-    Lls=["-","--"]
-    Lcol0=["black","blue"]
-    Lcol1=["gray","red"]
+    # diag terms
+    Lls=["-","--",":"]
+    Lcol0=["black","black","blue"]
+    Lcol1=["gray","gray","red"]
+    Lalpha0=[1,1,1]
+    Lalpha1=[1,1,1]
+    # off-diag terms
+    Lls_off=["-","--",":"]
+    Lcol0_off=["black","black","blue"]
+    Lcol1_off=["gray","gray","red"]
     
-        
+    if options.DoResid!=-1:
+        Sresid=LSols[1].copy()
+        LSols.append(Sresid)
 
     pylab.figure(1,figsize=(13,8))
     iAnt=0
@@ -135,8 +144,10 @@ def main(options=None):
             ylim0=-ampMax,ampMax
             ylim1=-ampMax,ampMax
 
-        if options.DoResid==1:
-            LSols[1].G[:,:,iDir,:,:]=LSols[1].G[:,:,iDir,:,:]-LSols[0].G[:,:,iDir,:,:]
+        if options.DoResid!=-1:
+            LSols[-1].G[:,:,iDir,:,:]=LSols[1].G[:,:,iDir,:,:]-LSols[0].G[:,:,iDir,:,:]
+            nSol+=1
+            
 
         pylab.clf()
         for i in range(nx):
@@ -153,21 +164,21 @@ def main(options=None):
                     Sols=LSols[iSol]
                     G=Sols.G[:,:,iDir,:,:]
                     J=G[:,iAnt,:,:]
-                    ax.plot(tm,op0(J[:,0,1]),color=Lcol0[iSol],alpha=0.5)
-                    ax.plot(tm,op0(J[:,1,0]),color=Lcol0[iSol],alpha=0.5)
-                    ax.plot(tm,op0(J[:,1,1]),color=Lcol0[iSol],alpha=0.5,ls="--")
-                    ax.plot(tm,op0(J[:,0,0]),color=Lcol0[iSol],alpha=0.5,ls="--")
+                    ax.plot(Sols.t0,op0(J[:,1,1]),color=Lcol0[iSol],alpha=Lalpha0[iSol],ls=Lls[iSol])
+                    ax.plot(Sols.t0,op0(J[:,0,0]),color=Lcol0[iSol],alpha=Lalpha0[iSol],ls=Lls[iSol])
+                    ax.plot(Sols.t0,op0(J[:,0,1]),color=Lcol0_off[iSol],alpha=Lalpha0[iSol],ls=Lls_off[iSol])
+                    ax.plot(Sols.t0,op0(J[:,1,0]),color=Lcol0_off[iSol],alpha=Lalpha0[iSol],ls=Lls_off[iSol])
                     ax.set_ylim(ylim0)
                     ax.set_xticks([])
                     ax.set_yticks([])
     
                     # ax.plot(tm,op1(J[:,0,1]),color="blue")
                     # ax.plot(tm,op1(J[:,1,0]),color="blue")
-                    ax2.plot(tm,op1(J[:,1,1]),color=Lcol1[iSol],alpha=0.5)
-                    ax2.plot(tm,op1(J[:,0,0]),color=Lcol1[iSol],alpha=0.5)
+                    ax2.plot(Sols.t0,op1(J[:,1,1]),color=Lcol1[iSol],alpha=Lalpha1[iSol],ls=Lls[iSol])
+                    ax2.plot(Sols.t0,op1(J[:,0,0]),color=Lcol1[iSol],alpha=Lalpha1[iSol],ls=Lls[iSol])
                     if options.PlotMode==1:
-                        ax2.plot(tm,op1(J[:,0,1]),color=Lcol1[iSol],alpha=0.5,ls="--")
-                        ax2.plot(tm,op1(J[:,1,0]),color=Lcol1[iSol],alpha=0.5,ls="--")
+                        ax2.plot(Sols.t0,op1(J[:,0,1]),color=Lcol1_off[iSol],alpha=Lalpha1[iSol],ls=Lls_off[iSol])
+                        ax2.plot(Sols.t0,op1(J[:,1,0]),color=Lcol1_off[iSol],alpha=Lalpha1[iSol],ls=Lls_off[iSol])
                     ax2.set_ylim(ylim1)
                     ax2.set_xticks([])
                     ax2.set_yticks([])

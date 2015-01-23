@@ -12,8 +12,8 @@ from Array import ModLinAlg
 
 
 class ClassPredict():
-    def __init__(self,Precision="D"):
-        self.NCPU=6
+    def __init__(self,Precision="D",NCPU=6):
+        self.NCPU=NCPU
         ne.set_num_threads(self.NCPU)
         if Precision=="D":
             self.CType=np.complex128

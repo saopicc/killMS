@@ -207,7 +207,7 @@ def main(options=None):
                                 DoPlot=options.DoPlot,
                                 Lambda=options.Lambda)
     Solver.InitSol(TestMode=False)
-    PM=ClassPredict()
+    PM=ClassPredict(NCPU=NCPU)
     SM=Solver.SM
 
 
