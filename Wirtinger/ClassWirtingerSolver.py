@@ -93,9 +93,11 @@ class ClassWirtingerSolver():
                  Lambda=1,NIter=20,
                  NCPU=6,
                  SolverType="CohJones",
+                 IdSharedMem="",
                  evP_StepStart=0, evP_Step=1,
                  DoPlot=False,
                  DoPBar=True):
+        self.IdSharedMem=IdSharedMem
         self.Lambda=Lambda
         self.NCPU=NCPU
         self.DoPBar=DoPBar
@@ -178,17 +180,17 @@ class ClassWirtingerSolver():
         self.SolsArray_done=np.zeros((NSols,),dtype=np.bool8)
         self.SolsArray_G=np.zeros((NSols,na,nd,npol,npol),dtype=np.complex64)
 
-        self.SolsArray_t0=NpShared.ToShared("SolsArray_t0",self.SolsArray_t0)
-        self.SolsArray_t1=NpShared.ToShared("SolsArray_t1",self.SolsArray_t1)
-        self.SolsArray_tm=NpShared.ToShared("SolsArray_tm",self.SolsArray_tm)
-        self.SolsArray_done=NpShared.ToShared("SolsArray_done",self.SolsArray_done)
-        self.SolsArray_G=NpShared.ToShared("SolsArray_G",self.SolsArray_G)
+        self.SolsArray_t0=NpShared.ToShared("%sSolsArray_t0"%self.IdSharedMem,self.SolsArray_t0)
+        self.SolsArray_t1=NpShared.ToShared("%sSolsArray_t1"%self.IdSharedMem,self.SolsArray_t1)
+        self.SolsArray_tm=NpShared.ToShared("%sSolsArray_tm"%self.IdSharedMem,self.SolsArray_tm)
+        self.SolsArray_done=NpShared.ToShared("%sSolsArray_done"%self.IdSharedMem,self.SolsArray_done)
+        self.SolsArray_G=NpShared.ToShared("%sSolsArray_G"%self.IdSharedMem,self.SolsArray_G)
 
         self.SolsArray_Full=np.zeros((NSols,),dtype=[("t0",np.float64),("t1",np.float64),("G",np.complex64,(na,nd,2,2))])
         self.SolsArray_Full=self.SolsArray_Full.view(np.recarray)
 
 
-        self.G=NpShared.ToShared("SharedGains",self.G)
+        self.G=NpShared.ToShared("%sSharedGains"%self.IdSharedMem,self.G)
         self.InitCovariance()
 
     def InitCovariance(self,FromG=False,sigP=0.1,sigQ=0.01):
@@ -217,9 +219,9 @@ class ClassWirtingerSolver():
         self.P=P
         self.Q=Q
         self.evP=np.zeros_like(P)
-        self.P=NpShared.ToShared("SharedCovariance",self.P)
-        self.Q=NpShared.ToShared("SharedCovariance_Q",self.Q)
-        self.evP=NpShared.ToShared("SharedEvolveCovariance",self.evP)
+        self.P=NpShared.ToShared("%sSharedCovariance"%self.IdSharedMem,self.P)
+        self.Q=NpShared.ToShared("%sSharedCovariance_Q"%self.IdSharedMem,self.Q)
+        self.evP=NpShared.ToShared("%sSharedEvolveCovariance"%self.IdSharedMem,self.evP)
 
 
     def setNextData(self):
@@ -292,7 +294,7 @@ class ClassWirtingerSolver():
             self.SolsArray_tm[self.iCurrentSol]=tm
             ThisTime=tm
             for iAnt in ListAntSolve:
-                JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Lambda=self.Lambda,Precision="D")
+                JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Lambda=self.Lambda,Precision="D",IdSharedMem=self.IdSharedMem)
                 JM.setDATA_Shared()
                 self.DicoJM[iAnt]=JM
 
@@ -400,7 +402,7 @@ class ClassWirtingerSolver():
         T.disable()
         for ii in range(NCPU):
              
-            W=WorkerAntennaLM(work_queue, result_queue,self.SM,self.PolMode,self.Lambda,self.SolverType)#,args=(e,))
+            W=WorkerAntennaLM(work_queue, result_queue,self.SM,self.PolMode,self.Lambda,self.SolverType,self.IdSharedMem)#,args=(e,))
             workerlist.append(W)
             workerlist[ii].start()
 
@@ -533,7 +535,7 @@ import multiprocessing
 class WorkerAntennaLM(multiprocessing.Process):
     def __init__(self,
                  work_queue,
-                 result_queue,SM,PolMode,Lambda,SolverType,**kwargs):
+                 result_queue,SM,PolMode,Lambda,SolverType,IdSharedMem,**kwargs):
         multiprocessing.Process.__init__(self)
         self.work_queue = work_queue
         self.result_queue = result_queue
@@ -543,6 +545,7 @@ class WorkerAntennaLM(multiprocessing.Process):
         self.PolMode=PolMode
         self.Lambda=Lambda
         self.SolverType=SolverType
+        self.IdSharedMem=IdSharedMem
         #self.DoCalcEvP=DoCalcEvP
         #self.ThisTime=ThisTime
         #self.e,=kwargs["args"]
@@ -557,12 +560,12 @@ class WorkerAntennaLM(multiprocessing.Process):
                 break
             #self.e.wait()
 
-            JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Lambda=self.Lambda)
+            JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Lambda=self.Lambda,IdSharedMem=self.IdSharedMem)
             JM.setDATA_Shared()
 
-            G=NpShared.GiveArray("SharedGains")
-            P=NpShared.GiveArray("SharedCovariance")
-            evP=NpShared.GiveArray("SharedEvolveCovariance")
+            G=NpShared.GiveArray("%sSharedGains"%self.IdSharedMem)
+            P=NpShared.GiveArray("%sSharedCovariance"%self.IdSharedMem)
+            evP=NpShared.GiveArray("%sSharedEvolveCovariance"%self.IdSharedMem)
 
             if self.SolverType=="CohJones":
                 x=JM.doLMStep(G)

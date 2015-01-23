@@ -330,7 +330,7 @@ class ClassSM():
         # ssn=ss/ss0#(ss-ss0)/ss0
     
         ss/=np.sqrt(ss0)
-
+        ss+=np.random.randn(*ss.shape)*1e-6
         #ssn=ss
         # pylab.scatter(xx,yy,marker="s",c=ss,s=50)
         # pylab.scatter(x,y,c=s,s=np.sqrt(s)*50)
@@ -343,13 +343,14 @@ class ClassSM():
         #print vmin,vmax
         if DoPlot:
             pylab.ion()
-            pylab.scatter(xx,yy,marker="s",c=ss,s=50,vmin=vmin,vmax=vmax)
+            #pylab.scatter(xx,yy,marker="s",c=ss,s=50,vmin=vmin,vmax=vmax)
+            pylab.imshow(ss.reshape((Np,Np)).T[::-1,:],vmin=vmin,vmax=vmax,extent=(x0,x1,y0,y1))
             pylab.xlim(x0,x1)
             pylab.ylim(y0,y1)
             pylab.draw()
-            pylab.show()
+            pylab.show(False)
+            pylab.pause(0.1)
         for i in range(nk):
-            time.sleep(1)
             ind=np.where(ss==np.max(ss))
             xnode.append(xx[ind])
             ynode.append(yy[ind])
@@ -358,8 +359,9 @@ class ClassSM():
 
             if DoPlot:
                 pylab.clf()
-                pylab.scatter(xx,yy,marker="s",c=ss,s=50)#,vmin=vmin,vmax=vmax)
+                #pylab.scatter(xx,yy,marker="s",c=ss,s=50)#,vmin=vmin,vmax=vmax)
                 #pylab.scatter(xnode[-1],ynode[-1],marker="s",vmin=vmin,vmax=vmax)
+                pylab.imshow(ss.reshape((Np,Np)).T[::-1,:],vmin=vmin,vmax=vmax,extent=(x0,x1,y0,y1))
                 pylab.scatter(xnode,ynode,marker="s",color="red",vmin=vmin,vmax=vmax)
                 #pylab.scatter(x,y,marker="o")#,vmin=vmin,vmax=vmax)
                 #pylab.colorbar()

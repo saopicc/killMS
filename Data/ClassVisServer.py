@@ -15,11 +15,11 @@ class ClassVisServer():
                  ColName="DATA",
                  TChunkSize=1,
                  TVisSizeMin=1,
-                 PrefixShared="SharedVis",
                  DicoSelectOptions={},
                  LofarBeam=None,
-                 AddNoiseJy=None):
-  
+                 AddNoiseJy=None,IdSharedMem=""):
+        self.IdSharedMem=IdSharedMem
+        PrefixShared="%sSharedVis"%self.IdSharedMem
         self.AddNoiseJy=AddNoiseJy
         self.ReInitChunkCount()
         self.TMemChunkSize=TChunkSize
@@ -341,8 +341,8 @@ class ClassVisServer():
 
     def ClearSharedMemory(self):
         NpShared.DelAll(self.PrefixShared)
-        NpShared.DelAll("DicoData")
-        NpShared.DelAll("KernelMat")
+        NpShared.DelAll("%sDicoData"%self.IdSharedMem)
+        NpShared.DelAll("%sKernelMat"%self.IdSharedMem)
 
         # for Name in self.SharedNames:
         #     NpShared.DelArray(Name)

@@ -2,8 +2,9 @@
 
 import optparse
 from Sky import ClassSM
+import pickle
 
-
+SaveName="last_MakeModel.obj"
 
 def read_options():
     desc="""Questions and suggestions: cyril.tasse@obspm.fr"""
@@ -18,9 +19,14 @@ def read_options():
     group.add_option('--CMethod',help=' Clustering method [1,2,3]. Default is %default',default="1")
     opt.add_option_group(group)
     options, arguments = opt.parse_args()
+    f = open(SaveName,"wb")
+    pickle.dump(options,f)
     
-if __name__=="__main__":
-    read_options()
+def main(options=None):
+    if options==None:
+        f = open(SaveName,'rb')
+        options = pickle.load(f)
+
     NCluster=int(options.NCluster)
     DoPlot=(int(options.DoPlot)==1)
     DoSelect=(int(options.DoSelect)==1)
@@ -38,3 +44,10 @@ if __name__=="__main__":
 
     if options.DoPrint=="1":
         SM.print_sm2()
+
+if __name__=="__main__":
+    read_options()
+    f = open(SaveName,'rb')
+    options = pickle.load(f)
+
+    main(options=options)

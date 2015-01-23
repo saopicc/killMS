@@ -112,7 +112,8 @@ def testLM():
 
 
 class ClassJacobianAntenna():
-    def __init__(self,SM,iAnt,PolMode="HalfFull",Lambda=1,Precision="S"):
+    def __init__(self,SM,iAnt,PolMode="HalfFull",Lambda=1,Precision="S",IdSharedMem=""):
+        self.IdSharedMem=IdSharedMem
         self.PolMode=PolMode
         #self.PM=ClassPredict(Precision="S")
         self.PM=ClassPredict(Precision=Precision)
@@ -125,7 +126,7 @@ class ClassJacobianAntenna():
             
         self.SM=SM
         self.iAnt=iAnt
-        self.SharedDataDicoName="DicoData.%2.2i"%self.iAnt
+        self.SharedDataDicoName="%sDicoData.%2.2i"%(self.IdSharedMem,self.iAnt)
         self.HasKernelMatrix=False
         self.Lambda=Lambda
         if self.PolMode=="HalfFull":
@@ -147,7 +148,7 @@ class ClassJacobianAntenna():
         # for SharedName in SharedNames:
         #     key=SharedNames.split(".")[1]
         #     self.DATA[key]=NpShared.GiveArray(SharedName)
-        self.DATA=NpShared.SharedToDico("SharedVis")
+        self.DATA=NpShared.SharedToDico("%sSharedVis"%self.IdSharedMem)
 
 
     def GivePaPol(self,Pa_in,ipol):
@@ -571,7 +572,7 @@ class ClassJacobianAntenna():
         n4vis=nrows*nchan
         self.n4vis=n4vis
         
-        KernelSharedName="KernelMat.%2.2i"%self.iAnt
+        KernelSharedName="%sKernelMat.%2.2i"%(self.IdSharedMem,self.iAnt)
         self.KernelMat=NpShared.GiveArray(KernelSharedName)
         if self.KernelMat!=None:
             self.HasKernelMatrix=True

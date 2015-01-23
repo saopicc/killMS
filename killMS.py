@@ -175,7 +175,8 @@ def main(options=None):
 
     ######################################
 
-    NpShared.DelAll()
+    IdSharedMem=str(int(np.random.rand(1)[0]*100000))+"."
+    NpShared.DelAll(IdSharedMem)
     ReadColName  = options.InCol
     WriteColName = options.OutCol
 
@@ -184,7 +185,7 @@ def main(options=None):
     #SM.SourceCat.I*=1000**2
     VS=ClassVisServer.ClassVisServer(options.ms,ColName=ReadColName,
                                      TVisSizeMin=dt,
-                                     TChunkSize=TChunk)
+                                     TChunkSize=TChunk,IdSharedMem=IdSharedMem)
     print VS.MS
     if not(WriteColName in VS.MS.ColNames):
         print>>log, "Column %s not in MS "%WriteColName
@@ -199,13 +200,14 @@ def main(options=None):
         TimeMin=float(sTimeMin)
         BeamProps=Mode,TimeMin
 
+
     Solver=ClassWirtingerSolver(VS,SM,PolMode=options.PolMode,
                                 BeamProps=BeamProps,
                                 NIter=options.NIter,NCPU=NCPU,
                                 SolverType=options.SolverType,
                                 evP_Step=options.evP_Step,evP_StepStart=options.evP_StepStart,
                                 DoPlot=options.DoPlot,
-                                Lambda=options.Lambda)
+                                Lambda=options.Lambda,IdSharedMem=IdSharedMem)
     Solver.InitSol(TestMode=False)
     PM=ClassPredict(NCPU=NCPU)
     SM=Solver.SM
@@ -216,14 +218,14 @@ def main(options=None):
         print>>log, ModColor.Str("Initialising Kalman filter with Levenberg-Maquardt estimate")
         VSInit=ClassVisServer.ClassVisServer(options.ms,ColName=ReadColName,
                                              TVisSizeMin=dtInit,
-                                             TChunkSize=dtInit/60)
+                                             TChunkSize=dtInit/60,IdSharedMem=IdSharedMem)
         
         VSInit.LoadNextVisChunk()
         SolverInit=ClassWirtingerSolver(VSInit,SM,PolMode=options.PolMode,
                                         NIter=options.NIter,NCPU=NCPU,
                                         SolverType="CohJones",
                                         #DoPlot=options.DoPlot,
-                                        DoPBar=False)
+                                        DoPBar=False,IdSharedMem=IdSharedMem)
 
 
         SolverInit.InitSol(TestMode=False)
@@ -325,7 +327,7 @@ def main(options=None):
     Sols=Solver.GiveSols()
     StationNames=np.array(Solver.VS.MS.StationNames)
     np.savez(FileName,Sols=Sols,StationNames=StationNames)
-    NpShared.DelAll()
+    NpShared.DelAll(IdSharedMem)
 
     
 
