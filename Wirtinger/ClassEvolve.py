@@ -22,7 +22,7 @@ class ClassModelEvolution():
         Q=NpShared.GiveArray("SharedCovariance_Q")[self.iAnt]
         #print indDone.size
         #print "mean",np.mean(Q)
-        if indDone.size==0: return Pa+Q
+        if indDone.size<2: return Pa+Q
         t0=NpShared.GiveArray("SolsArray_t0")[indDone]
         t1=NpShared.GiveArray("SolsArray_t1")[indDone]
         tm=NpShared.GiveArray("SolsArray_tm")[indDone]
@@ -54,7 +54,10 @@ class ClassModelEvolution():
             g_t=G[:,iPar]
             ThisG=Gin.ravel()[iPar]
             #ratio=1.+np.std(g_t)
-            ratio=(ThisG-np.mean(g_t))
+            #norm=np.max([np.abs(np.mean(g_t))
+            #ratio=np.cov(g_t)/Pa[iPar,iPar]
+            #print np.cov(g_t),Pa[iPar,iPar],ratio
+            ratio=(g_t[-1]-np.mean(g_t))/np.sqrt((Pa[iPar,iPar]+Q[iPar,iPar]))
             F[iPar]=ratio#/np.sqrt(2.)
 
 
@@ -71,7 +74,7 @@ class ClassModelEvolution():
         
 
 
-    def Evolve(self,x,P,CurrentTime):
+    def Evolve(self,Pa,CurrentTime):
         done=NpShared.GiveArray("SolsArray_done")
         indDone=np.where(done==1)[0]
 
@@ -114,8 +117,8 @@ class ClassModelEvolution():
             dx=1e-6
             for iPar in range(NPars):
                 g_t=G[:,iPar]
-                g_r=g_t.real
-                g_i=g_t.imag
+                g_r=g_t.real.copy()
+                g_i=g_t.imag.copy()
                 
                 ####
                 z_r0 = np.polyfit(tm0, g_r, self.order, w=w)
@@ -127,8 +130,10 @@ class ClassModelEvolution():
                 Gout[iPar]=x0_r+1j*x0_i
                 
                 ####
-                z_r1 = np.polyfit(tm0, g_r+dx, self.order, w=w)
-                z_i1 = np.polyfit(tm0, g_i+dx, self.order, w=w)
+                g_r[-1]+=dx
+                g_i[-1]+=dx
+                z_r1 = np.polyfit(tm0, g_r, self.order, w=w)
+                z_i1 = np.polyfit(tm0, g_i, self.order, w=w)
                 poly_r = np.poly1d(z_r1)
                 poly_i = np.poly1d(z_i1)
                 x1_r=poly_r(ThisTime)
@@ -137,16 +142,16 @@ class ClassModelEvolution():
                 dz=((x0_r-x1_r)+1j*(x0_i-x1_i))/dx
                 F[iPar]=dz/np.sqrt(2.)
 
-            # if self.iAnt==0:
-            #     xx=np.linspace(tm0.min(),tm0.max(),100)
-            #     pylab.clf()
-            #     pylab.plot(tm0, g_r)
-            #     pylab.plot(xx, poly_r(xx))
-            #     pylab.scatter([ThisTime],[x1_r])
-            #     pylab.draw()
-            #     pylab.show(False)
-            #     pylab.pause(0.1)
-
+            if self.iAnt==0:
+                xx=np.linspace(tm0.min(),tm0.max(),100)
+                pylab.clf()
+                pylab.plot(tm0, g_r)
+                pylab.plot(xx, poly_r(xx))
+                pylab.scatter([ThisTime],[x1_r])
+                pylab.draw()
+                pylab.show(False)
+                pylab.pause(0.1)
+                print F
             
         # if self.iAnt==0:
         #     pylab.clf()
@@ -156,7 +161,8 @@ class ClassModelEvolution():
         #     pylab.pause(0.1)
 
 
-        Pa=P[self.iAnt]
+        
+        #Pa=P[self.iAnt]
         PaOut=np.zeros_like(Pa)
         Q=np.diag(np.ones((PaOut.shape[0],)))*(self.sigQ**2)
         PaOut=F.reshape((NPars,1))*Pa*F.reshape((1,NPars)).conj()+Q

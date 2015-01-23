@@ -222,7 +222,7 @@ def main(options=None):
         SolverInit=ClassWirtingerSolver(VSInit,SM,PolMode=options.PolMode,
                                         NIter=options.NIter,NCPU=NCPU,
                                         SolverType="CohJones",
-                                        DoPlot=options.DoPlot,
+                                        #DoPlot=options.DoPlot,
                                         DoPBar=False)
 
 
@@ -290,7 +290,8 @@ def main(options=None):
             break
 
         Solver.doNextTimeSolve_Parallel()
-        #Solver.doNextTimeSolve()
+        # Solver.doNextTimeSolve()
+
         # substract
         ind=np.where(SM.SourceCat.kill==1)[0]
         

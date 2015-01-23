@@ -290,7 +290,7 @@ class ClassWirtingerSolver():
             self.SolsArray_t1[self.iCurrentSol]=t1
             tm=(t0+t1)/2.
             self.SolsArray_tm[self.iCurrentSol]=tm
-
+            ThisTime=tm
             for iAnt in ListAntSolve:
                 JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Lambda=self.Lambda,Precision="D")
                 JM.setDATA_Shared()
@@ -320,15 +320,16 @@ class ClassWirtingerSolver():
 
                     if self.SolverType=="KAFCA":
                         EM=ClassModelEvolution(iAnt,
-                                               StepStart=0,
+                                               StepStart=10,
                                                WeigthScale=1,
-                                               DoEvolve=False,
-                                               BufferNPoints=3,
+                                               DoEvolve=True,
+                                               BufferNPoints=10,
                                                sigQ=0.01)
 
                         x,P=JM.doEKFStep(self.G,self.P,self.evP,self.rms)
 
                         Pa=EM.Evolve0(x,P)
+                        #_,Pa=EM.Evolve(P,ThisTime)
                         if Pa!=None:
                             P=Pa
 
@@ -347,7 +348,7 @@ class ClassWirtingerSolver():
                     pylab.plot(np.abs(Gnew.flatten())-sig,color="black",ls="--")
                     self.P[:]=Pnew[:]
                 pylab.plot(np.abs(self.G.flatten()))
-                pylab.ylim(0,2)
+                #pylab.ylim(0,2)
                 pylab.draw()
                 pylab.show(False)
                 self.G[:]=Gnew[:]
@@ -579,9 +580,9 @@ class WorkerAntennaLM(multiprocessing.Process):
 
                 EM=ClassModelEvolution(iAnt,
                                        StepStart=0,
-                                       WeigthScale=1,
-                                       DoEvolve=False,
-                                       BufferNPoints=3,
+                                       WeigthScale=0.5,
+                                       DoEvolve=True,
+                                       BufferNPoints=10,
                                        sigQ=0.01)
 
                 # Ga,Pa=EM.Evolve0(G,P,self.ThisTime)
@@ -592,6 +593,7 @@ class WorkerAntennaLM(multiprocessing.Process):
                 x,Pout=JM.doEKFStep(G,P,evP,rms)
                 rmsFromData=JM.rmsFromData
                 Pa=EM.Evolve0(x,Pout)
+                #_,Pa=EM.Evolve(x,Pout,ThisTime)
 
                 if Pa!=None:
                     Pout=Pa

@@ -42,6 +42,7 @@ def read_options():
     group = optparse.OptionGroup(opt, "* Data-related options", "Won't work if not specified.")
     group.add_option('--SolsFile',help='Input Solutions list [no default]',default='')
     group.add_option('--DoResid',type='int',help=' [no default]',default=0)
+    group.add_option('--PlotMode',type='int',help=' [no default]',default=0)
     opt.add_option_group(group)
     
     options, arguments = opt.parse_args()
@@ -105,14 +106,14 @@ def main(options=None):
         LSols.append(Sols)
         StationNames=SolsDico["StationNames"]
 
-    if options.DoResid==1:
-        LSols[1].G=LSols[1].G-LSols[0].G
         # LSols=[LSols[0]]
         # nSol=1
 
     Lls=["-","--"]
-    LcolAmp=["black","blue"]
-    LcolPha=["gray","red"]
+    Lcol0=["black","blue"]
+    Lcol1=["gray","red"]
+    
+        
 
     pylab.figure(1,figsize=(13,8))
     iAnt=0
@@ -122,7 +123,20 @@ def main(options=None):
             G=Sols.G[:,:,iDir,:,:]
             Sols.G[:,:,iDir,:,:]=NormMatrices(G)
             
-        ampMinMax=0,np.max(np.abs(LSols[0].G))
+        ampMax=np.max(np.abs(LSols[0].G))
+        if options.PlotMode==0:
+            op0=np.abs
+            op1=np.angle
+            ylim0=0,ampMax
+            ylim1=-np.pi,np.pi
+        else:
+            op0=np.real
+            op1=np.imag
+            ylim0=-ampMax,ampMax
+            ylim1=-ampMax,ampMax
+
+        if options.DoResid==1:
+            LSols[1].G[:,:,iDir,:,:]=LSols[1].G[:,:,iDir,:,:]-LSols[0].G[:,:,iDir,:,:]
 
         pylab.clf()
         for i in range(nx):
@@ -139,19 +153,22 @@ def main(options=None):
                     Sols=LSols[iSol]
                     G=Sols.G[:,:,iDir,:,:]
                     J=G[:,iAnt,:,:]
-                    ax.plot(tm,np.abs(J[:,0,1]),color=LcolAmp[iSol],alpha=0.5)
-                    ax.plot(tm,np.abs(J[:,1,0]),color=LcolAmp[iSol],alpha=0.5)
-                    ax.plot(tm,np.abs(J[:,1,1]),color=LcolAmp[iSol],alpha=0.5)
-                    ax.plot(tm,np.abs(J[:,0,0]),color=LcolAmp[iSol],alpha=0.5)
-                    ax.set_ylim(ampMinMax)
+                    ax.plot(tm,op0(J[:,0,1]),color=Lcol0[iSol],alpha=0.5)
+                    ax.plot(tm,op0(J[:,1,0]),color=Lcol0[iSol],alpha=0.5)
+                    ax.plot(tm,op0(J[:,1,1]),color=Lcol0[iSol],alpha=0.5,ls="--")
+                    ax.plot(tm,op0(J[:,0,0]),color=Lcol0[iSol],alpha=0.5,ls="--")
+                    ax.set_ylim(ylim0)
                     ax.set_xticks([])
                     ax.set_yticks([])
     
-                    # ax.plot(tm,np.angle(J[:,0,1]),color="blue")
-                    # ax.plot(tm,np.angle(J[:,1,0]),color="blue")
-                    ax2.plot(tm,np.angle(J[:,1,1]),color=LcolPha[iSol],alpha=0.5)
-                    ax2.plot(tm,np.angle(J[:,0,0]),color=LcolPha[iSol],alpha=0.5)
-                    ax2.set_ylim(-np.pi,np.pi)
+                    # ax.plot(tm,op1(J[:,0,1]),color="blue")
+                    # ax.plot(tm,op1(J[:,1,0]),color="blue")
+                    ax2.plot(tm,op1(J[:,1,1]),color=Lcol1[iSol],alpha=0.5)
+                    ax2.plot(tm,op1(J[:,0,0]),color=Lcol1[iSol],alpha=0.5)
+                    if options.PlotMode==1:
+                        ax2.plot(tm,op1(J[:,0,1]),color=Lcol1[iSol],alpha=0.5,ls="--")
+                        ax2.plot(tm,op1(J[:,1,0]),color=Lcol1[iSol],alpha=0.5,ls="--")
+                    ax2.set_ylim(ylim1)
                     ax2.set_xticks([])
                     ax2.set_yticks([])
                     #print StationNames[iAnt]
