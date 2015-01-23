@@ -91,6 +91,7 @@ def main(options=None):
     FilesList=options.SolsFile.split(",")
     LSols=[]
     nSol=len(FilesList)
+    t0=None
     for FileName in FilesList:
         SolsDico=np.load(FileName)
         Sols=SolsDico["Sols"]
@@ -98,7 +99,8 @@ def main(options=None):
         ind=np.where(Sols.t1!=0)[0]
         Sols=Sols[ind]
         tm=(Sols.t1+Sols.t0)/2.
-        t0=tm[0]
+        if t0==None:
+            t0=tm[0]
         tm-=t0
         Sols.t0=tm
         nt,na,nd,_,_=Sols.G.shape
