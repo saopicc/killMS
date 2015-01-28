@@ -32,11 +32,17 @@ class ClassPredict():
         A1=DicoData["A1"]
         times=DicoData["times"]
         na=DicoData["infos"][0]
+
+        # nt,nd,nd,nchan,_,_=Beam.shape
+        # med=np.median(np.abs(Beam))
+        # Threshold=med*1e-2
+        
         for it in range(lt0.size):
             t0,t1=lt0[it],lt1[it]
             ind=np.where((times>=t0)&(times<t1))[0]
             if ind.size==0: continue
             data=ColOutDir[ind]
+            # flags=DicoData["flags"][ind]
             A0sel=A0[ind]
             A1sel=A1[ind]
             
@@ -54,14 +60,21 @@ class ClassPredict():
                     J0=np.mean(Beam[it,:,:,JChan,:,:],axis=1).reshape((na,4))
                     JH0=np.mean(BeamH[it,:,:,JChan,:,:],axis=1).reshape((na,4))
                     
+
+                
                 J=ModLinAlg.BatchInverse(J0)
                 JH=ModLinAlg.BatchInverse(JH0)
 
                 data[:,ichan,:]=ModLinAlg.BatchDot(J[A0sel,:],data[:,ichan,:])
                 data[:,ichan,:]=ModLinAlg.BatchDot(data[:,ichan,:],JH[A1sel,:])
 
-            ColOutDir[ind]=data[:]
+                # Abs_g0=(np.abs(J0[A0sel,0])<Threshold)
+                # Abs_g1=(np.abs(JH0[A1sel,0])<Threshold)
+                # flags[Abs_g0,ichan,:]=True
+                # flags[Abs_g1,ichan,:]=True
 
+            ColOutDir[ind]=data[:]
+            # DicoData["flags"][ind]=flags[:]
 
     def predictKernelPolCluster(self,DicoData,SM,iDirection=None,ApplyJones=None,ApplyTimeJones=None):
         self.DicoData=DicoData

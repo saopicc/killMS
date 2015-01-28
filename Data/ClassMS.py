@@ -644,13 +644,13 @@ class ClassMS():
 
         if self.swapped:
             visout=np.swapaxes(vis[spw*self.Nchan:(spw+1)*self.Nchan],0,1)
-            #flag_all=np.swapaxes(self.flag_all[spw*self.Nchan:(spw+1)*self.Nchan],0,1)
+            flag_all=np.swapaxes(self.flag_all[spw*self.Nchan:(spw+1)*self.Nchan],0,1)
         else:
             visout=vis
-            #flag_all=self.flag_all
+            flag_all=self.flag_all
 
         table_all.putcol(Col,visout.astype(self.data.dtype),self.ROW0,self.nRowRead)
-        #table_all.putcol("FLAG",flag_all,self.ROW0,self.nRowRead)
+        table_all.putcol("FLAG",flag_all,self.ROW0,self.nRowRead)
         table_all.close()
         
     def GiveUvwBL(self,a0,a1):

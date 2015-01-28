@@ -324,6 +324,7 @@ def main(options=None):
                 PM.ApplyCal(Solver.VS.ThisDataChunk,Jones,ApplyCal)
 
             Solver.VS.MS.data=Solver.VS.ThisDataChunk["data"]
+            Solver.VS.MS.flags_all=Solver.VS.ThisDataChunk["flags"]
             Solver.VS.MS.SaveVis(Col=WriteColName)
     
     FileName="killMS.%s.sols.npz"%options.SolverType
