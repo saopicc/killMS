@@ -8,7 +8,176 @@ import numexpr as ne
 from Other.progressbar import ProgressBar
 import multiprocessing
 from Array import ModLinAlg
+from Array import NpShared
 #ne.evaluate=lambda sin: ("return %s"%sin)
+import time
+
+def SolsToDicoJones(Sols,nf):
+    Jones={}
+    Jones["t0"]=Sols.t0
+    Jones["t1"]=Sols.t1
+    nt,na,nd,_,_=Sols.G.shape
+    G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
+    Jones["Beam"]=G
+    Jones["BeamH"]=ModLinAlg.BatchH(G)
+    Jones["ChanMap"]=np.zeros((nf,))#.tolist()
+    return Jones
+
+
+class ClassPredictParallel():
+    def __init__(self,Precision="D",NCPU=6,IdMemShared=""):
+        self.NCPU=NCPU
+        ne.set_num_threads(self.NCPU)
+        if Precision=="D":
+            self.CType=np.complex128
+            self.FType=np.float64
+        if Precision=="S":
+            self.CType=np.complex64
+            self.FType=np.float32
+        self.IdMemShared=IdMemShared
+
+
+    def ApplyCal(self,DicoDataIn,ApplyTimeJones,iCluster):
+
+        DicoData=NpShared.DicoToShared("%sDicoMemChunk"%(self.IdMemShared),DicoDataIn,DelInput=False)
+        if ApplyTimeJones!=None:
+            ApplyTimeJones=NpShared.DicoToShared("%sApplyTimeJones"%(self.IdMemShared),ApplyTimeJones,DelInput=False)
+
+        nrow,nch,_=DicoData["data"].shape
+        
+        RowList=np.int64(np.linspace(0,nrow,self.NCPU+1))
+        row0=RowList[0:-1]
+        row1=RowList[1::]
+        
+        work_queue = multiprocessing.Queue()
+        result_queue = multiprocessing.Queue()
+
+        workerlist=[]
+        NCPU=self.NCPU
+        
+        # NpShared.DelArray("%sCorrectedData"%(self.IdMemShared))
+        # CorrectedData=NpShared.SharedArray.create("%sCorrectedData"%(self.IdMemShared),DicoData["data"].shape,dtype=DicoData["data"].dtype)
+        # CorrectedData=
+
+        for ii in range(NCPU):
+            W=WorkerPredict(work_queue, result_queue,self.IdMemShared,Mode="ApplyCal",iCluster=iCluster)
+            workerlist.append(W)
+            workerlist[ii].start()
+
+        NJobs=row0.size
+        for iJob in range(NJobs):
+            ThisJob=row0[iJob],row1[iJob]
+            work_queue.put(ThisJob)
+
+        while int(result_queue.qsize())<NJobs:
+            time.sleep(0.1)
+            continue
+ 
+        for ii in range(NCPU):
+            workerlist[ii].shutdown()
+            workerlist[ii].terminate()
+            workerlist[ii].join()
+
+        DicoDataIn["data"]=DicoData["data"]
+
+
+    def predictKernelPolCluster(self,DicoData,SM,iDirection=None,ApplyJones=None,ApplyTimeJones=None,Noise=None):
+
+        DicoData=NpShared.DicoToShared("%sDicoMemChunk"%(self.IdMemShared),DicoData,DelInput=False)
+        if ApplyTimeJones!=None:
+            ApplyTimeJones=NpShared.DicoToShared("%sApplyTimeJones"%(self.IdMemShared),ApplyTimeJones,DelInput=False)
+
+        nrow,nch,_=DicoData["data"].shape
+        
+        RowList=np.int64(np.linspace(0,nrow,self.NCPU+1))
+        row0=RowList[0:-1]
+        row1=RowList[1::]
+        
+        work_queue = multiprocessing.Queue()
+        result_queue = multiprocessing.Queue()
+
+        workerlist=[]
+        NCPU=self.NCPU
+        
+        NpShared.DelArray("%sPredictData"%(self.IdMemShared))
+        PredictArray=NpShared.SharedArray.create("%sPredictData"%(self.IdMemShared),DicoData["data"].shape,dtype=DicoData["data"].dtype)
+        
+        for ii in range(NCPU):
+            W=WorkerPredict(work_queue, result_queue,self.IdMemShared,SM=SM)
+            workerlist.append(W)
+            workerlist[ii].start()
+
+        NJobs=row0.size
+        for iJob in range(NJobs):
+            ThisJob=row0[iJob],row1[iJob]
+            work_queue.put(ThisJob)
+
+        while int(result_queue.qsize())<NJobs:
+            time.sleep(0.1)
+            continue
+ 
+        for ii in range(NCPU):
+            workerlist[ii].shutdown()
+            workerlist[ii].terminate()
+            workerlist[ii].join()
+            
+        return PredictArray
+
+
+
+class WorkerPredict(multiprocessing.Process):
+    def __init__(self,
+                 work_queue,
+                 result_queue,IdSharedMem,SM=None,Mode="Predict",iCluster=-1):
+        multiprocessing.Process.__init__(self)
+        self.work_queue = work_queue
+        self.result_queue = result_queue
+        self.kill_received = False
+        self.exit = multiprocessing.Event()
+        self.SM=SM
+        self.IdSharedMem=IdSharedMem
+        self.Mode=Mode
+        self.iCluster=iCluster
+
+    def shutdown(self):
+        self.exit.set()
+    def run(self):
+        while not self.kill_received:
+            try:
+                Row0,Row1 = self.work_queue.get()
+            except:
+                break
+
+            D=NpShared.SharedToDico("%sDicoMemChunk"%self.IdSharedMem)
+            DicoData={}
+            DicoData["data"]=D["data"][Row0:Row1]
+            DicoData["flags"]=D["flags"][Row0:Row1]
+            DicoData["A0"]=D["A0"][Row0:Row1]
+            DicoData["A1"]=D["A1"][Row0:Row1]
+            DicoData["times"]=D["times"][Row0:Row1]
+            DicoData["uvw"]=D["uvw"][Row0:Row1]
+            DicoData["freqs"]=D["freqs"]
+            DicoData["infos"]=D["infos"]
+            
+            ApplyTimeJones=NpShared.SharedToDico("%sApplyTimeJones"%self.IdSharedMem)
+
+            PM=ClassPredict(NCPU=1)
+
+            if self.Mode=="Predict":
+                PredictData=PM.predictKernelPolCluster(DicoData,self.SM,ApplyTimeJones=ApplyTimeJones)
+                PredictArray=NpShared.GiveArray("%sPredictData"%(self.IdSharedMem))
+                PredictArray[Row0:Row1]=PredictData[:]
+            elif self.Mode=="ApplyCal":
+                PM.ApplyCal(DicoData,ApplyTimeJones,self.iCluster)
+
+            self.result_queue.put(True)
+
+
+
+
+####################################################
+####################################################
+
 
 
 class ClassPredict():
@@ -72,6 +241,7 @@ class ClassPredict():
                 # flags[Abs_g1,ichan,:]=True
 
             ColOutDir[ind]=data[:]
+
             # DicoData["flags"][ind]=flags[:]
 
     def predictKernelPolCluster(self,DicoData,SM,iDirection=None,ApplyJones=None,ApplyTimeJones=None,Noise=None):
@@ -104,9 +274,13 @@ class ClassPredict():
             JonesH=ModLinAlg.BatchH(Jones)
 
         for iCluster in ListDirection:
-            ColOutDir=self.PredictDirSPW(iCluster)
-            if ColOutDir==None: continue
-
+            indSources=np.where(self.SourceCat.Cluster==iCluster)[0]
+            ColOutDir=np.zeros_like(DataOut)
+            for iSource in range(indSources.size):
+                out=self.PredictDirSPW(iCluster,iSource)
+                if out==None: continue
+                ColOutDir+=out
+            
             # print iCluster,ListDirection
             # print ColOutDir.shape
             # ColOutDir.fill(0)
@@ -148,6 +322,7 @@ class ClassPredict():
 
                     for ichan in range(len(ChanMap)):
                         JChan=ChanMap[ichan]
+
                         J=Beam[it,iCluster,:,JChan,:,:].reshape((na,4))
                         JH=BeamH[it,iCluster,:,JChan,:,:].reshape((na,4))
                         data[:,ichan,:]=ModLinAlg.BatchDot(J[A0sel,:],data[:,ichan,:])
@@ -163,9 +338,12 @@ class ClassPredict():
         return DataOut
 
 
-    def PredictDirSPW(self,idir):
+    def PredictDirSPW(self,idir,isource=None):
 
-        ind0=np.where(self.SourceCat.Cluster==idir)[0]
+        if isource!=None:
+            ind0=np.where(self.SourceCat.Cluster==idir)[0][isource:isource+1]
+        else:
+            ind0=np.where(self.SourceCat.Cluster==idir)[0]
         NSource=ind0.size
         if NSource==0: return None
         SourceCat=self.SourceCat[ind0]

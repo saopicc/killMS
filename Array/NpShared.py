@@ -20,7 +20,10 @@ def ToShared(Name,A):
     return a
 
 def DelArray(Name):
-    SharedArray.delete(Name)
+    try:
+        SharedArray.delete(Name)
+    except:
+        pass
 
 def ListNames():
     ll=list(SharedArray.list())
@@ -41,7 +44,7 @@ def GiveArray(Name):
         return None
 
 
-def DicoToShared(Prefix,Dico):
+def DicoToShared(Prefix,Dico,DelInput=False):
     DicoOut={}
     print>>log, ModColor.Str("DicoToShared: start [prefix = %s]"%Prefix)
     for key in Dico.keys():
@@ -49,9 +52,14 @@ def DicoToShared(Prefix,Dico):
         #print "%s.%s"%(Prefix,key)
         ThisKeyPrefix="%s.%s"%(Prefix,key)
         print>>log, ModColor.Str("  %s -> %s"%(key,ThisKeyPrefix))
-        ar=Dico[key].copy()
+        ar=Dico[key]
         Shared=ToShared(ThisKeyPrefix,ar)
         DicoOut[key]=Shared
+        if DelInput:
+            del(Dico[key],ar)
+            
+    if DelInput:
+        del(Dico)
     print>>log, ModColor.Str("DicoToShared: done")
 
     return DicoOut
@@ -62,7 +70,7 @@ def SharedToDico(Prefix):
     print>>log, ModColor.Str("SharedToDico: start [prefix = %s]"%Prefix)
     Lnames=ListNames()
     keys=[Name for Name in Lnames if Prefix in Name]
-    if len(keys)==0: return False
+    if len(keys)==0: return None
     DicoOut={}
     for Sharedkey in keys:
         key=Sharedkey.split(".")[-1]

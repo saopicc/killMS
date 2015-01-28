@@ -168,7 +168,10 @@ class ClassWirtingerSolver():
         self.G=G
         #self.G*=0.001
         _,_,npol,_=self.G.shape
-        #self.G+=np.random.randn(*self.G.shape)*0.1#sigP
+
+
+        # print "!!!!!!!!!!"
+        # self.G+=np.random.randn(*self.G.shape)*0.1#sigP
         
         NSols=1.5*int(self.VS.MS.DTh/(self.VS.TVisSizeMin/60.))
         
@@ -247,18 +250,9 @@ class ClassWirtingerSolver():
             Dpol=DATA["data"][:,:,1:3]
             Fpol=DATA["flags"][:,:,1:3]
             self.rms=np.std(Dpol[Fpol==0])/np.sqrt(2.)
-        # stop
-        #self.rms=np.max([self.rms,0.01])
-        #self.rms=np.min(self.rmsPol)
 
-#        print>>log, "Estimated rms = %15.7f mJy"%(self.rms*1000)
-        
-        #np.savez("EKF.npz",data=self.DATA["data"],G=self.G)
-        #stop
-        
-        # D=np.load("EKF.npz")
-        # self.DATA["data"]=D["data"]
-        # self.G=D["G"]
+        #print "rms=",self.rms
+
 
         return True
 
@@ -281,11 +275,14 @@ class ClassWirtingerSolver():
         self.DicoJM={}
 
 
-
-
+        T=ClassTimeIt.ClassTimeIt("WirtingerSolver")
+        T.disable()
         while True:
+            T.reinit()
             Res=self.setNextData()
             if Res=="EndChunk": break
+            T.timeit("read data")
+
             
             t0,t1=self.VS.CurrentVisTimes_MS_Sec
             self.SolsArray_t0[self.iCurrentSol]=t0
@@ -293,11 +290,15 @@ class ClassWirtingerSolver():
             tm=(t0+t1)/2.
             self.SolsArray_tm[self.iCurrentSol]=tm
             ThisTime=tm
+            T.timeit("stuff")
             for iAnt in ListAntSolve:
                 JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Lambda=self.Lambda,Precision="D",IdSharedMem=self.IdSharedMem)
+                T.timeit("JM")
                 JM.setDATA_Shared()
+                T.timeit("Setdata_Shared")
                 self.DicoJM[iAnt]=JM
 
+            T.timeit("Class")
 
             if (self.CounterEvolveP())&(self.SolverType=="KAFCA")&(self.iCurrentSol>self.EvolvePStepStart):
                 for iAnt in self.DicoJM.keys():
@@ -308,6 +309,8 @@ class ClassWirtingerSolver():
                 for iAnt in self.DicoJM.keys():
                     JM=self.DicoJM[iAnt]
                     self.evP[iAnt]=JM.CalcMatrixEvolveCov(self.G,self.P,self.rms)
+
+            T.timeit("Evolve")
             
 
             for i in range(self.NIter):
@@ -322,39 +325,46 @@ class ClassWirtingerSolver():
 
                     if self.SolverType=="KAFCA":
                         EM=ClassModelEvolution(iAnt,
-                                               StepStart=10,
-                                               WeigthScale=1,
+                                               StepStart=3,
+                                               WeigthScale=0.3,
                                                DoEvolve=True,
                                                BufferNPoints=10,
                                                sigQ=0.01,IdSharedMem=self.IdSharedMem)
 
                         x,P=JM.doEKFStep(self.G,self.P,self.evP,self.rms)
+                        
+                        xe=None
 
                         Pa=EM.Evolve0(x,P)
-                        #_,Pa=EM.Evolve(P,ThisTime)
+
+                        #xe,Pa=EM.Evolve(x,P,ThisTime)
                         if Pa!=None:
                             P=Pa
+                        if xe!=None:
+                            x=xe
 
 
                         Pnew[iAnt]=P
 
                     Gnew[iAnt]=x
+                    T.timeit("SolveAnt %i"%iAnt)
                 
 
                 pylab.figure(1)
                 pylab.clf()
                 pylab.plot(np.abs(Gnew.flatten()))
                 if self.SolverType=="KAFCA":
-                    sig=np.sqrt(np.array([np.diag(Pnew[i]) for iAnt in range(self.VS.MS.na)]).flatten())
+                    sig=np.sqrt(np.array([np.diag(Pnew[iAnt]) for iAnt in range(self.VS.MS.na)]).flatten())
                     pylab.plot(np.abs(Gnew.flatten())+sig,color="black",ls="--")
                     pylab.plot(np.abs(Gnew.flatten())-sig,color="black",ls="--")
                     self.P[:]=Pnew[:]
                 pylab.plot(np.abs(self.G.flatten()))
-                #pylab.ylim(0,2)
+                pylab.ylim(0,2)
                 pylab.draw()
                 pylab.show(False)
                 self.G[:]=Gnew[:]
 
+                T.timeit("Plot")
 
 
             self.SolsArray_done[self.iCurrentSol]=1
@@ -493,7 +503,7 @@ class ClassWirtingerSolver():
                         sig=np.sqrt(np.abs(np.array([np.diag(self.P[i]) for i in ListAntSolve]))).flatten()
                         pylab.plot(np.abs(self.G[AntPlot].flatten())+sig,color="black",ls="--")
                         pylab.plot(np.abs(self.G[AntPlot].flatten())-sig,color="black",ls="--")
-                    #pylab.ylim(0,2)
+                    pylab.ylim(0,2)
                     pylab.draw()
                     pylab.show(False)
                     pylab.pause(0.1)

@@ -143,7 +143,7 @@ def main(options=None):
             G=Sols.G[:,:,iDir,:,:]
             Sols.G[:,:,iDir,:,:]=NormMatrices(G)
             
-        ampMax=np.max(np.median(np.abs(LSols[0].G),axis=1))
+        ampMax=1.5*np.max(np.median(np.abs(LSols[0].G),axis=1))
         if options.PlotMode==0:
             op0=np.abs
             op1=np.angle

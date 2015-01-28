@@ -1,6 +1,6 @@
 import numpy as np
 from Array import NpShared
-from Sky.PredictGaussPoints_NumExpr import ClassPredict
+from Sky.PredictGaussPoints_NumExpr2 import ClassPredict
 
 from Data import ClassVisServer
 from Sky import ClassSM
@@ -110,13 +110,18 @@ def testLM():
     stop    
     
 
+from Other import ClassTimeIt
+
 
 class ClassJacobianAntenna():
     def __init__(self,SM,iAnt,PolMode="HalfFull",Lambda=1,Precision="S",IdSharedMem=""):
+        T=ClassTimeIt.ClassTimeIt("ClassJacobianAntenna")
+        T.disable()
         self.IdSharedMem=IdSharedMem
         self.PolMode=PolMode
         #self.PM=ClassPredict(Precision="S")
         self.PM=ClassPredict(Precision=Precision)
+        T.timeit("PM")
         if Precision=="D":
             self.CType=np.complex128
             self.FType=np.float64
@@ -133,6 +138,7 @@ class ClassJacobianAntenna():
             self.NJacobBlocks=2
         elif self.PolMode=="Scalar":
             self.NJacobBlocks=1
+        T.timeit("rest")
     
     def GiveSubVecGainAnt(self,GainsIn):
         # if (GainsIn.size==self.NDir*2*2): return GainsIn.copy()
@@ -270,11 +276,13 @@ class ClassJacobianAntenna():
             self.CalcKernelMatrix()
             T.timeit("CalcKernelMatrix")
         z=self.DicoData["data_flat"]#self.GiveDataVec()
-
         f=(self.DicoData["flags_flat"]==0)
         ind=np.where(f)[0]
         Pa=P[self.iAnt]
         Ga=self.GiveSubVecGainAnt(Gains)
+
+
+
         self.rmsFromData=None
         if ind.size==0:
             return Ga.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks)),Pa
@@ -303,18 +311,19 @@ class ClassJacobianAntenna():
         #     print zr[f]
         #     print self.rmsFromData
         #     stop
-        # if self.iAnt==5:
+
+        # if self.iAnt==0:
         #     #self.DicoData["flags_flat"].fill(0)
         #     f=(self.DicoData["flags_flat"]==0)
         #     pylab.figure(2)
         #     pylab.clf()
         #     pylab.plot((z[f]))#[::11])#[::11])
         #     pylab.plot((Jx[f]))#[::11])#[::11])
-        #     pylab.plot(zr[f])#[::11])#[::11])
+        #     #pylab.plot(zr[f])#[::11])#[::11])
         #     pylab.draw()
         #     pylab.show(False)
         #     pylab.pause(0.1)
-
+        #     stop
 
 
         T.timeit("zr")
@@ -332,6 +341,7 @@ class ClassJacobianAntenna():
         #     xP=self.ApplyK_vec(J_Px,rms,Pa)
         #     evPa[iPar,:]=xP.flatten()
         # evPa= Pa-evPa
+
 
         del(self.Jacob)
         return x4.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks)),Pa_new1
@@ -642,9 +652,10 @@ class ClassJacobianAntenna():
 
 
     def GiveData(self,DATA,iAnt):
-
+        
         DicoData=NpShared.SharedToDico(self.SharedDataDicoName)
-        if DicoData==False:
+
+        if DicoData==None:
             #print "COMPUTE DATA"
             DicoData={}
             ind0=np.where(DATA['A0']==iAnt)[0]
@@ -692,6 +703,7 @@ class ClassJacobianAntenna():
             del(DicoData["data"])
 
             DicoData=NpShared.DicoToShared(self.SharedDataDicoName,DicoData)
+
         else:
             pass
             #print "DATA From shared"
@@ -706,6 +718,7 @@ class ClassJacobianAntenna():
 
         if "DicoBeam" in DATA.keys():
             DicoData["DicoBeam"] = DATA["DicoBeam"]
+
 
         # DicoData["A0"] = np.concatenate([DATA['A0'][ind0]])
         # DicoData["A1"] = np.concatenate([DATA['A1'][ind0]])

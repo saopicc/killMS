@@ -284,6 +284,7 @@ class ClassVisServer():
                      }
         
 
+
         if self.ApplyBeam:
             print>>log, "Update LOFAR beam .... "
             DtBeamSec=self.DtBeamMin*60
@@ -357,6 +358,6 @@ class ClassVisServer():
             Shared=NpShared.ToShared("%s.%s"%(self.PrefixShared,key),Dico[key])
             DicoOut[key]=Shared
             self.SharedNames.append("%s.%s"%(self.PrefixShared,key))
-
+            
         return DicoOut
 

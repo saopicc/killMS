@@ -5,7 +5,7 @@ import pylab
 from Array import NpShared
 
 class ClassModelEvolution():
-    def __init__(self,iAnt,WeightType="exp",WeigthScale=1,order=1,StepStart=10,BufferNPoints=10,sigQ=0.01,DoEvolve=True,IdSharedMem=""):
+    def __init__(self,iAnt,WeightType="exp",WeigthScale=1,order=1,StepStart=5,BufferNPoints=10,sigQ=0.01,DoEvolve=True,IdSharedMem=""):
         self.WeightType=WeightType 
         self.WeigthScale=WeigthScale*60. #in min
         self.order=order
@@ -37,15 +37,23 @@ class ClassModelEvolution():
 
         if nt>self.BufferNPoints:
             G=G[-self.BufferNPoints::,:,:,:]
+            tm=tm[-self.BufferNPoints::]
 
         G=G.copy()
 
         nt,_,_,_=G.shape
         NPars=nd*npol*npol
         G=G.reshape((nt,NPars))
-
+        
 
         F=np.ones((NPars,),np.complex128)
+        PaOut=np.zeros_like(Pa)
+
+        tm0=tm.copy()
+        tm0=tm-tm[-1]
+        w=np.exp(-tm0/self.WeigthScale)
+        w/=np.sum(w)
+        w=w[::-1]
 
         for iPar in range(NPars):
             #g_t=G[:,iPar][-1]
@@ -57,12 +65,17 @@ class ClassModelEvolution():
             #norm=np.max([np.abs(np.mean(g_t))
             #ratio=np.cov(g_t)/Pa[iPar,iPar]
             #print np.cov(g_t),Pa[iPar,iPar],ratio
-            ratio=(g_t[-1]-np.mean(g_t))/np.sqrt((Pa[iPar,iPar]+Q[iPar,iPar]))
-            F[iPar]=ratio#/np.sqrt(2.)
+            ratio=np.abs(ThisG-np.mean(g_t))/np.sqrt(Pa[iPar,iPar]+Q[iPar,iPar])
+            
+           #ratio=np.abs(g_t[-1]-np.mean(g_t))/np.sqrt(Pa[iPar,iPar])#+Q[iPar,iPar]))
+            diff=np.sum(w*(ThisG-g_t))/np.sum(w)
+            ratio=np.abs(diff)/np.sqrt(Pa[iPar,iPar]+Q[iPar,iPar])
+            F[iPar]=1.#ratio#/np.sqrt(2.)
 
+            diff=ThisG-g_t[-1]#np.sum(w*(ThisG-g_t))/np.sum(w)
+            PaOut[iPar,iPar]=np.abs(diff)**2+Pa[iPar,iPar]+Q[iPar,iPar]
+            PaOut[iPar,iPar]=np.abs(diff)**2+Pa[iPar,iPar]+Q[iPar,iPar]
 
-        
-        PaOut=np.zeros_like(Pa)
         # Q=np.diag(np.ones((PaOut.shape[0],)))*(self.sigQ**2)
 
 
@@ -74,9 +87,10 @@ class ClassModelEvolution():
         
 
 
-    def Evolve(self,Pa,CurrentTime):
+    def Evolve(self,xEst,Pa,CurrentTime):
         done=NpShared.GiveArray("%sSolsArray_done"%self.IdSharedMem)
         indDone=np.where(done==1)[0]
+        Q=NpShared.GiveArray("%sSharedCovariance_Q"%self.IdSharedMem)[self.iAnt]
 
         t0=NpShared.GiveArray("%sSolsArray_t0"%self.IdSharedMem)[indDone]
         t1=NpShared.GiveArray("%sSolsArray_t1"%self.IdSharedMem)[indDone]
@@ -139,19 +153,22 @@ class ClassModelEvolution():
                 x1_r=poly_r(ThisTime)
                 x1_i=poly_i(ThisTime)
                 
-                dz=((x0_r-x1_r)+1j*(x0_i-x1_i))/dx
+                # dz=((x0_r-x1_r)+1j*(x0_i-x1_i))/dx
+
+                xlast=G[-1][iPar]
+                dz=((x0_r-xlast.real)+1j*(x0_i-xlast.imag))/np.sqrt((Pa[iPar,iPar]+Q[iPar,iPar]))
                 F[iPar]=dz/np.sqrt(2.)
 
-            if self.iAnt==0:
-                xx=np.linspace(tm0.min(),tm0.max(),100)
-                pylab.clf()
-                pylab.plot(tm0, g_r)
-                pylab.plot(xx, poly_r(xx))
-                pylab.scatter([ThisTime],[x1_r])
-                pylab.draw()
-                pylab.show(False)
-                pylab.pause(0.1)
-                print F
+            # if self.iAnt==0:
+            #     xx=np.linspace(tm0.min(),tm0.max(),100)
+            #     pylab.clf()
+            #     pylab.plot(tm0, g_r)
+            #     pylab.plot(xx, poly_r(xx))
+            #     pylab.scatter([ThisTime],[x1_r])
+            #     pylab.draw()
+            #     pylab.show(False)
+            #     pylab.pause(0.1)
+            #     print F
             
         # if self.iAnt==0:
         #     pylab.clf()
@@ -164,7 +181,7 @@ class ClassModelEvolution():
         
         #Pa=P[self.iAnt]
         PaOut=np.zeros_like(Pa)
-        Q=np.diag(np.ones((PaOut.shape[0],)))*(self.sigQ**2)
+        #Q=np.diag(np.ones((PaOut.shape[0],)))*(self.sigQ**2)
         PaOut=F.reshape((NPars,1))*Pa*F.reshape((1,NPars)).conj()+Q
         
         

@@ -37,7 +37,8 @@ from Wirtinger.ClassWirtingerSolver import ClassWirtingerSolver
 
 from Other import ClassTimeIt
 from Data import ClassVisServer
-from Sky.PredictGaussPoints_NumExpr import ClassPredict
+#from Sky.PredictGaussPoints_NumExpr import ClassPredict
+from Sky.PredictGaussPoints_NumExpr2 import ClassPredictParallel as ClassPredict 
 from Array import ModLinAlg
 from Array import NpShared
 
@@ -234,7 +235,7 @@ def main(options=None):
         SolverInit=ClassWirtingerSolver(VSInit,SM,PolMode=options.PolMode,
                                         NIter=options.NIter,NCPU=NCPU,
                                         SolverType="CohJones",
-                                        #DoPlot=options.DoPlot,
+                                        DoPlot=options.DoPlot,
                                         DoPBar=False,IdSharedMem=IdSharedMem)
 
 
@@ -249,7 +250,7 @@ def main(options=None):
         G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
         Jones["Beam"]=G
         Jones["BeamH"]=ModLinAlg.BatchH(G)
-        Jones["ChanMap"]=np.zeros((VSInit.MS.NSPWChan,)).tolist()
+        Jones["ChanMap"]=np.zeros((VSInit.MS.NSPWChan,))
         PM.ApplyCal(SolverInit.VS.ThisDataChunk,Jones,0)
         DATA=SolverInit.VS.ThisDataChunk
         A0=SolverInit.VS.ThisDataChunk["A0"]
@@ -262,16 +263,19 @@ def main(options=None):
             Dpol=DATA["data"][ind,:,:]
             Fpol=DATA["flags"][ind,:,:]
             _,nchan,_=Dpol.shape
+            print "Antenna-%i"%A
             for ichan in range(nchan):
+                
                 d=Dpol[:,ichan,:]
                 f=Fpol[:,ichan,:]
+                print 
                 for ipol in range(4):
                     dp=d[:,ipol]
                     fp=f[:,ipol]
                     rms=np.std(dp[fp==0])/np.sqrt(2.)
                     mean=np.mean(dp[fp==0])/np.sqrt(2.)
+                    print "    pol=%i: (mean, rms)=(%s, %s)"%(ipol, str(mean),str(rms))
 
-                    #print A,ichan,ipol,rms,mean
                     rmsAnt[A,ichan,ipol]=rms
 
         rmsAnt=np.mean(np.mean(rmsAnt[:,:,1:3],axis=2),axis=1)
@@ -286,15 +290,24 @@ def main(options=None):
         indTake=np.where((rmsAnt-Mean_rmsAnt)/Mean_rmsAnt<Thr)[0]
         gscale=np.mean(np.abs(G[:,:,indTake,:,0,0]))
         TrueMeanRMSAnt=np.mean(rmsAnt[indTake])
+        rms=TrueMeanRMSAnt*gscale**2
+
         Solver.InitSol(G=SolverInit.G,TestMode=False)
         Solver.InitCovariance(FromG=True,sigP=options.CovP,sigQ=options.CovQ)
-        rms=TrueMeanRMSAnt*gscale**2
-        Solver.SetRmsFromExt(rms)
-        print>>log, "Estimated rms: %f Jy"%(rms)
-        
-    DoSubstract=(options.DoSub==1)
 
-    
+        rms=100
+
+        Solver.SetRmsFromExt(rms)
+
+        print>>log, "Estimated rms: %f Jy"%(rms)
+
+
+    DoSubstract=(options.DoSub==1)
+    #print "!!!!!!!!!!!!!!"
+    #Solver.SetRmsFromExt(100)
+    # Solver.InitCovariance(FromG=True,sigP=options.CovP,sigQ=options.CovQ)
+
+
     while True:
 
         Load=VS.LoadNextVisChunk()
@@ -316,7 +329,7 @@ def main(options=None):
             G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
             Jones["Beam"]=G
             Jones["BeamH"]=ModLinAlg.BatchH(G)
-            Jones["ChanMap"]=np.zeros((VS.MS.NSPWChan,)).tolist()
+            Jones["ChanMap"]=np.zeros((VS.MS.NSPWChan,))
             
             if DoSubstract:
                 print>>log, ModColor.Str("Substract sources ... ",col="green")
