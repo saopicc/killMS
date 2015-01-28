@@ -82,7 +82,7 @@ def read_options():
     opt.add_option_group(group)
     
     group = optparse.OptionGroup(opt, "* CohJones additional options")
-    group.add_option('--NIter',type="int",help=' Number of iterations for the solve. Default is %default ',default=20)
+    group.add_option('--NIter',type="int",help=' Number of iterations for the solve. Default is %default ',default=7)
     group.add_option('--Lambda',type="float",help=' Lambda parameter. Default is %default ',default=1)
     opt.add_option_group(group)
 
