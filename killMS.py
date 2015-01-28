@@ -49,17 +49,14 @@ def read_options():
     desc="""CohJones Questions and suggestions: cyril.tasse@obspm.fr"""
     
     opt = optparse.OptionParser(usage='Usage: %prog --ms=somename.MS <options>',version='%prog version 1.0',description=desc)
-    group = optparse.OptionGroup(opt, "* Data-related options", "Won't work if not specified.")
+    group = optparse.OptionGroup(opt, "* Data-related options")
     group.add_option('--ms',help='Input MS to draw [no default]',default='')
     group.add_option('--SkyModel',help='List of targets [no default]',default='')
-    group.add_option('--ClearSHM',help='Clear shared memory with given ID [no default]',default='')
-    opt.add_option_group(group)
-    
-    group = optparse.OptionGroup(opt, "* Visibilities options")
     group.add_option('--TChunk',help=' Time Chunk in hours. Default is %default',default=15)
     group.add_option('--InCol',help=' Column to work on. Default is %default',default="CORRECTED_DATA_BACKUP")
     group.add_option('--OutCol',help=' Column to write to. Default is %default',default="CORRECTED_DATA")
     group.add_option('--LOFARBeam',help='(Mode, Time): Mode can be AE, E, or A for "Array factor" and "Element beam". Time is the estimation time step',default="")
+    group.add_option('--UVMinMax',help=' Baseline length selection in km. For example --UVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default',default=None)
     opt.add_option_group(group)
 
     group = optparse.OptionGroup(opt, "* Source selection options")
@@ -80,6 +77,7 @@ def read_options():
     group.add_option('--NCPU',type="int",help=' Number of cores to use. Default is %default ',default=NCPU_default)
     group.add_option('--PolMode',help=' Polarisation mode (Scalar/HalfFull). Default is %default',default="Scalar")
     group.add_option('--dt',type="float",help='Time interval for a solution [minutes]. Default is %default. ',default=30)
+    group.add_option('--ClearSHM',help='Clear shared memory with given ID [no default]',default='')
     opt.add_option_group(group)
     
     group = optparse.OptionGroup(opt, "* CohJones additional options")
@@ -183,11 +181,19 @@ def main(options=None):
     ReadColName  = options.InCol
     WriteColName = options.OutCol
 
+    DicoSelectOptions= {}
+    if options.UVMinMax!=None:
+        sUVmin,sUVmax=options.UVMinMax
+        UVmin,UVmax=float(sUVmin),float(sUVmax)
+        DicoSelectOptions["UVRangeKm"]=UVmin,UVmax
+
+
     SM=ClassSM.ClassSM(options.SkyModel,
                        killdirs=kills,invert=invert)
     #SM.SourceCat.I*=1000**2
     VS=ClassVisServer.ClassVisServer(options.ms,ColName=ReadColName,
                                      TVisSizeMin=dt,
+                                     DicoSelectOptions=DicoSelectOptions,
                                      TChunkSize=TChunk,IdSharedMem=IdSharedMem)
     print VS.MS
     if not(WriteColName in VS.MS.ColNames):
@@ -221,6 +227,7 @@ def main(options=None):
         print>>log, ModColor.Str("Initialising Kalman filter with Levenberg-Maquardt estimate")
         VSInit=ClassVisServer.ClassVisServer(options.ms,ColName=ReadColName,
                                              TVisSizeMin=dtInit,
+                                             DicoSelectOptions=DicoSelectOptions,
                                              TChunkSize=dtInit/60,IdSharedMem=IdSharedMem)
         
         VSInit.LoadNextVisChunk()

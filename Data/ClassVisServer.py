@@ -130,7 +130,8 @@ class ClassVisServer():
                 d1*=1e3
                 u,v,w=uvw.T
                 duv=np.sqrt(u**2+v**2)
-                ind=np.where((duv<d0)|(duv>d1))[0]
+                #ind=np.where((duv<d0)|(duv>d1))[0]
+                ind=np.where((duv>d0)&(duv<d1))[0]
                 
                 flags=flags[ind]
                 data=data[ind]
