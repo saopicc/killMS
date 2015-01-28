@@ -99,7 +99,7 @@ class ClassMS():
 
     def PutLOFARKeys(self):
         keys=["LOFAR_ELEMENT_FAILURE", "LOFAR_STATION", "LOFAR_ANTENNA_FIELD"]
-        t=table(self.MSName,ack=False,readonly=False)
+        t=table(self.MSName,ack=False)
         for key in keys:
             t.putkeyword(key,'Table: %s/%s'%(self.MSName,key))
         t.close()
@@ -126,7 +126,7 @@ class ClassMS():
         import lofar.stationresponse as lsr
         f=self.ChanFreq.flatten()
         if f.shape[0]>1:
-            t=table(self.MSName+"/SPECTRAL_WINDOW/",ack=False,readonly=False)
+            t=table(self.MSName+"/SPECTRAL_WINDOW/",ack=False)
             c=t.getcol("CHAN_WIDTH")
             c.fill(np.abs((f[0:-1]-f[1::])[0]))
             t.putcol("CHAN_WIDTH",c)
@@ -354,7 +354,7 @@ class ClassMS():
         self.nRowRead=row1-row0
         nRowRead=self.nRowRead
 
-        table_all=table(self.MSName,ack=False,readonly=False)
+        table_all=table(self.MSName,ack=False)
         SPW=table_all.getcol('DATA_DESC_ID',row0,nRowRead)
         A0=table_all.getcol('ANTENNA1',row0,nRowRead)[SPW==self.ListSPW[0]]
         A1=table_all.getcol('ANTENNA2',row0,nRowRead)[SPW==self.ListSPW[0]]
@@ -513,7 +513,7 @@ class ClassMS():
         T.timeit()
 
 
-        table_all=table(MSname,ack=False,readonly=False)
+        table_all=table(MSname,ack=False)
         self.ColNames=table_all.colnames()
         SPW=table_all.getcol('DATA_DESC_ID')
         if self.SelectSPW!=None:
