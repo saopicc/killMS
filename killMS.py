@@ -66,7 +66,7 @@ def read_options():
     opt.add_option_group(group)
     
     group = optparse.OptionGroup(opt, "* Solution options")
-    group.add_option('--SubOnly',help=' Only substract the skymodel. Default is %default',default="0")
+    group.add_option('--SubOnly',help=' Substract the skymodel assuming unity Jones matrices (no solve). Default is %default',default="0")
     group.add_option('--DoPlot',type="int",help=' Plot the solutions, for debugging. Default is %default',default=0)
     group.add_option('--DoSub',type="int",help=' Substact selected sources. Default is %default',default=1)
     group.add_option('--ApplyCal',help=' Apply direction averaged gains to residual data in the mentioned direction. \
