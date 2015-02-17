@@ -219,7 +219,7 @@ def main(options=None):
                                 DoPlot=options.DoPlot,
                                 Lambda=options.Lambda,IdSharedMem=IdSharedMem)
     Solver.InitSol(TestMode=False)
-    PM=ClassPredict(NCPU=NCPU)
+    PM=ClassPredict(NCPU=NCPU,IdMemShared=IdSharedMem)
     SM=Solver.SM
 
 

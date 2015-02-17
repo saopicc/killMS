@@ -33,9 +33,9 @@ def DelAll(key=None):
     ll=ListNames()
     for name in ll:
         if key!=None:
-            if key in name: SharedArray.delete(name)
+            if key in name: DelArray(name)
         else:
-            SharedArray.delete(name)
+            DelArray(name)
 
 def GiveArray(Name):
     try:
