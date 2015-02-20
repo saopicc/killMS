@@ -180,9 +180,23 @@ class ClassJacobianAntenna():
             JHJ=self.L_JHJ[ipol]*(1./rms**2)
             JHJ+=Pinv
             JHJinv=ModLinAlg.invSVD(JHJ)
+            
             self.L_JHJinv.append(JHJinv)
 
+    def CalcKapa_i(self,yr,Pa,rms):
+        J=self.Jacob
 
+        pa=np.abs(np.diag(Pa))
+        pa=pa.reshape(1,pa.size)
+        JP=J*pa
+        trJPJH=np.sum(np.abs(JP*J.conj()))
+        trYYH=np.sum(np.abs(yr)**2)
+        Np=np.where(self.DicoData["flags_flat"]==0)[0].size
+        trR=Np*rms**2
+        kapa=np.abs((trYYH-trR)/trJPJH)
+        kapaout=np.sqrt(kapa)
+        #print "0",rms,kapaout,trYYH,trR,trJPJH,pa
+        return kapaout
 
     def PrepareJHJ_LM(self):
         self.L_JHJinv=[]
@@ -280,7 +294,7 @@ class ClassJacobianAntenna():
         ind=np.where(f)[0]
         Pa=P[self.iAnt]
         Ga=self.GiveSubVecGainAnt(Gains)
-
+        self.rms=rms
 
 
         self.rmsFromData=None
@@ -304,7 +318,9 @@ class ClassJacobianAntenna():
 
         # estimate x
         zr=(z-Jx)
-        
+
+        kapa=self.CalcKapa_i(zr,Pa,rms)
+
         self.rmsFromData=np.std(zr[f])
         # if np.isnan(self.rmsFromData):
         #     print zr
@@ -344,7 +360,7 @@ class ClassJacobianAntenna():
 
 
         del(self.Jacob)
-        return x4.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks)),Pa_new1
+        return x4.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks)),Pa_new1,kapa
 
     def CalcMatrixEvolveCov(self,Gains,P,rms):
         if not(self.HasKernelMatrix):

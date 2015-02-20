@@ -107,6 +107,9 @@ class ClassPredict():
             ColOutDir=self.PredictDirSPW(iCluster)
             if ColOutDir==None: continue
 
+            if Noise!=None:
+                ColOutDir+=(Noise/np.sqrt(len(ListDirection)))*(np.random.randn(*ColOutDir.shape)+1j*np.random.randn(*ColOutDir.shape))
+
             # print iCluster,ListDirection
             # print ColOutDir.shape
             # ColOutDir.fill(0)
@@ -155,8 +158,6 @@ class ClassPredict():
                     ColOutDir[ind]=data[:]
             
 
-            if Noise!=None:
-                ColOutDir+=Noise*(np.random.randn(*ColOutDir.shape)+1j*np.random.randn(*ColOutDir.shape))
             DataOut+=ColOutDir
 
 

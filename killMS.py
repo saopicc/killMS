@@ -288,14 +288,20 @@ def main(options=None):
             print>>log, "Antenna %s have abnormal noise (Numbers %s)"%(str(Stations[indFlag]),str(indFlag))
         
         indTake=np.where((rmsAnt-Mean_rmsAnt)/Mean_rmsAnt<Thr)[0]
+
+        
+
         gscale=np.mean(np.abs(G[:,:,indTake,:,0,0]))
         TrueMeanRMSAnt=np.mean(rmsAnt[indTake])
-        rms=TrueMeanRMSAnt*gscale**2
+
+
+        
+        GG=np.mean(np.mean(np.mean(np.abs(G[0,:]),axis=0),axis=0),axis=0)
+        GGprod= np.dot( np.dot(GG,np.ones((2,2),float)*TrueMeanRMSAnt) , GG.T)
+        rms=np.mean(GGprod)
 
         Solver.InitSol(G=SolverInit.G,TestMode=False)
         Solver.InitCovariance(FromG=True,sigP=options.CovP,sigQ=options.CovQ)
-
-        rms=100
 
         Solver.SetRmsFromExt(rms)
 

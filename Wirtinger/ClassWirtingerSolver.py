@@ -224,8 +224,12 @@ class ClassWirtingerSolver():
         self.evP=np.zeros_like(P)
         self.P=NpShared.ToShared("%sSharedCovariance"%self.IdSharedMem,self.P)
         self.Q=NpShared.ToShared("%sSharedCovariance_Q"%self.IdSharedMem,self.Q)
+        self.Q_Init=self.Q.copy()
         self.evP=NpShared.ToShared("%sSharedEvolveCovariance"%self.IdSharedMem,self.evP)
-
+        nbuff=10
+        self.DicoKapaList={}
+        for iAnt in range(na):
+            self.DicoKapaList[iAnt]=[]
 
     def setNextData(self):
         DATA=self.VS.GiveNextVis()
@@ -480,14 +484,26 @@ class ClassWirtingerSolver():
  
                 rmsFromDataList=[]
                 while iResult < NJobs:
-                    iAnt,G,P,rmsFromData = result_queue.get()
+                    iAnt,G,P,rmsFromData,kapa = result_queue.get()
                     if rmsFromData!=None:
                         rmsFromDataList.append(rmsFromData)
                     
                     self.G[iAnt][:]=G[:]
                     if P!=None:
                         self.P[iAnt,:]=P[:]
+
                     iResult+=1
+                    if kapa!=None:
+                        self.DicoKapaList[iAnt].append(kapa)
+                        dt=1
+                        TraceResidList=self.DicoKapaList[iAnt]
+                        x=np.arange(len(TraceResidList))
+                        expW=np.exp(-x/dt)[::-1]
+                        expW/=np.sum(expW)
+                        kapaW=np.sum(expW*np.array(TraceResidList))
+                        self.Q[iAnt]=kapaW*self.Q_Init[iAnt]
+                        #print iAnt,kapa,kapaW
+                        
 
                 if len(rmsFromDataList)>0:
                     self.rmsFromData=np.min(rmsFromDataList)
@@ -503,7 +519,7 @@ class ClassWirtingerSolver():
                         sig=np.sqrt(np.abs(np.array([np.diag(self.P[i]) for i in ListAntSolve]))).flatten()
                         pylab.plot(np.abs(self.G[AntPlot].flatten())+sig,color="black",ls="--")
                         pylab.plot(np.abs(self.G[AntPlot].flatten())-sig,color="black",ls="--")
-                    pylab.ylim(0,2)
+                    #pylab.ylim(0,2)
                     pylab.draw()
                     pylab.show(False)
                     pylab.pause(0.1)
@@ -579,7 +595,7 @@ class WorkerAntennaLM(multiprocessing.Process):
 
             if self.SolverType=="CohJones":
                 x=JM.doLMStep(G)
-                self.result_queue.put([iAnt,x,None,None])
+                self.result_queue.put([iAnt,x,None,None,None])
             elif self.SolverType=="KAFCA":
                 if DoCalcEvP:
                     evP[iAnt]=JM.CalcMatrixEvolveCov(G,P,rms)
@@ -598,17 +614,19 @@ class WorkerAntennaLM(multiprocessing.Process):
                                        BufferNPoints=10,
                                        sigQ=0.01,IdSharedMem=self.IdSharedMem)
 
+                Pa=None
+
                 # Ga,Pa=EM.Evolve0(G,P,self.ThisTime)
                 # if Ga!=None:
                 #     G[iAnt]=Ga
                 #     P[iAnt]=Pa
 
-                x,Pout=JM.doEKFStep(G,P,evP,rms)
+                x,Pout,kapa=JM.doEKFStep(G,P,evP,rms)
                 rmsFromData=JM.rmsFromData
-                Pa=EM.Evolve0(x,Pout)
+                Pa=EM.Evolve0(x,Pout)#,kapa=kapa)
                 #_,Pa=EM.Evolve(x,Pout,ThisTime)
 
                 if Pa!=None:
                     Pout=Pa
 
-                self.result_queue.put([iAnt,x,Pout,rmsFromData])
+                self.result_queue.put([iAnt,x,Pout,rmsFromData,kapa])

@@ -29,7 +29,7 @@ def main(options=None):
     ReadColName="DATA"
     WriteColName="DATA"
     NCPU=6
-    Noise=0
+    Noise=100
 
     SM=ClassSM.ClassSM(SMName)
 
@@ -51,8 +51,8 @@ def main(options=None):
     NSols=MS.F_ntimes
     Sols=np.zeros((NSols,),dtype=[("t0",np.float64),("t1",np.float64),("tm",np.float64),("G",np.complex64,(na,nd,2,2))])
     Sols=Sols.view(np.recarray)
-    Sols.G[:,:,:,0,0]=1
-    Sols.G[:,:,:,1,1]=1
+    Sols.G[:,:,:,0,0]=1e-3
+    Sols.G[:,:,:,1,1]=1e-3
 
     dt=MS.dt
     Sols.t0=MS.F_times-dt/2.
@@ -61,7 +61,7 @@ def main(options=None):
 
 
     DeltaT_Amp=np.random.randn(na,nd)*60
-    period_Amp=300+np.random.randn(na,nd)*10
+    period_Amp=30+np.random.randn(na,nd)*10
     Amp_Amp=np.random.randn(na,nd)*.1
 
     DeltaT_Phase=np.random.randn(na,nd)*60
@@ -69,16 +69,16 @@ def main(options=None):
     PhaseAbs=np.random.randn(na,nd)*np.pi
     Amp_Phase=np.random.randn(na,nd)*np.pi*0.2
 
-    # for itime in range(1,NSols):
-    #     for iAnt in range(na):
-    #         for iDir in range(nd):
-    #             t=Sols.tm[itime]
-    #             t0=Sols.tm[0]
-    #             A=1.+Amp_Amp[iAnt,iDir]*np.sin(DeltaT_Amp[iAnt,iDir]+(t-t0)/period_Amp[iAnt,iDir])
-    #             Phase=PhaseAbs[iAnt,iDir]+Amp_Phase[iAnt,iDir]*np.sin(DeltaT_Phase[iAnt,iDir]+(t-t0)/period_Phase[iAnt,iDir])
-    #             g0=A*np.exp(1j*Phase)
-    #             Sols.G[itime,iAnt,iDir,0,0]=g0
-    #             Sols.G[itime,iAnt,iDir,1,1]=g0
+    for itime in range(0,NSols):
+        for iAnt in range(na):
+            for iDir in range(nd):
+                t=Sols.tm[itime]
+                t0=Sols.tm[0]
+                A=1.+Amp_Amp[iAnt,iDir]*np.sin(DeltaT_Amp[iAnt,iDir]+(t-t0)/period_Amp[iAnt,iDir])
+                Phase=PhaseAbs[iAnt,iDir]+Amp_Phase[iAnt,iDir]*np.sin(DeltaT_Phase[iAnt,iDir]+(t-t0)/period_Phase[iAnt,iDir])
+                g0=A*np.exp(1j*Phase)
+                Sols.G[itime,iAnt,iDir,0,0]=g0
+                Sols.G[itime,iAnt,iDir,1,1]=g0
 
 
     Jones={}

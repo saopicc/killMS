@@ -16,12 +16,22 @@ class ClassModelEvolution():
         self.DoEvolve=DoEvolve
         self.IdSharedMem=IdSharedMem
 
-    def Evolve0(self,Gin,Pa):
+    def Evolve0(self,Gin,Pa,kapa=1.):
         done=NpShared.GiveArray("%sSolsArray_done"%self.IdSharedMem)
         indDone=np.where(done==1)[0]
-        Q=NpShared.GiveArray("%sSharedCovariance_Q"%self.IdSharedMem)[self.iAnt]
+        Q=kapa*NpShared.GiveArray("%sSharedCovariance_Q"%self.IdSharedMem)[self.iAnt]
         #print indDone.size
         #print "mean",np.mean(Q)
+
+        Ptot=Pa+Q
+        #nt,_,_,_=Gin.shape
+        #print Gin.shape
+        g=Gin
+        gg=g.ravel()
+        #gg+=(np.random.randn(*gg.shape)+1j*np.random.randn(*gg.shape))*np.sqrt(np.diag(Ptot))/np.sqrt(2.)
+
+
+        return Ptot
         if indDone.size<2: return Pa+Q
         t0=NpShared.GiveArray("%sSolsArray_t0"%self.IdSharedMem)[indDone]
         t1=NpShared.GiveArray("%sSolsArray_t1"%self.IdSharedMem)[indDone]
