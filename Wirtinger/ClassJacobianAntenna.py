@@ -185,16 +185,18 @@ class ClassJacobianAntenna():
 
     def CalcKapa_i(self,yr,Pa,rms):
         J=self.Jacob
-
-        pa=np.abs(np.diag(Pa))
-        pa=pa.reshape(1,pa.size)
-        JP=J*pa
-        trJPJH=np.sum(np.abs(JP*J.conj()))
-        trYYH=np.sum(np.abs(yr)**2)
-        Np=np.where(self.DicoData["flags_flat"]==0)[0].size
-        trR=Np*rms**2
-        kapa=np.abs((trYYH-trR)/trJPJH)
-        kapaout=np.sqrt(kapa)
+        kapaout=0
+        for ipol in range(self.NJacobBlocks):
+            PaPol=self.GivePaPol(Pa,ipol)
+            pa=np.abs(np.diag(PaPol))
+            pa=pa.reshape(1,pa.size)
+            JP=J*pa
+            trJPJH=np.sum(np.abs(JP*J.conj()))
+            trYYH=np.sum(np.abs(yr)**2)
+            Np=np.where(self.DicoData["flags_flat"]==0)[0].size
+            trR=Np*rms**2
+            kapa=np.abs((trYYH-trR)/trJPJH)
+            kapaout+=np.sqrt(kapa)
         #print "0",rms,kapaout,trYYH,trR,trJPJH,pa
         return kapaout
 
@@ -347,7 +349,7 @@ class ClassJacobianAntenna():
 
         T.timeit("ApplyK_vec")
         x0=Ga.flatten()
-        x4=x0+0.5*x3.flatten()
+        x4=x0+x3.flatten()
 
         # estimate P
         Pa_new1=np.dot(evPa,Pa)
