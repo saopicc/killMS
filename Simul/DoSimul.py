@@ -61,7 +61,7 @@ def main(options=None):
 
 
     DeltaT_Amp=np.random.randn(na,nd)*60
-    period_Amp=30+np.random.randn(na,nd)*10
+    period_Amp=120+np.random.randn(na,nd)*10
     Amp_Amp=np.random.randn(na,nd)*.1
 
     DeltaT_Phase=np.random.randn(na,nd)*60

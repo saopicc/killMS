@@ -23,15 +23,24 @@ class ClassModelEvolution():
         #print indDone.size
         #print "mean",np.mean(Q)
 
-        Ptot=Pa+Q
-        #nt,_,_,_=Gin.shape
-        #print Gin.shape
-        g=Gin
-        gg=g.ravel()
-        #gg+=(np.random.randn(*gg.shape)+1j*np.random.randn(*gg.shape))*np.sqrt(np.diag(Ptot))/np.sqrt(2.)
 
+        ##########
+        # Ptot=Pa+Q
+        # #nt,_,_,_=Gin.shape
+        # #print Gin.shape
+        # g=Gin
+        # gg=g.ravel()
+        # #gg+=(np.random.randn(*gg.shape)+1j*np.random.randn(*gg.shape))*np.sqrt(np.diag(Ptot))/np.sqrt(2.)
 
-        return Ptot
+        # # print Pa.shape,Q.shape
+        # # print np.diag(Pa)
+        # # print np.diag(Q)
+        # # print np.diag(Ptot)
+        # # print
+
+        # return Ptot
+        ##############
+
         if indDone.size<2: return Pa+Q
         t0=NpShared.GiveArray("%sSolsArray_t0"%self.IdSharedMem)[indDone]
         t1=NpShared.GiveArray("%sSolsArray_t1"%self.IdSharedMem)[indDone]

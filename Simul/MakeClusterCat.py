@@ -25,7 +25,7 @@ def test():
     #                       "finfo":(100e6,250e6,10)}
 
     DicoPropPointings[0]={"offset":(0,0),
-                          "Ns":10,
+                          "Ns":2,
                           "Nc":2,
                           "Diam":2,
                           "finfo":(50e6,250e6,1),

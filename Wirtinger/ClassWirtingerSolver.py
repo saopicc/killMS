@@ -495,13 +495,13 @@ class ClassWirtingerSolver():
                     iResult+=1
                     if kapa!=None:
                         self.DicoKapaList[iAnt].append(kapa)
-                        dt=1
+                        dt=1.
                         TraceResidList=self.DicoKapaList[iAnt]
                         x=np.arange(len(TraceResidList))
                         expW=np.exp(-x/dt)[::-1]
                         expW/=np.sum(expW)
                         kapaW=np.sum(expW*np.array(TraceResidList))
-                        self.Q[iAnt]=kapaW*self.Q_Init[iAnt]
+                        self.Q[iAnt]=(kapaW**2)*self.Q_Init[iAnt]
                         #print iAnt,kapa,kapaW
                         
 

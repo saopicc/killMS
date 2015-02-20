@@ -197,7 +197,7 @@ class ClassJacobianAntenna():
             trR=Np*rms**2
             kapa=np.abs((trYYH-trR)/trJPJH)
             kapaout+=np.sqrt(kapa)
-        #print "0",rms,kapaout,trYYH,trR,trJPJH,pa
+            print self.iAnt,rms,np.sqrt(kapa),trYYH,trR,trJPJH,pa
         return kapaout
 
     def PrepareJHJ_LM(self):
@@ -380,8 +380,9 @@ class ClassJacobianAntenna():
             xP=self.ApplyK_vec(J_Px,rms,Pa)
             evPa[iPar,:]=xP.flatten()
 
-        #evPa= PaOnes-evPa#(np.diag(np.diag(Pa-Pa_new)))#Pa-Pa_new#np.abs(np.diag(np.diag(Pa-Pa_new)))
-        evPa=np.diag(np.diag(evPa))
+        # #evPa= PaOnes-evPa#(np.diag(np.diag(Pa-Pa_new)))#Pa-Pa_new#np.abs(np.diag(np.diag(Pa-Pa_new)))
+        # evPa=np.diag(np.diag(evPa))
+
         return evPa
            
             
