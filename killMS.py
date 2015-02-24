@@ -43,6 +43,7 @@ from Data import ClassVisServer
 from Sky.PredictGaussPoints_NumExpr2 import ClassPredictParallel as ClassPredict 
 from Array import ModLinAlg
 from Array import NpShared
+from Other import reformat
 
 import multiprocessing
 NCPU_default=str(int(0.75*multiprocessing.cpu_count()))
@@ -145,7 +146,8 @@ def main(options=None):
         options = pickle.load(f)
     
 
-    IdSharedMem=str(int(np.random.rand(1)[0]*100000))+"."
+    #IdSharedMem=str(int(np.random.rand(1)[0]*100000))+"."
+    IdSharedMem=str(int(os.getpid()))+"."
     PrintOptions(options,IdSharedMem)
     ApplyCal=(options.ApplyCal=="1")
 
@@ -285,7 +287,7 @@ def main(options=None):
             Solver.VS.MS.flags_all=Solver.VS.ThisDataChunk["flags"]
             Solver.VS.MS.SaveVis(Col=WriteColName)
     
-    FileName="killMS.%s.sols.npz"%options.SolverType
+    FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.ms),options.SolverType)
     print>>log, "Save Solutions in file: %s"%FileName
     Sols=Solver.GiveSols()
     StationNames=np.array(Solver.VS.MS.StationNames)
