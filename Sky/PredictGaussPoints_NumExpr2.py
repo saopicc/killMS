@@ -278,7 +278,7 @@ class ClassPredict():
             ColOutDir=np.zeros_like(DataOut)
             for iSource in range(indSources.size):
                 out=self.PredictDirSPW(iCluster,iSource)
-                if out==None: continue
+                if type(out)==type(None): continue
                 ColOutDir+=out
             
             # print iCluster,ListDirection

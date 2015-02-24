@@ -27,6 +27,8 @@ if "nox" in sys.argv:
     import matplotlib
     matplotlib.use('agg')
     print ModColor.Str(" == !NOX! ==")
+    
+
 
 import time
 import os
@@ -224,88 +226,17 @@ def main(options=None):
 
 
     if (options.InitLM) & (options.SolverType=="KAFCA"):
-        
-        print>>log, ModColor.Str("Initialising Kalman filter with Levenberg-Maquardt estimate")
-        VSInit=ClassVisServer.ClassVisServer(options.ms,ColName=ReadColName,
-                                             TVisSizeMin=dtInit,
-                                             DicoSelectOptions=DicoSelectOptions,
-                                             TChunkSize=dtInit/60,IdSharedMem=IdSharedMem)
-        
-        VSInit.LoadNextVisChunk()
-        SolverInit=ClassWirtingerSolver(VSInit,SM,PolMode=options.PolMode,
-                                        NIter=options.NIter,NCPU=NCPU,
-                                        SolverType="CohJones",
-                                        DoPlot=options.DoPlot,
-                                        DoPBar=False,IdSharedMem=IdSharedMem)
 
+        rms,SolverInit_G=GiveNoise(options,
+                                   DicoSelectOptions,
+                                   IdSharedMem,
+                                   SM,PM)
 
-        SolverInit.InitSol(TestMode=False)
-        SolverInit.doNextTimeSolve_Parallel(OnlyOne=True)
-
-        Sols=SolverInit.GiveSols()
-        Jones={}
-        Jones["t0"]=Sols.t0
-        Jones["t1"]=Sols.t1
-        nt,na,nd,_,_=Sols.G.shape
-        G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
-        Jones["Beam"]=G
-        Jones["BeamH"]=ModLinAlg.BatchH(G)
-        Jones["ChanMap"]=np.zeros((VSInit.MS.NSPWChan,))
-        PM.ApplyCal(SolverInit.VS.ThisDataChunk,Jones,0)
-        DATA=SolverInit.VS.ThisDataChunk
-        A0=SolverInit.VS.ThisDataChunk["A0"]
-        A1=SolverInit.VS.ThisDataChunk["A1"]
-        _,nchan,_=DATA["data"].shape
-        na=VSInit.MS.na
-        rmsAnt=np.zeros((na,nchan,4),float)
-        for A in range(na):
-            ind=np.where((A0==1)|(A1==A))[0]
-            Dpol=DATA["data"][ind,:,:]
-            Fpol=DATA["flags"][ind,:,:]
-            _,nchan,_=Dpol.shape
-            print "Antenna-%i"%A
-            for ichan in range(nchan):
-                
-                d=Dpol[:,ichan,:]
-                f=Fpol[:,ichan,:]
-                print 
-                for ipol in range(4):
-                    dp=d[:,ipol]
-                    fp=f[:,ipol]
-                    rms=np.std(dp[fp==0])/np.sqrt(2.)
-                    mean=np.mean(dp[fp==0])/np.sqrt(2.)
-                    print "    pol=%i: (mean, rms)=(%s, %s)"%(ipol, str(mean),str(rms))
-
-                    rmsAnt[A,ichan,ipol]=rms
-
-        rmsAnt=np.mean(np.mean(rmsAnt[:,:,1:3],axis=2),axis=1)
-        Mean_rmsAnt=np.mean(rmsAnt)
-        Thr=5
-        indFlag=np.where((rmsAnt-Mean_rmsAnt)/Mean_rmsAnt>Thr)[0]
-
-        if indFlag.size>0:
-            Stations=np.array(SolverInit.VS.MS.StationNames)
-            print>>log, "Antenna %s have abnormal noise (Numbers %s)"%(str(Stations[indFlag]),str(indFlag))
-        
-        indTake=np.where((rmsAnt-Mean_rmsAnt)/Mean_rmsAnt<Thr)[0]
-
-        
-
-        gscale=np.mean(np.abs(G[:,:,indTake,:,0,0]))
-        TrueMeanRMSAnt=np.mean(rmsAnt[indTake])
-
-
-        
-        GG=np.mean(np.mean(np.mean(np.abs(G[0,:]),axis=0),axis=0),axis=0)
-        GGprod= np.dot( np.dot(GG,np.ones((2,2),float)*TrueMeanRMSAnt) , GG.T)
-        rms=np.mean(GGprod)
-
-        Solver.InitSol(G=SolverInit.G,TestMode=False)
+        Solver.InitSol(G=SolverInit_G,TestMode=False)
         Solver.InitCovariance(FromG=True,sigP=options.CovP,sigQ=options.CovQ)
 
         Solver.SetRmsFromExt(rms)
 
-        print>>log, "Estimated rms: %f Jy"%(rms)
 
 
     DoSubstract=(options.DoSub==1)
@@ -361,7 +292,75 @@ def main(options=None):
     NpShared.DelAll(IdSharedMem)
 
     
+def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM):
+    print>>log, ModColor.Str("Initialising Kalman filter with Levenberg-Maquardt estimate")
+    dtInit=float(options.InitLM_dt)
+    VSInit=ClassVisServer.ClassVisServer(options.ms,ColName=options.InCol,
+                                         TVisSizeMin=dtInit,
+                                         DicoSelectOptions=DicoSelectOptions,
+                                         TChunkSize=dtInit/60,IdSharedMem=IdSharedMem)
+    
+    VSInit.LoadNextVisChunk()
+    SolverInit=ClassWirtingerSolver(VSInit,SM,PolMode=options.PolMode,
+                                    NIter=options.NIter,NCPU=options.NCPU,
+                                    SolverType="CohJones",
+                                    DoPlot=options.DoPlot,
+                                    DoPBar=False,IdSharedMem=IdSharedMem)
+    SolverInit.InitSol(TestMode=False)
+    SolverInit.doNextTimeSolve_Parallel(OnlyOne=True)
+    Sols=SolverInit.GiveSols()
+    Jones={}
+    Jones["t0"]=Sols.t0
+    Jones["t1"]=Sols.t1
+    nt,na,nd,_,_=Sols.G.shape
+    G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
+    Jones["Beam"]=G
+    Jones["BeamH"]=ModLinAlg.BatchH(G)
+    Jones["ChanMap"]=np.zeros((VSInit.MS.NSPWChan,))
+    PM.ApplyCal(SolverInit.VS.ThisDataChunk,Jones,0)
+    DATA=SolverInit.VS.ThisDataChunk
+    A0=SolverInit.VS.ThisDataChunk["A0"]
+    A1=SolverInit.VS.ThisDataChunk["A1"]
+    _,nchan,_=DATA["data"].shape
+    na=VSInit.MS.na
+    rmsAnt=np.zeros((na,nchan,4),float)
+    for A in range(na):
+        ind=np.where((A0==1)|(A1==A))[0]
+        Dpol=DATA["data"][ind,:,:]
+        Fpol=DATA["flags"][ind,:,:]
+        _,nchan,_=Dpol.shape
+        # print "Antenna-%i"%A
+        for ichan in range(nchan):
+            
+            d=Dpol[:,ichan,:]
+            f=Fpol[:,ichan,:]
+            # print 
+            for ipol in range(4):
+                dp=d[:,ipol]
+                fp=f[:,ipol]
+                rms=np.std(dp[fp==0])/np.sqrt(2.)
+                mean=np.mean(dp[fp==0])/np.sqrt(2.)
+                #print "    pol=%i: (mean, rms)=(%s, %s)"%(ipol, str(mean),str(rms))
+                rmsAnt[A,ichan,ipol]=rms
 
+    rmsAnt=np.mean(np.mean(rmsAnt[:,:,1:3],axis=2),axis=1)
+    Mean_rmsAnt=np.mean(rmsAnt)
+    Thr=5
+    indFlag=np.where((rmsAnt-Mean_rmsAnt)/Mean_rmsAnt>Thr)[0]
+    if indFlag.size>0:
+        Stations=np.array(SolverInit.VS.MS.StationNames)
+        print>>log, "Antenna %s have abnormal noise (Numbers %s)"%(str(Stations[indFlag]),str(indFlag))
+    
+    indTake=np.where((rmsAnt-Mean_rmsAnt)/Mean_rmsAnt<Thr)[0]
+     
+    gscale=np.mean(np.abs(G[:,:,indTake,:,0,0]))
+    TrueMeanRMSAnt=np.mean(rmsAnt[indTake])
+      
+    GG=np.mean(np.mean(np.mean(np.abs(G[0,:]),axis=0),axis=0),axis=0)
+    GGprod= np.dot( np.dot(GG,np.ones((2,2),float)*TrueMeanRMSAnt) , GG.T)
+    rms=np.mean(GGprod)
+    print>>log, "Estimated rms: %f Jy"%(rms)
+    return rms,SolverInit.G
 
 
 
@@ -369,6 +368,9 @@ if __name__=="__main__":
     read_options()
     f = open("last_killMS.obj",'rb')
     options = pickle.load(f)
+    if options.DoBar=="0":
+        from progressbar import ProgressBar
+        ProgressBar.silent=1
     if options.ClearSHM!="":
         NpShared.DelAll(options.ClearSHM)
     else:

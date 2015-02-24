@@ -197,7 +197,7 @@ class ClassJacobianAntenna():
             trR=Np*rms**2
             kapa=np.abs((trYYH-trR)/trJPJH)
             kapaout+=np.sqrt(kapa)
-            print self.iAnt,rms,np.sqrt(kapa),trYYH,trR,trJPJH,pa
+            # print self.iAnt,rms,np.sqrt(kapa),trYYH,trR,trJPJH,pa
         return kapaout
 
     def PrepareJHJ_LM(self):
@@ -603,7 +603,7 @@ class ClassJacobianAntenna():
         
         KernelSharedName="%sKernelMat.%2.2i"%(self.IdSharedMem,self.iAnt)
         self.KernelMat=NpShared.GiveArray(KernelSharedName)
-        if self.KernelMat!=None:
+        if type(self.KernelMat)!=type(None):
             self.HasKernelMatrix=True
             if self.PolMode=="HalfFull":
                 self.K_XX=self.KernelMat[0]
