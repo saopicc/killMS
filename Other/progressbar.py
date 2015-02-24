@@ -102,8 +102,8 @@ class ProgressBar(object):
         percent -- the progress percentage %
         message -- message string (optional)
         """
-        if self.disableTag: return
         if self.silent==1: return
+        if self.disableTag: return
         import terminal
 
         if (self.Title!=None)&(self.HasRendered==False):

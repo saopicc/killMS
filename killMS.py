@@ -370,7 +370,7 @@ if __name__=="__main__":
     f = open("last_killMS.obj",'rb')
     options = pickle.load(f)
     if options.DoBar=="0":
-        from progressbar import ProgressBar
+        from Other.progressbar import ProgressBar
         ProgressBar.silent=1
     if options.ClearSHM!="":
         NpShared.DelAll(options.ClearSHM)
