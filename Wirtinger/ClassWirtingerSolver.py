@@ -152,7 +152,7 @@ class ClassWirtingerSolver():
         
 
 
-        if G==None:
+        if type(G)==type(None):
             if self.PolMode=="Scalar":
                 npol=1
                 G=np.ones((na,nd,1,1),np.complex128)
@@ -489,7 +489,7 @@ class ClassWirtingerSolver():
                         rmsFromDataList.append(rmsFromData)
                     
                     self.G[iAnt][:]=G[:]
-                    if P!=None:
+                    if type(P)!=type(None):
                         self.P[iAnt,:]=P[:]
 
                     iResult+=1
@@ -626,7 +626,7 @@ class WorkerAntennaLM(multiprocessing.Process):
                 Pa=EM.Evolve0(x,Pout)#,kapa=kapa)
                 #_,Pa=EM.Evolve(x,Pout,ThisTime)
 
-                if Pa!=None:
+                if type(Pa)!=type(None):
                     Pout=Pa
 
                 self.result_queue.put([iAnt,x,Pout,rmsFromData,kapa])
