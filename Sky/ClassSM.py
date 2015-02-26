@@ -194,10 +194,24 @@ class ClassSM():
         if not("l" in Cat.dtype.fields.keys()):
             Cat=RecArrayOps.AppendField(Cat,('l',float))
             Cat=RecArrayOps.AppendField(Cat,('m',float))
-
         Cat.l,Cat.m=self.radec2lm_scalar(self.SourceCat.ra,self.SourceCat.dec,rac,decc)
         self.SourceCat=Cat
         self.SourceCatKeepForSelector=self.SourceCat.copy()
+
+        Cat=self.ClusterCat
+        if not("l" in Cat.dtype.fields.keys()):
+            Cat=RecArrayOps.AppendField(Cat,('l',float))
+            Cat=RecArrayOps.AppendField(Cat,('m',float))
+        Cat.l,Cat.m=self.radec2lm_scalar(self.ClusterCat.ra,self.ClusterCat.dec,rac,decc)
+        self.ClusterCat=Cat
+    # def Calc_LM(self,rac,decc):
+    #     Cat=self.SourceCat
+    #     if not("l" in Cat.dtype.fields.keys()):
+    #         Cat=RecArrayOps.AppendField(Cat,('l',float))
+    #         Cat=RecArrayOps.AppendField(Cat,('m',float))
+    #     Cat.l,Cat.m=self.radec2lm_scalar(self.SourceCat.ra,self.SourceCat.dec,rac,decc)
+    #     self.SourceCat=Cat
+    #     self.SourceCatKeepForSelector=self.SourceCat.copy()
         
 
     def MakeREG(self):
@@ -531,7 +545,7 @@ class ClassSM():
         #    F[i]=F[i].lower().replace(" ","")
             
     
-        Cat=np.zeros((1000,),dtype=[('Name','|S200'),('ra',np.float),('dec',np.float),('Sref',np.float),('I',np.float),('Q',np.float),\
+        Cat=np.zeros((10000,),dtype=[('Name','|S200'),('ra',np.float),('dec',np.float),('Sref',np.float),('I',np.float),('Q',np.float),\
                                     ('U',np.float),('V',np.float),('RefFreq',np.float),('alpha',np.float),('ESref',np.float),\
                                     ('Ealpha',np.float),('kill',np.int),('Cluster',np.int),('Type',np.int),('Gmin',np.float),\
                                     ('Gmaj',np.float),('Gangle',np.float),("Select",np.int),('l',np.float),('m',np.float)])

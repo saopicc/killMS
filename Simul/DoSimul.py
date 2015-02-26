@@ -86,6 +86,9 @@ def main(options=None):
     Jones["t1"]=Sols.t1
     nt,na,nd,_,_=Sols.G.shape
     G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
+    # G.fill(0)
+    # G[:,:,:,:,0,0]=1.
+    # G[:,:,:,:,1,1]=1.
     Jones["Beam"]=G
     Jones["BeamH"]=ModLinAlg.BatchH(G)
     Jones["ChanMap"]=np.zeros((VS.MS.NSPWChan,)).tolist()
@@ -101,9 +104,8 @@ def main(options=None):
     VS.MS.SaveVis(Col="DATA")
     VS.MS.SaveVis(Col="CORRECTED_DATA")
     VS.MS.SaveVis(Col="CORRECTED_DATA_BACKUP")
-    FileName="Simul.npz"
-    np.savez(FileName,Sols=Sols,StationNames=MS.StationNames)
-
     
-
-
+    FileName="Simul.npz"
+    np.savez(FileName,Sols=Sols,StationNames=MS.StationNames,SkyModel=SM.ClusterCat,ClusterCat=SM.ClusterCat)
+    
+    

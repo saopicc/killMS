@@ -291,7 +291,7 @@ def main(options=None):
     print>>log, "Save Solutions in file: %s"%FileName
     Sols=Solver.GiveSols()
     StationNames=np.array(Solver.VS.MS.StationNames)
-    np.savez(FileName,Sols=Sols,StationNames=StationNames)
+    np.savez(FileName,Sols=Sols,StationNames=StationNames,SkyModel=SM.ClusterCat)
     NpShared.DelAll(IdSharedMem)
 
     
