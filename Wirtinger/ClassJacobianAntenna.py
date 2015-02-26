@@ -165,9 +165,9 @@ class ClassJacobianAntenna():
 
     def PrepareJHJ_EKF(self,Pa_in,rms):
         self.L_JHJinv=[]
-        pylab.figure(1)
-        pylab.clf()
         incr=1
+        # pylab.figure(1)
+        # pylab.clf()
         # pylab.imshow(np.abs(self.JHJ),interpolation="nearest")
         # pylab.draw()
         # pylab.show(False)
