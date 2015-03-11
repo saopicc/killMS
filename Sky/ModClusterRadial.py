@@ -25,7 +25,7 @@ def RadialCluster(xin,yin,sin,NRing,DoPlot=True):
 
     rspace=(np.linspace(0.,1.,NRing+1)**2)*rmax*1.01
     RegDef=[]
-    nreg=np.array([1,4,6,8,12,16])[0:NRing]
+    nreg=np.array([1,4,6,8,12,16,20,24])[0:NRing]
 
     DictNode={}
     indr=0

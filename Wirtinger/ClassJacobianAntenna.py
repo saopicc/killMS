@@ -198,6 +198,7 @@ class ClassJacobianAntenna():
             kapa=np.abs((trYYH-trR)/trJPJH)
             kapaout+=np.sqrt(kapa)
             # print self.iAnt,rms,np.sqrt(kapa),trYYH,trR,trJPJH,pa
+        kapaout=np.max([1.,kapaout])
         return kapaout
 
     def PrepareJHJ_LM(self):
