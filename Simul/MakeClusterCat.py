@@ -238,7 +238,7 @@ class MakeMultipleObs():
         D["NBands"]={"id":0,"val":1}
         D["WriteAutoCorr"]={"id":0,"val":"T"}
 
-        D["NFrequencies"]={"id":0,"val":3}#MS.Nchan}
+        D["NFrequencies"]={"id":0,"val":1}#MS.Nchan}
         D["StepFreq"]={"id":0,"val":2e6}#np.abs(self.MSTemplate.dFreq)}
 
         D["StartFreq"]={"id":0,"val":np.min(self.MSTemplate.ChanFreq.flatten())-np.abs(self.MSTemplate.dFreq)/2.}

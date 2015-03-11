@@ -125,7 +125,9 @@ class ClassVisServer():
 
         for Field in self.DicoSelectOptions.keys():
             if Field=="UVRangeKm":
-                d0,d1=Field
+                if self.DicoSelectOptions[Field]==None: break
+                d0,d1=self.DicoSelectOptions[Field]
+
                 d0*=1e3
                 d1*=1e3
                 u,v,w=uvw.T
