@@ -147,6 +147,7 @@ def main(options=None):
     
 
     #IdSharedMem=str(int(np.random.rand(1)[0]*100000))+"."
+    global IdSharedMem
     IdSharedMem=str(int(os.getpid()))+"."
     PrintOptions(options,IdSharedMem)
     ApplyCal=(options.ApplyCal=="1")
@@ -254,7 +255,7 @@ def main(options=None):
         if Load=="EndOfObservation":
             break
 
-        Solver.doNextTimeSolve_Parallel()
+        Solver.doNextTimeSolve_Parallel()#SkipMode=True)
         # Solver.doNextTimeSolve()
 
         # substract
@@ -320,6 +321,11 @@ def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM):
     Jones["Beam"]=G
     Jones["BeamH"]=ModLinAlg.BatchH(G)
     Jones["ChanMap"]=np.zeros((VSInit.MS.NSPWChan,))
+
+    PredictData=PM.predictKernelPolCluster(SolverInit.VS.ThisDataChunk,SolverInit.SM,ApplyTimeJones=Jones)
+    SolverInit.VS.ThisDataChunk["data"]-=PredictData
+
+
     PM.ApplyCal(SolverInit.VS.ThisDataChunk,Jones,0)
     DATA=SolverInit.VS.ThisDataChunk
     A0=SolverInit.VS.ThisDataChunk["A0"]
@@ -374,7 +380,12 @@ if __name__=="__main__":
     if options.DoBar=="0":
         from Other.progressbar import ProgressBar
         ProgressBar.silent=1
+
+
     if options.ClearSHM!="":
         NpShared.DelAll(options.ClearSHM)
     else:
-        main(options=options)
+        try:
+            main(options=options)
+        except:
+            NpShared.DelAll(IdSharedMem)

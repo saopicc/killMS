@@ -386,7 +386,7 @@ class ClassWirtingerSolver():
     
     
     
-    def doNextTimeSolve_Parallel(self,OnlyOne=False):
+    def doNextTimeSolve_Parallel(self,OnlyOne=False,SkipMode=False):
 
         
 
@@ -435,13 +435,15 @@ class ClassWirtingerSolver():
         #pBAR.disable()
         pBAR.render(0, '%4i/%i' % (0,nt))
         NDone=0
-        #ii=0
+        iiCount=0
         while True:
             Res=self.setNextData()
             if Res=="EndChunk": break
-            #ii+=1
-            #print ii
-            #if ii<58: continue
+            if SkipMode:
+                print iiCount
+                if iiCount<82: continue
+                iiCount+=1
+
             t0,t1=self.VS.CurrentVisTimes_MS_Sec
             self.SolsArray_t0[self.iCurrentSol]=t0
             self.SolsArray_t1[self.iCurrentSol]=t1
@@ -494,6 +496,11 @@ class ClassWirtingerSolver():
 
                     iResult+=1
                     if kapa!=None:
+                        if kapa==-1.:
+                            if len(self.DicoKapaList[iAnt])>0:
+                                kapa=self.DicoKapaList[iAnt][-1]
+                            else:
+                                kapa=1.
                         self.DicoKapaList[iAnt].append(kapa)
                         dt=1.
                         TraceResidList=self.DicoKapaList[iAnt]

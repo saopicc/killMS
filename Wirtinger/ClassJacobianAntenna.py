@@ -302,7 +302,7 @@ class ClassJacobianAntenna():
 
         self.rmsFromData=None
         if ind.size==0:
-            return Ga.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks)),Pa
+            return Ga.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks)),Pa,-1.
         
         self.CalcJacobianAntenna(Gains)
         T.timeit("Jacob")
@@ -363,6 +363,7 @@ class ClassJacobianAntenna():
 
 
         del(self.Jacob)
+        
         return x4.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks)),Pa_new1,kapa
 
     def CalcMatrixEvolveCov(self,Gains,P,rms):
