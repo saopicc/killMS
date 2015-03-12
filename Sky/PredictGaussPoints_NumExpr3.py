@@ -401,13 +401,28 @@ class ClassPredict():
         W_refAnt=UVW_RefAnt[:,:,2].reshape(U_shape)
 
         T.timeit("1")
-        Kp=np.exp(-f0*(U_refAnt*l+V_refAnt*m+W_refAnt*nn))
+        Kp0=np.exp(-f0*(U_refAnt*l+V_refAnt*m+W_refAnt*nn))
+        nd=NSource
+        if wave.size>2:
+            Kp=np.zeros((nd,nt,na,nf),self.CType)
+            Kp[:,:,:,0:1]=np.exp(-f0[:,:,:,0:1]*(U_refAnt*l+V_refAnt*m+W_refAnt*nn))
+            df0=-f0[:,:,:,1]-(-f0[:,:,:,0])
+            df0=df0.reshape((1,1,1,1))
+            dKp=np.exp(-df0[:,:,:,:]*(U_refAnt*l+V_refAnt*m+W_refAnt*nn))
+            for ich in range(1,nf):
+                Kp[:,:,:,ich]=Kp[:,:,:,ich-1]*dKp[:,:,:,0]
+            print Kp-Kp0
+            stop
+        else:
+            Kp0=np.exp(-f0*(U_refAnt*l+V_refAnt*m+W_refAnt*nn))
+
         T.timeit("2")
         A0=self.DicoData["A0"]
         A1=self.DicoData["A1"]
 
         KpRow=Kp[:,IndexTimesThisChunk_0,A0,:]
         KqRow=Kp[:,IndexTimesThisChunk_0,A1,:]
+        
         T.timeit("2a")
         Kpq=KpRow*KqRow.conj()
         T.timeit("2b")
