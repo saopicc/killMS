@@ -324,7 +324,7 @@ class ClassPredict():
             t0,t1=lt0[it],lt1[it]
             ind=np.where((times>=t0)&(times<t1))[0]
             if ind.size==0: continue
-            print it,t0,t1,ind.size
+            #print it,t0,t1,ind.size
             #print "tot0",ind.size
 
 
@@ -342,17 +342,17 @@ class ClassPredict():
                 J=Beam[it,:,:,JChan,:,:].reshape((nd,na,4))
                 JH=BeamH[it,:,:,JChan,:,:].reshape((nd,na,4))
                 
-                # Jinv=ModLinAlg.BatchInverse(J)
-                # JHinv=ModLinAlg.BatchInverse(JH)
-                # W0=np.abs(ModLinAlg.BatchDot(Jinv[:,A0sel,:],JHinv[:,A1sel,:]))
-                # Wm=np.max(W0[:,:,0],axis=0)**(-2)
+                Jinv=ModLinAlg.BatchInverse(J)
+                JHinv=ModLinAlg.BatchInverse(JH)
+                W0=np.abs(ModLinAlg.BatchDot(Jinv[:,A0sel,:],JHinv[:,A1sel,:]))
+                Wm=np.sqrt(np.mean(np.abs(W0[:,:,0]),axis=0)**(-2))
 
-                gid=np.abs(J[:,A0sel,0])
-                gjd=np.abs(J[:,A1sel,0])
-                gi=np.mean(gid,axis=0)
-                gj=np.mean(gjd,axis=0)
-                p=0.01
-                Wm=p**2*(1./gi**2+1./gj**2+p**2/(gi*gj)**2)
+                # gid=np.abs(J[:,A0sel,0])
+                # gjd=np.abs(J[:,A1sel,0])
+                # gi=np.mean(gid,axis=0)
+                # gj=np.mean(gjd,axis=0)
+                # p=0.01
+                # Wm=p**2*(1./gi**2+1./gj**2+p**2/(gi*gj)**2)
 
 
                 W[ind]=Wm[:]
