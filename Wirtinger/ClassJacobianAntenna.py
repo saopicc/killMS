@@ -155,7 +155,7 @@ class ClassJacobianAntenna():
         #     key=SharedNames.split(".")[1]
         #     self.DATA[key]=NpShared.GiveArray(SharedName)
         self.DATA=NpShared.SharedToDico("%sSharedVis"%self.IdSharedMem)
-        self.DATA["UVW_RefAnt"]=NpShared.GiveArray("%sUVW_RefAnt"%self.IdSharedMem)
+        #self.DATA["UVW_RefAnt"]=NpShared.GiveArray("%sUVW_RefAnt"%self.IdSharedMem)
 
     def GivePaPol(self,Pa_in,ipol):
         PaPol=Pa_in.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks,self.NDir,self.NJacobBlocks,self.NJacobBlocks))
@@ -703,6 +703,10 @@ class ClassJacobianAntenna():
 
             DicoData["IndexTimesThisChunk"]=np.concatenate([DATA["IndexTimesThisChunk"][ind0], DATA["IndexTimesThisChunk"][ind1]]) 
 
+            it0=np.min(DicoData["IndexTimesThisChunk"])
+            it1=np.max(DicoData["IndexTimesThisChunk"])+1
+            DicoData["UVW_RefAnt"]=DATA["UVW_RefAnt"][it0:it1]
+
             D0=DATA['flags'][ind0]
             D1=DATA['flags'][ind1].conj()
             c1=D1[:,:,1].copy()
@@ -749,10 +753,6 @@ class ClassJacobianAntenna():
 
             #stop
 
-        it0=np.min(DicoData["IndexTimesThisChunk"])
-        it1=np.max(DicoData["IndexTimesThisChunk"])+1
-        UVW_RefAnt=NpShared.GiveArray("%sUVW_RefAnt"%self.IdSharedMem)[it0:it1,:,:]
-        DicoData["UVW_RefAnt"]=UVW_RefAnt
 
 
         if "DicoBeam" in DATA.keys():

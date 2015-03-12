@@ -121,7 +121,7 @@ class ClassVisServer():
         A0=DATA["A0"]
         A1=DATA["A1"]
         times=DATA["times"]
-        IndexTimesThisChunk=self.IndexTimes
+        IndexTimesThisChunk=self.ThisDataChunk["IndexTimesThisChunk"]
 
         for Field in self.DicoSelectOptions.keys():
             if Field=="UVRangeKm":
@@ -186,8 +186,8 @@ class ClassVisServer():
 
         it0=np.min(DATA["IndexTimesThisChunk"])
         it1=np.max(DATA["IndexTimesThisChunk"])+1
-        UVW_RefAnt=NpShared.GiveArray("%sUVW_RefAnt"%self.IdSharedMem)[it0:it1,:,:]
-        DATA["UVW_RefAnt"]=UVW_RefAnt
+        DATA["UVW_RefAnt"]=self.ThisDataChunk["UVW_RefAnt"][it0:it1,:,:]
+
 
 
         #print
@@ -302,10 +302,10 @@ class ClassVisServer():
             iTime+=1
 
         #NpShared.PackListArray("%sUVW_Ants"%self.IdSharedMem,Luvw)
-        self.UVW_RefAnt=NpShared.ToShared("%sUVW_RefAnt"%self.IdSharedMem,Luvw)
-        self.IndexTimes=NpShared.ToShared("%sIndexTimes"%self.IdSharedMem,indexTimes)
+        #self.UVW_RefAnt=NpShared.ToShared("%sUVW_RefAnt"%self.IdSharedMem,Luvw)
+        #self.IndexTimes=NpShared.ToShared("%sIndexTimes"%self.IdSharedMem,indexTimes)
 
-        DicoDataOut={"times":times,
+        ThisDataChunk={"times":times,
                      "freqs":freqs,
                      #"A0A1":(A0[ind],A1[ind]),
                      #"A0A1":(A0,A1),
@@ -319,10 +319,11 @@ class ClassVisServer():
                      "ROW0":MS.ROW0,
                      "ROW1":MS.ROW1,
                      "infos":np.array([MS.na]),
-                     "IndexTimesThisChunk":self.IndexTimes
+                     "IndexTimesThisChunk":indexTimes,
+                     "UVW_RefAnt": Luvw
                      }
         
-
+        self.ThisDataChunk=NpShared.DicoToShared("%sThisDataChunk"%self.IdSharedMem,ThisDataChunk)
 
         if self.ApplyBeam:
             print>>log, "Update LOFAR beam .... "
@@ -348,28 +349,10 @@ class ClassVisServer():
             DicoBeam["tm"]=Tm
             DicoBeam["Beam"]=Beam
             DicoBeam["BeamH"]=BeamH
-            DicoDataOut["DicoBeam"]=DicoBeam
+            self.ThisDataChunk["DicoBeam"]=DicoBeam
             
             print>>log, "       .... done Update LOFAR beam "
 
-        #MyPickle.Save(DicoDataOut,"Pickle_All_%2.2i"%self.CountPickle)
-        #self.CountPickle+=1
-
-        DATA=DicoDataOut
-
-        #A0,A1=DATA["A0A1"]
-        #DATA["A0"]=A0
-        #DATA["A1"]=A1
-
-        ##############################################
-        
-        
-        # DATA["data"].fill(1)
-
-        # DATA.keys()
-        # ['uvw', 'MapBLSel', 'Weights', 'nbl', 'data', 'ROW_01', 'itimes', 'freqs', 'nf', 'times', 'A1', 'A0', 'flags', 'nt', 'A0A1']
-
-        self.ThisDataChunk = DATA
         return "LoadOK"
 
 

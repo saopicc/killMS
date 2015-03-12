@@ -181,7 +181,7 @@ class WorkerPredict(multiprocessing.Process):
 
 
 class ClassPredict():
-    def __init__(self,Precision="D",NCPU=6):
+    def __init__(self,Precision="D",NCPU=6,IdMemShared=None):
         self.NCPU=NCPU
         ne.set_num_threads(self.NCPU)
         if Precision=="D":

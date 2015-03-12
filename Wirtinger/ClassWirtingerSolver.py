@@ -612,7 +612,7 @@ class WorkerAntennaLM(multiprocessing.Process):
                 self.result_queue.put([iAnt,x,None,None,None])
             elif self.SolverType=="KAFCA":
                 T=ClassTimeIt.ClassTimeIt()
-                #T.disable()
+                T.disable()
                 if DoCalcEvP:
                     evP[iAnt]=JM.CalcMatrixEvolveCov(G,P,rms)
                     T.timeit("Estimate Evolve")

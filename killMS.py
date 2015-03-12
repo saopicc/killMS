@@ -39,8 +39,13 @@ from Wirtinger.ClassWirtingerSolver import ClassWirtingerSolver
 
 from Other import ClassTimeIt
 from Data import ClassVisServer
-#from Sky.PredictGaussPoints_NumExpr import ClassPredict
+
 from Sky.PredictGaussPoints_NumExpr3 import ClassPredictParallel as ClassPredict 
+#from Sky.PredictGaussPoints_NumExpr2 import ClassPredictParallel as ClassPredict_orig 
+
+#from Sky.PredictGaussPoints_NumExpr3 import ClassPredict as ClassPredict 
+#from Sky.PredictGaussPoints_NumExpr2 import ClassPredict as ClassPredict_orig 
+
 from Array import ModLinAlg
 from Array import NpShared
 from Other import reformat
@@ -228,6 +233,7 @@ def main(options=None):
                                 Lambda=options.Lambda,IdSharedMem=IdSharedMem)
     Solver.InitSol(TestMode=False)
     PM=ClassPredict(NCPU=NCPU,IdMemShared=IdSharedMem)
+    PM2=None#ClassPredict_orig(NCPU=NCPU,IdMemShared=IdSharedMem)
     SM=Solver.SM
 
 
@@ -236,14 +242,14 @@ def main(options=None):
         rms,SolverInit_G=GiveNoise(options,
                                    DicoSelectOptions,
                                    IdSharedMem,
-                                   SM,PM)
+                                   SM,PM,PM2)
 
         Solver.InitSol(G=SolverInit_G,TestMode=False)
         Solver.InitCovariance(FromG=True,sigP=options.CovP,sigQ=options.CovQ)
 
         Solver.SetRmsFromExt(rms)
 
-
+    return
 
     DoSubstract=(options.DoSub==1)
     #print "!!!!!!!!!!!!!!"
@@ -300,7 +306,7 @@ def main(options=None):
     NpShared.DelAll(IdSharedMem)
 
     
-def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM):
+def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2):
     print>>log, ModColor.Str("Initialising Kalman filter with Levenberg-Maquardt estimate")
     dtInit=float(options.InitLM_dt)
     VSInit=ClassVisServer.ClassVisServer(options.ms,ColName=options.InCol,
@@ -309,14 +315,20 @@ def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM):
                                          TChunkSize=dtInit/60,IdSharedMem=IdSharedMem)
     
     VSInit.LoadNextVisChunk()
+    # # test
+    # PredictData=PM.predictKernelPolCluster(VSInit.ThisDataChunk,SM)
+    # PredictData2=PM2.predictKernelPolCluster(VSInit.ThisDataChunk,SM)
+    # print np.max(PredictData-PredictData2)
+    # stop
+    # #######
     SolverInit=ClassWirtingerSolver(VSInit,SM,PolMode=options.PolMode,
                                     NIter=options.NIter,NCPU=options.NCPU,
                                     SolverType="CohJones",
                                     DoPlot=options.DoPlot,
                                     DoPBar=False,IdSharedMem=IdSharedMem)
     SolverInit.InitSol(TestMode=False)
-    SolverInit.doNextTimeSolve_Parallel(OnlyOne=True)
-    #SolverInit.doNextTimeSolve()
+    #SolverInit.doNextTimeSolve_Parallel(OnlyOne=True)
+    SolverInit.doNextTimeSolve()
     Sols=SolverInit.GiveSols()
     Jones={}
     Jones["t0"]=Sols.t0
@@ -328,6 +340,7 @@ def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM):
     Jones["ChanMap"]=np.zeros((VSInit.MS.NSPWChan,))
 
     PredictData=PM.predictKernelPolCluster(SolverInit.VS.ThisDataChunk,SolverInit.SM,ApplyTimeJones=Jones)
+
     SolverInit.VS.ThisDataChunk["data"]-=PredictData
 
 

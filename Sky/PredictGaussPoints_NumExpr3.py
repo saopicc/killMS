@@ -162,8 +162,7 @@ class WorkerPredict(multiprocessing.Process):
 
             it0=np.min(DicoData["IndexTimesThisChunk"])
             it1=np.max(DicoData["IndexTimesThisChunk"])+1
-            UVW_RefAnt=NpShared.GiveArray("%sUVW_RefAnt"%self.IdSharedMem)[it0:it1,:,:]
-            DicoData["UVW_RefAnt"]=UVW_RefAnt
+            DicoData["UVW_RefAnt"]=D["UVW_RefAnt"][it0:it1,:,:]
 
             ApplyTimeJones=NpShared.SharedToDico("%sApplyTimeJones"%self.IdSharedMem)
 
@@ -187,7 +186,7 @@ class WorkerPredict(multiprocessing.Process):
 
 
 class ClassPredict():
-    def __init__(self,Precision="D",NCPU=6):
+    def __init__(self,Precision="D",NCPU=6,IdMemShared=None):
         self.NCPU=NCPU
         ne.set_num_threads(self.NCPU)
         if Precision=="D":
@@ -353,6 +352,7 @@ class ClassPredict():
         else:
             ind0=np.where(self.SourceCat.Cluster==idir)[0]
 
+        T=ClassTimeIt("PredictDirSPW")
         IndexTimesThisChunk=self.DicoData["IndexTimesThisChunk"]
         IndexTimesThisChunk_0=IndexTimesThisChunk-IndexTimesThisChunk[0]
         UVW_RefAnt=self.DicoData["UVW_RefAnt"]#[IndexTimesThisChunk_0]
@@ -384,7 +384,7 @@ class ClassPredict():
         rasel =SourceCat.ra
         decsel=SourceCat.dec
         
-
+        T.timeit("0")
         Ll=self.FType(SourceCat.l)
         Lm=self.FType(SourceCat.m)
         l=Ll.reshape(NSource,1,1,1)
@@ -400,16 +400,21 @@ class ClassPredict():
         V_refAnt=UVW_RefAnt[:,:,1].reshape(U_shape)
         W_refAnt=UVW_RefAnt[:,:,2].reshape(U_shape)
 
-        Kp=np.exp(f0*(U_refAnt*l+V_refAnt*m+W_refAnt*nn))
+        T.timeit("1")
+        Kp=np.exp(-f0*(U_refAnt*l+V_refAnt*m+W_refAnt*nn))
+        T.timeit("2")
         A0=self.DicoData["A0"]
         A1=self.DicoData["A1"]
 
         KpRow=Kp[:,IndexTimesThisChunk_0,A0,:]
         KqRow=Kp[:,IndexTimesThisChunk_0,A1,:]
+        T.timeit("2a")
         Kpq=KpRow*KqRow.conj()
+        T.timeit("2b")
         nrow=IndexTimesThisChunk_0.size
         Kpq=Kpq.reshape((NSource,nrow,nf,1))
 
+        T.timeit("3")
         ##########################
 
         TypeSources=SourceCat.Type
@@ -428,6 +433,7 @@ class ClassPredict():
         Sky[:,:,:,2]=(fU-1j*fV);
         Sky[:,:,:,3]=(fI-fQ);
 
+        T.timeit("4")
         Ssel  =Sky*(freq.reshape((1,1,freq.size,1))/RefFreq)**(alpha)
         Ssel=self.CType(Ssel)
         f=Ssel
@@ -436,6 +442,7 @@ class ClassPredict():
         ################
 
         Kpq=Kpq*Ssel
+        T.timeit("5")
 
 
         #################
@@ -458,6 +465,7 @@ class ClassPredict():
             uvp=ne.evaluate("exp(const*((U*SminCos-V*SminSin)**2+(U*SmajSin+V*SmajCos)**2))")
             #KernelPha=ne.evaluate("KernelPha+uvp")
             Kpq[indGauss,:,:,:]*=uvp[:,:,:,:]
+        T.timeit("6")
 
 
 
@@ -469,5 +477,6 @@ class ClassPredict():
             ColOut=ne.evaluate("sum(Kpq,axis=0)").astype(self.CType)
         else:
             ColOut=Kpq[0]
+        T.timeit("6")
 
         return ColOut
