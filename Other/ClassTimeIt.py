@@ -6,7 +6,7 @@ DoLog=False
 
 
 class ClassTimeIt():
-    def __init__(self,name=""):
+    def __init__(self,name="",f=1.):
         self.t0=timemod.time()
         self.IsEnable=True
         if name=="":
@@ -15,6 +15,7 @@ class ClassTimeIt():
             self.name=name+": "
         self.IsEnableIncr=False
         self.Counter=""
+        self.f=f
 
     def reinit(self):
         self.t0=timemod.time()
@@ -22,7 +23,7 @@ class ClassTimeIt():
     def timeit(self,stri=" Time",hms=False):
         if self.IsEnable==False: return
         t1=timemod.time()
-        dt=t1-self.t0
+        dt=self.f*(t1-self.t0)
         if not(hms):
             Sout= "  * %s%s %s : %7.5fs"%(self.name,stri,str(self.Counter),dt)
             if self.IsEnableIncr: self.Counter+=1

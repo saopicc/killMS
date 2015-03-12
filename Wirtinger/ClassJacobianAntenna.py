@@ -586,7 +586,8 @@ class ClassJacobianAntenna():
 
     def CalcKernelMatrix(self):
         # Out[28]: ['freqs', 'times', 'A1', 'A0', 'flags', 'uvw', 'data']
-        T=ClassTimeIt.ClassTimeIt("CalcKernelMatrix")
+        T=ClassTimeIt.ClassTimeIt("CalcKernelMatrix Ant=%i"%self.iAnt)
+        T.disable()
         DATA=self.DATA
         iAnt=self.iAnt
         na=DATA['infos'][0]
@@ -703,9 +704,12 @@ class ClassJacobianAntenna():
 
             DicoData["IndexTimesThisChunk"]=np.concatenate([DATA["IndexTimesThisChunk"][ind0], DATA["IndexTimesThisChunk"][ind1]]) 
 
-            it0=np.min(DicoData["IndexTimesThisChunk"])
-            it1=np.max(DicoData["IndexTimesThisChunk"])+1
-            DicoData["UVW_RefAnt"]=DATA["UVW_RefAnt"][it0:it1]
+            #it0=np.min(DicoData["IndexTimesThisChunk"])
+            #it1=np.max(DicoData["IndexTimesThisChunk"])+1
+            DicoData["UVW_RefAnt"]=DATA["UVW_RefAnt"]#[it0:it1]
+
+            if "Kp" in DATA.keys():
+                 DicoData["Kp"]=DATA["Kp"]
 
             D0=DATA['flags'][ind0]
             D1=DATA['flags'][ind1].conj()

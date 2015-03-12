@@ -254,6 +254,7 @@ class ClassPredict():
     def predictKernelPolCluster(self,DicoData,SM,iDirection=None,ApplyJones=None,ApplyTimeJones=None,Noise=None):
         self.DicoData=DicoData
         self.SourceCat=SM.SourceCat
+        self.SM=SM
 
         freq=DicoData["freqs"]
         times=DicoData["times"]
@@ -344,45 +345,41 @@ class ClassPredict():
 
         return DataOut
 
-
-    def PredictDirSPW(self,idir,isource=None):
-
+    def GiveKp(self,DicoData,SM,idir=None,isource=None):
+        SourceCat=SM.SourceCat
+        
         if isource!=None:
-            ind0=np.where(self.SourceCat.Cluster==idir)[0][isource:isource+1]
-        else:
-            ind0=np.where(self.SourceCat.Cluster==idir)[0]
+            ind0=np.where(SourceCat.Cluster==idir)[0][isource:isource+1]
+            SourceCat=SourceCat[ind0]
+        elif idir!=None:
+            ind0=np.where(SourceCat.Cluster==idir)[0]
+            SourceCat=SourceCat[ind0]
 
-        T=ClassTimeIt("PredictDirSPW")
-        IndexTimesThisChunk=self.DicoData["IndexTimesThisChunk"]
-        IndexTimesThisChunk_0=IndexTimesThisChunk-IndexTimesThisChunk[0]
-        UVW_RefAnt=self.DicoData["UVW_RefAnt"]#[IndexTimesThisChunk_0]
-
-        NSource=ind0.size
+        NSource=SourceCat.shape[0]
         if NSource==0: return None
-        SourceCat=self.SourceCat[ind0]
-        freq=self.freqs
+
+        T=ClassTimeIt("GiveKp")
+        T.disable()
+        IndexTimesThisChunk=DicoData["IndexTimesThisChunk"]
+        IndexTimesThisChunk_0=IndexTimesThisChunk-IndexTimesThisChunk[0]
+        UVW_RefAnt=DicoData["UVW_RefAnt"]#[IndexTimesThisChunk_0]
+
+
+        freqs=DicoData["freqs"]
         pi=np.pi
-        wave=self.wave#[0]
-        uvw=self.DicoData["uvw"]
+        wave=299792458./freqs
 
-                
-
-
+        # uvw=DicoData["uvw"]
         # U=self.FType(uvw[:,0].flatten().copy())
         # V=self.FType(uvw[:,1].flatten().copy())
         # W=self.FType(uvw[:,2].flatten().copy())
-
         # U=U.reshape((1,U.size,1,1))
         # V=V.reshape((1,U.size,1,1))
         # W=W.reshape((1,U.size,1,1))
-    
-        
-        #ColOut=np.zeros(U.shape,dtype=complex)
+
         f0=self.CType(2*pi*1j/wave)
         f0=f0.reshape((1,1,1,f0.size))
         nf=wave.size
-        rasel =SourceCat.ra
-        decsel=SourceCat.dec
         
         T.timeit("0")
         Ll=self.FType(SourceCat.l)
@@ -401,28 +398,142 @@ class ClassPredict():
         W_refAnt=UVW_RefAnt[:,:,2].reshape(U_shape)
 
         T.timeit("1")
-        Kp0=np.exp(-f0*(U_refAnt*l+V_refAnt*m+W_refAnt*nn))
+        # KpB=np.exp(-f0*(U*l+V*m+W*nn))
+        # T.timeit("Kp0")
+        # Kp0=np.exp(-f0*(U_refAnt*l+V_refAnt*m+W_refAnt*nn))
+        # T.timeit("Kp1")
         nd=NSource
-        if wave.size>2:
+
+        dfs=freqs[1::]-freqs[0:-1]
+        dfs-=dfs[0]
+        dfs/=1e-6
+        CondEquidistant=(np.max(np.abs(dfs))<1e-3)
+
+        if (wave.size>2)&(CondEquidistant):
             Kp=np.zeros((nd,nt,na,nf),self.CType)
             Kp[:,:,:,0:1]=np.exp(-f0[:,:,:,0:1]*(U_refAnt*l+V_refAnt*m+W_refAnt*nn))
             df0=-f0[:,:,:,1]-(-f0[:,:,:,0])
             df0=df0.reshape((1,1,1,1))
-            dKp=np.exp(-df0[:,:,:,:]*(U_refAnt*l+V_refAnt*m+W_refAnt*nn))
+            dKp=np.exp(df0[:,:,:,:]*(U_refAnt*l+V_refAnt*m+W_refAnt*nn))
             for ich in range(1,nf):
                 Kp[:,:,:,ich]=Kp[:,:,:,ich-1]*dKp[:,:,:,0]
-            print Kp-Kp0
-            stop
+            T.timeit("Kp2")
         else:
-            Kp0=np.exp(-f0*(U_refAnt*l+V_refAnt*m+W_refAnt*nn))
+            Kp=np.exp(-f0*(U_refAnt*l+V_refAnt*m+W_refAnt*nn))
+
+        return Kp
+
+
+    def PredictDirSPW(self,idir,isource=None):
+
+        IDSource=None
+        if isource!=None:
+            IDs=np.arange(self.SourceCat.shape[0])
+            ind0=np.where(self.SourceCat.Cluster==idir)[0]
+            IDs=IDs[ind0][isource:isource+1]
+            ind0=ind0[isource:isource+1]
+        else:
+            ind0=np.where(self.SourceCat.Cluster==idir)[0]
+
+        T=ClassTimeIt("PredictDirSPW",f=1e3)
+        
+        #print idir,isource
+        T.disable()
+        IndexTimesThisChunk=self.DicoData["IndexTimesThisChunk"]
+        IndexTimesThisChunk_0=IndexTimesThisChunk-IndexTimesThisChunk[0]
+        UVW_RefAnt=self.DicoData["UVW_RefAnt"]#[IndexTimesThisChunk_0]
+
+        NSource=ind0.size
+        if NSource==0: return None
+        SourceCat=self.SourceCat[ind0]
+        freq=self.freqs
+        pi=np.pi
+        wave=self.wave#[0]
+        uvw=self.DicoData["uvw"]
+
+                
+
+
+        U=self.FType(uvw[:,0].flatten().copy())
+        V=self.FType(uvw[:,1].flatten().copy())
+        W=self.FType(uvw[:,2].flatten().copy())
+        U=U.reshape((1,U.size,1,1))
+        V=V.reshape((1,U.size,1,1))
+        W=W.reshape((1,U.size,1,1))
+    
+        
+        #ColOut=np.zeros(U.shape,dtype=complex)
+        f0=self.CType(2*pi*1j/wave)
+        f0=f0.reshape((1,1,1,f0.size))
+        nf=wave.size
+        rasel =SourceCat.ra
+        decsel=SourceCat.dec
+        
+        T.timeit("0")
+        Ll=self.FType(SourceCat.l)
+        Lm=self.FType(SourceCat.m)
+        l=Ll.reshape(NSource,1,1,1)
+        m=Lm.reshape(NSource,1,1,1)
+        nn=self.FType(np.sqrt(1.-l**2-m**2)-1.)
+
+        #KernelPha=ne.evaluate("f0*(U*l+V*m+W*nn)").astype(self.CType)
+        T.timeit("1")
+
+        if "Kp" in self.DicoData.keys():
+            nd,nt,na,nf=self.DicoData["Kp"].shape
+            if NSource==1:
+                Kp=self.DicoData["Kp"][IDs[0]].reshape(1,nt,na,nf)
+            else:
+                Kp=self.DicoData["Kp"][IDs]
+        else:
+            Kp=self.GiveKp(self.DicoData,self.SM,idir=idir,isource=isource)
+
+        # # # lm : [nd,nt,na,nf]
+        # nt,na,_=UVW_RefAnt.shape
+        # U_shape=(1,nt,na,1)
+        # U_refAnt=UVW_RefAnt[:,:,0].reshape(U_shape)# [1, nt, na, 1]
+        # V_refAnt=UVW_RefAnt[:,:,1].reshape(U_shape)
+        # W_refAnt=UVW_RefAnt[:,:,2].reshape(U_shape)
+
+        # # T.timeit("1")
+        # # KpB=np.exp(-f0*(U*l+V*m+W*nn))
+        # # T.timeit("Kp0")
+        # Kp0=np.exp(-f0*(U_refAnt*l+V_refAnt*m+W_refAnt*nn))
+        # # T.timeit("Kp1")
+        # # nd=NSource
+
+        # # dfs=self.freqs[1::]-self.freqs[0:-1]
+        # # dfs-=dfs[0]
+        # # dfs/=1e-6
+        # # CondEquidistant=(np.max(np.abs(dfs))<1e-3)
+
+        # # if (wave.size>2)&(CondEquidistant):
+        # #     Kp=np.zeros((nd,nt,na,nf),self.CType)
+        # #     Kp[:,:,:,0:1]=np.exp(-f0[:,:,:,0:1]*(U_refAnt*l+V_refAnt*m+W_refAnt*nn))
+        # #     df0=-f0[:,:,:,1]-(-f0[:,:,:,0])
+        # #     df0=df0.reshape((1,1,1,1))
+        # #     dKp=np.exp(df0[:,:,:,:]*(U_refAnt*l+V_refAnt*m+W_refAnt*nn))
+        # #     for ich in range(1,nf):
+        # #         Kp[:,:,:,ich]=Kp[:,:,:,ich-1]*dKp[:,:,:,0]
+        # #     T.timeit("Kp2")
+        # # else:
+        # #     Kp0=np.exp(-f0*(U_refAnt*l+V_refAnt*m+W_refAnt*nn))
+        # print Kp0-Kp
+
+        # stop
 
         T.timeit("2")
         A0=self.DicoData["A0"]
         A1=self.DicoData["A1"]
 
-        KpRow=Kp[:,IndexTimesThisChunk_0,A0,:]
-        KqRow=Kp[:,IndexTimesThisChunk_0,A1,:]
-        
+        indxTime=IndexTimesThisChunk_0
+        KpRow=Kp[:,indxTime,A0,:]
+        KqRow=Kp[:,indxTime,A1,:]
+        # KpRow=Kp[:,indxTime[0]:indxTime[-1]+1,A0,:]
+        # KqRow=Kp[:,indxTime,A1,:]
+        # stop
+
+
         T.timeit("2a")
         Kpq=KpRow*KqRow.conj()
         T.timeit("2b")
@@ -453,12 +564,16 @@ class ClassPredict():
         Ssel=self.CType(Ssel)
         f=Ssel
         Ssel[Ssel==0]=1e-10
+        T.timeit("4a")
 
         ################
 
         Kpq=Kpq*Ssel
-        T.timeit("5")
-
+        # T.timeit("5")
+        # Kpq0=np.zeros_like(Kpq)
+        # for ipol in range(4):
+        #     Kpq0[:,:,:,ipol]=Kpq[:,:,:,0]*Ssel[:,:,:,ipol]
+        # T.timeit("5a")
 
         #################
         indGauss=np.where(TypeSources==1)[0]

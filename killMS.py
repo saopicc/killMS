@@ -208,7 +208,8 @@ def main(options=None):
     VS=ClassVisServer.ClassVisServer(options.ms,ColName=ReadColName,
                                      TVisSizeMin=dt,
                                      DicoSelectOptions=DicoSelectOptions,
-                                     TChunkSize=TChunk,IdSharedMem=IdSharedMem)
+                                     TChunkSize=TChunk,IdSharedMem=IdSharedMem,
+                                     SM=SM,NCPU=NCPU)
     print VS.MS
     if not(WriteColName in VS.MS.ColNames):
         print>>log, "Column %s not in MS "%WriteColName
@@ -249,7 +250,7 @@ def main(options=None):
 
         Solver.SetRmsFromExt(rms)
 
-    return
+
 
     DoSubstract=(options.DoSub==1)
     #print "!!!!!!!!!!!!!!"
@@ -312,7 +313,8 @@ def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2):
     VSInit=ClassVisServer.ClassVisServer(options.ms,ColName=options.InCol,
                                          TVisSizeMin=dtInit,
                                          DicoSelectOptions=DicoSelectOptions,
-                                         TChunkSize=dtInit/60,IdSharedMem=IdSharedMem)
+                                         TChunkSize=dtInit/60,IdSharedMem=IdSharedMem,
+                                         SM=SM,NCPU=options.NCPU)
     
     VSInit.LoadNextVisChunk()
     # # test
@@ -327,8 +329,8 @@ def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2):
                                     DoPlot=options.DoPlot,
                                     DoPBar=False,IdSharedMem=IdSharedMem)
     SolverInit.InitSol(TestMode=False)
-    #SolverInit.doNextTimeSolve_Parallel(OnlyOne=True)
-    SolverInit.doNextTimeSolve()
+    SolverInit.doNextTimeSolve_Parallel(OnlyOne=True)
+    #SolverInit.doNextTimeSolve()
     Sols=SolverInit.GiveSols()
     Jones={}
     Jones["t0"]=Sols.t0

@@ -9,6 +9,8 @@ from Other import ClassTimeIt
 from Other import ModColor
 from Array import ModLinAlg
 MyLogger.setSilent(["NpShared"])
+#from Sky.PredictGaussPoints_NumExpr3 import ClassPredictParallel as ClassPredict 
+from Sky.PredictGaussPoints_NumExpr3 import ClassPredict as ClassPredict 
 
 class ClassVisServer():
     def __init__(self,MSName,
@@ -17,7 +19,8 @@ class ClassVisServer():
                  TVisSizeMin=1,
                  DicoSelectOptions={},
                  LofarBeam=None,
-                 AddNoiseJy=None,IdSharedMem=""):
+                 AddNoiseJy=None,IdSharedMem="",
+                 SM=None,NCPU=None):
         self.IdSharedMem=IdSharedMem
         PrefixShared="%sSharedVis"%self.IdSharedMem
         self.AddNoiseJy=AddNoiseJy
@@ -25,6 +28,8 @@ class ClassVisServer():
         self.TMemChunkSize=TChunkSize
         self.TVisSizeMin=TVisSizeMin
         self.MSName=MSName
+        self.SM=SM
+        self.NCPU=NCPU
         self.VisWeights=None
         self.CountPickle=0
         self.ColName=ColName
@@ -172,9 +177,14 @@ class ClassVisServer():
         DATA["times"]=times
         DATA["IndexTimesThisChunk"]=IndexTimesThisChunk
 
+        it0=np.min(DATA["IndexTimesThisChunk"])
+        it1=np.max(DATA["IndexTimesThisChunk"])+1
+        DATA["UVW_RefAnt"]=self.ThisDataChunk["UVW_RefAnt"][it0:it1,:,:]
 
+        #PM=ClassPredict(NCPU=self.NCPU,IdMemShared=self.IdSharedMem)
+        #DATA["Kp"]=PM.GiveKp(DATA,self.SM)
 
-
+        #stop
         if self.VisInSharedMem:
             self.ClearSharedMemory()
             DATA=self.PutInShared(DATA)
@@ -184,11 +194,10 @@ class ClassVisServer():
             DATA["DicoBeam"]=D["DicoBeam"]
 
 
-        it0=np.min(DATA["IndexTimesThisChunk"])
-        it1=np.max(DATA["IndexTimesThisChunk"])+1
-        DATA["UVW_RefAnt"]=self.ThisDataChunk["UVW_RefAnt"][it0:it1,:,:]
-
-
+        #it0=np.min(DATA["IndexTimesThisChunk"])
+        #it1=np.max(DATA["IndexTimesThisChunk"])+1
+        #DATA["UVW_RefAnt"]=self.ThisDataChunk["UVW_RefAnt"][it0:it1,:,:]
+        
 
         #print
         #print self.MS.ROW0,self.MS.ROW1
@@ -281,11 +290,12 @@ class ClassVisServer():
             data+=(self.AddNoiseJy/np.sqrt(2.))*(np.random.randn(*data.shape)+1j*np.random.randn(*data.shape))
         
         # Building uvw infos
-        
+        print>>log, "Building uvw infos .... "
         Luvw=np.zeros((MS.times.size,MS.na,3),uvw.dtype)
         AntRef=0
         indexTimes=np.zeros((times.size,),np.int64)
         iTime=0
+
         for ThisTime in MS.times:
             ind=np.where(times==ThisTime)[0]
             indAnt=np.where(A0[ind]==AntRef)[0]
@@ -300,6 +310,7 @@ class ClassVisServer():
             #Luvw.append(ThisUVW)
             indexTimes[ind]=iTime
             iTime+=1
+        print>>log, "     .... Done "
 
         #NpShared.PackListArray("%sUVW_Ants"%self.IdSharedMem,Luvw)
         #self.UVW_RefAnt=NpShared.ToShared("%sUVW_RefAnt"%self.IdSharedMem,Luvw)
@@ -323,7 +334,7 @@ class ClassVisServer():
                      "UVW_RefAnt": Luvw
                      }
         
-        self.ThisDataChunk=NpShared.DicoToShared("%sThisDataChunk"%self.IdSharedMem,ThisDataChunk)
+        self.ThisDataChunk=ThisDataChunk#NpShared.DicoToShared("%sThisDataChunk"%self.IdSharedMem,ThisDataChunk)
 
         if self.ApplyBeam:
             print>>log, "Update LOFAR beam .... "
