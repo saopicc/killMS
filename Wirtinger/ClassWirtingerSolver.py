@@ -511,8 +511,8 @@ class ClassWirtingerSolver():
                         expW=np.exp(-x/dt)[::-1]
                         expW/=np.sum(expW)
                         kapaW=np.sum(expW*np.array(TraceResidList))
-                        self.Q[iAnt]=(kapaW**2)*self.Q_Init[iAnt]
-                        #self.Q[iAnt]=(kapaW)*self.Q_Init[iAnt]
+                        #self.Q[iAnt]=(kapaW**2)*self.Q_Init[iAnt]
+                        self.Q[iAnt]=(kapaW)*self.Q_Init[iAnt]
                         #print iAnt,kapa,kapaW
                         #sig=np.sqrt(np.abs(np.array([np.diag(self.P[i]) for i in [iAnt]]))).flatten()
                         #print sig
