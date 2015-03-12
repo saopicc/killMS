@@ -38,8 +38,50 @@ class ClassPredictParallel():
 
         self.PM=ClassPredict(Precision=Precision,NCPU=NCPU,IdMemShared=IdMemShared)
 
-    def GiveCovariance(self,*args):
-        return self.PM.GiveCovariance(*args)
+    def GiveCovariance(self,DicoDataIn,ApplyTimeJones):
+
+        DicoData=NpShared.DicoToShared("%sDicoMemChunk"%(self.IdMemShared),DicoDataIn,DelInput=False)
+        
+        if ApplyTimeJones!=None:
+            ApplyTimeJones=NpShared.DicoToShared("%sApplyTimeJones"%(self.IdMemShared),ApplyTimeJones,DelInput=False)
+
+        nrow,nch,_=DicoData["data"].shape
+        
+        RowList=np.int64(np.linspace(0,nrow,self.NCPU+1))
+        row0=RowList[0:-1]
+        row1=RowList[1::]
+        
+        work_queue = multiprocessing.Queue()
+        result_queue = multiprocessing.Queue()
+
+        workerlist=[]
+        NCPU=self.NCPU
+        
+        # NpShared.DelArray("%sCorrectedData"%(self.IdMemShared))
+        # CorrectedData=NpShared.SharedArray.create("%sCorrectedData"%(self.IdMemShared),DicoData["data"].shape,dtype=DicoData["data"].dtype)
+        # CorrectedData=
+
+        for ii in range(NCPU):
+            W=WorkerPredict(work_queue, result_queue,self.IdMemShared,Mode="GiveCovariance")
+            workerlist.append(W)
+            workerlist[ii].start()
+
+        NJobs=row0.size
+        for iJob in range(NJobs):
+            ThisJob=row0[iJob],row1[iJob]
+            work_queue.put(ThisJob)
+
+        while int(result_queue.qsize())<NJobs:
+            time.sleep(0.1)
+            continue
+ 
+        for ii in range(NCPU):
+            workerlist[ii].shutdown()
+            workerlist[ii].terminate()
+            workerlist[ii].join()
+
+        DicoDataIn["W"]=DicoData["W"]
+
 
     def ApplyCal(self,DicoDataIn,ApplyTimeJones,iCluster):
 
@@ -168,6 +210,9 @@ class WorkerPredict(multiprocessing.Process):
             it1=np.max(DicoData["IndexTimesThisChunk"])+1
             DicoData["UVW_RefAnt"]=D["UVW_RefAnt"][it0:it1,:,:]
 
+            if "W" in D.keys():
+                DicoData["W"]=D["W"][Row0:Row1]
+
             ApplyTimeJones=NpShared.SharedToDico("%sApplyTimeJones"%self.IdSharedMem)
 
             PM=ClassPredict(NCPU=1)
@@ -178,6 +223,9 @@ class WorkerPredict(multiprocessing.Process):
                 PredictArray[Row0:Row1]=PredictData[:]
             elif self.Mode=="ApplyCal":
                 PM.ApplyCal(DicoData,ApplyTimeJones,self.iCluster)
+            elif self.Mode=="GiveCovariance":
+                PM.GiveCovariance(DicoData,ApplyTimeJones)
+
 
             self.result_queue.put(True)
 
@@ -218,8 +266,10 @@ class ClassPredict():
         # Threshold=med*1e-2
         
         for it in range(lt0.size):
+            
             t0,t1=lt0[it],lt1[it]
             ind=np.where((times>=t0)&(times<t1))[0]
+
             if ind.size==0: continue
             data=ColOutDir[ind]
             # flags=DicoData["flags"][ind]
@@ -268,12 +318,13 @@ class ClassPredict():
 
         nt,nd,na,nch,_,_=Beam.shape
         
-        W=np.zeros((times.size,),np.float32)
+        W=DicoData["W"]#np.zeros((times.size,),np.float32)
         #print "tot",times.size
         for it in range(lt0.size):
             t0,t1=lt0[it],lt1[it]
             ind=np.where((times>=t0)&(times<t1))[0]
             if ind.size==0: continue
+            print it,t0,t1,ind.size
             #print "tot0",ind.size
 
 
@@ -299,8 +350,8 @@ class ClassPredict():
                 Wm=np.max(W0[:,:,0],axis=0)**(-2)
                 W[ind]=Wm[:]
 
-        W=W.reshape((W.size,1))*np.ones((1,4))
-        return W
+        #W=W.reshape((W.size,1))*np.ones((1,4))
+        #return W
 
 
 

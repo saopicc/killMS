@@ -302,8 +302,13 @@ def main(options=None):
 
             if ReWeight:
                 print>>log, ModColor.Str("Estimate Covariance ... ",col="green")
-                Solver.VS.MS.Weights[:]=PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones)[:]
-                
+                nrows=Solver.VS.ThisDataChunk["times"].size
+                Solver.VS.ThisDataChunk["W"]=np.zeros((nrows,),np.float32)
+                PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones)
+                Weights=Solver.VS.ThisDataChunk["W"]
+                return Weights
+                Weights=Weights.reshape((Weights.size,1))*np.ones((1,4))
+                Solver.VS.MS.Weights[:]=Weights[:]
             Solver.VS.MS.SaveVis(Col=WriteColName)
                 
 
