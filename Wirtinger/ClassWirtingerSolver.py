@@ -305,11 +305,13 @@ class ClassWirtingerSolver():
             T.timeit("Class")
 
             if (self.CounterEvolveP())&(self.SolverType=="KAFCA")&(self.iCurrentSol>self.EvolvePStepStart):
+                print "Evolve0"
                 for iAnt in self.DicoJM.keys():
                     JM=self.DicoJM[iAnt]
                     self.evP[iAnt]=JM.CalcMatrixEvolveCov(self.G,self.P,self.rms)
 
             elif (self.SolverType=="KAFCA")&(self.iCurrentSol<=self.EvolvePStepStart):
+                print "Evolve1"
                 for iAnt in self.DicoJM.keys():
                     JM=self.DicoJM[iAnt]
                     self.evP[iAnt]=JM.CalcMatrixEvolveCov(self.G,self.P,self.rms)
@@ -441,8 +443,8 @@ class ClassWirtingerSolver():
             if Res=="EndChunk": break
             if SkipMode:
                 print iiCount
-                if iiCount<82: continue
                 iiCount+=1
+                if iiCount<170: continue
 
             t0,t1=self.VS.CurrentVisTimes_MS_Sec
             self.SolsArray_t0[self.iCurrentSol]=t0
@@ -472,13 +474,14 @@ class ClassWirtingerSolver():
 
             Gold=self.G.copy()
             for LMIter in range(NIter):
-
+                #print
                 # for EKF
                 DoCalcEvP=False
                 if (self.CounterEvolveP())&(self.SolverType=="KAFCA")&(self.iCurrentSol>self.EvolvePStepStart):
                     DoCalcEvP=True
                 elif (self.SolverType=="KAFCA")&(self.iCurrentSol<=self.EvolvePStepStart):
                     DoCalcEvP=True
+
                 #########
 
                 for iAnt in ListAntSolve:
@@ -508,8 +511,11 @@ class ClassWirtingerSolver():
                         expW=np.exp(-x/dt)[::-1]
                         expW/=np.sum(expW)
                         kapaW=np.sum(expW*np.array(TraceResidList))
-                        self.Q[iAnt]=(kapaW**2)*self.Q_Init[iAnt]
+                        #self.Q[iAnt]=(kapaW**2)*self.Q_Init[iAnt]
+                        self.Q[iAnt]=(kapaW)*self.Q_Init[iAnt]
                         #print iAnt,kapa,kapaW
+                        #sig=np.sqrt(np.abs(np.array([np.diag(self.P[i]) for i in [iAnt]]))).flatten()
+                        #print sig
                         
 
                 if len(rmsFromDataList)>0:
@@ -598,15 +604,19 @@ class WorkerAntennaLM(multiprocessing.Process):
 
             G=NpShared.GiveArray("%sSharedGains"%self.IdSharedMem)
             P=NpShared.GiveArray("%sSharedCovariance"%self.IdSharedMem)
+            #Q=NpShared.GiveArray("%sSharedCovariance_Q"%self.IdSharedMem)
             evP=NpShared.GiveArray("%sSharedEvolveCovariance"%self.IdSharedMem)
 
             if self.SolverType=="CohJones":
                 x=JM.doLMStep(G)
                 self.result_queue.put([iAnt,x,None,None,None])
             elif self.SolverType=="KAFCA":
+                T=ClassTimeIt.ClassTimeIt()
+                #T.disable()
                 if DoCalcEvP:
                     evP[iAnt]=JM.CalcMatrixEvolveCov(G,P,rms)
-                        
+                    T.timeit("Estimate Evolve")
+
                 # EM=ClassModelEvolution(iAnt,
                 #                        StepStart=3,
                 #                        WeigthScale=2,
@@ -620,6 +630,7 @@ class WorkerAntennaLM(multiprocessing.Process):
                                        DoEvolve=True,
                                        BufferNPoints=10,
                                        sigQ=0.01,IdSharedMem=self.IdSharedMem)
+                T.timeit("Init EM")
 
                 Pa=None
 
@@ -629,8 +640,10 @@ class WorkerAntennaLM(multiprocessing.Process):
                 #     P[iAnt]=Pa
 
                 x,Pout,kapa=JM.doEKFStep(G,P,evP,rms)
+                T.timeit("EKFStep")
                 rmsFromData=JM.rmsFromData
                 Pa=EM.Evolve0(x,Pout)#,kapa=kapa)
+                T.timeit("Evolve")
                 #_,Pa=EM.Evolve(x,Pout,ThisTime)
 
                 if type(Pa)!=type(None):

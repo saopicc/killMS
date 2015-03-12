@@ -1,6 +1,6 @@
 import numpy as np
 from Array import NpShared
-from Sky.PredictGaussPoints_NumExpr2 import ClassPredict
+from Sky.PredictGaussPoints_NumExpr import ClassPredict
 
 from Data import ClassVisServer
 from Sky import ClassSM
@@ -288,7 +288,6 @@ class ClassJacobianAntenna():
         
     def doEKFStep(self,Gains,P,evP,rms):
         T=ClassTimeIt.ClassTimeIt("EKF")
-        T.disable()
         if not(self.HasKernelMatrix):
             self.CalcKernelMatrix()
             T.timeit("CalcKernelMatrix")
@@ -305,26 +304,30 @@ class ClassJacobianAntenna():
             return Ga.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks)),Pa,-1.
         
         self.CalcJacobianAntenna(Gains)
-        T.timeit("Jacob")
+        #T.timeit("Jacob")
 
         
 
         
         Jx=self.J_x(Ga)
-        T.timeit("J_x")
+        #T.timeit("J_x")
 
         
         evPa=evP[self.iAnt]
 
         self.PrepareJHJ_EKF(Pa,rms)
-        T.timeit("PrepareJHJ")
+        #T.timeit("PrepareJHJ")
 
         # estimate x
         zr=(z-Jx)
+        #T.timeit("Resid")
 
         kapa=self.CalcKapa_i(zr,Pa,rms)
+        #T.timeit("kapa")
 
         self.rmsFromData=np.std(zr[f])
+        #T.timeit("rmsFromData")
+
         # if np.isnan(self.rmsFromData):
         #     print zr
         #     print zr[f]
@@ -345,15 +348,15 @@ class ClassJacobianAntenna():
         #     stop
 
 
-        T.timeit("zr")
         x3=self.ApplyK_vec(zr,rms,Pa)
 
-        T.timeit("ApplyK_vec")
+        #T.timeit("ApplyK_vec")
         x0=Ga.flatten()
         x4=x0+x3.flatten()
 
         # estimate P
         Pa_new1=np.dot(evPa,Pa)
+        #T.timeit("EstimateP")
         ##################
         # for iPar in range(Pa.shape[0]):
         #     J_Px=self.J_x(Pa[iPar,:])
@@ -363,6 +366,7 @@ class ClassJacobianAntenna():
 
 
         del(self.Jacob)
+        T.timeit("Rest")
         
         return x4.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks)),Pa_new1,kapa
 
@@ -582,6 +586,7 @@ class ClassJacobianAntenna():
 
     def CalcKernelMatrix(self):
         # Out[28]: ['freqs', 'times', 'A1', 'A0', 'flags', 'uvw', 'data']
+        T=ClassTimeIt.ClassTimeIt("CalcKernelMatrix")
         DATA=self.DATA
         iAnt=self.iAnt
         na=DATA['infos'][0]
@@ -591,8 +596,9 @@ class ClassJacobianAntenna():
         self.iAnt=iAnt
         if self.PolMode=="HalfFull":
             npol=4
-
+        T.timeit("stuff")
         self.DicoData=self.GiveData(DATA,iAnt)
+        T.timeit("data")
         # self.Data=self.DicoData["data"]
         self.A1=self.DicoData["A1"]
         # print "AntMax1",self.SharedDataDicoName,np.max(self.A1)
@@ -625,6 +631,7 @@ class ClassJacobianAntenna():
             pass
             #print "COMPUTE KERNEL"
 
+        T.timeit("stuff 2")
         # GiveArray(Name)
 
         if self.PolMode=="HalfFull":
@@ -645,6 +652,7 @@ class ClassJacobianAntenna():
             self.K_YY=self.K_XX
             self.n4vis=n4vis
             self.NJacobBlocks=1
+        T.timeit("stuff 3")
 
         #self.Data=self.Data.reshape((nrows,nchan,self.NJacobBlocks,self.NJacobBlocks))
 
@@ -670,6 +678,7 @@ class ClassJacobianAntenna():
             #self.K_XX.append(K_XX)
             #self.K_YY.append(K_YY)
         self.HasKernelMatrix=True
+        T.timeit("stuff 4")
 
 
     def GiveData(self,DATA,iAnt):

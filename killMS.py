@@ -197,6 +197,8 @@ def main(options=None):
 
     SM=ClassSM.ClassSM(options.SkyModel,
                        killdirs=kills,invert=invert)
+
+
     #SM.SourceCat.I*=1000**2
     VS=ClassVisServer.ClassVisServer(options.ms,ColName=ReadColName,
                                      TVisSizeMin=dt,
@@ -255,8 +257,9 @@ def main(options=None):
         if Load=="EndOfObservation":
             break
 
-        Solver.doNextTimeSolve_Parallel()#SkipMode=True)
-        # Solver.doNextTimeSolve()
+        #Solver.doNextTimeSolve_Parallel()
+        #Solver.doNextTimeSolve_Parallel(SkipMode=True)
+        Solver.doNextTimeSolve()
 
         # substract
         ind=np.where(SM.SourceCat.kill==1)[0]
@@ -292,7 +295,7 @@ def main(options=None):
     print>>log, "Save Solutions in file: %s"%FileName
     Sols=Solver.GiveSols()
     StationNames=np.array(Solver.VS.MS.StationNames)
-    np.savez(FileName,Sols=Sols,StationNames=StationNames,SkyModel=SM.ClusterCat)
+    np.savez(FileName,Sols=Sols,StationNames=StationNames,SkyModel=SM.ClusterCat,ClusterCat=SM.ClusterCat)
     NpShared.DelAll(IdSharedMem)
 
     

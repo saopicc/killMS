@@ -10,7 +10,8 @@ class Counter():
         i=self.i
         #print "%i -> %i"%(i,i+1)
         self.i+=1
-        return (self.i%self.N==0)
+        Cond=(self.i%self.N==0)
+        return Cond
 
 
 class CounterTime():

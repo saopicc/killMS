@@ -8,6 +8,7 @@ import numexpr as ne
 from Other.progressbar import ProgressBar
 import multiprocessing
 from Array import ModLinAlg
+
 #ne.evaluate=lambda sin: ("return %s"%sin)
 
 
@@ -75,6 +76,8 @@ class ClassPredict():
             # DicoData["flags"][ind]=flags[:]
 
     def predictKernelPolCluster(self,DicoData,SM,iDirection=None,ApplyJones=None,ApplyTimeJones=None,Noise=None):
+        T=ClassTimeIt("predictKernelPolCluster")
+        T.disable()
         self.DicoData=DicoData
         self.SourceCat=SM.SourceCat
 
@@ -94,7 +97,7 @@ class ClassPredict():
             ListDirection=[iDirection]
         else:
             ListDirection=SM.Dirs#range(SM.NDir)
-        
+        T.timeit("0")
         A0=DicoData["A0"]
         A1=DicoData["A1"]
         if ApplyJones!=None:
@@ -102,9 +105,13 @@ class ClassPredict():
             Jones=np.swapaxes(ApplyJones,0,1)
             Jones=Jones.reshape((NDir,na,4))
             JonesH=ModLinAlg.BatchH(Jones)
+        T.timeit("1")
+
+
 
         for iCluster in ListDirection:
             ColOutDir=self.PredictDirSPW(iCluster)
+            T.timeit("2")
             if ColOutDir==None: continue
 
             if Noise!=None:
@@ -127,6 +134,7 @@ class ClassPredict():
                 for ichan in range(nf):
                     ColOutDir[:,ichan,:]=ModLinAlg.BatchDot(J[A0,:],ColOutDir[:,ichan,:])
                     ColOutDir[:,ichan,:]=ModLinAlg.BatchDot(ColOutDir[:,ichan,:],JH[A1,:])
+            T.timeit("3")
 
             if ApplyTimeJones!=None:#"DicoBeam" in DicoData.keys():
                 D=ApplyTimeJones#DicoData["DicoBeam"]
@@ -156,15 +164,18 @@ class ClassPredict():
                         data[:,ichan,:]=ModLinAlg.BatchDot(J[A0sel,:],data[:,ichan,:])
                         data[:,ichan,:]=ModLinAlg.BatchDot(data[:,ichan,:],JH[A1sel,:])
                     ColOutDir[ind]=data[:]
+            T.timeit("4")
             
 
             DataOut+=ColOutDir
+            T.timeit("5")
 
 
         return DataOut
 
 
     def PredictDirSPW(self,idir):
+        T=ClassTimeIt("PredictDirSPW")
 
         ind0=np.where(self.SourceCat.Cluster==idir)[0]
         NSource=ind0.size
@@ -183,7 +194,7 @@ class ClassPredict():
         U=U.reshape((1,U.size,1,1))
         V=V.reshape((1,U.size,1,1))
         W=W.reshape((1,U.size,1,1))
-
+        T.timeit("0")
         
         #ColOut=np.zeros(U.shape,dtype=complex)
         f0=self.CType(2*pi*1j/wave)
@@ -212,6 +223,7 @@ class ClassPredict():
 
         Ssel  =Sky*(freq.reshape((1,1,freq.size,1))/RefFreq)**(alpha)
         Ssel=self.CType(Ssel)
+        T.timeit("1")
 
 
 
@@ -230,6 +242,7 @@ class ClassPredict():
 
         NGauss=indGauss.size
 
+        T.timeit("2")
 
 
         if NGauss>0:
@@ -249,17 +262,22 @@ class ClassPredict():
             #KernelPha=ne.evaluate("KernelPha+uvp")
             KernelPha[indGauss,:,:,:]+=uvp[:,:,:,:]
 
+        T.timeit("3")
 
 
         LogF=np.log(f)
         
+        T.timeit("3a")
+        
         Kernel=ne.evaluate("exp(KernelPha+LogF)")
 
+        T.timeit("4")
         #Kernel=ne.evaluate("f*exp(KernelPha)").astype(self.CType)
 
         if Kernel.shape[0]>1:
             ColOut=ne.evaluate("sum(Kernel,axis=0)").astype(self.CType)
         else:
             ColOut=Kernel[0]
+        T.timeit("5")
 
         return ColOut
