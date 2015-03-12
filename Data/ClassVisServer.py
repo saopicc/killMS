@@ -111,7 +111,7 @@ class ClassVisServer():
         DATA={}
         for key in D.keys():
             if type(D[key])!=np.ndarray: continue
-            if not(key in ['times', 'A1', 'A0', 'flags', 'uvw', 'data']):             
+            if not(key in ['times', 'A1', 'A0', 'flags', 'uvw', 'data', "IndexTimesThisChunk"]):             
                 DATA[key]=D[key]
             else:
                 DATA[key]=D[key][ind]
@@ -126,7 +126,8 @@ class ClassVisServer():
         A0=DATA["A0"]
         A1=DATA["A1"]
         times=DATA["times"]
-        IndexTimesThisChunk=self.ThisDataChunk["IndexTimesThisChunk"]
+        IndexTimesThisChunk=DATA["IndexTimesThisChunk"]
+#        IndexTimesThisChunk=self.ThisDataChunk["IndexTimesThisChunk"]
 
         for Field in self.DicoSelectOptions.keys():
             if Field=="UVRangeKm":
