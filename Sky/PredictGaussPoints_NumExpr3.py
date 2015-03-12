@@ -342,16 +342,17 @@ class ClassPredict():
                 J=Beam[it,:,:,JChan,:,:].reshape((nd,na,4))
                 JH=BeamH[it,:,:,JChan,:,:].reshape((nd,na,4))
                 
-                Jinv=ModLinAlg.BatchInverse(J)
-                JHinv=ModLinAlg.BatchInverse(JH)
-                
-
-                W0=np.abs(ModLinAlg.BatchDot(Jinv[:,A0sel,:],JHinv[:,A1sel,:]))
-                Wm=np.max(W0[:,:,0],axis=0)**(-2)
+                # Jinv=ModLinAlg.BatchInverse(J)
+                # JHinv=ModLinAlg.BatchInverse(JH)
+                # W0=np.abs(ModLinAlg.BatchDot(Jinv[:,A0sel,:],JHinv[:,A1sel,:]))
+                # Wm=np.max(W0[:,:,0],axis=0)**(-2)
 
                 gid=np.abs(J[:,A0sel,0,0])
-                gjd=np.ans(J[:,A1sel,0,0])
-                gi=np.mean(
+                gjd=np.abs(J[:,A1sel,0,0])
+                gi=np.mean(gid,axis=0)
+                gj=np.mean(gjd,axis=0)
+                p=0.05
+                Wm=p**2*(1./gi**2+1./gj**2+p**2/(gi*gj)**2)
 
 
                 W[ind]=Wm[:]
