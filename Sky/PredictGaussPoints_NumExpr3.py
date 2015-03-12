@@ -351,7 +351,7 @@ class ClassPredict():
                 gjd=np.abs(J[:,A1sel,0])
                 gi=np.mean(gid,axis=0)
                 gj=np.mean(gjd,axis=0)
-                p=0.05
+                p=0.01
                 Wm=p**2*(1./gi**2+1./gj**2+p**2/(gi*gj)**2)
 
 
