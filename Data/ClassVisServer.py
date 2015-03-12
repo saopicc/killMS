@@ -297,17 +297,37 @@ class ClassVisServer():
         indexTimes=np.zeros((times.size,),np.int64)
         iTime=0
 
-        for ThisTime in MS.times:
-            ind=np.where(times==ThisTime)[0]
+
+        #Times_all_32=np.float32(times-MS.times[0])
+        #Times32=np.float32(MS.times-MS.times[0])
+        irow=0
+        for ThisTime in MS.times:#Times32:
+
+            T= ClassTimeIt.ClassTimeIt("VS")
+            T.disable()
+            #ind=np.where(Times_all_32[irow::]==ThisTime)[0]
+            ind=np.where(times[irow::]==ThisTime)[0]+irow
+            
+            irow+=ind.size
+            T.timeit("0b")
+
             indAnt=np.where(A0[ind]==AntRef)[0]
             ThisUVW0=uvw[ind][indAnt].copy()
             Ant0=A1[ind][indAnt].copy()
+            T.timeit("1")
+
             indAnt=np.where(A1[ind]==AntRef)[0]
             ThisUVW1=-uvw[ind][indAnt].copy()
             Ant1=A0[ind][indAnt].copy()
             ThisUVW=np.concatenate((ThisUVW1,ThisUVW0[1::]))
-            AA=np.concatenate((Ant1,Ant0[1::]))
+
+            T.timeit("2")
+
+            #AA=np.concatenate((Ant1,Ant0[1::]))
             Luvw[iTime,:,:]=ThisUVW[:,:]
+
+            T.timeit("3")
+
             #Luvw.append(ThisUVW)
             indexTimes[ind]=iTime
             iTime+=1
