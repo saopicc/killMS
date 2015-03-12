@@ -297,6 +297,12 @@ class ClassPredict():
 
                 W0=np.abs(ModLinAlg.BatchDot(Jinv[:,A0sel,:],JHinv[:,A1sel,:]))
                 Wm=np.max(W0[:,:,0],axis=0)**(-2)
+
+                gid=np.abs(J[:,A0sel,0,0])
+                gjd=np.ans(J[:,A1sel,0,0])
+                gi=np.mean(
+
+
                 W[ind]=Wm[:]
 
         W=W.reshape((W.size,1))*np.ones((1,4))
