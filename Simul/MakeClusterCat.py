@@ -25,11 +25,11 @@ def test():
     #                       "finfo":(100e6,250e6,10)}
 
     DicoPropPointings[0]={"offset":(0,0),
-                          "Ns":4,
-                          "Nc":0,
+                          "Ns":10,
+                          "Nc":2,
                           "Diam":1,
                           "finfo":(50e6,250e6,1),
-                          "Mode":"Grid"}
+                          "Mode":"Random"}
 
 
     # DicoPropPointings[0]={"offset":(0,0),
@@ -238,13 +238,13 @@ class MakeMultipleObs():
         D["NBands"]={"id":0,"val":1}
         D["WriteAutoCorr"]={"id":0,"val":"T"}
 
-        D["NFrequencies"]={"id":0,"val":1}#MS.Nchan}
+        D["NFrequencies"]={"id":0,"val":3}#MS.Nchan}
         D["StepFreq"]={"id":0,"val":2e6}#np.abs(self.MSTemplate.dFreq)}
 
         D["StartFreq"]={"id":0,"val":np.min(self.MSTemplate.ChanFreq.flatten())-np.abs(self.MSTemplate.dFreq)/2.}
         D["StartTime"]={"id":0,"val":DateTime}
 
-        D["NTimes"]={"id":0,"val":30}#int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
+        D["NTimes"]={"id":0,"val":300}#int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
         #D["NTimes"]={"id":0,"val":int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
         
         D["NParts"]={"id":0,"val":"1"}

@@ -1,6 +1,6 @@
 import numpy as np
 from Array import NpShared
-from Sky.PredictGaussPoints_NumExpr3 import ClassPredict
+from Sky.PredictGaussPoints_NumExpr2 import ClassPredict
 
 from Data import ClassVisServer
 from Sky import ClassSM

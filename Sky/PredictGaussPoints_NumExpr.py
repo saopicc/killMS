@@ -176,7 +176,7 @@ class ClassPredict():
 
     def PredictDirSPW(self,idir):
         T=ClassTimeIt("PredictDirSPW")
-
+        T.disable()
         ind0=np.where(self.SourceCat.Cluster==idir)[0]
         NSource=ind0.size
         if NSource==0: return None
@@ -266,7 +266,7 @@ class ClassPredict():
 
 
         LogF=np.log(f)
-        stop
+
         T.timeit("3a")
         
         Kernel=ne.evaluate("exp(KernelPha+LogF)")
