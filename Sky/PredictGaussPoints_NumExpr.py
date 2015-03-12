@@ -266,7 +266,7 @@ class ClassPredict():
 
 
         LogF=np.log(f)
-        
+        stop
         T.timeit("3a")
         
         Kernel=ne.evaluate("exp(KernelPha+LogF)")

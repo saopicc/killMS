@@ -288,6 +288,7 @@ class ClassJacobianAntenna():
         
     def doEKFStep(self,Gains,P,evP,rms):
         T=ClassTimeIt.ClassTimeIt("EKF")
+        T.disable()
         if not(self.HasKernelMatrix):
             self.CalcKernelMatrix()
             T.timeit("CalcKernelMatrix")

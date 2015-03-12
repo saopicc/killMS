@@ -220,7 +220,7 @@ class ClassVisServer():
         self.CurrentMemTimeChunk+=1
 
         print>>log, "Reading next data chunk in [%5.2f, %5.2f] hours"%(self.TimesInt[iT0],self.TimesInt[iT1])
-        MS.ReadData(t0=self.TimesInt[iT0],t1=self.TimesInt[iT1])
+        MS.ReadData(t0=self.TimesInt[iT0],t1=self.TimesInt[iT1],ReadWeight=True)
 
 
 

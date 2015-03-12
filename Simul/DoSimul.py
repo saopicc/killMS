@@ -29,7 +29,7 @@ def main(options=None):
     ReadColName="DATA"
     WriteColName="DATA"
     NCPU=6
-    Noise=0
+    Noise=10
 
     SM=ClassSM.ClassSM(SMName)
 

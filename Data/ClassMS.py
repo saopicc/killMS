@@ -365,8 +365,10 @@ class ClassMS():
         ntimes=time_all.shape[0]/self.nbl
 
         flag_all=table_all.getcol("FLAG",row0,nRowRead)[SPW==self.ListSPW[0]]
+        self.HasWeights=False
         if ReadWeight==True:
             self.Weights=table_all.getcol("WEIGHT",row0,nRowRead)
+            self.HasWeights=True
 
         if self.EqualizeFlag:
             for i in range(self.Nchan):
@@ -651,6 +653,9 @@ class ClassMS():
 
         table_all.putcol(Col,visout.astype(self.data.dtype),self.ROW0,self.nRowRead)
         table_all.putcol("FLAG",flag_all,self.ROW0,self.nRowRead)
+        if self.HasWeights:
+            table_all.putcol("WEIGHT",self.Weights,self.ROW0,self.nRowRead)
+            #print "ok w"
         table_all.close()
         
     def GiveUvwBL(self,a0,a1):

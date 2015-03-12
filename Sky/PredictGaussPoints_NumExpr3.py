@@ -25,7 +25,7 @@ def SolsToDicoJones(Sols,nf):
 
 
 class ClassPredictParallel():
-    def __init__(self,Precision="D",NCPU=6,IdMemShared=""):
+    def __init__(self,Precision="S",NCPU=6,IdMemShared=""):
         self.NCPU=NCPU
         ne.set_num_threads(self.NCPU)
         if Precision=="D":
@@ -36,6 +36,10 @@ class ClassPredictParallel():
             self.FType=np.float32
         self.IdMemShared=IdMemShared
 
+        self.PM=ClassPredict(Precision=Precision,NCPU=NCPU,IdMemShared=IdMemShared)
+
+    def GiveCovariance(self,*args):
+        return self.PM.GiveCovariance(*args)
 
     def ApplyCal(self,DicoDataIn,ApplyTimeJones,iCluster):
 
@@ -186,7 +190,7 @@ class WorkerPredict(multiprocessing.Process):
 
 
 class ClassPredict():
-    def __init__(self,Precision="D",NCPU=6,IdMemShared=None):
+    def __init__(self,Precision="S",NCPU=6,IdMemShared=None):
         self.NCPU=NCPU
         ne.set_num_threads(self.NCPU)
         if Precision=="D":
@@ -250,6 +254,59 @@ class ClassPredict():
             ColOutDir[ind]=data[:]
 
             # DicoData["flags"][ind]=flags[:]
+
+
+    def GiveCovariance(self,DicoData,ApplyTimeJones):
+        D=ApplyTimeJones
+        Beam=D["Beam"]
+        BeamH=D["BeamH"]
+        lt0,lt1=D["t0"],D["t1"]
+        A0=DicoData["A0"]
+        A1=DicoData["A1"]
+        times=DicoData["times"]
+        na=DicoData["infos"][0]
+
+        nt,nd,na,nch,_,_=Beam.shape
+        
+        W=np.zeros((times.size,),np.float32)
+        #print "tot",times.size
+        for it in range(lt0.size):
+            t0,t1=lt0[it],lt1[it]
+            ind=np.where((times>=t0)&(times<t1))[0]
+            if ind.size==0: continue
+            #print "tot0",ind.size
+
+
+            A0sel=A0[ind]
+            A1sel=A1[ind]
+            
+            if "ChanMap" in ApplyTimeJones.keys():
+                ChanMap=ApplyTimeJones["ChanMap"]
+            else:
+                ChanMap=range(nf)
+
+            for ichan in range(len(ChanMap)):
+                JChan=ChanMap[ichan]
+
+                J=Beam[it,:,:,JChan,:,:].reshape((nd,na,4))
+                JH=BeamH[it,:,:,JChan,:,:].reshape((nd,na,4))
+                
+                Jinv=ModLinAlg.BatchInverse(J)
+                JHinv=ModLinAlg.BatchInverse(JH)
+                
+
+                W0=np.abs(ModLinAlg.BatchDot(Jinv[:,A0sel,:],JHinv[:,A1sel,:]))
+                Wm=np.max(W0[:,:,0],axis=0)**(-2)
+                W[ind]=Wm[:]
+
+        W=W.reshape((W.size,1))*np.ones((1,4))
+        return W
+
+
+
+
+
+
 
     def predictKernelPolCluster(self,DicoData,SM,iDirection=None,ApplyJones=None,ApplyTimeJones=None,Noise=None):
         self.DicoData=DicoData

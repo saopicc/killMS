@@ -66,6 +66,7 @@ def read_options():
     group.add_option('--OutCol',help=' Column to write to. Default is %default',default="CORRECTED_DATA")
     group.add_option('--LOFARBeam',help='(Mode, Time): Mode can be AE, E, or A for "Array factor" and "Element beam". Time is the estimation time step',default="")
     group.add_option('--UVMinMax',help=' Baseline length selection in km. For example --UVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default',default=None)
+    group.add_option('--ReWeight',type="int",help=' . Default is %default',default=1)
     opt.add_option_group(group)
 
     group = optparse.OptionGroup(opt, "* Source selection options")
@@ -156,6 +157,7 @@ def main(options=None):
     IdSharedMem=str(int(os.getpid()))+"."
     PrintOptions(options,IdSharedMem)
     ApplyCal=(options.ApplyCal=="1")
+    ReWeight=(options.ReWeight==1)
 
     if options.ms=="":
         print "Give an MS name!"
@@ -269,9 +271,8 @@ def main(options=None):
         #Solver.doNextTimeSolve()
 
         # substract
-        ind=np.where(SM.SourceCat.kill==1)[0]
-        
-        if (ind.size>0)&((DoSubstract)|(ApplyCal!=None)):
+        #ind=np.where(SM.SourceCat.kill==1)[0]
+        if ((DoSubstract)|(ApplyCal!=None)|(ReWeight)):
             Sols=Solver.GiveSols()
             Jones={}
             Jones["t0"]=Sols.t0
@@ -297,7 +298,15 @@ def main(options=None):
 
             Solver.VS.MS.data=Solver.VS.ThisDataChunk["data"]
             Solver.VS.MS.flags_all=Solver.VS.ThisDataChunk["flags"]
+
+
+            if ReWeight:
+                Solver.VS.MS.Weights[:]=PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones)[:]
+                
             Solver.VS.MS.SaveVis(Col=WriteColName)
+                
+
+
     
     FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.ms),options.SolverType)
     print>>log, "Save Solutions in file: %s"%FileName

@@ -99,6 +99,7 @@ def main(options=None):
         SolsDico=np.load(FileName)
         Sols=SolsDico["Sols"]
         Sols=Sols.view(np.recarray)
+
         ind=np.where(Sols.t1!=0)[0]
         Sols=Sols[ind]
         tm=(Sols.t1+Sols.t0)/2.
