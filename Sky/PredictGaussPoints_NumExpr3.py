@@ -158,7 +158,13 @@ class WorkerPredict(multiprocessing.Process):
             DicoData["uvw"]=D["uvw"][Row0:Row1]
             DicoData["freqs"]=D["freqs"]
             DicoData["infos"]=D["infos"]
-            
+            DicoData["IndexTimesThisChunk"]=D["IndexTimesThisChunk"][Row0:Row1]
+
+            it0=np.min(DicoData["IndexTimesThisChunk"])
+            it1=np.max(DicoData["IndexTimesThisChunk"])+1
+            UVW_RefAnt=NpShared.GiveArray("%sUVW_RefAnt"%self.IdSharedMem)[it0:it1,:,:]
+            DicoData["UVW_RefAnt"]=UVW_RefAnt
+
             ApplyTimeJones=NpShared.SharedToDico("%sApplyTimeJones"%self.IdSharedMem)
 
             PM=ClassPredict(NCPU=1)

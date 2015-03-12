@@ -278,6 +278,7 @@ def main(options=None):
             if DoSubstract:
                 print>>log, ModColor.Str("Substract sources ... ",col="green")
                 SM.SelectSubCat(SM.SourceCat.kill==1)
+
                 PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
                 Solver.VS.ThisDataChunk["data"]-=PredictData
                 SM.RestoreCat()

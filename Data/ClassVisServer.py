@@ -183,6 +183,13 @@ class ClassVisServer():
         if "DicoBeam" in D.keys():
             DATA["DicoBeam"]=D["DicoBeam"]
 
+
+        it0=np.min(DATA["IndexTimesThisChunk"])
+        it1=np.max(DATA["IndexTimesThisChunk"])+1
+        UVW_RefAnt=NpShared.GiveArray("%sUVW_RefAnt"%self.IdSharedMem)[it0:it1,:,:]
+        DATA["UVW_RefAnt"]=UVW_RefAnt
+
+
         #print
         #print self.MS.ROW0,self.MS.ROW1
         #t0=np.min(DATA["times"])-self.MS.F_tstart
@@ -311,7 +318,8 @@ class ClassVisServer():
                      "data":data,
                      "ROW0":MS.ROW0,
                      "ROW1":MS.ROW1,
-                     "infos":np.array([MS.na])
+                     "infos":np.array([MS.na]),
+                     "IndexTimesThisChunk":self.IndexTimes
                      }
         
 
