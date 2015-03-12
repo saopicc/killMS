@@ -357,6 +357,8 @@ class ClassPredict():
 
                 W[ind]=Wm[:]
 
+        W/=np.mean(W)
+
         #W=W.reshape((W.size,1))*np.ones((1,4))
         #return W
 
