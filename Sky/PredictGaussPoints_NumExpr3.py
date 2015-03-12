@@ -404,10 +404,12 @@ class ClassPredict():
         # T.timeit("Kp1")
         nd=NSource
 
-        dfs=freqs[1::]-freqs[0:-1]
-        dfs-=dfs[0]
-        dfs/=1e-6
-        CondEquidistant=(np.max(np.abs(dfs))<1e-3)
+        CondEquidistant=False
+        if freqs.size>2:
+            dfs=freqs[1::]-freqs[0:-1]
+            dfs-=dfs[0]
+            dfs/=1e-6
+            CondEquidistant=(np.max(np.abs(dfs))<1e-3)
 
         if (wave.size>2)&(CondEquidistant):
             Kp=np.zeros((nd,nt,na,nf),self.CType)
