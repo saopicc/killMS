@@ -197,7 +197,7 @@ def main(options=None):
 
     DicoSelectOptions= {}
     if options.UVMinMax!=None:
-        sUVmin,sUVmax=options.UVMinMax
+        sUVmin,sUVmax=options.UVMinMax.split(",")
         UVmin,UVmax=float(sUVmin),float(sUVmax)
         DicoSelectOptions["UVRangeKm"]=UVmin,UVmax
 
