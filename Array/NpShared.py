@@ -82,3 +82,72 @@ def SharedToDico(Prefix):
 
     return DicoOut
 
+
+#########################
+
+def PackListArray(Name,LArray):
+    DelArray(Name)
+
+    NArray=len(LArray)
+    ListNDim=[len(LArray[i].shape) for i in range(len(LArray))]
+    NDimTot=np.sum(ListNDim)
+    # [NArray,NDim0...NDimN,shape0...shapeN,Arr0...ArrN]
+
+    dS=LArray[0].dtype
+    TotSize=0
+    for i in range(NArray):
+        TotSize+=LArray[i].size
+
+
+    S=SharedArray.create(Name,(1+NArray+NDimTot+TotSize,),dtype=dS)
+    S[0]=NArray
+    idx=1
+    # write ndims
+    for i in range(NArray):
+        S[idx]=ListNDim[i]
+        idx+=1
+
+    # write shapes
+    for i in range(NArray):
+        ndim=ListNDim[i]
+        A=LArray[i]
+        S[idx:idx+ndim]=A.shape
+        idx+=ndim
+
+    # write arrays
+    for i in range(NArray):
+        A=LArray[i]
+        S[idx:idx+A.size]=A.ravel()
+        idx+=A.size
+
+
+def UnPackListArray(Name):
+    S=GiveArray(Name)
+
+    NArray=np.int32(S[0].real)
+    idx=1
+
+    # read ndims
+    ListNDim=[]
+    for i in range(NArray):
+        ListNDim.append(np.int32(S[idx].real))
+        idx+=1
+
+    # read shapes
+    ListShapes=[]
+    for i in range(NArray):
+        ndim=ListNDim[i]
+        shape=np.int32(S[idx:idx+ndim].real)
+        ListShapes.append(shape)
+        idx+=ndim
+
+    # read values
+    ListArray=[]
+    for i in range(NArray):
+        shape=ListShapes[i]
+        size=np.prod(shape)
+        A=S[idx:idx+size].reshape(shape)
+        ListArray.append(A)
+        idx+=size
+    return ListArray
+

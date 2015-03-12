@@ -347,8 +347,9 @@ class ClassPredict():
         else:
             ind0=np.where(self.SourceCat.Cluster==idir)[0]
 
-        #Luvw=self.DicoData["Luvw"]
-        #indexTimes=self.DicoData["indexTimes"]
+        IndexTimesThisChunk=self.DicoData["IndexTimesThisChunk"]
+        IndexTimesThisChunk_0=IndexTimesThisChunk-IndexTimesThisChunk[0]
+        UVW_RefAnt=self.DicoData["UVW_RefAnt"]#[IndexTimesThisChunk_0]
 
         NSource=ind0.size
         if NSource==0: return None
@@ -356,33 +357,61 @@ class ClassPredict():
         freq=self.freqs
         pi=np.pi
         wave=self.wave#[0]
-
         uvw=self.DicoData["uvw"]
 
-        U=self.FType(uvw[:,0].flatten().copy())
-        V=self.FType(uvw[:,1].flatten().copy())
-        W=self.FType(uvw[:,2].flatten().copy())
+                
 
-        U=U.reshape((1,U.size,1,1))
-        V=V.reshape((1,U.size,1,1))
-        W=W.reshape((1,U.size,1,1))
 
+        # U=self.FType(uvw[:,0].flatten().copy())
+        # V=self.FType(uvw[:,1].flatten().copy())
+        # W=self.FType(uvw[:,2].flatten().copy())
+
+        # U=U.reshape((1,U.size,1,1))
+        # V=V.reshape((1,U.size,1,1))
+        # W=W.reshape((1,U.size,1,1))
+    
         
         #ColOut=np.zeros(U.shape,dtype=complex)
         f0=self.CType(2*pi*1j/wave)
-        f0=f0.reshape((1,1,f0.size,1))
-
+        f0=f0.reshape((1,1,1,f0.size))
+        nf=wave.size
         rasel =SourceCat.ra
         decsel=SourceCat.dec
         
+
+        Ll=self.FType(SourceCat.l)
+        Lm=self.FType(SourceCat.m)
+        l=Ll.reshape(NSource,1,1,1)
+        m=Lm.reshape(NSource,1,1,1)
+        nn=self.FType(np.sqrt(1.-l**2-m**2)-1.)
+
+        #KernelPha=ne.evaluate("f0*(U*l+V*m+W*nn)").astype(self.CType)
+
+        # lm : [nd,nt,na,nf]
+        nt,na,_=UVW_RefAnt.shape
+        U_shape=(1,nt,na,1)
+        U_refAnt=UVW_RefAnt[:,:,0].reshape(U_shape)# [1, nt, na, 1]
+        V_refAnt=UVW_RefAnt[:,:,1].reshape(U_shape)
+        W_refAnt=UVW_RefAnt[:,:,2].reshape(U_shape)
+
+        Kp=np.exp(f0*(U_refAnt*l+V_refAnt*m+W_refAnt*nn))
+        A0=self.DicoData["A0"]
+        A1=self.DicoData["A1"]
+
+        KpRow=Kp[:,IndexTimesThisChunk_0,A0,:]
+        KqRow=Kp[:,IndexTimesThisChunk_0,A1,:]
+        Kpq=KpRow*KqRow.conj()
+        nrow=IndexTimesThisChunk_0.size
+        Kpq=Kpq.reshape((NSource,nrow,nf,1))
+
+        ##########################
+
         TypeSources=SourceCat.Type
         Gmaj=SourceCat.Gmaj.reshape((NSource,1,1,1))
         Gmin=SourceCat.Gmin.reshape((NSource,1,1,1))
         Gangle=SourceCat.Gangle.reshape((NSource,1,1,1))
-
         RefFreq=SourceCat.RefFreq.reshape((NSource,1,1,1))
         alpha=SourceCat.alpha.reshape((NSource,1,1,1))
-
         fI=SourceCat.I.reshape((NSource,1,1))
         fQ=SourceCat.Q.reshape((NSource,1,1))
         fU=SourceCat.U.reshape((NSource,1,1))
@@ -395,26 +424,18 @@ class ClassPredict():
 
         Ssel  =Sky*(freq.reshape((1,1,freq.size,1))/RefFreq)**(alpha)
         Ssel=self.CType(Ssel)
-
-
-
-
-        Ll=self.FType(SourceCat.l)
-        Lm=self.FType(SourceCat.m)
-        
-        l=Ll.reshape(NSource,1,1,1)
-        m=Lm.reshape(NSource,1,1,1)
-        nn=self.FType(np.sqrt(1.-l**2-m**2)-1.)
         f=Ssel
         Ssel[Ssel==0]=1e-10
 
-        KernelPha=ne.evaluate("f0*(U*l+V*m+W*nn)").astype(self.CType)
+        ################
+
+        Kpq=Kpq*Ssel
+
+
+        #################
         indGauss=np.where(TypeSources==1)[0]
-
         NGauss=indGauss.size
-
-
-
+        
         if NGauss>0:
             ang=Gangle[indGauss].reshape((NGauss,1,1,1))
             SigMaj=Gmaj[indGauss].reshape((NGauss,1,1,1))
@@ -428,21 +449,19 @@ class ClassPredict():
             #vp=ne.evaluate("U*SmajSin+V*SmajCos")
             const=-(2*(pi**2)*(1/WaveL)**2)#*fudge
             const=const.reshape((1,1,freq.size,1))
-            uvp=ne.evaluate("const*((U*SminCos-V*SminSin)**2+(U*SmajSin+V*SmajCos)**2)")
+            uvp=ne.evaluate("exp(const*((U*SminCos-V*SminSin)**2+(U*SmajSin+V*SmajCos)**2))")
             #KernelPha=ne.evaluate("KernelPha+uvp")
-            KernelPha[indGauss,:,:,:]+=uvp[:,:,:,:]
+            Kpq[indGauss,:,:,:]*=uvp[:,:,:,:]
 
 
 
-        LogF=np.log(f)
         
-        Kernel=ne.evaluate("exp(KernelPha+LogF)")
 
         #Kernel=ne.evaluate("f*exp(KernelPha)").astype(self.CType)
 
-        if Kernel.shape[0]>1:
-            ColOut=ne.evaluate("sum(Kernel,axis=0)").astype(self.CType)
+        if Kpq.shape[0]>1:
+            ColOut=ne.evaluate("sum(Kpq,axis=0)").astype(self.CType)
         else:
-            ColOut=Kernel[0]
+            ColOut=Kpq[0]
 
         return ColOut

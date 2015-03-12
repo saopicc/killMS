@@ -121,7 +121,7 @@ class ClassVisServer():
         A0=DATA["A0"]
         A1=DATA["A1"]
         times=DATA["times"]
-
+        IndexTimesThisChunk=self.IndexTimes
 
         for Field in self.DicoSelectOptions.keys():
             if Field=="UVRangeKm":
@@ -141,6 +141,7 @@ class ClassVisServer():
                 A1=A1[ind]
                 uvw=uvw[ind]
                 times=times[ind]
+                IndexTimesThisChunk=IndexTimesThisChunk[ind]
 
         for A in self.FlagAntNumber:
             ind=np.where((A0!=A)&(A1!=A))[0]
@@ -150,6 +151,7 @@ class ClassVisServer():
             A1=A1[ind]
             uvw=uvw[ind]
             times=times[ind]
+            IndexTimesThisChunk=IndexTimesThisChunk[ind]
         
             
 
@@ -160,6 +162,7 @@ class ClassVisServer():
         A1=A1[ind]
         uvw=uvw[ind,:]
         times=times[ind]
+        IndexTimesThisChunk=IndexTimesThisChunk[ind]
 
         DATA["flags"]=flags
         DATA["uvw"]=uvw
@@ -167,6 +170,7 @@ class ClassVisServer():
         DATA["A0"]=A0
         DATA["A1"]=A1
         DATA["times"]=times
+        DATA["IndexTimesThisChunk"]=IndexTimesThisChunk
 
 
 
@@ -269,6 +273,31 @@ class ClassVisServer():
         if self.AddNoiseJy!=None:
             data+=(self.AddNoiseJy/np.sqrt(2.))*(np.random.randn(*data.shape)+1j*np.random.randn(*data.shape))
         
+        # Building uvw infos
+        
+        Luvw=np.zeros((MS.times.size,MS.na,3),uvw.dtype)
+        AntRef=0
+        indexTimes=np.zeros((times.size,),np.int64)
+        iTime=0
+        for ThisTime in MS.times:
+            ind=np.where(times==ThisTime)[0]
+            indAnt=np.where(A0[ind]==AntRef)[0]
+            ThisUVW0=uvw[ind][indAnt].copy()
+            Ant0=A1[ind][indAnt].copy()
+            indAnt=np.where(A1[ind]==AntRef)[0]
+            ThisUVW1=-uvw[ind][indAnt].copy()
+            Ant1=A0[ind][indAnt].copy()
+            ThisUVW=np.concatenate((ThisUVW1,ThisUVW0[1::]))
+            AA=np.concatenate((Ant1,Ant0[1::]))
+            Luvw[iTime,:,:]=ThisUVW[:,:]
+            #Luvw.append(ThisUVW)
+            indexTimes[ind]=iTime
+            iTime+=1
+
+        #NpShared.PackListArray("%sUVW_Ants"%self.IdSharedMem,Luvw)
+        self.UVW_RefAnt=NpShared.ToShared("%sUVW_RefAnt"%self.IdSharedMem,Luvw)
+        self.IndexTimes=NpShared.ToShared("%sIndexTimes"%self.IdSharedMem,indexTimes)
+
         DicoDataOut={"times":times,
                      "freqs":freqs,
                      #"A0A1":(A0[ind],A1[ind]),

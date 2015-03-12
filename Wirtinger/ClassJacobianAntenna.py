@@ -1,6 +1,6 @@
 import numpy as np
 from Array import NpShared
-from Sky.PredictGaussPoints_NumExpr import ClassPredict
+from Sky.PredictGaussPoints_NumExpr3 import ClassPredict
 
 from Data import ClassVisServer
 from Sky import ClassSM
@@ -155,7 +155,7 @@ class ClassJacobianAntenna():
         #     key=SharedNames.split(".")[1]
         #     self.DATA[key]=NpShared.GiveArray(SharedName)
         self.DATA=NpShared.SharedToDico("%sSharedVis"%self.IdSharedMem)
-
+        self.DATA["UVW_RefAnt"]=NpShared.GiveArray("%sUVW_RefAnt"%self.IdSharedMem)
 
     def GivePaPol(self,Pa_in,ipol):
         PaPol=Pa_in.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks,self.NDir,self.NJacobBlocks,self.NJacobBlocks))
@@ -701,6 +701,8 @@ class ClassJacobianAntenna():
             DicoData["data"] = np.concatenate([D0, D1])
             DicoData["uvw"]  = np.concatenate([DATA['uvw'][ind0], -DATA['uvw'][ind1]])
 
+            DicoData["IndexTimesThisChunk"]=np.concatenate([DATA["IndexTimesThisChunk"][ind0], DATA["IndexTimesThisChunk"][ind1]]) 
+
             D0=DATA['flags'][ind0]
             D1=DATA['flags'][ind1].conj()
             c1=D1[:,:,1].copy()
@@ -732,6 +734,7 @@ class ClassJacobianAntenna():
 
             del(DicoData["data"])
 
+
             DicoData=NpShared.DicoToShared(self.SharedDataDicoName,DicoData)
 
         else:
@@ -745,6 +748,12 @@ class ClassJacobianAntenna():
             #print
 
             #stop
+
+        it0=np.min(DicoData["IndexTimesThisChunk"])
+        it1=np.max(DicoData["IndexTimesThisChunk"])+1
+        UVW_RefAnt=NpShared.GiveArray("%sUVW_RefAnt"%self.IdSharedMem)[it0:it1,:,:]
+        DicoData["UVW_RefAnt"]=UVW_RefAnt
+
 
         if "DicoBeam" in DATA.keys():
             DicoData["DicoBeam"] = DATA["DicoBeam"]

@@ -40,7 +40,7 @@ from Wirtinger.ClassWirtingerSolver import ClassWirtingerSolver
 from Other import ClassTimeIt
 from Data import ClassVisServer
 #from Sky.PredictGaussPoints_NumExpr import ClassPredict
-from Sky.PredictGaussPoints_NumExpr2 import ClassPredictParallel as ClassPredict 
+from Sky.PredictGaussPoints_NumExpr3 import ClassPredictParallel as ClassPredict 
 from Array import ModLinAlg
 from Array import NpShared
 from Other import reformat
@@ -257,9 +257,9 @@ def main(options=None):
         if Load=="EndOfObservation":
             break
 
-        #Solver.doNextTimeSolve_Parallel()
+        Solver.doNextTimeSolve_Parallel()
         #Solver.doNextTimeSolve_Parallel(SkipMode=True)
-        Solver.doNextTimeSolve()
+        #Solver.doNextTimeSolve()
 
         # substract
         ind=np.where(SM.SourceCat.kill==1)[0]
@@ -315,6 +315,7 @@ def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM):
                                     DoPBar=False,IdSharedMem=IdSharedMem)
     SolverInit.InitSol(TestMode=False)
     SolverInit.doNextTimeSolve_Parallel(OnlyOne=True)
+    #SolverInit.doNextTimeSolve()
     Sols=SolverInit.GiveSols()
     Jones={}
     Jones["t0"]=Sols.t0
