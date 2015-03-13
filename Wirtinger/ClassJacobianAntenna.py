@@ -194,7 +194,8 @@ class ClassJacobianAntenna():
             trJPJH=np.sum(np.abs(JP*J.conj()))
             trYYH=np.sum(np.abs(yr)**2)
             Np=np.where(self.DicoData["flags_flat"]==0)[0].size
-            trR=np.sum(self.R_flat)#Np*rms**2
+            Take=(self.DicoData["flags_flat"]==0)
+            trR=np.sum(self.R_flat[Take])#Np*rms**2
             kapa=np.abs((trYYH-trR)/trJPJH)
             kapaout+=np.sqrt(kapa)
             # print self.iAnt,rms,np.sqrt(kapa),trYYH,trR,trJPJH,pa
@@ -293,7 +294,7 @@ class ClassJacobianAntenna():
         T=ClassTimeIt.ClassTimeIt("EKF")
         T.disable()
         if not(self.HasKernelMatrix):
-            Resolution=(10./3600)*np.pi/180
+            Resolution=(50./3600)*np.pi/180
             self.CalcKernelMatrix(rms,Resolution=Resolution)
             T.timeit("CalcKernelMatrix")
         z=self.DicoData["data_flat"]#self.GiveDataVec()
@@ -378,7 +379,7 @@ class ClassJacobianAntenna():
 
     def CalcMatrixEvolveCov(self,Gains,P,rms):
         if not(self.HasKernelMatrix):
-            Resolution=(10./3600)*np.pi/180
+            Resolution=(50./3600)*np.pi/180
             self.CalcKernelMatrix(rms,Resolution=Resolution)
 #            self.CalcKernelMatrix(rms)
         self.CalcJacobianAntenna(Gains)
@@ -771,10 +772,15 @@ class ClassJacobianAntenna():
                     V=np.ones((u.size,freqs.size,npol),np.float32)
                     
                 R=rms**2*V
+                
                 Rinv=1./R
+                
                 self.R_flat=np.rollaxis(R,2).reshape(self.NJacobBlocks,nr*nch*self.NJacobBlocks)
                 self.Rinv_flat=np.rollaxis(Rinv,2).reshape(self.NJacobBlocks,nr*nch*self.NJacobBlocks)
-
+                Rmin=np.min(R)
+                #Rmax=np.max(R)
+                Flag=(self.R_flat>1e3*Rmin)
+                DicoData["flags_flat"][Flag]=1
 
             DicoData=NpShared.DicoToShared(self.SharedDataDicoName,DicoData)
 
