@@ -6,6 +6,9 @@ from Other import MyPickle
 from Other import logo
 from Other import ModColor
 from Other import MyLogger
+from Other import MyPickle
+from Other import PrintOptParse
+
 log=MyLogger.getLogger("killMS")
 MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
 
@@ -61,11 +64,11 @@ def read_options():
     group = optparse.OptionGroup(opt, "* Data-related options")
     group.add_option('--ms',help='Input MS to draw [no default]',default='')
     group.add_option('--SkyModel',help='List of targets [no default]',default='')
-    group.add_option('--TChunk',help=' Time Chunk in hours. Default is %default',default=15)
-    group.add_option('--InCol',help=' Column to work on. Default is %default',default="CORRECTED_DATA_BACKUP")
-    group.add_option('--OutCol',help=' Column to write to. Default is %default',default="CORRECTED_DATA")
+    group.add_option('--TChunk',help='Time Chunk in hours. Default is %default',default=15)
+    group.add_option('--InCol',help='Column to work on. Default is %default',default="CORRECTED_DATA_BACKUP")
+    group.add_option('--OutCol',help='Column to write to. Default is %default',default="CORRECTED_DATA")
     group.add_option('--LOFARBeam',help='(Mode, Time): Mode can be AE, E, or A for "Array factor" and "Element beam". Time is the estimation time step',default="")
-    group.add_option('--UVMinMax',help=' Baseline length selection in km. For example --UVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default',default=None)
+    group.add_option('--UVMinMax',help='Baseline length selection in km. For example --UVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default',default=None)
     group.add_option('--ReWeight',type="int",help=' . Default is %default',default=1)
     opt.add_option_group(group)
 
@@ -75,17 +78,17 @@ def read_options():
     opt.add_option_group(group)
     
     group = optparse.OptionGroup(opt, "* Solution options")
-    group.add_option('--SubOnly',help=' Substract the skymodel assuming unity Jones matrices (no solve). Default is %default',default="0")
-    group.add_option('--DoPlot',type="int",help=' Plot the solutions, for debugging. Default is %default',default=0)
-    group.add_option('--DoSub',type="int",help=' Substact selected sources. Default is %default',default=1)
-    group.add_option('--ApplyCal',help=' Apply direction averaged gains to residual data in the mentioned direction. \
+    group.add_option('--SubOnly',help='Substract the skymodel assuming unity Jones matrices (no solve). Default is %default',default="0")
+    group.add_option('--DoPlot',type="int",help='Plot the solutions, for debugging. Default is %default',default=0)
+    group.add_option('--DoSub',type="int",help='Substact selected sources. Default is %default',default=1)
+    group.add_option('--ApplyCal',help='Apply direction averaged gains to residual data in the mentioned direction. \
     If ApplyCal=-1 takes the mean gain over directions. Default is %default',default="No")
     opt.add_option_group(group)
     
     group = optparse.OptionGroup(opt, "* Algorithm options", "Default values should give reasonable results, but all of them have noticeable influence on the results")
     group.add_option('--SolverType',help='Name of the solver to use (CohJones/KAFCA)',default="CohJones")
-    group.add_option('--NCPU',type="int",help=' Number of cores to use. Default is %default ',default=NCPU_default)
-    group.add_option('--PolMode',help=' Polarisation mode (Scalar/HalfFull). Default is %default',default="Scalar")
+    group.add_option('--NCPU',type="int",help='Number of cores to use. Default is %default ',default=NCPU_default)
+    group.add_option('--PolMode',help='Polarisation mode (Scalar/HalfFull). Default is %default',default="Scalar")
     group.add_option('--dt',type="float",help='Time interval for a solution [minutes]. Default is %default. ',default=30)
     group.add_option('--ClearSHM',help='Clear shared memory with given ID [no default]',default='')
     opt.add_option_group(group)
@@ -109,6 +112,16 @@ def read_options():
     
     options, arguments = opt.parse_args()
     options.DoPlot=(options.DoPlot==1)
+
+    if options.SolverType=="KAFCA":
+        RejectGroup=["CohJones"]
+    elif options.SolverType=="CohJones":
+        RejectGroup=["KAFCA"]
+
+    PrintOptParse.PrintOptParse(opt,options,RejectGroup=RejectGroup)
+    # print options.ms
+    # MyPickle.Save([opt,options],"test")
+    # stop
     f = open("last_killMS.obj","wb")
     pickle.dump(options,f)
     
@@ -155,7 +168,7 @@ def main(options=None):
     #IdSharedMem=str(int(np.random.rand(1)[0]*100000))+"."
     global IdSharedMem
     IdSharedMem=str(int(os.getpid()))+"."
-    PrintOptions(options,IdSharedMem)
+    #PrintOptions(options,IdSharedMem)
     ApplyCal=(options.ApplyCal=="1")
     ReWeight=(options.ReWeight==1)
 
