@@ -345,7 +345,7 @@ class ClassPredict():
                 Jinv=ModLinAlg.BatchInverse(J)
                 JHinv=ModLinAlg.BatchInverse(JH)
                 W0=np.abs(ModLinAlg.BatchDot(Jinv[:,A0sel,:],JHinv[:,A1sel,:]))
-                Wm=np.sqrt(np.mean(np.abs(W0[:,:,0]),axis=0)**(-2))
+                Wm=np.mean(np.abs(W0[:,:,0]),axis=0)**(-2)
 
                 # gid=np.abs(J[:,A0sel,0])
                 # gjd=np.abs(J[:,A1sel,0])
