@@ -171,7 +171,7 @@ class ClassWirtingerSolver():
 
 
         # print "!!!!!!!!!!"
-        # self.G+=np.random.randn(*self.G.shape)*0.1#sigP
+        self.G+=np.random.randn(*self.G.shape)*0.1#sigP
         
         NSols=np.max([1,1.5*int(self.VS.MS.DTh/(self.VS.TVisSizeMin/60.))])
         
@@ -337,7 +337,7 @@ class ClassWirtingerSolver():
                                                BufferNPoints=10,
                                                sigQ=0.01,IdSharedMem=self.IdSharedMem)
 
-                        x,P=JM.doEKFStep(self.G,self.P,self.evP,self.rms)
+                        x,P,_=JM.doEKFStep(self.G,self.P,self.evP,self.rms)
                         
                         xe=None
 
