@@ -18,7 +18,7 @@ import os
 import numpy as np
 import pickle
 from Sky import ClassSM
-
+from pyrap.tables import table
 
 
 def main(options=None):
@@ -101,10 +101,22 @@ def main(options=None):
 
     MS.data=PredictData
 
+    t=table(MSName,readonly=False)
+    f=t.getcol("FLAG")
+    f.fill(0)
+    r=np.random.rand(*(f.shape))
+    f=(r>0.9)
+    MS.flag_all=f
+    #t.putcol("FLAG",f)
+    #t.putcol("FLAG_BACKUP",f)
+    t.close()
+    MS.data[f]=1.e10
+
     VS.MS.SaveVis(Col="DATA")
     VS.MS.SaveVis(Col="CORRECTED_DATA")
     VS.MS.SaveVis(Col="CORRECTED_DATA_BACKUP")
     
+
     FileName="Simul.npz"
     np.savez(FileName,Sols=Sols,StationNames=MS.StationNames,SkyModel=SM.ClusterCat,ClusterCat=SM.ClusterCat)
     

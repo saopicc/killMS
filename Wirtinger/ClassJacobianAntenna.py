@@ -589,7 +589,7 @@ class ClassJacobianAntenna():
             flags=self.DicoData["flags_flat"][polIndex]
             J=Jacob[flags==0]
             nrow,_=J.shape
-            Rinv=self.Rinv_flat[polIndex].reshape((nrow,1))
+            Rinv=self.Rinv_flat[polIndex][flags==0].reshape((nrow,1))
             self.L_JHJ.append(np.dot(J.T.conj(),Rinv*J))
         # self.JHJinv=np.linalg.inv(self.JHJ)
         # self.JHJinv=np.diag(np.diag(self.JHJinv))

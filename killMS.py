@@ -240,23 +240,26 @@ def main(options=None):
     SM=Solver.SM
 
 
-    if (options.InitLM) & (options.SolverType=="KAFCA"):
+    if (options.SolverType=="KAFCA"):
 
-        rms,SolverInit_G=GiveNoise(options,
-                                   DicoSelectOptions,
-                                   IdSharedMem,
-                                   SM,PM,PM2)
+        if (options.InitLM):
+            rms,SolverInit_G=GiveNoise(options,
+                                       DicoSelectOptions,
+                                       IdSharedMem,
+                                       SM,PM,PM2)
 
-        Solver.InitSol(G=SolverInit_G,TestMode=False)
-        Solver.InitCovariance(FromG=True,sigP=options.CovP,sigQ=options.CovQ)
-
-        Solver.SetRmsFromExt(rms)
-
+            Solver.InitSol(G=SolverInit_G,TestMode=False)
+            Solver.InitCovariance(FromG=True,sigP=options.CovP,sigQ=options.CovQ)
+            
+            Solver.SetRmsFromExt(rms)
+        else:
+            pass
+            #Solver.SetRmsFromExt(100)
 
 
     DoSubstract=(options.DoSub==1)
     #print "!!!!!!!!!!!!!!"
-    #Solver.SetRmsFromExt(100)
+    #
     # Solver.InitCovariance(FromG=True,sigP=options.CovP,sigQ=options.CovQ)
 
 
