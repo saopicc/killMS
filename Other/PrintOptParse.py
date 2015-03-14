@@ -29,7 +29,7 @@ def test2():
     PrintOptParse(Obj,ValObj,RejectGroup=["CohJones"])
 
 def PrintOptParse(Obj,ValObj,RejectGroup=[]):
-    P=ClassPrint.ClassPrint(HW=30)
+    P=ClassPrint.ClassPrint(HW=50)
     LGroups=Obj.option_groups
     print ModColor.Str(" Selected Options:")
 
@@ -49,7 +49,9 @@ def PrintOptParse(Obj,ValObj,RejectGroup=[]):
 
 
             V=getattr(ValObj,oname)
-            if V!="":
+            if True:#V!="":
+
+                if V=="": V="''"
 
                 #P.Print(oname,V)
                 default=o.default
