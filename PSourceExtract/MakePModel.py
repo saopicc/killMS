@@ -16,6 +16,8 @@ import ClassPointFit2 as ClassPointFit
 from pyrap.images import image
 from Other.progressbar import ProgressBar
 from Other import reformat
+from Sky import ClassSM
+from Other import rad2hmsdms
 
 def read_options():
     desc="""Questions and suggestions: cyril.tasse@obspm.fr"""
@@ -115,7 +117,6 @@ def main(options=None):
         Fit.PutFittedArray(ImOut)
 
     Islands.FitIm=ImOut
-    import rad2hmsdms
     xlist=[]
     ylist=[]
     slist=[]
@@ -141,7 +142,6 @@ def main(options=None):
     Islands.FittedComps=(xlist,ylist,slist)
     Islands.plot()
 
-    import ClassSM
     SM=ClassSM.ClassSM(Osm,ReName=True,DoREG=True,SaveNp=True,NCluster=NCluster,DoPlot=DoPlot,FromExt=Cat,ClusterMethod=CMethod)
     #SM=ClassSM.ClassSM(Osm,ReName=True,SaveNp=True,DoPlot=DoPlot,FromExt=Cat)
 
