@@ -327,9 +327,13 @@ class ClassJacobianAntenna():
 
         # estimate x
         zr=(z-Jx)
+        
+
         #T.timeit("Resid")
 
         kapa=self.CalcKapa_i(zr,Pa,rms)
+
+        InfoNoise={"std":np.std(zr),"max":np.max(zr),"kapa":kapa}
         #T.timeit("kapa")
 
         self.rmsFromData=np.std(zr[f])
@@ -375,7 +379,7 @@ class ClassJacobianAntenna():
         del(self.Jacob)
         T.timeit("Rest")
         
-        return x4.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks)),Pa_new1,kapa
+        return x4.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks)),Pa_new1,InfoNoise
 
     def CalcMatrixEvolveCov(self,Gains,P,rms):
         if not(self.HasKernelMatrix):

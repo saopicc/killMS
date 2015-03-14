@@ -69,7 +69,6 @@ def read_options():
     group.add_option('--OutCol',help='Column to write to. Default is %default',default="CORRECTED_DATA")
     group.add_option('--LOFARBeam',help='(Mode, Time): Mode can be AE, E, or A for "Array factor" and "Element beam". Time is the estimation time step',default="")
     group.add_option('--UVMinMax',help='Baseline length selection in km. For example --UVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default',default=None)
-    group.add_option('--ReWeight',type="int",help=' . Default is %default',default=1)
     opt.add_option_group(group)
 
     group = optparse.OptionGroup(opt, "* Source selection options")
@@ -85,13 +84,25 @@ def read_options():
     If ApplyCal=-1 takes the mean gain over directions. Default is %default',default="No")
     opt.add_option_group(group)
     
-    group = optparse.OptionGroup(opt, "* Algorithm options", "Default values should give reasonable results, but all of them have noticeable influence on the results")
-    group.add_option('--SolverType',help='Name of the solver to use (CohJones/KAFCA)',default="CohJones")
+    group = optparse.OptionGroup(opt, "* Action options", "Default values should give reasonable results, but all of them have noticeable influence on the results")
+    group.add_option('--Steps',type="str",help='Number of cores to use. Default is %default ',default="Solve,Sustract")
     group.add_option('--NCPU',type="int",help='Number of cores to use. Default is %default ',default=NCPU_default)
-    group.add_option('--PolMode',help='Polarisation mode (Scalar/HalfFull). Default is %default',default="Scalar")
-    group.add_option('--dt',type="float",help='Time interval for a solution [minutes]. Default is %default. ',default=30)
     group.add_option('--ClearSHM',help='Clear shared memory with given ID [no default]',default='')
     opt.add_option_group(group)
+
+    
+    group = optparse.OptionGroup(opt, "* ApplyCal additional options", "Default values should give reasonable results, but all of them have noticeable influence on the results")
+    group.add_option('--ExtSols',type="str",help='Substact selected sources. ',default="")
+    group.add_option('--ApplyMode',type="str",help='Substact selected sources. ',default="AP")
+    group.add_option('--ReWeight',type="str",help=' . Default is %default',default=0)
+    opt.add_option_group(group)
+
+    group = optparse.OptionGroup(opt, "* Solver options", "Default values should give reasonable results, but all of them have noticeable influence on the results")
+    group.add_option('--SolverType',help='Name of the solver to use (CohJones/KAFCA)',default="CohJones")
+    group.add_option('--PolMode',help='Polarisation mode (Scalar/HalfFull). Default is %default',default="Scalar")
+    group.add_option('--dt',type="float",help='Time interval for a solution [minutes]. Default is %default. ',default=30)
+    opt.add_option_group(group)
+    
     
     group = optparse.OptionGroup(opt, "* CohJones additional options")
     group.add_option('--NIter',type="int",help=' Number of iterations for the solve. Default is %default ',default=7)
@@ -106,7 +117,6 @@ def read_options():
     group.add_option('--CovQ',type="float",help='Intrinsic process Covariance in fraction of the initial gain amplitude. Default is %default',default=0.01) 
     group.add_option('--evP_Step',type="int",help='Start calculation evP every evP_Step after that step. Default is %default',default=0)
     group.add_option('--evP_StepStart',type="int",help='Calcule (I-KJ) matrix every evP_Step steps. Default is %default',default=1)
-
     opt.add_option_group(group)
     
     

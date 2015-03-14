@@ -144,7 +144,18 @@ class ClassWirtingerSolver():
         else:                
             self.SolsArray_Full.G[0:ind.size]=self.SolsArray_G[0:ind.size]
 
-        return self.SolsArray_Full[0:ind.size]
+        Std=np.array(self.ListStd)
+        Max=np.array(self.ListMax)
+        Kapa=np.array(self.ListKapa)
+
+        na,nt=Std.shape
+        NoiseInfo=np.zeros((na,nt,3))
+        NoiseInfo[:,:,0]=Std[:,:]
+        NoiseInfo[:,:,1]=np.abs(Max[:,:])
+        NoiseInfo[:,:,2]=Kapa[:,:]
+        np.save("NoiseInfo",NoiseInfo)
+
+        return self.SolsArray_Full[0:ind.size].copy()
 
     def InitSol(self,G=None,TestMode=True):
         na=self.VS.MS.na
@@ -227,9 +238,10 @@ class ClassWirtingerSolver():
         self.Q_Init=self.Q.copy()
         self.evP=NpShared.ToShared("%sSharedEvolveCovariance"%self.IdSharedMem,self.evP)
         nbuff=10
-        self.DicoKapaList={}
-        for iAnt in range(na):
-            self.DicoKapaList[iAnt]=[]
+        self.ListKapa=[[] for iAnt in range(na)]
+        self.ListStd=[[] for iAnt in range(na)]
+        self.ListMax=[[] for iAnt in range(na)]
+
 
     def setNextData(self):
         DATA=self.VS.GiveNextVis()
@@ -255,7 +267,7 @@ class ClassWirtingerSolver():
             Fpol=DATA["flags"][:,:,1:3]
             self.rms=np.std(Dpol[Fpol==0])/np.sqrt(2.)
 
-        #print "rms=",self.rms
+        print "rms=",self.rms
 
 
         return True
@@ -489,7 +501,7 @@ class ClassWirtingerSolver():
  
                 rmsFromDataList=[]
                 while iResult < NJobs:
-                    iAnt,G,P,rmsFromData,kapa = result_queue.get()
+                    iAnt,G,P,rmsFromData,InfoNoise = result_queue.get()
                     if rmsFromData!=None:
                         rmsFromDataList.append(rmsFromData)
                     
@@ -497,16 +509,21 @@ class ClassWirtingerSolver():
                     if type(P)!=type(None):
                         self.P[iAnt,:]=P[:]
 
+                    kapa=InfoNoise["kapa"]
+                    self.ListStd[iAnt].append(InfoNoise["std"])
+                    self.ListMax[iAnt].append(InfoNoise["max"])
+
+
                     iResult+=1
                     if kapa!=None:
                         if kapa==-1.:
-                            if len(self.DicoKapaList[iAnt])>0:
-                                kapa=self.DicoKapaList[iAnt][-1]
+                            if len(self.ListKapa[iAnt])>0:
+                                kapa=self.ListKapa[iAnt][-1]
                             else:
                                 kapa=1.
-                        self.DicoKapaList[iAnt].append(kapa)
+                        self.ListKapa[iAnt].append(kapa)
                         dt=1.
-                        TraceResidList=self.DicoKapaList[iAnt]
+                        TraceResidList=self.ListKapa[iAnt]
                         x=np.arange(len(TraceResidList))
                         expW=np.exp(-x/dt)[::-1]
                         expW/=np.sum(expW)
@@ -639,7 +656,7 @@ class WorkerAntennaLM(multiprocessing.Process):
                 #     G[iAnt]=Ga
                 #     P[iAnt]=Pa
 
-                x,Pout,kapa=JM.doEKFStep(G,P,evP,rms)
+                x,Pout,InfoNoise=JM.doEKFStep(G,P,evP,rms)
                 T.timeit("EKFStep")
                 rmsFromData=JM.rmsFromData
                 Pa=EM.Evolve0(x,Pout)#,kapa=kapa)
@@ -649,4 +666,4 @@ class WorkerAntennaLM(multiprocessing.Process):
                 if type(Pa)!=type(None):
                     Pout=Pa
 
-                self.result_queue.put([iAnt,x,Pout,rmsFromData,kapa])
+                self.result_queue.put([iAnt,x,Pout,rmsFromData,InfoNoise])
