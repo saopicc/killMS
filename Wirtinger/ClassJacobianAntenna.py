@@ -333,7 +333,8 @@ class ClassJacobianAntenna():
 
         kapa=self.CalcKapa_i(zr,Pa,rms)
 
-        InfoNoise={"std":np.std(zr),"max":np.max(zr),"kapa":kapa}
+        InfoNoise={"std":np.std(zr[f]),"max":np.max(np.abs(zr[f])),"kapa":kapa}
+        print self.iAnt,InfoNoise
         #T.timeit("kapa")
 
         self.rmsFromData=np.std(zr[f])
