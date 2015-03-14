@@ -19,6 +19,8 @@ class ClassModelEvolution():
     def Evolve0(self,Gin,Pa,kapa=1.):
         done=NpShared.GiveArray("%sSolsArray_done"%self.IdSharedMem)
         indDone=np.where(done==1)[0]
+        print kapa
+        print type(NpShared.GiveArray("%sSharedCovariance_Q"%self.IdSharedMem))
         Q=kapa*NpShared.GiveArray("%sSharedCovariance_Q"%self.IdSharedMem)[self.iAnt]
         #print indDone.size
         #print "mean",np.mean(Q)

@@ -308,7 +308,7 @@ class ClassJacobianAntenna():
 
         self.rmsFromData=None
         if ind.size==0:
-            return Ga.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks)),Pa,-1.
+            return Ga.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks)),Pa,{"std":-1.,"max":-1.,"kapa":-1.}
         
         self.CalcJacobianAntenna(Gains)
         #T.timeit("Jacob")
