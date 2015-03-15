@@ -94,7 +94,7 @@ def read_options():
     group = optparse.OptionGroup(opt, "* ApplyCal additional options", "Default values should give reasonable results, but all of them have noticeable influence on the results")
     group.add_option('--ExtSols',type="str",help='Substact selected sources. ',default="")
     group.add_option('--ApplyMode',type="str",help='Substact selected sources. ',default="AP")
-    group.add_option('--ReWeight',type="str",help=' . Default is %default',default=0)
+    group.add_option('--ReWeight',type="int",help=' . Default is %default',default=1)
     opt.add_option_group(group)
 
     group = optparse.OptionGroup(opt, "* Solver options", "Default values should give reasonable results, but all of them have noticeable influence on the results")
@@ -309,10 +309,29 @@ def main(options=None):
             Jones["BeamH"]=ModLinAlg.BatchH(G)
             Jones["ChanMap"]=np.zeros((VS.MS.NSPWChan,))
             
+
+            if ReWeight:
+                print>>log, ModColor.Str("Estimating imaging weights ... ",col="green")
+                nrows=Solver.VS.ThisDataChunk["times"].size
+                Solver.VS.ThisDataChunk["W"]=np.ones((nrows,),np.float32)
+
+                # PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones)
+
+                PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
+                Diff=Solver.VS.ThisDataChunk["data"]-PredictData
+                std=np.std(Diff[Solver.VS.ThisDataChunk["flags"]==0])
+                ThresHold=10.
+                indRow,indChan,indPol=np.where(Diff>ThresHold*std)
+                Solver.VS.ThisDataChunk["W"][indRow]=0.
+                print>>log, "   Flagged %5.2f percent of data"%(float(indRow.size)/(Diff.shape[0]))
+                Weights=Solver.VS.ThisDataChunk["W"]
+                Weights=Weights.reshape((Weights.size,1))*np.ones((1,4))
+                Solver.VS.MS.Weights[:]=Weights[:]
+
+                
             if DoSubstract:
                 print>>log, ModColor.Str("Substract sources ... ",col="green")
                 SM.SelectSubCat(SM.SourceCat.kill==1)
-
                 PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
                 Solver.VS.ThisDataChunk["data"]-=PredictData
                 SM.RestoreCat()
@@ -326,15 +345,8 @@ def main(options=None):
             Solver.VS.MS.flags_all=Solver.VS.ThisDataChunk["flags"]
 
 
-            if ReWeight:
-                print>>log, ModColor.Str("Estimate Covariance ... ",col="green")
-                nrows=Solver.VS.ThisDataChunk["times"].size
-                Solver.VS.ThisDataChunk["W"]=np.zeros((nrows,),np.float32)
-                PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones)
-                Weights=Solver.VS.ThisDataChunk["W"]
 
-                Weights=Weights.reshape((Weights.size,1))*np.ones((1,4))
-                Solver.VS.MS.Weights[:]=Weights[:]
+
             Solver.VS.MS.SaveVis(Col=WriteColName)
                 
 
