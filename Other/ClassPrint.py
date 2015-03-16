@@ -28,7 +28,7 @@ class ClassPrint():
         WidthTerm=self.getWidth()
         Lpar=len(str(par))
         Lval=len(str(value))
-        SFill="."*max(self.LeftW-self.Lproto-Lpar-Lval,2)
+        SFill="."*max(self.LeftW-self.Lproto-Lpar-Lval,10)
         WidthHelp=WidthTerm-(self.Lproto+Lpar+Lval+len(SFill))
         Spar="%s"%ModColor.Str(str(par),col=col,Bold=False)
         Sval="%s"%ModColor.Str(str(value),col=col,Bold=False)

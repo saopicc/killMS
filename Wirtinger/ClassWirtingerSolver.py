@@ -267,7 +267,7 @@ class ClassWirtingerSolver():
             Fpol=DATA["flags"][:,:,1:3]
             self.rms=np.std(Dpol[Fpol==0])/np.sqrt(2.)
 
-        print "rms=",self.rms
+        #print "rms=",self.rms
 
 
         return True

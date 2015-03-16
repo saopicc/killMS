@@ -87,13 +87,12 @@ def read_options():
     group = optparse.OptionGroup(opt, "* Action options", "Default values should give reasonable results, but all of them have noticeable influence on the results")
     group.add_option('--Steps',type="str",help='Number of cores to use. Default is %default ',default="Solve,Sustract")
     group.add_option('--NCPU',type="int",help='Number of cores to use. Default is %default ',default=NCPU_default)
-    group.add_option('--ClearSHM',help='Clear shared memory with given ID [no default]',default='')
     opt.add_option_group(group)
 
     
     group = optparse.OptionGroup(opt, "* ApplyCal additional options", "Default values should give reasonable results, but all of them have noticeable influence on the results")
     group.add_option('--ExtSols',type="str",help='Substact selected sources. ',default="")
-    group.add_option('--ApplyMode',type="str",help='Substact selected sources. ',default="AP")
+    group.add_option('--ApplyMode',type="str",help='Substact selected sources. ',default="P")
     group.add_option('--ReWeight',type="int",help=' . Default is %default',default=1)
     opt.add_option_group(group)
 
@@ -305,10 +304,19 @@ def main(options=None):
             Jones["t1"]=Sols.t1
             nt,na,nd,_,_=Sols.G.shape
             G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
+
+            if not("A" in options.ApplyMode):
+                gabs=np.abs(G)
+                gabs[gabs==0]=1.
+                G/=gabs
+
+
             Jones["Beam"]=G
             Jones["BeamH"]=ModLinAlg.BatchH(G)
             Jones["ChanMap"]=np.zeros((VS.MS.NSPWChan,))
             
+
+
 
             if ReWeight:
                 print>>log, ModColor.Str("Estimating imaging weights ... ",col="green")
@@ -320,10 +328,13 @@ def main(options=None):
                 PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
                 Diff=Solver.VS.ThisDataChunk["data"]-PredictData
                 std=np.std(Diff[Solver.VS.ThisDataChunk["flags"]==0])
-                ThresHold=10.
-                indRow,indChan,indPol=np.where(Diff>ThresHold*std)
+                ThresHold=3.
+                indRow,indChan,indPol=np.where(np.abs(Diff)>ThresHold*std)
+
+                print "std=%f"%std
+                print indRow.size
                 Solver.VS.ThisDataChunk["W"][indRow]=0.
-                print>>log, "   Flagged %5.2f percent of data"%(float(indRow.size)/(Diff.shape[0]))
+                print>>log, "   Flagged %5.2f percent of data"%(100*float(indRow.size)/(Diff.size))
                 Weights=Solver.VS.ThisDataChunk["W"]
                 Weights=Weights.reshape((Weights.size,1))*np.ones((1,4))
                 Solver.VS.MS.Weights[:]=Weights[:]
@@ -352,8 +363,9 @@ def main(options=None):
 
 
     
-    FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.ms),options.SolverType)
     print>>log, "Save Solutions in file: %s"%FileName
+    Sols=Solver.GiveSols()
+    FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.ms),options.SolverType)
     Sols=Solver.GiveSols()
     StationNames=np.array(Solver.VS.MS.StationNames)
     np.savez(FileName,Sols=Sols,StationNames=StationNames,SkyModel=SM.ClusterCat,ClusterCat=SM.ClusterCat)
@@ -455,10 +467,8 @@ if __name__=="__main__":
         ProgressBar.silent=1
 
 
-    if options.ClearSHM!="":
-        NpShared.DelAll(options.ClearSHM)
-    else:
-        try:
-            main(options=options)
-        except:
-            NpShared.DelAll(IdSharedMem)
+    try:
+        main(options=options)
+    except:
+        NpShared.DelAll(IdSharedMem)
+            

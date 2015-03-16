@@ -56,7 +56,8 @@ def PrintOptParse(Obj,ValObj,RejectGroup=[]):
                 #P.Print(oname,V)
                 default=o.default
                 H=o.help.replace("%default",str(default))
-                P.Print2(oname,V,H)
+                #P.Print2(oname,V,H)
+                P.Print(oname,V)
 
                 # strName=%s
                 # print "       "oname,V
