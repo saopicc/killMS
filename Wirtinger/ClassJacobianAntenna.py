@@ -114,13 +114,13 @@ from Other import ClassTimeIt
 
 
 class ClassJacobianAntenna():
-    def __init__(self,SM,iAnt,PolMode="HalfFull",Lambda=1,Precision="S",IdSharedMem=""):
+    def __init__(self,SM,iAnt,PolMode="HalfFull",Lambda=1,Precision="S",IdSharedMem="",DoSmearing="FT"):
         T=ClassTimeIt.ClassTimeIt("ClassJacobianAntenna")
         T.disable()
         self.IdSharedMem=IdSharedMem
         self.PolMode=PolMode
         #self.PM=ClassPredict(Precision="S")
-        self.PM=ClassPredict(Precision=Precision)
+        self.PM=ClassPredict(Precision=Precision,DoSmearing=DoSmearing)
         T.timeit("PM")
         if Precision=="D":
             self.CType=np.complex128

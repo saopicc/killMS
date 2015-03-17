@@ -80,8 +80,8 @@ def read_options():
     group.add_option('--SubOnly',help='Substract the skymodel assuming unity Jones matrices (no solve). Default is %default',default="0")
     group.add_option('--DoPlot',type="int",help='Plot the solutions, for debugging. Default is %default',default=0)
     group.add_option('--DoSub',type="int",help='Substact selected sources. Default is %default',default=1)
-    group.add_option('--ApplyCal',help='Apply direction averaged gains to residual data in the mentioned direction. \
-    If ApplyCal=-1 takes the mean gain over directions. Default is %default',default="No")
+    group.add_option('--ApplyCal',type="int",help='Apply direction averaged gains to residual data in the mentioned direction. \
+    If ApplyCal=-1 takes the mean gain over directions. -2 if off. Default is %default',default=-2)
     opt.add_option_group(group)
     
     group = optparse.OptionGroup(opt, "* Action options", "Default values should give reasonable results, but all of them have noticeable influence on the results")
@@ -94,7 +94,7 @@ def read_options():
     group.add_option('--ExtSols',type="str",help='Substact selected sources. ',default="")
     group.add_option('--ApplyMode',type="str",help='Substact selected sources. ',default="P")
     group.add_option('--ReWeight',type="int",help=' . Default is %default',default=1)
-    group.add_option('--DoSmearing',type="int",help=' . Default is %default',default=1)
+    group.add_option('--Decorrelation',type="str",help=' . Default is %default',default="FT")
     opt.add_option_group(group)
 
     group = optparse.OptionGroup(opt, "* Solver options", "Default values should give reasonable results, but all of them have noticeable influence on the results")
@@ -179,7 +179,8 @@ def main(options=None):
     global IdSharedMem
     IdSharedMem=str(int(os.getpid()))+"."
     #PrintOptions(options,IdSharedMem)
-    ApplyCal=(options.ApplyCal=="1")
+    DoApplyCal=(options.ApplyCal!=-2)
+    ApplyCal=int(options.ApplyCal)
     ReWeight=(options.ReWeight==1)
 
     if options.ms=="":
@@ -192,9 +193,6 @@ def main(options=None):
         print "Give a numpy sky model!"
         exit()
 
-    ApplyCal=None
-    if options.ApplyCal!="No":
-        ApplyCal=int(options.ApplyCal)
 
     TChunk=float(options.TChunk)
     dt=float(options.dt)
@@ -203,7 +201,7 @@ def main(options=None):
     SubOnly=(int(options.SubOnly)==1)
     invert=(options.invert=="1")
     options.InitLM=(int(options.InitLM)==1)
-
+    DoSmearing=options.Decorrelation
 
     
     if options.kills!="":
@@ -259,7 +257,7 @@ def main(options=None):
                                 Lambda=options.Lambda,
                                 IdSharedMem=IdSharedMem)
     Solver.InitSol(TestMode=False)
-    PM=ClassPredict(NCPU=NCPU,IdMemShared=IdSharedMem)
+    PM=ClassPredict(NCPU=NCPU,IdMemShared=IdSharedMem,DoSmearing=DoSmearing)
     PM2=None#ClassPredict_orig(NCPU=NCPU,IdMemShared=IdSharedMem)
     SM=Solver.SM
 
@@ -299,7 +297,7 @@ def main(options=None):
 
         # substract
         #ind=np.where(SM.SourceCat.kill==1)[0]
-        if ((DoSubstract)|(ApplyCal!=None)|(ReWeight)):
+        if ((DoSubstract)|(DoApplyCal)|(ReWeight)):
             Sols=Solver.GiveSols()
             Jones={}
             Jones["t0"]=Sols.t0
@@ -353,7 +351,7 @@ def main(options=None):
                 SM.RestoreCat()
 
 
-            if ApplyCal!=None:
+            if DoApplyCal:
                 print>>log, ModColor.Str("Apply calibration in direction: %i"%ApplyCal,col="green")
                 PM.ApplyCal(Solver.VS.ThisDataChunk,Jones,ApplyCal)
 
@@ -361,7 +359,7 @@ def main(options=None):
             Solver.VS.MS.flags_all=Solver.VS.ThisDataChunk["flags"]
             # Solver.VS.MS.SaveVis(Col=WriteColName)
 
-            if DoSubstract|ApplyCal:
+            if (DoSubstract|DoApplyCal):
                 print>>log, "Save visibilities in %s column"%WriteColName
                 t=table(Solver.VS.MS.MSName,readonly=False,ack=False)
                 t.putcol(WriteColName,Solver.VS.MS.data)

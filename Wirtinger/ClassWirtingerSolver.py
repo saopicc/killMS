@@ -96,11 +96,13 @@ class ClassWirtingerSolver():
                  IdSharedMem="",
                  evP_StepStart=0, evP_Step=1,
                  DoPlot=False,
-                 DoPBar=True):
+                 DoPBar=True,
+                 DoSmearing="FT"):
         self.IdSharedMem=IdSharedMem
         self.Lambda=Lambda
         self.NCPU=NCPU
         self.DoPBar=DoPBar
+        self.DoSmearing=DoSmearing
         if BeamProps!=None:
             rabeam,decbeam=SM.ClusterCat.ra,SM.ClusterCat.dec
             Mode,TimeMin=BeamProps
@@ -308,7 +310,7 @@ class ClassWirtingerSolver():
             ThisTime=tm
             T.timeit("stuff")
             for iAnt in ListAntSolve:
-                JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Lambda=self.Lambda,Precision="D",IdSharedMem=self.IdSharedMem)
+                JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Lambda=self.Lambda,Precision="D",IdSharedMem=self.IdSharedMem,DoSmearing=self.DoSmearing)
                 T.timeit("JM")
                 JM.setDATA_Shared()
                 T.timeit("Setdata_Shared")
@@ -591,7 +593,8 @@ import multiprocessing
 class WorkerAntennaLM(multiprocessing.Process):
     def __init__(self,
                  work_queue,
-                 result_queue,SM,PolMode,Lambda,SolverType,IdSharedMem,**kwargs):
+                 result_queue,SM,PolMode,Lambda,SolverType,IdSharedMem,
+                 DoSmearing="FT"):
         multiprocessing.Process.__init__(self)
         self.work_queue = work_queue
         self.result_queue = result_queue
@@ -602,6 +605,7 @@ class WorkerAntennaLM(multiprocessing.Process):
         self.Lambda=Lambda
         self.SolverType=SolverType
         self.IdSharedMem=IdSharedMem
+        self.DoSmearing=DoSmearing
         #self.DoCalcEvP=DoCalcEvP
         #self.ThisTime=ThisTime
         #self.e,=kwargs["args"]
@@ -616,7 +620,7 @@ class WorkerAntennaLM(multiprocessing.Process):
                 break
             #self.e.wait()
 
-            JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Lambda=self.Lambda,IdSharedMem=self.IdSharedMem)
+            JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Lambda=self.Lambda,IdSharedMem=self.IdSharedMem,DoSmearing=self.DoSmearing)
             JM.setDATA_Shared()
 
             G=NpShared.GiveArray("%sSharedGains"%self.IdSharedMem)

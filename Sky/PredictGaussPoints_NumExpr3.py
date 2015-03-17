@@ -204,6 +204,7 @@ class WorkerPredict(multiprocessing.Process):
             DicoData["times"]=D["times"][Row0:Row1]
             DicoData["uvw"]=D["uvw"][Row0:Row1]
             DicoData["freqs"]=D["freqs"]
+            DicoData["dfreqs"]=D["dfreqs"]
             DicoData["infos"]=D["infos"]
             DicoData["IndexTimesThisChunk"]=D["IndexTimesThisChunk"][Row0:Row1]
 
@@ -465,6 +466,8 @@ class ClassPredict():
         return DataOut
 
     def GiveKp(self,DicoData,SM,idir=None,isource=None):
+        T=ClassTimeIt("GiveKp",f=1e3)
+        T.disable()
         SourceCat=SM.SourceCat
         
         if isource!=None:
@@ -477,8 +480,6 @@ class ClassPredict():
         NSource=SourceCat.shape[0]
         if NSource==0: return None
 
-        T=ClassTimeIt("GiveKp")
-        T.disable()
         IndexTimesThisChunk=DicoData["IndexTimesThisChunk"]
         IndexTimesThisChunk_0=IndexTimesThisChunk-IndexTimesThisChunk[0]
         UVW_RefAnt=DicoData["UVW_RefAnt"]#[IndexTimesThisChunk_0]
@@ -539,10 +540,13 @@ class ClassPredict():
             dKp=np.exp(df0[:,:,:,:]*Kp_phase)
             for ich in range(1,nf):
                 Kp[:,:,:,ich]=Kp[:,:,:,ich-1]*dKp[:,:,:,0]
-            T.timeit("Kp2")
+            T.timeit("Kp2a")
         else:
             Kp_phase=(U_refAnt*l+V_refAnt*m+W_refAnt*nn)
+            T.timeit("Kp2_phase_a")
             Kp=np.exp(-f0*Kp_phase)
+            T.timeit("Kp2_phase_exp")
+
 
 
         Kp_phase_dt=None
@@ -551,6 +555,7 @@ class ClassPredict():
             (nd,nt,na,nf)=Kp_phase_dt.shape
             Kp_phase_dt=Kp_phase_dt[:,nt/2,:,:]
             Kp_phase_dt=Kp_phase_dt.reshape((nd,1,na,nf))
+            T.timeit("Kp2_phase_speed")
 
         return Kp,Kp_phase,Kp_phase_dt
 
@@ -680,11 +685,13 @@ class ClassPredict():
         Gangle=SourceCat.Gangle.reshape((NSource,1,1,1))
         RefFreq=SourceCat.RefFreq.reshape((NSource,1,1,1))
         alpha=SourceCat.alpha.reshape((NSource,1,1,1))
+        T.timeit("3a")
         fI=SourceCat.I.reshape((NSource,1,1))
         fQ=SourceCat.Q.reshape((NSource,1,1))
         fU=SourceCat.U.reshape((NSource,1,1))
         fV=SourceCat.V.reshape((NSource,1,1))
         Sky=np.zeros((NSource,1,1,4),self.CType)
+        T.timeit("3b")
         Sky[:,:,:,0]=(fI+fQ);
         Sky[:,:,:,1]=(fU+1j*fV);
         Sky[:,:,:,2]=(fU-1j*fV);
@@ -700,6 +707,7 @@ class ClassPredict():
         ################
 
         Kpq=Kpq*Ssel
+        T.timeit("4b")
         # T.timeit("5")
         # Kpq0=np.zeros_like(Kpq)
         # for ipol in range(4):
@@ -729,25 +737,33 @@ class ClassPredict():
         T.timeit("6")
         
         if self.DoSmearing!=None:
+
             if "F" in self.DoSmearing:
                 dfreqs=self.DicoData["dfreqs"]
                 KpRow_Phase=Kp_phase[:,indxTime,A0,:]
                 KqRow_Phase=Kp_phase[:,indxTime,A1,:]
+                #T.timeit("6a")
                 dfreqs=dfreqs.copy().reshape((1,1,1,dfreqs.size))/299792458.
-                dphi=(2.*np.pi)*(KpRow_Phase-KqRow_Phase)*dfreqs # (nd=1,nt,na,nf=1)
-                decorr=np.sinc(dphi/2.).reshape((NSource,nrow,nf,1))
+                dphi=(KpRow_Phase-KqRow_Phase)*(np.pi*dfreqs) # (nd=1,nt,na,nf=1)
+                #T.timeit("6b")
+                decorr=np.sinc(dphi).reshape((NSource,nrow,nf,1))
+
+                #T.timeit("6c")
                 Kpq=Kpq*decorr
-            # Kp_phase_dt
+                #T.timeit("6d")
+
             if "T" in self.DoSmearing:
                 freq=self.DicoData["freqs"].reshape((NSource,1,1,nf))
                 dt=indxTime.max()+1#self.DicoData["times"][-1]-self.DicoData["times"][0]
                 KpRow_Phase_dt=Kp_phase_dt[:,:,A0,:]
                 KqRow_Phase_dt=Kp_phase_dt[:,:,A1,:]
-                dphi=(2.*np.pi)*(KpRow_Phase_dt-KqRow_Phase_dt)*dt*freq/299792458. # (nd=1,nt,na,nf=1)
-                decorr=np.sinc(dphi/2.).reshape((NSource,nrow,nf,1))
+                dphi=(KpRow_Phase_dt-KqRow_Phase_dt)*(np.pi*dt*freq/299792458.) # (nd=1,nt,na,nf=1)
+                decorr=np.sinc(dphi).reshape((NSource,nrow,nf,1))
+
                 Kpq=Kpq*decorr
 
-        
+        T.timeit("7")
+
 
         #Kernel=ne.evaluate("f*exp(KernelPha)").astype(self.CType)
 
