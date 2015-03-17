@@ -13,7 +13,7 @@ log=MyLogger.getLogger("killMS")
 MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
 
 sys.path=[name for name in sys.path if not(("pyrap" in name)&("/usr/local/lib/" in name))]
-
+from pyrap.tables import table
 # test
 
 #import numpy
@@ -339,6 +339,9 @@ def main(options=None):
                 Weights=Solver.VS.ThisDataChunk["W"]
                 Weights=Weights.reshape((Weights.size,1))*np.ones((1,4))
                 Solver.VS.MS.Weights[:]=Weights[:]
+                t=table(Solver.VS.MS.MSName,readonly=False,ack=False)
+                t.putcol("WEIGHT",Solver.VS.MS.Weights)
+                t.close()
 
                 
             if DoSubstract:
@@ -355,11 +358,15 @@ def main(options=None):
 
             Solver.VS.MS.data=Solver.VS.ThisDataChunk["data"]
             Solver.VS.MS.flags_all=Solver.VS.ThisDataChunk["flags"]
+            # Solver.VS.MS.SaveVis(Col=WriteColName)
 
+            if DoSubstract|ApplyCal:
+                print>>log, "Save visibilities in %s column"%WriteColName
+                t=table(Solver.VS.MS.MSName,readonly=False,ack=False)
+                t.putcol(WriteColName,Solver.VS.MS.data)
+                t.putcol("FLAG",Solver.VS.MS.flags_all)
+                t.close()
 
-
-
-            Solver.VS.MS.SaveVis(Col=WriteColName)
                 
 
 
@@ -466,9 +473,10 @@ if __name__=="__main__":
         from Other.progressbar import ProgressBar
         ProgressBar.silent=1
 
+    main(options=options)
 
-    try:
-        main(options=options)
-    except:
-        NpShared.DelAll(IdSharedMem)
+    # try:
+    #     main(options=options)
+    # except:
+    #     NpShared.DelAll(IdSharedMem)
             

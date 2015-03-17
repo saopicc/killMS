@@ -715,6 +715,9 @@ class ClassPredict():
             #KernelPha=ne.evaluate("KernelPha+uvp")
             Kpq[indGauss,:,:,:]*=uvp[:,:,:,:]
         T.timeit("6")
+        
+        if self.DoSmearing:
+            
 
 
 
