@@ -94,6 +94,7 @@ def read_options():
     group.add_option('--ExtSols',type="str",help='Substact selected sources. ',default="")
     group.add_option('--ApplyMode',type="str",help='Substact selected sources. ',default="P")
     group.add_option('--ReWeight',type="int",help=' . Default is %default',default=1)
+    group.add_option('--DoSmearing',type="int",help=' . Default is %default',default=1)
     opt.add_option_group(group)
 
     group = optparse.OptionGroup(opt, "* Solver options", "Default values should give reasonable results, but all of them have noticeable influence on the results")

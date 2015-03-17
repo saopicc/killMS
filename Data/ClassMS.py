@@ -543,7 +543,7 @@ class ClassMS():
         ta_spectral=table(MSname+'/SPECTRAL_WINDOW/',ack=False)
         reffreq=ta_spectral.getcol('REF_FREQUENCY')
         chan_freq=ta_spectral.getcol('CHAN_FREQ')
-        self.dFreq=ta_spectral.getcol("CHAN_WIDTH").flatten()[0]
+        self.dFreq=ta_spectral.getcol("CHAN_WIDTH").flatten()
         self.ChanWidth=ta_spectral.getcol('CHAN_WIDTH')
         if chan_freq.shape[0]>len(self.ListSPW):
             print ModColor.Str("  ====================== >> More SPW in headers, modifying that error....")

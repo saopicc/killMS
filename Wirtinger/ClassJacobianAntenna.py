@@ -750,6 +750,7 @@ class ClassJacobianAntenna():
 
 
             DicoData["freqs"]   = DATA['freqs']
+            DicoData["dfreqs"]   = DATA['dfreqs']
             DicoData["times"] = np.concatenate([DATA['times'][ind0], DATA['times'][ind1]])
             DicoData["infos"] = DATA['infos']
 

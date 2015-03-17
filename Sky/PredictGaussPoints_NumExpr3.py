@@ -25,7 +25,7 @@ def SolsToDicoJones(Sols,nf):
 
 
 class ClassPredictParallel():
-    def __init__(self,Precision="S",NCPU=6,IdMemShared=""):
+    def __init__(self,Precision="S",NCPU=6,IdMemShared="",DoSmearing=False):
         self.NCPU=NCPU
         ne.set_num_threads(self.NCPU)
         if Precision=="D":
@@ -35,8 +35,8 @@ class ClassPredictParallel():
             self.CType=np.complex64
             self.FType=np.float32
         self.IdMemShared=IdMemShared
-
-        self.PM=ClassPredict(Precision=Precision,NCPU=NCPU,IdMemShared=IdMemShared)
+        self.DoSmearing=DoSmearing
+        self.PM=ClassPredict(Precision=Precision,NCPU=NCPU,IdMemShared=IdMemShared,DoSmearing=DoSmearing)
 
     def GiveCovariance(self,DicoDataIn,ApplyTimeJones):
 
@@ -62,7 +62,7 @@ class ClassPredictParallel():
         # CorrectedData=
 
         for ii in range(NCPU):
-            W=WorkerPredict(work_queue, result_queue,self.IdMemShared,Mode="GiveCovariance")
+            W=WorkerPredict(work_queue, result_queue,self.IdMemShared,Mode="GiveCovariance",DoSmearing=self.DoSmearing)
             workerlist.append(W)
             workerlist[ii].start()
 
@@ -149,7 +149,7 @@ class ClassPredictParallel():
         PredictArray=NpShared.SharedArray.create("%sPredictData"%(self.IdMemShared),DicoData["data"].shape,dtype=DicoData["data"].dtype)
         
         for ii in range(NCPU):
-            W=WorkerPredict(work_queue, result_queue,self.IdMemShared,SM=SM)
+            W=WorkerPredict(work_queue, result_queue,self.IdMemShared,SM=SM,DoSmearing=self.DoSmearing)
             workerlist.append(W)
             workerlist[ii].start()
 
@@ -174,7 +174,7 @@ class ClassPredictParallel():
 class WorkerPredict(multiprocessing.Process):
     def __init__(self,
                  work_queue,
-                 result_queue,IdSharedMem,SM=None,Mode="Predict",iCluster=-1):
+                 result_queue,IdSharedMem,SM=None,Mode="Predict",iCluster=-1,DoSmearing=False):
         multiprocessing.Process.__init__(self)
         self.work_queue = work_queue
         self.result_queue = result_queue
@@ -184,6 +184,7 @@ class WorkerPredict(multiprocessing.Process):
         self.IdSharedMem=IdSharedMem
         self.Mode=Mode
         self.iCluster=iCluster
+        self.DoSmearing=DoSmearing
 
     def shutdown(self):
         self.exit.set()
@@ -215,7 +216,7 @@ class WorkerPredict(multiprocessing.Process):
 
             ApplyTimeJones=NpShared.SharedToDico("%sApplyTimeJones"%self.IdSharedMem)
 
-            PM=ClassPredict(NCPU=1)
+            PM=ClassPredict(NCPU=1,DoSmearing=self.DoSmearing)
 
             if self.Mode=="Predict":
                 PredictData=PM.predictKernelPolCluster(DicoData,self.SM,ApplyTimeJones=ApplyTimeJones)
@@ -238,7 +239,7 @@ class WorkerPredict(multiprocessing.Process):
 
 
 class ClassPredict():
-    def __init__(self,Precision="S",NCPU=6,IdMemShared=None):
+    def __init__(self,Precision="S",NCPU=6,IdMemShared=None,DoSmearing=True):
         self.NCPU=NCPU
         ne.set_num_threads(self.NCPU)
         if Precision=="D":
@@ -247,6 +248,7 @@ class ClassPredict():
         if Precision=="S":
             self.CType=np.complex64
             self.FType=np.float32
+        self.DoSmearing=DoSmearing
 
     
 
@@ -533,14 +535,19 @@ class ClassPredict():
             Kp[:,:,:,0:1]=np.exp(-f0[:,:,:,0:1]*(U_refAnt*l+V_refAnt*m+W_refAnt*nn))
             df0=-f0[:,:,:,1]-(-f0[:,:,:,0])
             df0=df0.reshape((1,1,1,1))
-            dKp=np.exp(df0[:,:,:,:]*(U_refAnt*l+V_refAnt*m+W_refAnt*nn))
+            Kp_phase=(U_refAnt*l+V_refAnt*m+W_refAnt*nn)
+            dKp=np.exp(df0[:,:,:,:]*Kp_phase)
             for ich in range(1,nf):
                 Kp[:,:,:,ich]=Kp[:,:,:,ich-1]*dKp[:,:,:,0]
             T.timeit("Kp2")
         else:
-            Kp=np.exp(-f0*(U_refAnt*l+V_refAnt*m+W_refAnt*nn))
+            Kp_phase=(U_refAnt*l+V_refAnt*m+W_refAnt*nn)
+            Kp=np.exp(-f0*Kp_phase)
 
-        return Kp
+        Kp_phase=(U_refAnt*l+V_refAnt*m+W_refAnt*nn)
+            
+
+        return Kp,Kp_phase
 
 
     def PredictDirSPW(self,idir,isource=None):
@@ -605,7 +612,7 @@ class ClassPredict():
             else:
                 Kp=self.DicoData["Kp"][IDs]
         else:
-            Kp=self.GiveKp(self.DicoData,self.SM,idir=idir,isource=isource)
+            Kp,Kp_phase=self.GiveKp(self.DicoData,self.SM,idir=idir,isource=isource)
 
         # # # lm : [nd,nt,na,nf]
         # nt,na,_=UVW_RefAnt.shape
@@ -717,9 +724,13 @@ class ClassPredict():
         T.timeit("6")
         
         if self.DoSmearing:
-            
-
-
+            dfreqs=self.DicoData["dfreqs"]
+            KpRow_Phase=Kp_phase[:,indxTime,A0,:]
+            KqRow_Phase=Kp_phase[:,indxTime,A1,:]
+            dfreqs=dfreqs.copy().reshape((1,1,1,dfreqs.size))/299792458.
+            dphi=(2.*np.pi)*(KpRow_Phase-KqRow_Phase)*dfreqs # (nd=1,nt,na,nf=1)
+            decorr=np.sinc(dphi/2.).reshape((NSource,nrow,nf,1))
+            Kpq=Kpq*decorr
 
         
 

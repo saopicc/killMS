@@ -139,7 +139,7 @@ class ClassVisServer():
             else:
                 DATA[key]=D[key][ind]
 
-
+        
         #############################
         ### data selection
         #############################
@@ -271,7 +271,7 @@ class ClassVisServer():
         flags=MS.flag_all
         freqs=MS.ChanFreq.flatten()
         nbl=MS.nbl
-
+        dfreqs=MS.dFreq
         #flags.fill(0)
 
         # f=(np.random.rand(*flags.shape)>0.5)
@@ -366,6 +366,7 @@ class ClassVisServer():
         #self.IndexTimes=NpShared.ToShared("%sIndexTimes"%self.IdSharedMem,indexTimes)
         ThisDataChunk={"times":times,
                        "freqs":freqs,
+                       "dfreqs":dfreqs,
                        #"A0A1":(A0[ind],A1[ind]),
                        #"A0A1":(A0,A1),
                        "A0":A0,
