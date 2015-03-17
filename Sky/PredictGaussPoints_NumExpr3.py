@@ -544,10 +544,15 @@ class ClassPredict():
             Kp_phase=(U_refAnt*l+V_refAnt*m+W_refAnt*nn)
             Kp=np.exp(-f0*Kp_phase)
 
-        Kp_phase=(U_refAnt*l+V_refAnt*m+W_refAnt*nn)
-            
 
-        return Kp,Kp_phase
+        Kp_phase_dt=None
+        if "T" in self.DoSmearing:
+            Kp_phase_dt=Kp_phase[:,1::,:,:]-Kp_phase[:,0:-1,:,:]
+            (nd,nt,na,nf)=Kp_phase_dt.shape
+            Kp_phase_dt=Kp_phase_dt[:,nt/2,:,:]
+            Kp_phase_dt=Kp_phase_dt.reshape((nd,1,na,nf))
+
+        return Kp,Kp_phase,Kp_phase_dt
 
 
     def PredictDirSPW(self,idir,isource=None):
@@ -612,7 +617,7 @@ class ClassPredict():
             else:
                 Kp=self.DicoData["Kp"][IDs]
         else:
-            Kp,Kp_phase=self.GiveKp(self.DicoData,self.SM,idir=idir,isource=isource)
+            Kp,Kp_phase,Kp_phase_dt=self.GiveKp(self.DicoData,self.SM,idir=idir,isource=isource)
 
         # # # lm : [nd,nt,na,nf]
         # nt,na,_=UVW_RefAnt.shape
@@ -723,16 +728,16 @@ class ClassPredict():
             Kpq[indGauss,:,:,:]*=uvp[:,:,:,:]
         T.timeit("6")
         
-        # if self.DoSmearing!=None:
-        #     if "F" in self.DoSmearing:
-        #         dfreqs=self.DicoData["dfreqs"]
-        #         KpRow_Phase=Kp_phase[:,indxTime,A0,:]
-        #         KqRow_Phase=Kp_phase[:,indxTime,A1,:]
-        #         dfreqs=dfreqs.copy().reshape((1,1,1,dfreqs.size))/299792458.
-        #         dphi=(2.*np.pi)*(KpRow_Phase-KqRow_Phase)*dfreqs # (nd=1,nt,na,nf=1)
-        #         decorr=np.sinc(dphi/2.).reshape((NSource,nrow,nf,1))
-        #         Kpq=Kpq*decorr
-            
+        if self.DoSmearing!=None:
+            if "F" in self.DoSmearing:
+                dfreqs=self.DicoData["dfreqs"]
+                KpRow_Phase=Kp_phase[:,indxTime,A0,:]
+                KqRow_Phase=Kp_phase[:,indxTime,A1,:]
+                dfreqs=dfreqs.copy().reshape((1,1,1,dfreqs.size))/299792458.
+                dphi=(2.*np.pi)*(KpRow_Phase-KqRow_Phase)*dfreqs # (nd=1,nt,na,nf=1)
+                decorr=np.sinc(dphi/2.).reshape((NSource,nrow,nf,1))
+                Kpq=Kpq*decorr
+            # Kp_phase_dt
             # if "T" in self.DoSmearing:
             #     dfreqs=self.DicoData["dfreqs"]
             #     KpRow_Phase=Kp_phase[:,indxTime,A0,:]
