@@ -239,7 +239,7 @@ class WorkerPredict(multiprocessing.Process):
 
 
 class ClassPredict():
-    def __init__(self,Precision="S",NCPU=6,IdMemShared=None,DoSmearing=True):
+    def __init__(self,Precision="S",NCPU=6,IdMemShared=None,DoSmearing="TF"):
         self.NCPU=NCPU
         ne.set_num_threads(self.NCPU)
         if Precision=="D":
@@ -723,14 +723,23 @@ class ClassPredict():
             Kpq[indGauss,:,:,:]*=uvp[:,:,:,:]
         T.timeit("6")
         
-        if self.DoSmearing:
-            dfreqs=self.DicoData["dfreqs"]
-            KpRow_Phase=Kp_phase[:,indxTime,A0,:]
-            KqRow_Phase=Kp_phase[:,indxTime,A1,:]
-            dfreqs=dfreqs.copy().reshape((1,1,1,dfreqs.size))/299792458.
-            dphi=(2.*np.pi)*(KpRow_Phase-KqRow_Phase)*dfreqs # (nd=1,nt,na,nf=1)
-            decorr=np.sinc(dphi/2.).reshape((NSource,nrow,nf,1))
-            Kpq=Kpq*decorr
+        if self.DoSmearing!=None:
+            if "F" in self.DoSmearing:
+                dfreqs=self.DicoData["dfreqs"]
+                KpRow_Phase=Kp_phase[:,indxTime,A0,:]
+                KqRow_Phase=Kp_phase[:,indxTime,A1,:]
+                dfreqs=dfreqs.copy().reshape((1,1,1,dfreqs.size))/299792458.
+                dphi=(2.*np.pi)*(KpRow_Phase-KqRow_Phase)*dfreqs # (nd=1,nt,na,nf=1)
+                decorr=np.sinc(dphi/2.).reshape((NSource,nrow,nf,1))
+                Kpq=Kpq*decorr
+            # if "T" in self.DoSmearing:
+            #     dfreqs=self.DicoData["dfreqs"]
+            #     KpRow_Phase=Kp_phase[:,indxTime,A0,:]
+            #     KqRow_Phase=Kp_phase[:,indxTime,A1,:]
+            #     dfreqs=dfreqs.copy().reshape((1,1,1,dfreqs.size))/299792458.
+            #     dphi=(2.*np.pi)*(KpRow_Phase-KqRow_Phase)*dfreqs # (nd=1,nt,na,nf=1)
+            #     decorr=np.sinc(dphi/2.).reshape((NSource,nrow,nf,1))
+            #     Kpq=Kpq*decorr
 
         
 

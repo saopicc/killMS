@@ -294,7 +294,7 @@ class ClassJacobianAntenna():
         T=ClassTimeIt.ClassTimeIt("EKF")
         T.disable()
         if not(self.HasKernelMatrix):
-            Resolution=(20./3600)*np.pi/180
+            Resolution=(0./3600)*np.pi/180
             self.CalcKernelMatrix(rms,Resolution=Resolution)
             T.timeit("CalcKernelMatrix")
         z=self.DicoData["data_flat"]#self.GiveDataVec()
@@ -384,7 +384,7 @@ class ClassJacobianAntenna():
 
     def CalcMatrixEvolveCov(self,Gains,P,rms):
         if not(self.HasKernelMatrix):
-            Resolution=(20./3600)*np.pi/180
+            Resolution=(0./3600)*np.pi/180
             self.CalcKernelMatrix(rms,Resolution=Resolution)
 #            self.CalcKernelMatrix(rms)
         self.CalcJacobianAntenna(Gains)
@@ -780,10 +780,10 @@ class ClassJacobianAntenna():
                 else:
                     V=np.ones((u.size,freqs.size,npol),np.float32)
                     
-                if "W" in DicoData.keys():
-                    W=DicoData["W"]
-                    W[W==0]=1.e-6
-                    V=V/W.reshape(W.size,1,1)
+                # if "W" in DicoData.keys():
+                #     W=DicoData["W"]
+                #     W[W==0]=1.e-6
+                #     V=V/W.reshape(W.size,1,1)
 
                 R=rms**2*V
                 
