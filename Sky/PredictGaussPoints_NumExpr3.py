@@ -738,14 +738,14 @@ class ClassPredict():
                 decorr=np.sinc(dphi/2.).reshape((NSource,nrow,nf,1))
                 Kpq=Kpq*decorr
             # Kp_phase_dt
-            # if "T" in self.DoSmearing:
-            #     dfreqs=self.DicoData["dfreqs"]
-            #     KpRow_Phase=Kp_phase[:,indxTime,A0,:]
-            #     KqRow_Phase=Kp_phase[:,indxTime,A1,:]
-            #     dfreqs=dfreqs.copy().reshape((1,1,1,dfreqs.size))/299792458.
-            #     dphi=(2.*np.pi)*(KpRow_Phase-KqRow_Phase)*dfreqs # (nd=1,nt,na,nf=1)
-            #     decorr=np.sinc(dphi/2.).reshape((NSource,nrow,nf,1))
-            #     Kpq=Kpq*decorr
+            if "T" in self.DoSmearing:
+                freq=self.DicoData["freqs"].reshape((NSource,1,1,nf))
+                dt=self.DicoData["times"][-1]-self.DicoData["times"][0]
+                KpRow_Phase_dt=Kp_phase_dt[:,:,A0,:]
+                KqRow_Phase_dt=Kp_phase_dt[:,:,A1,:]
+                dphi=(2.*np.pi)*(KpRow_Phase_dt-KqRow_Phase_dt)*dt*freq/299792458. # (nd=1,nt,na,nf=1)
+                decorr=np.sinc(dphi/2.).reshape((NSource,nrow,nf,1))
+                Kpq=Kpq*decorr
 
         
 
