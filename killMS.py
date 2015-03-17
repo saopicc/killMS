@@ -255,7 +255,8 @@ def main(options=None):
                                 SolverType=options.SolverType,
                                 evP_Step=options.evP_Step,evP_StepStart=options.evP_StepStart,
                                 DoPlot=options.DoPlot,
-                                Lambda=options.Lambda,IdSharedMem=IdSharedMem)
+                                Lambda=options.Lambda,
+                                IdSharedMem=IdSharedMem)
     Solver.InitSol(TestMode=False)
     PM=ClassPredict(NCPU=NCPU,IdMemShared=IdSharedMem)
     PM2=None#ClassPredict_orig(NCPU=NCPU,IdMemShared=IdSharedMem)
@@ -334,7 +335,7 @@ def main(options=None):
                 print "std=%f"%std
                 print indRow.size
                 Solver.VS.ThisDataChunk["W"][indRow]=0.
-                print>>log, "   Flagged %5.2f percent of data"%(100*float(indRow.size)/(Diff.size))
+                print>>log, "   Set weights to Zero for %5.2f %% of data"%(100*float(indRow.size)/(Diff.size))
                 Weights=Solver.VS.ThisDataChunk["W"]
                 Weights=Weights.reshape((Weights.size,1))*np.ones((1,4))
                 Solver.VS.MS.Weights[:]=Weights[:]
@@ -363,9 +364,8 @@ def main(options=None):
 
 
     
-    print>>log, "Save Solutions in file: %s"%FileName
-    Sols=Solver.GiveSols()
     FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.ms),options.SolverType)
+    print>>log, "Save Solutions in file: %s"%FileName
     Sols=Solver.GiveSols()
     StationNames=np.array(Solver.VS.MS.StationNames)
     np.savez(FileName,Sols=Sols,StationNames=StationNames,SkyModel=SM.ClusterCat,ClusterCat=SM.ClusterCat)

@@ -11,6 +11,7 @@ from Array import ModLinAlg
 MyLogger.setSilent(["NpShared"])
 #from Sky.PredictGaussPoints_NumExpr3 import ClassPredictParallel as ClassPredict 
 from Sky.PredictGaussPoints_NumExpr3 import ClassPredict as ClassPredict 
+import ClassWeighting
 
 class ClassVisServer():
     def __init__(self,MSName,
@@ -20,7 +21,8 @@ class ClassVisServer():
                  DicoSelectOptions={},
                  LofarBeam=None,
                  AddNoiseJy=None,IdSharedMem="",
-                 SM=None,NCPU=None):
+                 SM=None,NCPU=None,
+                 Robust=2,Weighting="Uniform"):
         self.IdSharedMem=IdSharedMem
         PrefixShared="%sSharedVis"%self.IdSharedMem
         self.AddNoiseJy=AddNoiseJy
@@ -39,6 +41,10 @@ class ClassVisServer():
         self.VisInSharedMem = (PrefixShared!=None)
         self.LofarBeam=LofarBeam
         self.ApplyBeam=False
+        
+        self.Robust=Robust
+        self.Weighting=Weighting
+
         self.Init()
 
         self.dTimesVisMin=self.TVisSizeMin
@@ -65,12 +71,29 @@ class ClassVisServer():
         self.TimesInt=TimesInt
         self.NTChunk=len(self.TimesInt)-1
         self.MS=MS
+        self.CalcWeigths()
 
         #TimesVisMin=np.arange(0,MS.DTh*60.,self.TVisSizeMin).tolist()
         #if not(MS.DTh*60. in TimesVisMin): TimesVisMin.append(MS.DTh*60.)
         #self.TimesVisMin=np.array(TimesVisMin)
 
-
+    def CalcWeigths(self,FOV=5.):
+        if self.VisWeights!=None: return
+        
+        uvw,WEIGHT=self.GiveAllUVW()
+        u,v,w=uvw.T
+        freq=np.mean(self.MS.ChanFreq)
+        uvmax=np.max(np.sqrt(u**2+v**2))
+        res=uvmax*freq/3.e8
+        npix=(FOV*np.pi/180)/res
+        ImShape=(1,1,npix,npix)
+        WeightMachine=ClassWeighting.ClassWeighting(ImShape,res)
+        VisWeights=WEIGHT[:,0]#np.ones((uvw.shape[0],),dtype=np.float32)
+        #VisWeights=np.ones((uvw.shape[0],),dtype=np.float32)
+        Robust=self.Robust
+        self.VisWeights=WeightMachine.CalcWeights(uvw,VisWeights,Robust=Robust,
+                                                  Weighting=self.Weighting)
+ 
     def ReInitChunkCount(self):
         self.CurrentMemTimeChunk=0
 
@@ -102,7 +125,7 @@ class ClassVisServer():
         t0_sec+=t0_MS
         t1_sec+=t0_MS
         self.CurrentVisTimes_MS_Sec=t0_sec,t1_sec
-
+        
         D=self.ThisDataChunk
         # time selection
         ind=np.where((self.ThisDataChunk["times"]>=t0_sec)&(self.ThisDataChunk["times"]<t1_sec))[0]
@@ -111,7 +134,7 @@ class ClassVisServer():
         DATA={}
         for key in D.keys():
             if type(D[key])!=np.ndarray: continue
-            if not(key in ['times', 'A1', 'A0', 'flags', 'uvw', 'data', "IndexTimesThisChunk"]):             
+            if not(key in ['times', 'A1', 'A0', 'flags', 'uvw', 'data', "IndexTimesThisChunk", "W"]):             
                 DATA[key]=D[key]
             else:
                 DATA[key]=D[key][ind]
@@ -126,6 +149,7 @@ class ClassVisServer():
         A0=DATA["A0"]
         A1=DATA["A1"]
         times=DATA["times"]
+        W=DATA["W"]
         IndexTimesThisChunk=DATA["IndexTimesThisChunk"]
 #        IndexTimesThisChunk=self.ThisDataChunk["IndexTimesThisChunk"]
 
@@ -148,6 +172,7 @@ class ClassVisServer():
                 uvw=uvw[ind]
                 times=times[ind]
                 IndexTimesThisChunk=IndexTimesThisChunk[ind]
+                W=W[ind]
 
         for A in self.FlagAntNumber:
             ind=np.where((A0!=A)&(A1!=A))[0]
@@ -158,6 +183,7 @@ class ClassVisServer():
             uvw=uvw[ind]
             times=times[ind]
             IndexTimesThisChunk=IndexTimesThisChunk[ind]
+            W=W[ind]
         
             
 
@@ -169,6 +195,7 @@ class ClassVisServer():
         uvw=uvw[ind,:]
         times=times[ind]
         IndexTimesThisChunk=IndexTimesThisChunk[ind]
+        W=W[ind]
 
         DATA["flags"]=flags
         DATA["uvw"]=uvw
@@ -177,6 +204,7 @@ class ClassVisServer():
         DATA["A1"]=A1
         DATA["times"]=times
         DATA["IndexTimesThisChunk"]=IndexTimesThisChunk
+        DATA["W"]=W
 
         it0=np.min(DATA["IndexTimesThisChunk"])
         it1=np.max(DATA["IndexTimesThisChunk"])+1
@@ -336,23 +364,23 @@ class ClassVisServer():
         #NpShared.PackListArray("%sUVW_Ants"%self.IdSharedMem,Luvw)
         #self.UVW_RefAnt=NpShared.ToShared("%sUVW_RefAnt"%self.IdSharedMem,Luvw)
         #self.IndexTimes=NpShared.ToShared("%sIndexTimes"%self.IdSharedMem,indexTimes)
-
         ThisDataChunk={"times":times,
-                     "freqs":freqs,
-                     #"A0A1":(A0[ind],A1[ind]),
-                     #"A0A1":(A0,A1),
-                     "A0":A0,
-                     "A1":A1,
-                     "uvw":uvw,
-                     "flags":flags,
-                     "nbl":nbl,
-                     "na":MS.na,
-                     "data":data,
-                     "ROW0":MS.ROW0,
-                     "ROW1":MS.ROW1,
-                     "infos":np.array([MS.na]),
-                     "IndexTimesThisChunk":indexTimes,
-                     "UVW_RefAnt": Luvw
+                       "freqs":freqs,
+                       #"A0A1":(A0[ind],A1[ind]),
+                       #"A0A1":(A0,A1),
+                       "A0":A0,
+                       "A1":A1,
+                       "uvw":uvw,
+                       "flags":flags,
+                       "nbl":nbl,
+                       "na":MS.na,
+                       "data":data,
+                       "ROW0":MS.ROW0,
+                       "ROW1":MS.ROW1,
+                       "infos":np.array([MS.na]),
+                       "IndexTimesThisChunk":indexTimes,
+                       "UVW_RefAnt": Luvw,
+                       "W":self.VisWeights[MS.ROW0:MS.ROW1]
                      }
         
         self.ThisDataChunk=ThisDataChunk#NpShared.DicoToShared("%sThisDataChunk"%self.IdSharedMem,ThisDataChunk)
@@ -391,8 +419,9 @@ class ClassVisServer():
     def GiveAllUVW(self):
         t=table(self.MS.MSName,ack=False)
         uvw=t.getcol("UVW")
+        WEIGHT=t.getcol("WEIGHT")
         t.close()
-        return uvw
+        return uvw,WEIGHT
 
 
     def ClearSharedMemory(self):

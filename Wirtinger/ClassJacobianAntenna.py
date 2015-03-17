@@ -718,6 +718,9 @@ class ClassJacobianAntenna():
             DicoData["data"] = np.concatenate([D0, D1])
             DicoData["uvw"]  = np.concatenate([DATA['uvw'][ind0], -DATA['uvw'][ind1]])
 
+            if "W" in DATA.keys():
+                DicoData["W"] = np.concatenate([DATA['W'][ind0], DATA['W'][ind1]])
+
             DicoData["IndexTimesThisChunk"]=np.concatenate([DATA["IndexTimesThisChunk"][ind0], DATA["IndexTimesThisChunk"][ind1]]) 
 
             #it0=np.min(DicoData["IndexTimesThisChunk"])
@@ -776,6 +779,11 @@ class ClassJacobianAntenna():
                 else:
                     V=np.ones((u.size,freqs.size,npol),np.float32)
                     
+                if "W" in DicoData.keys():
+                    W=DicoData["W"]
+                    W[W==0]=1.e-6
+                    V=V/W.reshape(W.size,1,1)
+
                 R=rms**2*V
                 
                 Rinv=1./R
