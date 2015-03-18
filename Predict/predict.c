@@ -366,8 +366,10 @@ static PyObject *predict(PyObject *self, PyObject *args)
   	  result=p_Flux[dd*nchan+ch]*cexp(phase*c1[ch]);
   	  if(FSmear==1){
   	    phi=PI*PI_C*p_DFreqs[ch]*phase;
-  	    phi=sin(phi)/(phi);
-  	    result*=phi;
+	    if(phi!=0.){
+	      phi=sin(phi)/(phi);
+	      result*=phi;
+	    };
   	  };
   	  if(TSmear==1){
 	    
@@ -378,8 +380,10 @@ static PyObject *predict(PyObject *self, PyObject *args)
   	    phi=PI*PI_C*p_Freqs[ch]*dphase;
   	    //printf("phi = %f\n",phi);
   	    //printf("dphase = %f\n",dphase);
-  	    phi=sin(phi)/(phi);
-  	    result*=phi;
+	    if(phi!=0.){
+	      phi=sin(phi)/(phi);
+	      result*=phi;
+	    };
   	  };
 
 

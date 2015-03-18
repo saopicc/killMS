@@ -44,7 +44,7 @@ class ClassPredictParallel():
 
 
 
-    def GiveCovariance(self,DicoDataIn,ApplyTimeJones):
+    def GiveCovariance(self,DicoDataIn,ApplyTimeJones,SM):
 
         DicoData=NpShared.DicoToShared("%sDicoMemChunk"%(self.IdMemShared),DicoDataIn,DelInput=False)
         
@@ -68,7 +68,7 @@ class ClassPredictParallel():
         # CorrectedData=
 
         for ii in range(NCPU):
-            W=WorkerPredict(work_queue, result_queue,self.IdMemShared,Mode="GiveCovariance",DoSmearing=self.DoSmearing)
+            W=WorkerPredict(work_queue, result_queue,self.IdMemShared,Mode="GiveCovariance",DoSmearing=self.DoSmearing,SM=SM)
             workerlist.append(W)
             workerlist[ii].start()
 
@@ -240,7 +240,7 @@ class WorkerPredict(multiprocessing.Process):
             elif self.Mode=="ApplyCal":
                 PM.ApplyCal(DicoData,ApplyTimeJones,self.iCluster)
             elif self.Mode=="GiveCovariance":
-                PM.GiveCovariance(DicoData,ApplyTimeJones)
+                PM.GiveCovariance(DicoData,ApplyTimeJones,self.SM)
 
 
             self.result_queue.put(True)
@@ -333,7 +333,7 @@ class ClassPredict():
         ParamJonesList=[MapJones,A0,A1,JonesMatrices]
         return ParamJonesList
 
-    def GiveCovariance(self,DicoData,ApplyTimeJones):
+    def GiveCovariance(self,DicoData,ApplyTimeJones,SM):
         D=ApplyTimeJones
         Beam=D["Beam"]
         BeamH=D["BeamH"]
@@ -343,9 +343,14 @@ class ClassPredict():
         times=DicoData["times"]
         na=DicoData["infos"][0]
 
-        ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
 
-        MaxVis=predict.GiveMaxCorr(DicoData["data"],ParamJonesList)
+        Predict=self.predictKernelPolCluster(DicoData,SM,ApplyTimeJones=ApplyTimeJones)
+
+        Resid=DicoData["data"]-Predict
+        ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
+        
+        
+        MaxVis=predict.GiveMaxCorr(Resid,ParamJonesList)
         rms=findrms.findrms(MaxVis)
         med=np.median(MaxVis)
 
@@ -478,7 +483,6 @@ class ClassPredict():
         for iCluster in ListDirection:
             indSources=np.where(self.SourceCat.Cluster==iCluster)[0]
             ColOutDir=np.zeros(DataOut.shape,np.complex64)
-            
 
             T=ClassTimeIt("predict")
             T.disable()
@@ -504,7 +508,6 @@ class ClassPredict():
             T.timeit("init")
             predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode)
             T.timeit("predict0")
-
             ###### test
             # ColOutDir0=ColOutDir.copy()
             # ColOutDir.fill(0)
@@ -552,6 +555,7 @@ class ClassPredict():
                     ind=np.where((times>=t0)&(times<t1))[0]
                     if ind.size==0: continue
                     data=ColOutDir[ind]
+                    
                     A0sel=A0[ind]
                     A1sel=A1[ind]
 
@@ -559,6 +563,7 @@ class ClassPredict():
                         ChanMap=ApplyTimeJones["ChanMap"]
                     else:
                         ChanMap=range(nf)
+
 
                     for ichan in range(len(ChanMap)):
                         JChan=ChanMap[ichan]
@@ -568,7 +573,7 @@ class ClassPredict():
                         data[:,ichan,:]=ModLinAlg.BatchDot(J[A0sel,:],data[:,ichan,:])
                         data[:,ichan,:]=ModLinAlg.BatchDot(data[:,ichan,:],JH[A1sel,:])
                     ColOutDir[ind]=data[:]
-            
+
 
             if Noise!=None:
                 ColOutDir+=Noise*(np.random.randn(*ColOutDir.shape)+1j*np.random.randn(*ColOutDir.shape))
