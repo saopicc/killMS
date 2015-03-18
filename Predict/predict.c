@@ -332,7 +332,7 @@ static PyObject *predict(PyObject *self, PyObject *args)
   	    dphase=(du+dv+dw)*DT;
   	    phi=PI*PI_C*p_Freqs[ch]*dphase;
   	    //printf("phi = %f\n",phi);
-  	    printf("dphase = %f\n",dphase);
+  	    //printf("dphase = %f\n",dphase);
   	    phi=sin(phi)/(phi);
   	    result*=phi;
   	  };

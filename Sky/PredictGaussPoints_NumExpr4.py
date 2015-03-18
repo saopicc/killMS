@@ -453,10 +453,9 @@ class ClassPredict():
             Jones=Jones.reshape((NDir,na,4))
             JonesH=ModLinAlg.BatchH(Jones)
 
-        print self.DoSmearing
         TSmear=0.
         FSmear=0.
-        stop
+
         if "T" in self.DoSmearing:
             TSmear=1.
         if "F" in self.DoSmearing:

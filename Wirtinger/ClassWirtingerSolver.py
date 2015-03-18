@@ -432,7 +432,7 @@ class ClassWirtingerSolver():
         T.disable()
         for ii in range(NCPU):
              
-            W=WorkerAntennaLM(work_queue, result_queue,self.SM,self.PolMode,self.Lambda,self.SolverType,self.IdSharedMem)#,args=(e,))
+            W=WorkerAntennaLM(work_queue, result_queue,self.SM,self.PolMode,self.Lambda,self.SolverType,self.IdSharedMem,DoSmearing=self.DoSmearing)#,args=(e,))
             workerlist.append(W)
             workerlist[ii].start()
 
