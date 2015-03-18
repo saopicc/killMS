@@ -127,6 +127,10 @@ class ClassVisServer():
         self.CurrentVisTimes_MS_Sec=t0_sec,t1_sec
         
         D=self.ThisDataChunk
+
+        # Calculate uvw speed for time spearing
+
+
         # time selection
         ind=np.where((self.ThisDataChunk["times"]>=t0_sec)&(self.ThisDataChunk["times"]<t1_sec))[0]
         if ind.shape[0]==0:
@@ -134,7 +138,8 @@ class ClassVisServer():
         DATA={}
         for key in D.keys():
             if type(D[key])!=np.ndarray: continue
-            if not(key in ['times', 'A1', 'A0', 'flags', 'uvw', 'data', "IndexTimesThisChunk", "W"]):             
+            if not(key in ['times', 'A1', 'A0', 'flags', 'uvw', 'data', #"IndexTimesThisChunk", 
+                           "W"]):             
                 DATA[key]=D[key]
             else:
                 DATA[key]=D[key][ind]
@@ -150,8 +155,8 @@ class ClassVisServer():
         A1=DATA["A1"]
         times=DATA["times"]
         W=DATA["W"]
-        IndexTimesThisChunk=DATA["IndexTimesThisChunk"]
-#        IndexTimesThisChunk=self.ThisDataChunk["IndexTimesThisChunk"]
+        # IndexTimesThisChunk=DATA["IndexTimesThisChunk"]
+
 
         for Field in self.DicoSelectOptions.keys():
             if Field=="UVRangeKm":
@@ -171,7 +176,7 @@ class ClassVisServer():
                 A1=A1[ind]
                 uvw=uvw[ind]
                 times=times[ind]
-                IndexTimesThisChunk=IndexTimesThisChunk[ind]
+                #IndexTimesThisChunk=IndexTimesThisChunk[ind]
                 W=W[ind]
 
         for A in self.FlagAntNumber:
@@ -182,7 +187,7 @@ class ClassVisServer():
             A1=A1[ind]
             uvw=uvw[ind]
             times=times[ind]
-            IndexTimesThisChunk=IndexTimesThisChunk[ind]
+            # IndexTimesThisChunk=IndexTimesThisChunk[ind]
             W=W[ind]
         
             
@@ -194,7 +199,7 @@ class ClassVisServer():
         A1=A1[ind]
         uvw=uvw[ind,:]
         times=times[ind]
-        IndexTimesThisChunk=IndexTimesThisChunk[ind]
+        #IndexTimesThisChunk=IndexTimesThisChunk[ind]
         W=W[ind]
 
         DATA["flags"]=flags
@@ -203,15 +208,19 @@ class ClassVisServer():
         DATA["A0"]=A0
         DATA["A1"]=A1
         DATA["times"]=times
-        DATA["IndexTimesThisChunk"]=IndexTimesThisChunk
+        #DATA["IndexTimesThisChunk"]=IndexTimesThisChunk
         DATA["W"]=W
 
-        it0=np.min(DATA["IndexTimesThisChunk"])
-        it1=np.max(DATA["IndexTimesThisChunk"])+1
-        DATA["UVW_RefAnt"]=self.ThisDataChunk["UVW_RefAnt"][it0:it1,:,:]
+        DATA["UVW_dt"]=self.MS.Give_dUVW_dt(times,A0,A1)
+        
 
-        #PM=ClassPredict(NCPU=self.NCPU,IdMemShared=self.IdSharedMem)
-        #DATA["Kp"]=PM.GiveKp(DATA,self.SM)
+
+        # it0=np.min(DATA["IndexTimesThisChunk"])
+        # it1=np.max(DATA["IndexTimesThisChunk"])+1
+        # DATA["UVW_RefAnt"]=self.ThisDataChunk["UVW_RefAnt"][it0:it1,:,:]
+        #
+        # # PM=ClassPredict(NCPU=self.NCPU,IdMemShared=self.IdSharedMem)
+        # # DATA["Kp"]=PM.GiveKp(DATA,self.SM)
 
         #stop
         if self.VisInSharedMem:
@@ -319,47 +328,53 @@ class ClassVisServer():
             data+=(self.AddNoiseJy/np.sqrt(2.))*(np.random.randn(*data.shape)+1j*np.random.randn(*data.shape))
         
         # Building uvw infos
-        print>>log, "Building uvw infos .... "
-        Luvw=np.zeros((MS.times.size,MS.na,3),uvw.dtype)
-        AntRef=0
-        indexTimes=np.zeros((times.size,),np.int64)
-        iTime=0
+        #################################################
+        #################################################
+        # print>>log, "Building uvw infos .... "
+        # Luvw=np.zeros((MS.times.size,MS.na,3),uvw.dtype)
+        # AntRef=0
+        # indexTimes=np.zeros((times.size,),np.int64)
+        # iTime=0
 
+        # # UVW per antenna
+        # #Times_all_32=np.float32(times-MS.times[0])
+        # #Times32=np.float32(MS.times-MS.times[0])
+        # irow=0
+        # for ThisTime in MS.times:#Times32:
 
-        #Times_all_32=np.float32(times-MS.times[0])
-        #Times32=np.float32(MS.times-MS.times[0])
-        irow=0
-        for ThisTime in MS.times:#Times32:
-
-            T= ClassTimeIt.ClassTimeIt("VS")
-            T.disable()
-            #ind=np.where(Times_all_32[irow::]==ThisTime)[0]
-            ind=np.where(times[irow::]==ThisTime)[0]+irow
+        #     T= ClassTimeIt.ClassTimeIt("VS")
+        #     T.disable()
+        #     #ind=np.where(Times_all_32[irow::]==ThisTime)[0]
+        #     ind=np.where(times[irow::]==ThisTime)[0]+irow
             
-            irow+=ind.size
-            T.timeit("0b")
+        #     irow+=ind.size
+        #     T.timeit("0b")
 
-            indAnt=np.where(A0[ind]==AntRef)[0]
-            ThisUVW0=uvw[ind][indAnt].copy()
-            Ant0=A1[ind][indAnt].copy()
-            T.timeit("1")
+        #     indAnt=np.where(A0[ind]==AntRef)[0]
+        #     ThisUVW0=uvw[ind][indAnt].copy()
+        #     Ant0=A1[ind][indAnt].copy()
+        #     T.timeit("1")
 
-            indAnt=np.where(A1[ind]==AntRef)[0]
-            ThisUVW1=-uvw[ind][indAnt].copy()
-            Ant1=A0[ind][indAnt].copy()
-            ThisUVW=np.concatenate((ThisUVW1,ThisUVW0[1::]))
+        #     indAnt=np.where(A1[ind]==AntRef)[0]
+        #     ThisUVW1=-uvw[ind][indAnt].copy()
+        #     Ant1=A0[ind][indAnt].copy()
+        #     ThisUVW=np.concatenate((ThisUVW1,ThisUVW0[1::]))
 
-            T.timeit("2")
+        #     T.timeit("2")
 
-            #AA=np.concatenate((Ant1,Ant0[1::]))
-            Luvw[iTime,:,:]=ThisUVW[:,:]
+        #     #AA=np.concatenate((Ant1,Ant0[1::]))
+        #     Luvw[iTime,:,:]=ThisUVW[:,:]
+        
+        #     T.timeit("3")
 
-            T.timeit("3")
+        #     #Luvw.append(ThisUVW)
+        #     indexTimes[ind]=iTime
+        #     iTime+=1
+        # print>>log, "     .... Done "
+        #################################################
+        #################################################
 
-            #Luvw.append(ThisUVW)
-            indexTimes[ind]=iTime
-            iTime+=1
-        print>>log, "     .... Done "
+
 
         #NpShared.PackListArray("%sUVW_Ants"%self.IdSharedMem,Luvw)
         #self.UVW_RefAnt=NpShared.ToShared("%sUVW_RefAnt"%self.IdSharedMem,Luvw)
@@ -378,9 +393,9 @@ class ClassVisServer():
                        "data":data,
                        "ROW0":MS.ROW0,
                        "ROW1":MS.ROW1,
-                       "infos":np.array([MS.na]),
-                       "IndexTimesThisChunk":indexTimes,
-                       "UVW_RefAnt": Luvw,
+                       "infos":np.array([MS.na,MS.TimeInterVal[0]]),
+                       #"IndexTimesThisChunk":indexTimes,
+                       #"UVW_RefAnt": Luvw,
                        "W":self.VisWeights[MS.ROW0:MS.ROW1]
                      }
         

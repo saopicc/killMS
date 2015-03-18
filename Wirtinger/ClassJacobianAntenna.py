@@ -1,6 +1,6 @@
 import numpy as np
 from Array import NpShared
-from Sky.PredictGaussPoints_NumExpr3 import ClassPredict
+from Sky.PredictGaussPoints_NumExpr4 import ClassPredict
 
 from Data import ClassVisServer
 from Sky import ClassSM
@@ -717,15 +717,13 @@ class ClassJacobianAntenna():
             D1[:,:,2]=c1
             DicoData["data"] = np.concatenate([D0, D1])
             DicoData["uvw"]  = np.concatenate([DATA['uvw'][ind0], -DATA['uvw'][ind1]])
+            DicoData["UVW_dt"]  = np.concatenate([DATA["UVW_dt"][ind0], -DATA["UVW_dt"][ind1]])
 
             if "W" in DATA.keys():
                 DicoData["W"] = np.concatenate([DATA['W'][ind0], DATA['W'][ind1]])
 
-            DicoData["IndexTimesThisChunk"]=np.concatenate([DATA["IndexTimesThisChunk"][ind0], DATA["IndexTimesThisChunk"][ind1]]) 
-
-            #it0=np.min(DicoData["IndexTimesThisChunk"])
-            #it1=np.max(DicoData["IndexTimesThisChunk"])+1
-            DicoData["UVW_RefAnt"]=DATA["UVW_RefAnt"]#[it0:it1]
+            # DicoData["IndexTimesThisChunk"]=np.concatenate([DATA["IndexTimesThisChunk"][ind0], DATA["IndexTimesThisChunk"][ind1]]) 
+            # DicoData["UVW_RefAnt"]=DATA["UVW_RefAnt"][it0:it1]
 
             if "Kp" in DATA.keys():
                  DicoData["Kp"]=DATA["Kp"]

@@ -323,13 +323,13 @@ def main(options=None):
                 nrows=Solver.VS.ThisDataChunk["times"].size
                 Solver.VS.ThisDataChunk["W"]=np.ones((nrows,),np.float32)
 
-                # PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones)
+                PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones)
 
-                PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
-                Diff=Solver.VS.ThisDataChunk["data"]-PredictData
-                std=np.std(Diff[Solver.VS.ThisDataChunk["flags"]==0])
-                ThresHold=3.
-                indRow,indChan,indPol=np.where(np.abs(Diff)>ThresHold*std)
+                # PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
+                # Diff=Solver.VS.ThisDataChunk["data"]-PredictData
+                # std=np.std(Diff[Solver.VS.ThisDataChunk["flags"]==0])
+                # ThresHold=3.
+                # indRow,indChan,indPol=np.where(np.abs(Diff)>ThresHold*std)
 
                 print "std=%f"%std
                 print indRow.size

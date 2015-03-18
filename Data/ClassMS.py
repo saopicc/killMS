@@ -56,7 +56,9 @@ class ClassMS():
         JD=time_start_MDJ+2400000.5-2415020
         d=ephem.Date(JD)
 
-        return d.datetime().isoformat().replace("T","/")
+        return d.datetime()#.isoformat().replace("T","/")
+
+
 
     def GiveDataChunk(self,it0,it1):
         MapSelBLs=self.MapSelBLs
@@ -381,6 +383,7 @@ class ClassMS():
         self.swapped=False
 
         uvw=table_all.getcol('UVW',row0,nRowRead)[SPW==self.ListSPW[0]]
+        self.TimeInterVal=table_all.getcol("INTERVAL")
 
         if self.ReOrder:
             vis_all=table_all.getcol(self.ColName,row0,nRowRead)
@@ -417,7 +420,6 @@ class ClassMS():
 
 
         self.flag_all=flag_all
-
         if self.RejectAutoCorr:
             indGetCorrelation=np.where(A0!=A1)[0]
             A0=A0[indGetCorrelation]
@@ -612,6 +614,63 @@ class ClassMS():
         T.timeit()
         # self.StrRADEC=(rad2hmsdms(self.rarad,Type="ra").replace(" ",":")\
         #                ,rad2hmsdms(self.decrad,Type="dec").replace(" ","."))
+
+    # def Give_dUVW_dt(self,ttVec,A0,A1):
+    #     uvw0=self.Give_dUVW_dt0(np.mean(ttVec),A0,A1,LongitudeDeg=6.8689,R="UVW")
+    #     uvw1=self.Give_dUVW_dt0(np.mean(ttVec)+30.,A0,A1,LongitudeDeg=6.8689,R="UVW")
+    #     duvw0=uvw1-uvw0
+    #     duvw1=30*self.Give_dUVW_dt0(np.mean(ttVec)+15.,A0,A1,LongitudeDeg=6.8689,R="UVW_dt")
+    #     print duvw0-duvw1
+    #     stop
+
+    def Give_dUVW_dt(self,ttVec,A0,A1,LongitudeDeg=6.8689,R="UVW_dt"):
+
+        # tt=self.times_all[0]
+        # A0=self.A0[self.times_all==tt]
+        # A1=self.A1[self.times_all==tt]
+        # uvw=self.uvw[self.times_all==tt]
+
+
+        tt=np.mean(ttVec)
+        import sidereal
+        import datetime
+        ra,d=self.radec
+        D=self.GiveDate(tt)
+        Lon=LongitudeDeg*np.pi/180
+        h= sidereal.raToHourAngle(ra,D,Lon)
+        
+
+        c=np.cos
+        s=np.sin
+        L=self.StationPos[A1]-self.StationPos[A0]
+
+        if R=="UVW":
+            R=np.array([[ s(h)      ,  c(h)      , 0.  ],
+                        [-s(d)*c(h) ,  s(d)*s(h) , c(d)],
+                        [ c(d)*c(h) , -c(d)*s(h) , s(d)]])
+            UVW=np.dot(R,L.T).T
+            import pylab
+            pylab.clf()
+            # pylab.subplot(1,2,1)
+            # pylab.scatter(uvw[:,0],uvw[:,1],marker='.')
+            #pylab.subplot(1,2,2)
+            pylab.scatter(UVW[:,0],UVW[:,1],marker='.')
+            pylab.draw()
+            pylab.show(False)
+            return UVW
+        else:
+        # stop
+            K=2.*np.pi/(24.*3600)
+            R_dt=np.array([[K*c(h)      , -K*s(h)     , 0.  ],
+                           [K*s(d)*s(h) , K*s(d)*c(h) , 0.  ],
+                           [-K*c(d)*s(h), -K*c(d)*c(h), 0.  ]])
+
+            UVW_dt=np.dot(R_dt,L.T).T
+            return np.float32(UVW_dt)
+
+
+
+
 
 
     def __str__(self):
