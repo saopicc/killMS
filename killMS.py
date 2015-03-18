@@ -43,7 +43,8 @@ from Wirtinger.ClassWirtingerSolver import ClassWirtingerSolver
 from Other import ClassTimeIt
 from Data import ClassVisServer
 
-from Sky.PredictGaussPoints_NumExpr4 import ClassPredictParallel as ClassPredict 
+#from Sky.PredictGaussPoints_NumExpr4 import ClassPredictParallel as ClassPredict 
+from Sky.PredictGaussPoints_NumExpr4 import ClassPredict as ClassPredict 
 
 #from Sky.PredictGaussPoints_NumExpr2 import ClassPredictParallel as ClassPredict_orig 
 #from Sky.PredictGaussPoints_NumExpr3 import ClassPredict as ClassPredict 
@@ -252,7 +253,7 @@ def main(options=None):
     #
     # Solver.InitCovariance(FromG=True,sigP=options.CovP,sigQ=options.CovQ)
 
-
+    SaveSols=False
     while True:
 
         Load=VS.LoadNextVisChunk()
@@ -260,19 +261,22 @@ def main(options=None):
             break
 
         if options.ExtSols=="":
+            SaveSols=True
             Solver.doNextTimeSolve_Parallel()
             #Solver.doNextTimeSolve_Parallel(SkipMode=True)
             #Solver.doNextTimeSolve()
             Sols=Solver.GiveSols()
         else:
             Sols=np.load(options.ExtSols)["Sols"]
+            Sols=Sols.view(np.recarray)
 
         # substract
         #ind=np.where(SM.SourceCat.kill==1)[0]
         if ((DoSubstract)|(DoApplyCal)|(ReWeight)):
-            Sols=Solver.GiveSols()
+            Sols.t1[-1]+=1e3
             Jones={}
             Jones["t0"]=Sols.t0
+            Jones["t1"]=Sols.t1
             Jones["t1"]=Sols.t1
             nt,na,nd,_,_=Sols.G.shape
             G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
@@ -292,11 +296,24 @@ def main(options=None):
 
             if ReWeight:
                 print>>log, ModColor.Str("Estimating imaging weights ... ",col="green")
+
+                ind=np.array([],np.int32)
+                for it in range(nt):
+                    t0=Jones["t0"][it]
+                    t1=Jones["t1"][it]
+                    indMStime=np.where((Solver.VS.ThisDataChunk["times"]>=t0)&(Solver.VS.ThisDataChunk["times"]<t1))[0]
+                    indMStime=np.ones((indMStime.size,),np.int32)*it
+                    ind=np.concatenate((ind,indMStime))
+
+                Jones["MapJones"]=ind
+
                 nrows=Solver.VS.ThisDataChunk["times"].size
+
                 Solver.VS.ThisDataChunk["W"]=np.ones((nrows,),np.float32)
 
                 ################
-                PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones)
+                #PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones)
+                PM.GiveCovariance2(Solver.VS.ThisDataChunk,Jones)
                 ################
                 # PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
                 # Diff=Solver.VS.ThisDataChunk["data"]-PredictData
@@ -346,12 +363,13 @@ def main(options=None):
                 
 
 
-    
-    FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.ms),options.SolverType)
-    print>>log, "Save Solutions in file: %s"%FileName
-    Sols=Solver.GiveSols()
-    StationNames=np.array(Solver.VS.MS.StationNames)
-    np.savez(FileName,Sols=Sols,StationNames=StationNames,SkyModel=SM.ClusterCat,ClusterCat=SM.ClusterCat)
+    if SaveSols:
+        FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.ms),options.SolverType)
+        print>>log, "Save Solutions in file: %s"%FileName
+        Sols=Solver.GiveSols()
+        StationNames=np.array(Solver.VS.MS.StationNames)
+        np.savez(FileName,Sols=Sols,StationNames=StationNames,SkyModel=SM.ClusterCat,ClusterCat=SM.ClusterCat)
+
     NpShared.DelAll(IdSharedMem)
 
     

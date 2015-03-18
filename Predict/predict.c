@@ -16,6 +16,7 @@
 /* ==== Set up the methods table ====================== */
 static PyMethodDef predict_Methods[] = {
 	{"predict", predict, METH_VARARGS},
+	{"GiveMaxCorr", GiveMaxCorr, METH_VARARGS},
 	{NULL, NULL}     /* Sentinel - marks the end of this structure */
 };
 
@@ -25,6 +26,187 @@ void initpredict()  {
 	(void) Py_InitModule("predict", predict_Methods);
 	import_array();  // Must be present for NumPy.  Called first after above line.
 }
+
+
+void GiveJones(float complex *ptrJonesMatrices, int *JonesDims, float *ptrCoefs, int i_t, int i_ant0, int i_dir, float complex *Jout){
+  int nd_Jones,na_Jones,nch_Jones;
+  nd_Jones=JonesDims[1];
+  na_Jones=JonesDims[2];
+  nch_Jones=JonesDims[3];
+  
+  int ipol,idir;
+  int offJ0=i_t*nd_Jones*na_Jones*nch_Jones*4
+    +i_dir*na_Jones*nch_Jones*4
+    +i_ant0*nch_Jones*4;
+  for(ipol=0; ipol<4; ipol++){
+    Jout[ipol]=*(ptrJonesMatrices+offJ0+ipol);
+  }
+  
+}
+
+
+static PyObject *GiveMaxCorr(PyObject *self, PyObject *args)
+{
+  PyObject *ObjVisIn;
+  PyObject *LSM, *LJones;
+  PyArrayObject *NpVisIn, *NpUVWin, *matout;
+  float *p_l,*p_m,*p_alpha,*p_Flux, *WaveL;
+
+  int nrow,npol,nsources,i,dim[2];
+  
+  if (!PyArg_ParseTuple(args, "OO!",
+			&ObjVisIn,
+			&PyList_Type, &LJones))  return NULL;
+  
+
+
+
+  NpVisIn = (PyArrayObject *) PyArray_ContiguousFromObject(ObjVisIn, PyArray_COMPLEX64, 0, 3);
+  float complex* __restrict__ VisIn=p_complex64(NpVisIn);
+
+  
+
+
+
+  //////////////////////////////////////////////
+
+  int LengthJonesList=PyList_Size(LJones);
+  int DoApplyJones=0;
+  PyArrayObject *npJonesMatrices, *npTimeMappingJonesMatrices, *npA0, *npA1, *npJonesIDIR, *npCoefsInterp,*npModeInterpolation;
+  float complex* ptrJonesMatrices;
+  int *ptrTimeMappingJonesMatrices,*ptrA0,*ptrA1,*ptrJonesIDIR;
+  float *ptrCoefsInterp;
+  int i_dir;
+  int nd_Jones,na_Jones,nch_Jones,nt_Jones;
+  
+  int JonesDims[4];
+  int ModeInterpolation=1;
+  int *ptrModeInterpolation;
+
+  npTimeMappingJonesMatrices  = (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LJones, 0), PyArray_INT32, 0, 4);
+  ptrTimeMappingJonesMatrices = p_int32(npTimeMappingJonesMatrices);
+
+  npA0 = (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LJones, 1), PyArray_INT32, 0, 4);
+  ptrA0 = p_int32(npA0);
+
+  npA1= (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LJones, 2), PyArray_INT32, 0, 4);
+  ptrA1=p_int32(npA1);
+ 
+      
+  // (nt,nd,na,1,2,2)
+  npJonesMatrices = (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LJones, 3), PyArray_COMPLEX64, 0, 6);
+  ptrJonesMatrices=p_complex64(npJonesMatrices);
+  nt_Jones=(int)npJonesMatrices->dimensions[0];
+  nd_Jones=(int)npJonesMatrices->dimensions[1];
+  na_Jones=(int)npJonesMatrices->dimensions[2];
+  nch_Jones=(int)npJonesMatrices->dimensions[3];
+  JonesDims[0]=nt_Jones;
+  JonesDims[1]=nd_Jones;
+  JonesDims[2]=na_Jones;
+  JonesDims[3]=nch_Jones;
+  
+  /* npJonesIDIR= (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LJones, 4), PyArray_INT32, 0, 4); */
+  /* ptrJonesIDIR=p_int32(npJonesIDIR); */
+  /* i_dir=ptrJonesIDIR[0]; */
+
+  /* ////////////////////////////////////////////// */
+
+
+
+
+
+  
+  int ch,dd,nchan,ndir;
+  nrow=NpVisIn->dimensions[0];
+  nchan=NpVisIn->dimensions[1];
+
+  ndir=nd_Jones;
+
+  /* Get the dimensions of the input */
+  
+  /* Make a new double matrix of same dims */
+  //matout=(PyArrayObject *) PyArray_FromDims(2,dims,NPY_DOUBLE);
+
+  
+  
+  /* Do the calculation. */
+  float phase,l,m,n,u,v,w;
+  float complex c0,result;
+  float C=299792456.;
+  float PI=3.141592;
+  c0=2.*PI*I;
+  float complex *p0;
+  double *p1;
+  p0=VisIn;
+
+  int irow;
+
+
+  //float dnu=C/WaveL[0]-C/WaveL[nchan-1];
+  float PI_C=PI/C;
+  float phi,du,dv,dw,dphase;
+  float complex* __restrict__ visPtr_Uncorr;
+  float complex visPtr[4];
+  int ipol;
+
+  float *visMax;
+  visMax=malloc((nrow)*sizeof(float));
+  memset(visMax, 0, (nrow)*sizeof(float));
+  npy_intp NpShape[1];
+  NpShape[0]=nrow;
+  int npType=NPY_FLOAT32;
+
+  
+  PyArrayObject * NpVisMax = (PyArrayObject*)PyArray_SimpleNewFromData(1, NpShape, npType, visMax);
+  
+  /* for ( irow=0; irow<nrow; irow++)  { */
+  /*     int i_t=ptrTimeMappingJonesMatrices[irow]; */
+  /*     printf("%i %i \n",irow, i_t); */
+  /* } */
+
+  for(dd=0;dd<ndir;dd++){
+    int i_dir=dd;
+    VisIn=p0;
+
+
+    for ( irow=0; irow<nrow; irow++)  {
+
+      int i_t=ptrTimeMappingJonesMatrices[irow];
+      int i_ant0=ptrA0[irow];
+      int i_ant1=ptrA1[irow];
+      //printf("%i %i %i %i | ",dd, i_t,i_ant0,i_ant1);
+
+      
+      float complex J0[4]={0},J1[4]={0},J0inv[4]={0},J1H[4]={0},J1Hinv[4]={0},JJ[4]={0};
+      GiveJones(ptrJonesMatrices, JonesDims, ptrCoefsInterp, i_t, i_ant0, i_dir, J0);
+      GiveJones(ptrJonesMatrices, JonesDims, ptrCoefsInterp, i_t, i_ant1, i_dir, J1);
+      
+      MatInv(J0,J0inv,0);
+      MatH(J1,J1H);
+      MatInv(J1H,J1Hinv,0);
+
+      for(ch=0;ch<nchan;ch++){
+      	int doff = (irow * nchan + ch) * 4;
+
+      	visPtr_Uncorr  = VisIn  + doff;
+      	for(ipol =0; ipol<4;ipol++){
+      	  visPtr[ipol]=visPtr_Uncorr[ipol];
+      	}
+	    
+      	MatDot(J0inv,visPtr_Uncorr,visPtr);
+      	MatDot(visPtr,J1Hinv,visPtr);
+	
+      }
+      float Amp=cabs(visPtr[0]);
+
+      if(Amp>visMax[irow]){visMax[irow]=Amp;}
+    }
+  }
+
+  //return Py_None;  
+  return PyArray_Return(NpVisMax);
+}
+
 
 
 static PyObject *predict(PyObject *self, PyObject *args)
