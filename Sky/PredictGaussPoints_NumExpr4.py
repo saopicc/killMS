@@ -206,8 +206,12 @@ class WorkerPredict(multiprocessing.Process):
             DicoData["uvw"]=D["uvw"][Row0:Row1]
             DicoData["freqs"]=D["freqs"]
             DicoData["dfreqs"]=D["dfreqs"]
-            DicoData["UVW_dt"]=D["UVW_dt"]
+            # DicoData["UVW_dt"]=D["UVW_dt"]
             DicoData["infos"]=D["infos"]
+
+            #DicoData["IndRows_All_UVW_dt"]=D["IndRows_All_UVW_dt"]
+            #DicoData["All_UVW_dt"]=D["All_UVW_dt"]
+            DicoData["UVW_dt"]=D["UVW_dt"][Row0:Row1]
 
             # DicoData["IndexTimesThisChunk"]=D["IndexTimesThisChunk"][Row0:Row1]
             # it0=np.min(DicoData["IndexTimesThisChunk"])
@@ -220,6 +224,9 @@ class WorkerPredict(multiprocessing.Process):
             ApplyTimeJones=NpShared.SharedToDico("%sApplyTimeJones"%self.IdSharedMem)
 
             PM=ClassPredict(NCPU=1,DoSmearing=self.DoSmearing)
+
+            #print DicoData.keys()
+
 
             if self.Mode=="Predict":
                 PredictData=PM.predictKernelPolCluster(DicoData,self.SM,ApplyTimeJones=ApplyTimeJones)
@@ -425,6 +432,7 @@ class ClassPredict():
 
         DT=DicoData["infos"][1]
         UVW_dt=DicoData["UVW_dt"]
+        
         for iCluster in ListDirection:
             indSources=np.where(self.SourceCat.Cluster==iCluster)[0]
             ColOutDir=np.zeros(DataOut.shape,np.complex64)

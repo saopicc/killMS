@@ -43,9 +43,9 @@ from Wirtinger.ClassWirtingerSolver import ClassWirtingerSolver
 from Other import ClassTimeIt
 from Data import ClassVisServer
 
-from Sky.PredictGaussPoints_NumExpr3 import ClassPredictParallel as ClassPredict 
-#from Sky.PredictGaussPoints_NumExpr2 import ClassPredictParallel as ClassPredict_orig 
+from Sky.PredictGaussPoints_NumExpr4 import ClassPredictParallel as ClassPredict 
 
+#from Sky.PredictGaussPoints_NumExpr2 import ClassPredictParallel as ClassPredict_orig 
 #from Sky.PredictGaussPoints_NumExpr3 import ClassPredict as ClassPredict 
 #from Sky.PredictGaussPoints_NumExpr2 import ClassPredict as ClassPredict_orig 
 
@@ -135,37 +135,6 @@ def read_options():
     f = open("last_killMS.obj","wb")
     pickle.dump(options,f)
     
-def PrintOptions(options,IdSharedMem):
-    print ModColor.Str(" killMS configuration")
-    print "   - MS Name: %s"%ModColor.Str(options.ms,col="green")
-    print "   - Reading %s, and writting to %s"%(ModColor.Str(options.InCol,col="green"),ModColor.Str(options.OutCol,col="green"))
-
-
-    
-    # print options.TChunk
-    if options.LOFARBeam!="":
-        mode,DT=options.LOFARBeam.split(",")
-        print "   - LOFAR beam in %s mode with DT=%s"%(mode,DT)
-
-    #print options.kills
-    #print options.invert
-    #print options.SubOnly
-    
-    print "   - Apply calibration: %s"%(options.ApplyCal)
-
-
-    print "   - Algorithm %s in %s mode [%i CPU]"%(ModColor.Str(options.SolverType,col="green") ,ModColor.Str(options.PolMode,col="green"),options.NCPU)
-    print "   - Solution time interval %5.2f min."%options.dt
-
-    if options.SolverType=="CohJones":
-        print "   - Number of iterations %i"%options.NIter
-    if options.SolverType=="KAFCA":
-        print "   - Covariance %5.1f of the initial gain amplitude"%float(options.CovP)
-        if options.InitLM==1:
-            print "   - Initialise using Levenberg-Maquardt with dt=%5.1f"%float(options.InitLM_dt)
-
-    print "   - IdSharedMem %s"%(IdSharedMem)
-    print
 
 def main(options=None):
     
@@ -178,7 +147,6 @@ def main(options=None):
     #IdSharedMem=str(int(np.random.rand(1)[0]*100000))+"."
     global IdSharedMem
     IdSharedMem=str(int(os.getpid()))+"."
-    #PrintOptions(options,IdSharedMem)
     DoApplyCal=(options.ApplyCal!=-2)
     ApplyCal=int(options.ApplyCal)
     ReWeight=(options.ReWeight==1)
@@ -291,9 +259,13 @@ def main(options=None):
         if Load=="EndOfObservation":
             break
 
-        Solver.doNextTimeSolve_Parallel()
-        #Solver.doNextTimeSolve_Parallel(SkipMode=True)
-        #Solver.doNextTimeSolve()
+        if options.ExtSols=="":
+            Solver.doNextTimeSolve_Parallel()
+            #Solver.doNextTimeSolve_Parallel(SkipMode=True)
+            #Solver.doNextTimeSolve()
+            Sols=Solver.GiveSols()
+        else:
+            Sols=np.load(options.ExtSols)["Sols"]
 
         # substract
         #ind=np.where(SM.SourceCat.kill==1)[0]
@@ -341,6 +313,8 @@ def main(options=None):
                 Weights=Solver.VS.ThisDataChunk["W"]
                 Weights=Weights.reshape((Weights.size,1))*np.ones((1,4))
                 Solver.VS.MS.Weights[:]=Weights[:]
+
+                print>>log, "  Writting in WEIGHT column "
                 t=table(Solver.VS.MS.MSName,readonly=False,ack=False)
                 t.putcol("WEIGHT",Solver.VS.MS.Weights)
                 t.close()

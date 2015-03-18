@@ -9,8 +9,8 @@ from Other import ClassTimeIt
 from Other import ModColor
 from Array import ModLinAlg
 MyLogger.setSilent(["NpShared"])
-#from Sky.PredictGaussPoints_NumExpr3 import ClassPredictParallel as ClassPredict 
-from Sky.PredictGaussPoints_NumExpr3 import ClassPredict as ClassPredict 
+from Sky.PredictGaussPoints_NumExpr3 import ClassPredictParallel as ClassPredict 
+#from Sky.PredictGaussPoints_NumExpr3 import ClassPredict as ClassPredict 
 import ClassWeighting
 
 class ClassVisServer():
@@ -375,6 +375,26 @@ class ClassVisServer():
         #################################################
 
 
+        Dt_UVW_dt=1.*3600
+        t0=times[0]
+        t1=times[-1]
+        All_UVW_dt=[]
+        Times=np.arange(t0,t1,Dt_UVW_dt).tolist()
+        if not(t1 in Times): Times.append(t1+1)
+
+        All_UVW_dt=np.array([],np.float32).reshape((0,3))
+        for it in range(len(Times)-1):
+            t0=Times[it]
+            t1=Times[it+1]
+            tt=(t0+t1)/2.
+            indRows=np.where((times>=t0)&(times<t1))[0]
+            All_UVW_dt=np.concatenate((All_UVW_dt,self.MS.Give_dUVW_dt(tt,A0[indRows],A1[indRows])))
+
+            
+
+        UVW_dt=All_UVW_dt
+        
+
 
         #NpShared.PackListArray("%sUVW_Ants"%self.IdSharedMem,Luvw)
         #self.UVW_RefAnt=NpShared.ToShared("%sUVW_RefAnt"%self.IdSharedMem,Luvw)
@@ -396,7 +416,9 @@ class ClassVisServer():
                        "infos":np.array([MS.na,MS.TimeInterVal[0]]),
                        #"IndexTimesThisChunk":indexTimes,
                        #"UVW_RefAnt": Luvw,
-                       "W":self.VisWeights[MS.ROW0:MS.ROW1]
+                       "W":self.VisWeights[MS.ROW0:MS.ROW1],
+                       #"IndRows_All_UVW_dt":IndRows_All_UVW_dt,
+                       "UVW_dt":UVW_dt
                      }
         
         self.ThisDataChunk=ThisDataChunk#NpShared.DicoToShared("%sThisDataChunk"%self.IdSharedMem,ThisDataChunk)
