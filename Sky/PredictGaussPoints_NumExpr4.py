@@ -350,7 +350,10 @@ class ClassPredict():
         med=np.median(MaxVis)
         
         W=DicoData["W"]
-        dev=1./((MaxVis-med)/rms)**2
+        diff=(MaxVis-med)/rms
+        print rms
+        dev=1./()**2
+
         W*=dev
         W/=np.mean(W)
         
