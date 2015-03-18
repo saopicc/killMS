@@ -161,7 +161,8 @@ static PyObject *GiveMaxCorr(PyObject *self, PyObject *args)
   NpShape[0]=ndir;
   PyArrayObject * NpStdDir = (PyArrayObject*)PyArray_SimpleNewFromData(1, NpShape, npTypeF32, StdDir);
 
-  float complex *SumDir=calloc(1,(ndir)*sizeof(complex float));
+  float complex *SumDir=calloc(1,(ndir)*sizeof(float complex));
+  float complex *SumDirSq=calloc(1,(ndir)*sizeof(float complex));
 
   for(dd=0;dd<ndir;dd++){
     int i_dir=dd;
@@ -190,12 +191,19 @@ static PyObject *GiveMaxCorr(PyObject *self, PyObject *args)
       	MatDot(visPtr,J1Hinv,visPtr);
 	
       }
-      float complex Amp=visPtr[0];
-      SumDir[dd]+=Amp;
+      float complex V=visPtr[0];
+      SumDir[dd]+=V;
+      float Amp=cabs(V);
+      SumDirSq[dd]+=(Amp*Amp);
     }
   }
   
-  
+  for(dd=0;dd<ndir;dd++){
+    SumDir[dd]/=nrow;
+    SumDirSq[dd]/=nrow;
+    StdDir[dd]=SumDirSq[dd]-SumDir[dd]*SumDir[dd];
+  }
+
   /* for ( irow=0; irow<nrow; irow++)  { */
   /*     int i_t=ptrTimeMappingJonesMatrices[irow]; */
   /*     printf("%i %i \n",irow, i_t); */
@@ -234,7 +242,7 @@ static PyObject *GiveMaxCorr(PyObject *self, PyObject *args)
       	MatDot(visPtr,J1Hinv,visPtr);
 	
       }
-      float Amp=cabs(visPtr[0]);
+      float Amp=cabs(visPtr[0])/StdDir[dd];
 
       if(Amp>visMax[irow]){visMax[irow]=Amp;}
     }

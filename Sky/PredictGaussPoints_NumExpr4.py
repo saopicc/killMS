@@ -240,7 +240,7 @@ class WorkerPredict(multiprocessing.Process):
             elif self.Mode=="ApplyCal":
                 PM.ApplyCal(DicoData,ApplyTimeJones,self.iCluster)
             elif self.Mode=="GiveCovariance":
-                PM.GiveCovariance2(DicoData,ApplyTimeJones)
+                PM.GiveCovariance(DicoData,ApplyTimeJones)
 
 
             self.result_queue.put(True)
@@ -333,7 +333,7 @@ class ClassPredict():
         ParamJonesList=[MapJones,A0,A1,JonesMatrices]
         return ParamJonesList
 
-    def GiveCovariance2(self,DicoData,ApplyTimeJones):
+    def GiveCovariance(self,DicoData,ApplyTimeJones):
         D=ApplyTimeJones
         Beam=D["Beam"]
         BeamH=D["BeamH"]
@@ -348,7 +348,7 @@ class ClassPredict():
         MaxVis=predict.GiveMaxCorr(DicoData["data"],ParamJonesList)
         rms=findrms.findrms(MaxVis)
         med=np.median(MaxVis)
-        
+
         W=DicoData["W"]
         diff=(MaxVis-med)/rms
         print rms
@@ -360,62 +360,62 @@ class ClassPredict():
         
 
 
-    def GiveCovariance(self,DicoData,ApplyTimeJones):
-        D=ApplyTimeJones
-        Beam=D["Beam"]
-        BeamH=D["BeamH"]
-        lt0,lt1=D["t0"],D["t1"]
-        A0=DicoData["A0"]
-        A1=DicoData["A1"]
-        times=DicoData["times"]
-        na=DicoData["infos"][0]
+    # def GiveCovariance(self,DicoData,ApplyTimeJones):
+    #     D=ApplyTimeJones
+    #     Beam=D["Beam"]
+    #     BeamH=D["BeamH"]
+    #     lt0,lt1=D["t0"],D["t1"]
+    #     A0=DicoData["A0"]
+    #     A1=DicoData["A1"]
+    #     times=DicoData["times"]
+    #     na=DicoData["infos"][0]
 
-        nt,nd,na,nch,_,_=Beam.shape
+    #     nt,nd,na,nch,_,_=Beam.shape
         
-        W=DicoData["W"]#np.zeros((times.size,),np.float32)
+    #     W=DicoData["W"]#np.zeros((times.size,),np.float32)
 
-        #print "tot",times.size
-        for it in range(lt0.size):
-            t0,t1=lt0[it],lt1[it]
-            ind=np.where((times>=t0)&(times<t1))[0]
-            if ind.size==0: continue
-            #print it,t0,t1,ind.size
-            #print "tot0",ind.size
+    #     #print "tot",times.size
+    #     for it in range(lt0.size):
+    #         t0,t1=lt0[it],lt1[it]
+    #         ind=np.where((times>=t0)&(times<t1))[0]
+    #         if ind.size==0: continue
+    #         #print it,t0,t1,ind.size
+    #         #print "tot0",ind.size
 
 
-            A0sel=A0[ind]
-            A1sel=A1[ind]
+    #         A0sel=A0[ind]
+    #         A1sel=A1[ind]
             
-            if "ChanMap" in ApplyTimeJones.keys():
-                ChanMap=ApplyTimeJones["ChanMap"]
-            else:
-                ChanMap=range(nf)
+    #         if "ChanMap" in ApplyTimeJones.keys():
+    #             ChanMap=ApplyTimeJones["ChanMap"]
+    #         else:
+    #             ChanMap=range(nf)
 
-            for ichan in range(len(ChanMap)):
-                JChan=ChanMap[ichan]
+    #         for ichan in range(len(ChanMap)):
+    #             JChan=ChanMap[ichan]
 
-                J=Beam[it,:,:,JChan,:,:].reshape((nd,na,4))
-                JH=BeamH[it,:,:,JChan,:,:].reshape((nd,na,4))
+    #             J=Beam[it,:,:,JChan,:,:].reshape((nd,na,4))
+    #             JH=BeamH[it,:,:,JChan,:,:].reshape((nd,na,4))
                 
-                Jinv=ModLinAlg.BatchInverse(J)
-                JHinv=ModLinAlg.BatchInverse(JH)
-                W0=np.abs(ModLinAlg.BatchDot(Jinv[:,A0sel,:],JHinv[:,A1sel,:]))
-                Wm=np.mean(np.abs(W0[:,:,0]),axis=0)**(-2)
+    #             Jinv=ModLinAlg.BatchInverse(J)
+    #             JHinv=ModLinAlg.BatchInverse(JH)
+    #             W0=np.abs(ModLinAlg.BatchDot(Jinv[:,A0sel,:],JHinv[:,A1sel,:]))
+    #             Wm=np.mean(np.abs(W0[:,:,0]),axis=0)**(-2)
 
-                # gid=np.abs(J[:,A0sel,0])
-                # gjd=np.abs(J[:,A1sel,0])
-                # gi=np.mean(gid,axis=0)
-                # gj=np.mean(gjd,axis=0)
-                # p=0.01
-                # Wm=p**2*(1./gi**2+1./gj**2+p**2/(gi*gj)**2)
+    #             # gid=np.abs(J[:,A0sel,0])
+    #             # gjd=np.abs(J[:,A1sel,0])
+    #             # gi=np.mean(gid,axis=0)
+    #             # gj=np.mean(gjd,axis=0)
+    #             # p=0.01
+    #             # Wm=p**2*(1./gi**2+1./gj**2+p**2/(gi*gj)**2)
 
 
-                W[ind]=Wm[:]
+    #             W[ind]=Wm[:]
 
-        W/=np.mean(W)
+    #     W/=np.mean(W)
 
-        #W=W.reshape((W.size,1))*np.ones((1,4))
-        #return W
+    #     #W=W.reshape((W.size,1))*np.ones((1,4))
+    #     #return W
 
 
 
