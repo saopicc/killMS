@@ -352,10 +352,11 @@ class ClassPredict():
         W=DicoData["W"]
         diff=(MaxVis-med)/rms
         print rms
-        dev=1./()**2
-
-        W*=dev
-        W/=np.mean(W)
+        diff[diff==0]=1e-6
+        dev=1./(1.+diff)**2
+        W[diff>3.]=0
+        # W*=dev
+        # W/=np.mean(W)
         
 
 
@@ -452,10 +453,10 @@ class ClassPredict():
             Jones=Jones.reshape((NDir,na,4))
             JonesH=ModLinAlg.BatchH(Jones)
 
-        self.DoSmearing="FT"
+        print self.DoSmearing
         TSmear=0.
         FSmear=0.
-        
+        stop
         if "T" in self.DoSmearing:
             TSmear=1.
         if "F" in self.DoSmearing:
@@ -499,7 +500,7 @@ class ClassPredict():
             LSM=[l,m,fluxFreq]
             LFreqs=[WaveL,np.float32(self.freqs),dnu]
             LUVWSpeed=[UVW_dt,DT]
-            TSmear=0.
+
             LSmearMode=[FSmear,TSmear]
             T.timeit("init")
             predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode)

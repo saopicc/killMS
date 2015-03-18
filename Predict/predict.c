@@ -325,13 +325,14 @@ static PyObject *predict(PyObject *self, PyObject *args)
   	    result*=phi;
   	  };
   	  if(TSmear==1){
+	    
   	    du=UVW_dt[3*i]*l;
   	    dv=UVW_dt[3*i+1]*m;
   	    dw=UVW_dt[3*i+2]*n;
   	    dphase=(du+dv+dw)*DT;
   	    phi=PI*PI_C*p_Freqs[ch]*dphase;
   	    //printf("phi = %f\n",phi);
-  	    //printf("dphase = %f\n",dphase);
+  	    printf("dphase = %f\n",dphase);
   	    phi=sin(phi)/(phi);
   	    result*=phi;
   	  };

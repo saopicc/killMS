@@ -224,7 +224,7 @@ def main(options=None):
                                 evP_Step=options.evP_Step,evP_StepStart=options.evP_StepStart,
                                 DoPlot=options.DoPlot,
                                 Lambda=options.Lambda,
-                                IdSharedMem=IdSharedMem)
+                                IdSharedMem=IdSharedMem,DoSmearing=DoSmearing)
     Solver.InitSol(TestMode=False)
     PM=ClassPredict(NCPU=NCPU,IdMemShared=IdSharedMem,DoSmearing=DoSmearing)
     PM2=None#ClassPredict_orig(NCPU=NCPU,IdMemShared=IdSharedMem)
@@ -393,7 +393,7 @@ def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2):
                                     NIter=options.NIter,NCPU=options.NCPU,
                                     SolverType="CohJones",
                                     DoPlot=options.DoPlot,
-                                    DoPBar=False,IdSharedMem=IdSharedMem)
+                                    DoPBar=False,IdSharedMem=IdSharedMem,DoSmearing=options.Decorrelation)
     SolverInit.InitSol(TestMode=False)
     SolverInit.doNextTimeSolve_Parallel(OnlyOne=True)
     #SolverInit.doNextTimeSolve()
