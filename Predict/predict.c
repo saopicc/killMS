@@ -149,15 +149,52 @@ static PyObject *GiveMaxCorr(PyObject *self, PyObject *args)
   float complex visPtr[4];
   int ipol;
 
-  float *visMax;
-  visMax=malloc((nrow)*sizeof(float));
+  float *visMax=malloc((nrow)*sizeof(float));
   memset(visMax, 0, (nrow)*sizeof(float));
   npy_intp NpShape[1];
   NpShape[0]=nrow;
-  int npType=NPY_FLOAT32;
-
+  int npTypeF32=NPY_FLOAT32;
+  PyArrayObject * NpVisMax = (PyArrayObject*)PyArray_SimpleNewFromData(1, NpShape, npTypeF32, visMax);
   
-  PyArrayObject * NpVisMax = (PyArrayObject*)PyArray_SimpleNewFromData(1, NpShape, npType, visMax);
+  float *StdDir=malloc((ndir)*sizeof(float));
+  memset(StdDir, 0, (ndir)*sizeof(float));
+  NpShape[0]=ndir;
+  PyArrayObject * NpStdDir = (PyArrayObject*)PyArray_SimpleNewFromData(1, NpShape, npTypeF32, StdDir);
+
+  float complex *SumDir=calloc(1,(ndir)*sizeof(complex float));
+
+  for(dd=0;dd<ndir;dd++){
+    int i_dir=dd;
+    VisIn=p0;
+
+
+    for ( irow=0; irow<nrow; irow++)  {
+
+      int i_t=ptrTimeMappingJonesMatrices[irow];
+      int i_ant0=ptrA0[irow];
+      int i_ant1=ptrA1[irow];
+      float complex J0[4]={0},J1[4]={0},J0inv[4]={0},J1H[4]={0},J1Hinv[4]={0},JJ[4]={0};
+      GiveJones(ptrJonesMatrices, JonesDims, ptrCoefsInterp, i_t, i_ant0, i_dir, J0);
+      GiveJones(ptrJonesMatrices, JonesDims, ptrCoefsInterp, i_t, i_ant1, i_dir, J1);
+      
+      MatInv(J0,J0inv,0);
+      MatH(J1,J1H);
+      MatInv(J1H,J1Hinv,0);
+
+      for(ch=0;ch<nchan;ch++){
+      	int doff = (irow * nchan + ch) * 4;
+
+      	visPtr_Uncorr  = VisIn  + doff;
+	    
+      	MatDot(J0inv,visPtr_Uncorr,visPtr);
+      	MatDot(visPtr,J1Hinv,visPtr);
+	
+      }
+      float complex Amp=visPtr[0];
+      SumDir[dd]+=Amp;
+    }
+  }
+  
   
   /* for ( irow=0; irow<nrow; irow++)  { */
   /*     int i_t=ptrTimeMappingJonesMatrices[irow]; */

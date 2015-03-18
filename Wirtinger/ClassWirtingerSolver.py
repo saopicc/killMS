@@ -227,7 +227,23 @@ class ClassWirtingerSolver():
         else:
 
             P=(sigP**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*np.diag(np.ones((nd*npol*npol),np.complex128)) for iAnt in range(na)])
-            Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*np.diag(np.ones((nd*npol*npol),np.complex128)) for iAnt in range(na)])
+
+
+            ra=self.SM.ClusterCat.ra
+            dec=self.SM.ClusterCat.dec
+            n=ra.size
+            d=np.sqrt((ra.reshape((ns,1))-ra.reshape((1,ns)))**2+(dec.reshape((ns,1))-dec.reshape((1,ns)))**2)
+            d0=2.*np.pi/180
+            QQ=(1./(1.+d/d0))**2
+
+            # Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*np.diag(np.ones((nd*npol*npol),np.complex128)) for iAnt in range(na)])
+            Qa=np.zeros((nd,npol,npol,nd,npol,npol),np.complex128)
+            for ipol in range(npol):
+                for jpol in range(npol):
+                    Qa[:,ipol,jpol,:,ipol,jpol]=QQ[:,:]
+            Qa=Qa.reshape((nd*npol*npol,nd*npol*npol))
+            Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*Qa for iAnt in range(na)])
+
             #P=(sigP**2)*np.array([np.complex128(np.diag(np.abs(self.G[iAnt]).flatten())) for iAnt in range(na)])
             #Q=(sigQ**2)*np.array([np.complex128(np.diag(np.abs(self.G[iAnt]).flatten())) for iAnt in range(na)])
 
