@@ -240,7 +240,7 @@ class WorkerPredict(multiprocessing.Process):
             elif self.Mode=="ApplyCal":
                 PM.ApplyCal(DicoData,ApplyTimeJones,self.iCluster)
             elif self.Mode=="GiveCovariance":
-                PM.GiveCovariance(DicoData,ApplyTimeJones)
+                PM.GiveCovariance2(DicoData,ApplyTimeJones)
 
 
             self.result_queue.put(True)

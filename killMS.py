@@ -43,8 +43,8 @@ from Wirtinger.ClassWirtingerSolver import ClassWirtingerSolver
 from Other import ClassTimeIt
 from Data import ClassVisServer
 
-#from Sky.PredictGaussPoints_NumExpr4 import ClassPredictParallel as ClassPredict 
-from Sky.PredictGaussPoints_NumExpr4 import ClassPredict as ClassPredict 
+from Sky.PredictGaussPoints_NumExpr4 import ClassPredictParallel as ClassPredict 
+#from Sky.PredictGaussPoints_NumExpr4 import ClassPredict as ClassPredict 
 
 #from Sky.PredictGaussPoints_NumExpr2 import ClassPredictParallel as ClassPredict_orig 
 #from Sky.PredictGaussPoints_NumExpr3 import ClassPredict as ClassPredict 
@@ -313,7 +313,7 @@ def main(options=None):
 
                 ################
                 #PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones)
-                PM.GiveCovariance2(Solver.VS.ThisDataChunk,Jones)
+                PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones)
                 ################
                 # PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
                 # Diff=Solver.VS.ThisDataChunk["data"]-PredictData
