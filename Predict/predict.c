@@ -45,8 +45,9 @@ static PyObject *predict(PyObject *self, PyObject *args)
 			&PyList_Type, &LUVWSpeed,
 			&PyList_Type, &LSmearMode))  return NULL;
   
-  NpVisIn = (PyArrayObject *) PyArray_ContiguousFromObject(ObjVisIn, PyArray_COMPLEX64, 0, 3);
-  float complex* __restrict__ VisIn=p_complex64(NpVisIn);
+  NpVisIn = (PyArrayObject *) PyArray_ContiguousFromObject(ObjVisIn, PyArray_COMPLEX64, 0, 4);
+
+  float complex* VisIn=p_complex64(NpVisIn);
 
   PyArrayObject *Np_l;
   Np_l = (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LSM, 0), PyArray_FLOAT32, 0, 4);
@@ -96,9 +97,6 @@ static PyObject *predict(PyObject *self, PyObject *args)
 
   /* Get the dimensions of the input */
   
-  /* Make a new double matrix of same dims */
-  //matout=(PyArrayObject *) PyArray_FromDims(2,dims,NPY_DOUBLE);
-  
   
   /* Do the calculation. */
   float phase,l,m,n,u,v,w;
@@ -111,7 +109,7 @@ static PyObject *predict(PyObject *self, PyObject *args)
   p0=VisIn;
   p1=UVWin;
   float complex c1[nchan];
-  for(ch=0;ch<nchan;ch++){ 
+  for(ch=0;ch<nchan;ch++){
     c1[ch]=c0/WaveL[ch];
     //printf("chan %f,%f: l=%f\n",creal(c1[ch]),cimag(c1[ch]),WaveL[ch]);
   }
@@ -138,23 +136,23 @@ static PyObject *predict(PyObject *self, PyObject *args)
 
   	for(ch=0;ch<nchan;ch++){
   	  //printf("ch: %i %f\n",ch,WaveL[ch]);
-	  result=p_Flux[dd*nchan+ch]*cexp(phase*c1[ch]);
-	  if(FSmear==1){
-	    phi=PI*PI_C*p_DFreqs[ch]*phase;
-	    phi=sin(phi)/(phi);
-	    result*=phi;
-	  };
-	  if(TSmear==1){
-	    du=UVW_dt[3*i]*l;
-	    dv=UVW_dt[3*i+1]*m;
-	    dw=UVW_dt[3*i+2]*n;
-	    dphase=(du+dv+dw)*DT;
-	    phi=PI*PI_C*p_Freqs[ch]*dphase;
-	    //printf("phi = %f\n",phi);
-	    //printf("dphase = %f\n",dphase);
-	    phi=sin(phi)/(phi);
-	    result*=phi;
-	  };
+  	  result=p_Flux[dd*nchan+ch]*cexp(phase*c1[ch]);
+  	  if(FSmear==1){
+  	    phi=PI*PI_C*p_DFreqs[ch]*phase;
+  	    phi=sin(phi)/(phi);
+  	    result*=phi;
+  	  };
+  	  if(TSmear==1){
+  	    du=UVW_dt[3*i]*l;
+  	    dv=UVW_dt[3*i+1]*m;
+  	    dw=UVW_dt[3*i+2]*n;
+  	    dphase=(du+dv+dw)*DT;
+  	    phi=PI*PI_C*p_Freqs[ch]*dphase;
+  	    //printf("phi = %f\n",phi);
+  	    //printf("dphase = %f\n",dphase);
+  	    phi=sin(phi)/(phi);
+  	    result*=phi;
+  	  };
 
 
   	  //printf("\n");
@@ -166,8 +164,8 @@ static PyObject *predict(PyObject *self, PyObject *args)
     }
   }
 
-  return Py_None;  
-  //return PyArray_Return(NpVisIn);
+  //return Py_None;  
+  return PyArray_Return(NpVisIn);
 }
 
 
