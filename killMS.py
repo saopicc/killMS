@@ -70,6 +70,8 @@ def read_options():
     group.add_option('--OutCol',help='Column to write to. Default is %default',default="CORRECTED_DATA")
     group.add_option('--LOFARBeam',help='(Mode, Time): Mode can be AE, E, or A for "Array factor" and "Element beam". Time is the estimation time step',default="")
     group.add_option('--UVMinMax',help='Baseline length selection in km. For example --UVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default',default=None)
+    group.add_option('--FlagAnts',type="str",help='FlagAntenna patern. Default is %default',default="")
+
     opt.add_option_group(group)
 
     group = optparse.OptionGroup(opt, "* Source selection options")
@@ -197,7 +199,9 @@ def main(options=None):
         sUVmin,sUVmax=options.UVMinMax.split(",")
         UVmin,UVmax=float(sUVmin),float(sUVmax)
         DicoSelectOptions["UVRangeKm"]=UVmin,UVmax
-
+    if options.FlagAnts!="":
+        FlagAnts=options.FlagAnt.split(",")
+        DicoSelectOptions["FlagAnts"]=FlagAnts
 
     SM=ClassSM.ClassSM(options.SkyModel,
                        killdirs=kills,invert=invert)
