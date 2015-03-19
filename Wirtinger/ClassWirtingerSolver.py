@@ -393,7 +393,7 @@ class ClassWirtingerSolver():
                     pylab.plot(np.abs(Gnew.flatten())-sig,color="black",ls="--")
                     self.P[:]=Pnew[:]
                 pylab.plot(np.abs(self.G.flatten()))
-                pylab.ylim(0,2)
+                # pylab.ylim(0,2)
                 pylab.draw()
                 pylab.show(False)
                 self.G[:]=Gnew[:]
@@ -572,6 +572,7 @@ class ClassWirtingerSolver():
                     if self.SolverType=="KAFCA":
                         pylab.plot(np.abs(self.G[AntPlot].flatten())+sig,color="black",ls="--")
                         pylab.plot(np.abs(self.G[AntPlot].flatten())-sig,color="black",ls="--")
+
                     #pylab.ylim(0,2)
                     pylab.draw()
                     pylab.show(False)

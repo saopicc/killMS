@@ -123,7 +123,7 @@ class ClassJacobianAntenna():
 
         for key in kwargs.keys():
             setattr(self,key,kwargs[key])
-
+        
         self.PM=ClassPredict(Precision=Precision,DoSmearing=self.DoSmearing)
         T.timeit("PM")
         if Precision=="D":
@@ -137,7 +137,7 @@ class ClassJacobianAntenna():
         self.iAnt=iAnt
         self.SharedDataDicoName="%sDicoData.%2.2i"%(self.IdSharedMem,self.iAnt)
         self.HasKernelMatrix=False
-
+        self.LQxInv=None
 
         if self.PolMode=="HalfFull":
             self.NJacobBlocks=2
@@ -165,8 +165,13 @@ class ClassJacobianAntenna():
     def GivePaPol(self,Pa_in,ipol):
         PaPol=Pa_in.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks,self.NDir,self.NJacobBlocks,self.NJacobBlocks))
         PaPol=PaPol[:,ipol,:,:,ipol,:].reshape((self.NDir*self.NJacobBlocks,self.NDir*self.NJacobBlocks))
-        #PaPol=np.diag(np.max(Pa_in)*np.ones((PaPol.shape[0],),np.complex128))
         return PaPol
+
+    def setQxInvPol(self):
+        QxInv=np.ones((self.NDir,1,self.NJacobBlocks,self.NDir,1,self.NJacobBlocks),np.float32)
+        QxInv*=(self.gamma**2)*1./(self.AmpQx**2)
+        QxInv=QxInv.reshape((self.NDir*self.NJacobBlocks,self.NDir*self.NJacobBlocks))
+        self.LQxInv=[QxInv,QxInv]
 
     def PrepareJHJ_EKF(self,Pa_in,rms):
         self.L_JHJinv=[]
@@ -184,6 +189,8 @@ class ClassJacobianAntenna():
             
             JHJ=self.L_JHJ[ipol]#*(1./rms**2)
             JHJ+=Pinv
+            if self.DoReg:
+                JHJ+=self.LQxInv[ipol]
             JHJinv=ModLinAlg.invSVD(JHJ)
             
             self.L_JHJinv.append(JHJinv)
@@ -214,11 +221,12 @@ class ClassJacobianAntenna():
             #JHJinv=ModLinAlg.invSVD(self.JHJ)
             self.L_JHJinv.append(JHJinv)
 
-    def ApplyK_vec(self,zr,rms,Pa):
+
+    def ApplyK_vec(self,zr,rms,Pa,DoReg=True):
 
         Rinv_zr=self.Rinv_flat*zr
         JH_z=self.JH_z(Rinv_zr)
-
+        
 
         # pylab.figure(1)
         # pylab.clf()
@@ -253,7 +261,13 @@ class ClassJacobianAntenna():
 
 
         x1 = self.JHJinv_x(JH_z)
-        z1=self.J_x(x1)
+        if (self.DoReg)&(DoReg):
+            self.G0=np.ones_like(self.Ga)
+            dx1a=self.Msq_x(self.LQxInv,(self.Ga-self.G0))
+            dx1b = self.JHJinv_x(dx1a)
+            x1+=dx1b
+
+        z1 = self.J_x(x1)
 
         # if self.iAnt==5:
         #     pylab.figure(1)
@@ -276,6 +290,12 @@ class ClassJacobianAntenna():
         zr-=z1
         zr*=self.Rinv_flat
         x2=self.JH_z(zr)
+
+        if (self.DoReg)&(DoReg):
+            xr=self.Ga.ravel()-self.G0.ravel()-x1.ravel()
+            dx2=self.Msq_x(self.LQxInv,xr)
+            x2+=dx2.reshape(x2.shape)
+
         x3=[]
         for ipol in range(self.NJacobBlocks):
             PaPol=self.GivePaPol(Pa,ipol)
@@ -283,16 +303,13 @@ class ClassJacobianAntenna():
             Prod=np.dot(PaPol,x2[:,ipol,:].flatten())
             x3.append(Prod.reshape((self.NDir,1,self.NJacobBlocks)))
 
+            
 
         x3=np.concatenate(x3,axis=1)
         #x3=np.swapaxes(x3,1,2)
 
         return x3
     
-    def EvolveStep(self,Gains,P):
-
-        Pa=P[self.iAnt]
-        G=Gains[self.iAnt]
 
         
     def doEKFStep(self,Gains,P,evP,rms):
@@ -307,12 +324,15 @@ class ClassJacobianAntenna():
         ind=np.where(f)[0]
         Pa=P[self.iAnt]
         Ga=self.GiveSubVecGainAnt(Gains)
+        self.Ga=Ga
         self.rms=rms
 
 
         self.rmsFromData=None
         if ind.size==0:
             return Ga.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks)),Pa,{"std":-1.,"max":-1.,"kapa":-1.}
+        if self.DoReg:
+            self.setQxInvPol()
         
         self.CalcJacobianAntenna(Gains)
         #T.timeit("Jacob")
@@ -386,9 +406,12 @@ class ClassJacobianAntenna():
         
         return x4.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks)),Pa_new1,InfoNoise
 
+
     def CalcMatrixEvolveCov(self,Gains,P,rms):
         if not(self.HasKernelMatrix):
             self.CalcKernelMatrix(rms)
+        if self.LQxInv==None:
+            self.setQxInvPol()
 #            self.CalcKernelMatrix(rms)
         self.CalcJacobianAntenna(Gains)
         Pa=P[self.iAnt]
@@ -400,7 +423,7 @@ class ClassJacobianAntenna():
 
         for iPar in range(Pa.shape[0]):
             J_Px=self.J_x(PaOnes[iPar,:])
-            xP=self.ApplyK_vec(J_Px,rms,Pa)
+            xP=self.ApplyK_vec(J_Px,rms,Pa,DoReg=False)
             evPa[iPar,:]=xP.flatten()
 
         # #evPa= PaOnes-evPa#(np.diag(np.diag(Pa-Pa_new)))#Pa-Pa_new#np.abs(np.diag(np.diag(Pa-Pa_new)))
@@ -494,14 +517,17 @@ class ClassJacobianAntenna():
                                         
     def JHJinv_x(self,Gains):
         G=[]
-        nd,_,_=Gains.shape
+        #nd,_,_=Gains.shape
+        Gains=Gains.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks))
         for polIndex in range(self.NJacobBlocks):
             Gain=Gains[:,polIndex,:]
+            print "JHJinv_x: %i %s . %s "%(polIndex,str(self.L_JHJinv[polIndex].shape),str(Gain.flatten().shape))
             Vec=np.dot(self.L_JHJinv[polIndex],Gain.flatten())
-            Vec=Vec.reshape((nd,1,self.NJacobBlocks))
+            Vec=Vec.reshape((self.NDir,1,self.NJacobBlocks))
             G.append(Vec)
             
         Gout=np.concatenate(G,axis=1)
+        print "JHJinv_x: Gout %s "%(str(Gout.shape))
         
         return Gout.flatten()
 
@@ -519,6 +545,24 @@ class ClassJacobianAntenna():
             z.append(np.dot(J,Gain))
         z=np.array(z)
         return z
+
+    def Msq_x(self,LM,Gains):
+        G=[]
+        Gains=Gains.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks))
+        for polIndex in range(self.NJacobBlocks):
+            Gain=Gains[:,polIndex,:]
+            print "Msq_x: %i %s . %s"%(polIndex,str(LM[polIndex].shape),str(Gain.flatten().shape))
+            Vec=np.dot(LM[polIndex],Gain.flatten())
+            Vec=Vec.reshape((self.NDir,1,self.NJacobBlocks))
+            G.append(Vec)
+            
+        Gout=np.concatenate(G,axis=1)
+        print "Msq_x: Gout %s "%(str(Gout.shape))
+        
+        return Gout.flatten()
+
+
+
 
     def JH_z(self,zin):
         #z=zin.reshape((self.NJacobBlocks,zin.size/self.NJacobBlocks))
@@ -599,7 +643,8 @@ class ClassJacobianAntenna():
             J=Jacob[flags==0]
             nrow,_=J.shape
             Rinv=self.Rinv_flat[polIndex][flags==0].reshape((nrow,1))
-            self.L_JHJ.append(np.dot(J.T.conj(),Rinv*J))
+            JHJ=np.dot(J.T.conj(),Rinv*J)
+            self.L_JHJ.append(JHJ)
         # self.JHJinv=np.linalg.inv(self.JHJ)
         # self.JHJinv=np.diag(np.diag(self.JHJinv))
 

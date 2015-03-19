@@ -230,7 +230,10 @@ def main(options=None):
     ResolutionRad=(options.Resolution/3600)*(np.pi/180)
     ConfigJacobianAntenna={"DoSmearing":DoSmearing,
                            "ResolutionRad":ResolutionRad,
-                           "Lambda":options.Lambda}
+                           "Lambda":options.Lambda,
+                           "DoReg":True,
+                           "gamma":1.,
+                           "AmpQx":.001}
 
     Solver=ClassWirtingerSolver(VS,SM,PolMode=options.PolMode,
                                 BeamProps=BeamProps,
@@ -277,9 +280,9 @@ def main(options=None):
 
         if options.ExtSols=="":
             SaveSols=True
-            Solver.doNextTimeSolve_Parallel()
+            #Solver.doNextTimeSolve_Parallel()
             #Solver.doNextTimeSolve_Parallel(SkipMode=True)
-            #Solver.doNextTimeSolve()
+            Solver.doNextTimeSolve()
             Sols=Solver.GiveSols()
         else:
             Sols=np.load(options.ExtSols)["Sols"]
