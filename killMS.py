@@ -200,7 +200,7 @@ def main(options=None):
         UVmin,UVmax=float(sUVmin),float(sUVmax)
         DicoSelectOptions["UVRangeKm"]=UVmin,UVmax
     if options.FlagAnts!="":
-        FlagAnts=options.FlagAnt.split(",")
+        FlagAnts=options.FlagAnts.split(",")
         DicoSelectOptions["FlagAnts"]=FlagAnts
 
     SM=ClassSM.ClassSM(options.SkyModel,

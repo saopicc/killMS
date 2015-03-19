@@ -275,15 +275,17 @@ class ClassWirtingerSolver():
         self.rms=-1
         if self.rmsFromData!=None:
             self.rms=self.rmsFromData
+            #print>>log," rmsFromDataJacobAnt: %s"%self.rms
         elif self.rmsFromExt!=None:
             self.rms=self.rmsFromExt
+            #print>>log," rmsFromExt: %s"%self.rms
         else:
             Dpol=DATA["data"][:,:,1:3]
             Fpol=DATA["flags"][:,:,1:3]
             self.rms=np.std(Dpol[Fpol==0])/np.sqrt(2.)
+            #print>>log," rmsFromGlobalData: %s"%self.rms
 
         #print "rms=",self.rms
-
 
         return True
 
@@ -556,12 +558,19 @@ class ClassWirtingerSolver():
 
 
                 if self.DoPlot:
-                    AntPlot=np.array(ListAntSolve)
+                    AntPlot=np.arange(self.VS.MS.na)#np.array(ListAntSolve)
                     pylab.clf()
                     pylab.plot(np.abs(self.G[AntPlot].flatten()))
                     pylab.plot(np.abs(Gold[AntPlot].flatten()))
+                    sig=[]
+                    for iiAnt in AntPlot:
+                        if iiAnt in ListAntSolve:
+                            sig.append(np.sqrt(np.abs(np.array([np.diag(self.P[iiAnt]) ]))).flatten())
+                        else:
+                            sig.append(np.zeros((self.SM.NDir,),self.P.dtype))
+                        
+                    sig=np.array(sig).flatten()
                     if self.SolverType=="KAFCA":
-                        sig=np.sqrt(np.abs(np.array([np.diag(self.P[i]) for i in ListAntSolve]))).flatten()
                         pylab.plot(np.abs(self.G[AntPlot].flatten())+sig,color="black",ls="--")
                         pylab.plot(np.abs(self.G[AntPlot].flatten())-sig,color="black",ls="--")
                     #pylab.ylim(0,2)

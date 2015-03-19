@@ -303,16 +303,16 @@ class ClassVisServer():
             nf=np.count_nonzero(fA)
             Frac=nf/float(fA.size)
             if Frac>self.ThresholdFlag:
-                print>>log, "Flagging antenna %i (~%4.1f%% of flagged data, more than %4.1f%%)"%\
-                    (A,Frac*100,self.ThresholdFlag*100)
+                print>>log, "Flagging antenna #%i [%s] (~%4.1f%% of flagged data, more than %4.1f%%)"%\
+                    (A,MS.StationNames[iAnt],Frac*100,self.ThresholdFlag*100)
                 self.FlagAntNumber.append(A)
                 
         if "FlagAnts" in self.DicoSelectOptions.keys():
-            FlagAnts=self.DicoSelectOptions[Field]
+            FlagAnts=self.DicoSelectOptions["FlagAnts"]
             for Name in FlagAnts:
                 for iAnt in range(MS.na):
                     if Name in MS.StationNames[iAnt]:
-                        print>>log, "Flagging antenna %i"%(iAnt)
+                        print>>log, "Flagging antenna #%i [%s]"%(iAnt,MS.StationNames[iAnt])
                         self.FlagAntNumber.append(iAnt)
             
 
