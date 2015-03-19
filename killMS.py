@@ -74,11 +74,6 @@ def read_options():
 
     opt.add_option_group(group)
 
-    group = optparse.OptionGroup(opt, "* Source selection options")
-    group.add_option('--kills',help='Name or number index of sources to kill',default="")
-    group.add_option('--invert',help='Invert the selected sources to kill',default="0")
-    opt.add_option_group(group)
-
     group = optparse.OptionGroup(opt, "* Weighting scheme")
     group.add_option('--Resolution',type="float",help='Resolution in arcsec. Default is %default',default=0.)
     group.add_option('--Weighting',type="str",help='Weighting scheme. Default is %default',default="Natural")
@@ -86,23 +81,26 @@ def read_options():
     opt.add_option_group(group)
 
     
-    group = optparse.OptionGroup(opt, "* Solution options")
-    group.add_option('--SubOnly',help='Substract the skymodel assuming unity Jones matrices (no solve). Default is %default',default="0")
+    group = optparse.OptionGroup(opt, "* Action options", "Default values should give reasonable results, but all of them have noticeable influence on the results")
+    #group.add_option('--SubOnly',help='Substract the skymodel assuming unity Jones matrices (no solve). Default is %default',default="0")
     group.add_option('--DoPlot',type="int",help='Plot the solutions, for debugging. Default is %default',default=0)
     group.add_option('--DoSub',type="int",help='Substact selected sources. Default is %default',default=1)
     group.add_option('--ApplyCal',type="int",help='Apply direction averaged gains to residual data in the mentioned direction. \
     If ApplyCal=-1 takes the mean gain over directions. -2 if off. Default is %default',default=-2)
-    opt.add_option_group(group)
     
-    group = optparse.OptionGroup(opt, "* Action options", "Default values should give reasonable results, but all of them have noticeable influence on the results")
-    group.add_option('--Steps',type="str",help='Number of cores to use. Default is %default ',default="Solve,Sustract")
+    #group.add_option('--Steps',type="str",help='Number of cores to use. Default is %default ',default="Solve,Sustract")
     group.add_option('--NCPU',type="int",help='Number of cores to use. Default is %default ',default=NCPU_default)
     opt.add_option_group(group)
 
-    
+    group = optparse.OptionGroup(opt, "* Source selection options")
+    group.add_option('--kills',help='Name or number index of sources to kill',default="")
+    group.add_option('--invert',help='Invert the selected sources to kill',default="0")
+    opt.add_option_group(group)
+
+   
     group = optparse.OptionGroup(opt, "* ApplyCal additional options", "Default values should give reasonable results, but all of them have noticeable influence on the results")
     group.add_option('--ExtSols',type="str",help='Substact selected sources. ',default="")
-    group.add_option('--ApplyMode',type="str",help='Substact selected sources. ',default="P")
+    group.add_option('--ApplyMode',type="str",help='Substact selected sources. ',default="AP")
     group.add_option('--ReWeight',type="int",help=' . Default is %default',default=1)
     group.add_option('--Decorrelation',type="str",help=' . Default is %default',default="FT")
     opt.add_option_group(group)
