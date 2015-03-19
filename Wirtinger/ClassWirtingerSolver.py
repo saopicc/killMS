@@ -97,12 +97,12 @@ class ClassWirtingerSolver():
                  evP_StepStart=0, evP_Step=1,
                  DoPlot=False,
                  DoPBar=True,
-                 DoSmearing="FT"):
+                 ConfigJacobianAntenna={}):
         self.IdSharedMem=IdSharedMem
+        self.ConfigJacobianAntenna=ConfigJacobianAntenna
         self.Lambda=Lambda
         self.NCPU=NCPU
         self.DoPBar=DoPBar
-        self.DoSmearing=DoSmearing
         if BeamProps!=None:
             rabeam,decbeam=SM.ClusterCat.ra,SM.ClusterCat.dec
             Mode,TimeMin=BeamProps
@@ -323,7 +323,7 @@ class ClassWirtingerSolver():
             ThisTime=tm
             T.timeit("stuff")
             for iAnt in ListAntSolve:
-                JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Lambda=self.Lambda,Precision="D",IdSharedMem=self.IdSharedMem,DoSmearing=self.DoSmearing)
+                JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Precision="D",IdSharedMem=self.IdSharedMem,**self.ConfigJacobianAntenna)
                 T.timeit("JM")
                 JM.setDATA_Shared()
                 T.timeit("Setdata_Shared")
@@ -445,7 +445,7 @@ class ClassWirtingerSolver():
         T.disable()
         for ii in range(NCPU):
              
-            W=WorkerAntennaLM(work_queue, result_queue,self.SM,self.PolMode,self.Lambda,self.SolverType,self.IdSharedMem,DoSmearing=self.DoSmearing)#,args=(e,))
+            W=WorkerAntennaLM(work_queue, result_queue,self.SM,self.PolMode,self.SolverType,self.IdSharedMem,ConfigJacobianAntenna=self.ConfigJacobianAntenna)#,args=(e,))
             workerlist.append(W)
             workerlist[ii].start()
 
@@ -606,8 +606,7 @@ import multiprocessing
 class WorkerAntennaLM(multiprocessing.Process):
     def __init__(self,
                  work_queue,
-                 result_queue,SM,PolMode,Lambda,SolverType,IdSharedMem,
-                 DoSmearing="FT"):
+                 result_queue,SM,PolMode,SolverType,IdSharedMem,ConfigJacobianAntenna):
         multiprocessing.Process.__init__(self)
         self.work_queue = work_queue
         self.result_queue = result_queue
@@ -615,10 +614,9 @@ class WorkerAntennaLM(multiprocessing.Process):
         self.exit = multiprocessing.Event()
         self.SM=SM
         self.PolMode=PolMode
-        self.Lambda=Lambda
         self.SolverType=SolverType
         self.IdSharedMem=IdSharedMem
-        self.DoSmearing=DoSmearing
+        self.ConfigJacobianAntenna=ConfigJacobianAntenna
         #self.DoCalcEvP=DoCalcEvP
         #self.ThisTime=ThisTime
         #self.e,=kwargs["args"]
@@ -633,7 +631,8 @@ class WorkerAntennaLM(multiprocessing.Process):
                 break
             #self.e.wait()
 
-            JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Lambda=self.Lambda,IdSharedMem=self.IdSharedMem,DoSmearing=self.DoSmearing)
+            JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,IdSharedMem=self.IdSharedMem,
+                                    **self.ConfigJacobianAntenna)
             JM.setDATA_Shared()
 
             G=NpShared.GiveArray("%sSharedGains"%self.IdSharedMem)

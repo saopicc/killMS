@@ -114,13 +114,17 @@ from Other import ClassTimeIt
 
 
 class ClassJacobianAntenna():
-    def __init__(self,SM,iAnt,PolMode="HalfFull",Lambda=1,Precision="S",IdSharedMem="",DoSmearing="FT"):
+    def __init__(self,SM,iAnt,PolMode="HalfFull",Precision="S",IdSharedMem="",**kwargs):
         T=ClassTimeIt.ClassTimeIt("ClassJacobianAntenna")
         T.disable()
         self.IdSharedMem=IdSharedMem
         self.PolMode=PolMode
         #self.PM=ClassPredict(Precision="S")
-        self.PM=ClassPredict(Precision=Precision,DoSmearing=DoSmearing)
+
+        for key in kwargs.keys():
+            setattr(self,key,kwargs[key])
+
+        self.PM=ClassPredict(Precision=Precision,DoSmearing=self.DoSmearing)
         T.timeit("PM")
         if Precision=="D":
             self.CType=np.complex128
@@ -133,7 +137,8 @@ class ClassJacobianAntenna():
         self.iAnt=iAnt
         self.SharedDataDicoName="%sDicoData.%2.2i"%(self.IdSharedMem,self.iAnt)
         self.HasKernelMatrix=False
-        self.Lambda=Lambda
+
+
         if self.PolMode=="HalfFull":
             self.NJacobBlocks=2
         elif self.PolMode=="Scalar":
@@ -290,12 +295,11 @@ class ClassJacobianAntenna():
         G=Gains[self.iAnt]
 
         
-    def doEKFStep(self,Gains,P,evP,rms,Resolution=0.):
+    def doEKFStep(self,Gains,P,evP,rms):
         T=ClassTimeIt.ClassTimeIt("EKF")
         T.disable()
         if not(self.HasKernelMatrix):
-            Resolution=(0./3600)*np.pi/180
-            self.CalcKernelMatrix(rms,Resolution=Resolution)
+            self.CalcKernelMatrix(rms)
             T.timeit("CalcKernelMatrix")
         z=self.DicoData["data_flat"]#self.GiveDataVec()
 
@@ -384,8 +388,7 @@ class ClassJacobianAntenna():
 
     def CalcMatrixEvolveCov(self,Gains,P,rms):
         if not(self.HasKernelMatrix):
-            Resolution=(0./3600)*np.pi/180
-            self.CalcKernelMatrix(rms,Resolution=Resolution)
+            self.CalcKernelMatrix(rms)
 #            self.CalcKernelMatrix(rms)
         self.CalcJacobianAntenna(Gains)
         Pa=P[self.iAnt]
@@ -600,7 +603,7 @@ class ClassJacobianAntenna():
         # self.JHJinv=np.linalg.inv(self.JHJ)
         # self.JHJinv=np.diag(np.diag(self.JHJinv))
 
-    def CalcKernelMatrix(self,rms=0.,Resolution=0.):
+    def CalcKernelMatrix(self,rms=0.):
         # Out[28]: ['freqs', 'times', 'A1', 'A0', 'flags', 'uvw', 'data']
         T=ClassTimeIt.ClassTimeIt("CalcKernelMatrix Ant=%i"%self.iAnt)
         T.disable()
@@ -614,7 +617,7 @@ class ClassJacobianAntenna():
         if self.PolMode=="HalfFull":
             npol=4
         T.timeit("stuff")
-        self.DicoData=self.GiveData(DATA,iAnt,rms=rms,Resolution=Resolution)
+        self.DicoData=self.GiveData(DATA,iAnt,rms=rms)
         T.timeit("data")
         # self.Data=self.DicoData["data"]
         self.A1=self.DicoData["A1"]
@@ -698,7 +701,7 @@ class ClassJacobianAntenna():
         T.timeit("stuff 4")
 
 
-    def GiveData(self,DATA,iAnt,rms=0.,Resolution=0.):
+    def GiveData(self,DATA,iAnt,rms=0.):
         
         DicoData=NpShared.SharedToDico(self.SharedDataDicoName)
 
@@ -766,22 +769,22 @@ class ClassJacobianAntenna():
             if rms!=0.:
                 DicoData["rms"]=np.array([rms],np.float32)
                 u,v,w=DicoData["uvw"].T
-                if Resolution!=None:
+                if self.ResolutionRad!=None:
                     freqs=DicoData["freqs"]
                     wave=np.mean(299792456./freqs)
                     d=np.sqrt((u/wave)**2+(v/wave)**2)
                     FWHMFact=2.*np.sqrt(2.*np.log(2.))
-                    sig=Resolution/FWHMFact
+                    sig=self.ResolutionRad/FWHMFact
                     V=1./np.exp(-d**2*np.pi*sig**2)
                     
                     V=V.reshape((V.size,1,1))*np.ones((1,freqs.size,npol))
                 else:
                     V=np.ones((u.size,freqs.size,npol),np.float32)
                     
-                # if "W" in DicoData.keys():
-                #     W=DicoData["W"]
-                #     W[W==0]=1.e-6
-                #     V=V/W.reshape(W.size,1,1)
+                if "W" in DicoData.keys():
+                    W=DicoData["W"]
+                    W[W==0]=1.e-6
+                    V=V/W.reshape(W.size,1,1)
 
                 R=rms**2*V
                 

@@ -76,6 +76,13 @@ def read_options():
     group.add_option('--kills',help='Name or number index of sources to kill',default="")
     group.add_option('--invert',help='Invert the selected sources to kill',default="0")
     opt.add_option_group(group)
+
+    group = optparse.OptionGroup(opt, "* Weighting scheme")
+    group.add_option('--Resolution',type="float",help='Resolution in arcsec. Default is %default',default=0.)
+    group.add_option('--Weighting',type="str",help='Weighting scheme. Default is %default',default="Natural")
+    group.add_option('--Robust',type="float",help='Briggs Robust parameter. Default is %default',default=0)
+    opt.add_option_group(group)
+
     
     group = optparse.OptionGroup(opt, "* Solution options")
     group.add_option('--SubOnly',help='Substract the skymodel assuming unity Jones matrices (no solve). Default is %default',default="0")
@@ -201,7 +208,9 @@ def main(options=None):
                                      TVisSizeMin=dt,
                                      DicoSelectOptions=DicoSelectOptions,
                                      TChunkSize=TChunk,IdSharedMem=IdSharedMem,
-                                     SM=SM,NCPU=NCPU)
+                                     SM=SM,NCPU=NCPU,
+                                     Weighting=options.Weighting,
+                                     Robust=options.Robust)
     print VS.MS
     if not(WriteColName in VS.MS.ColNames):
         print>>log, "Column %s not in MS "%WriteColName
@@ -216,6 +225,10 @@ def main(options=None):
         TimeMin=float(sTimeMin)
         BeamProps=Mode,TimeMin
 
+    ResolutionRad=(options.Resolution/3600)*(np.pi/180)
+    ConfigJacobianAntenna={"DoSmearing":DoSmearing,
+                           "ResolutionRad":ResolutionRad,
+                           "Lambda":options.Lambda}
 
     Solver=ClassWirtingerSolver(VS,SM,PolMode=options.PolMode,
                                 BeamProps=BeamProps,
@@ -223,8 +236,8 @@ def main(options=None):
                                 SolverType=options.SolverType,
                                 evP_Step=options.evP_Step,evP_StepStart=options.evP_StepStart,
                                 DoPlot=options.DoPlot,
-                                Lambda=options.Lambda,
-                                IdSharedMem=IdSharedMem,DoSmearing=DoSmearing)
+                                IdSharedMem=IdSharedMem,
+                                ConfigJacobianAntenna=ConfigJacobianAntenna)
     Solver.InitSol(TestMode=False)
     PM=ClassPredict(NCPU=NCPU,IdMemShared=IdSharedMem,DoSmearing=DoSmearing)
     PM2=None#ClassPredict_orig(NCPU=NCPU,IdMemShared=IdSharedMem)
@@ -373,14 +386,14 @@ def main(options=None):
     NpShared.DelAll(IdSharedMem)
 
     
-def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2):
+def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2,ConfigJacobianAntenna):
     print>>log, ModColor.Str("Initialising Kalman filter with Levenberg-Maquardt estimate")
     dtInit=float(options.InitLM_dt)
     VSInit=ClassVisServer.ClassVisServer(options.ms,ColName=options.InCol,
                                          TVisSizeMin=dtInit,
                                          DicoSelectOptions=DicoSelectOptions,
                                          TChunkSize=dtInit/60,IdSharedMem=IdSharedMem,
-                                         SM=SM,NCPU=options.NCPU)
+                                         SM=SM,NCPU=options.NCP)
     
     VSInit.LoadNextVisChunk()
     # # test
@@ -393,7 +406,8 @@ def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2):
                                     NIter=options.NIter,NCPU=options.NCPU,
                                     SolverType="CohJones",
                                     DoPlot=options.DoPlot,
-                                    DoPBar=False,IdSharedMem=IdSharedMem,DoSmearing=options.Decorrelation)
+                                    DoPBar=False,IdSharedMem=IdSharedMem,
+                                    ConfigJacobianAntenna=ConfigJacobianAntenna)
     SolverInit.InitSol(TestMode=False)
     SolverInit.doNextTimeSolve_Parallel(OnlyOne=True)
     #SolverInit.doNextTimeSolve()

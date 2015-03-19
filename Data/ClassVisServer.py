@@ -88,8 +88,8 @@ class ClassVisServer():
         npix=(FOV*np.pi/180)/res
         ImShape=(1,1,npix,npix)
         WeightMachine=ClassWeighting.ClassWeighting(ImShape,res)
-        VisWeights=WEIGHT[:,0]#np.ones((uvw.shape[0],),dtype=np.float32)
-        #VisWeights=np.ones((uvw.shape[0],),dtype=np.float32)
+        #VisWeights=WEIGHT[:,0]#np.ones((uvw.shape[0],),dtype=np.float32)
+        VisWeights=np.ones((uvw.shape[0],),dtype=np.float32)
         Robust=self.Robust
         self.VisWeights=WeightMachine.CalcWeights(uvw,VisWeights,Robust=Robust,
                                                   Weighting=self.Weighting)
