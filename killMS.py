@@ -174,7 +174,7 @@ def main(options=None):
     dt=float(options.dt)
     dtInit=float(options.InitLM_dt)
     NCPU=int(options.NCPU)
-    SubOnly=(int(options.SubOnly)==1)
+    #SubOnly=(int(options.SubOnly)==1)
     invert=(options.invert=="1")
     options.InitLM=(int(options.InitLM)==1)
     DoSmearing=options.Decorrelation

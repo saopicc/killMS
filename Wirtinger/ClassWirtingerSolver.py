@@ -146,16 +146,15 @@ class ClassWirtingerSolver():
         else:                
             self.SolsArray_Full.G[0:ind.size]=self.SolsArray_G[0:ind.size]
 
-        Std=np.array(self.ListStd)
-        Max=np.array(self.ListMax)
-        Kapa=np.array(self.ListKapa)
-
-        na,nt=Std.shape
-        NoiseInfo=np.zeros((na,nt,3))
-        NoiseInfo[:,:,0]=Std[:,:]
-        NoiseInfo[:,:,1]=np.abs(Max[:,:])
-        NoiseInfo[:,:,2]=Kapa[:,:]
-        np.save("NoiseInfo",NoiseInfo)
+        # Std=np.array(self.ListStd)
+        # Max=np.array(self.ListMax)
+        # Kapa=np.array(self.ListKapa)
+        # na,nt=Std.shape
+        # NoiseInfo=np.zeros((na,nt,3))
+        # NoiseInfo[:,:,0]=Std[:,:]
+        # NoiseInfo[:,:,1]=np.abs(Max[:,:])
+        # NoiseInfo[:,:,2]=Kapa[:,:]
+        # np.save("NoiseInfo",NoiseInfo)
 
         return self.SolsArray_Full[0:ind.size].copy()
 
