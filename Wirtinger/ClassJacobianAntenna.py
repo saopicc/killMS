@@ -829,7 +829,7 @@ class ClassJacobianAntenna():
                     d=np.sqrt((u/wave)**2+(v/wave)**2)
                     FWHMFact=2.*np.sqrt(2.*np.log(2.))
                     sig=self.ResolutionRad/FWHMFact
-                    V=1./np.exp(-d**2*np.pi*sig**2)
+                    V=(1./np.exp(-d**2*np.pi*sig**2))**2
                     
                     V=V.reshape((V.size,1,1))*np.ones((1,freqs.size,npol))
                 else:
