@@ -71,7 +71,7 @@ def read_options():
     group.add_option('--LOFARBeam',help='(Mode, Time): Mode can be AE, E, or A for "Array factor" and "Element beam". Time is the estimation time step',default="")
     group.add_option('--UVMinMax',help='Baseline length selection in km. For example --UVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default',default=None)
     group.add_option('--FlagAnts',type="str",help='FlagAntenna patern. Default is %default',default="")
-
+    group.add_option('--DistMaxToCore',type="float",help='Maximum distance to core in km. Default is %default',default=1000.)
     opt.add_option_group(group)
 
     group = optparse.OptionGroup(opt, "* Weighting scheme")
@@ -200,6 +200,10 @@ def main(options=None):
     if options.FlagAnts!="":
         FlagAnts=options.FlagAnts.split(",")
         DicoSelectOptions["FlagAnts"]=FlagAnts
+
+    DicoSelectOptions["DistMaxToCore"]=options.DistMaxToCore
+
+
 
     SM=ClassSM.ClassSM(options.SkyModel,
                        killdirs=kills,invert=invert)
