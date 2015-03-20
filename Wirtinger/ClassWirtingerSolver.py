@@ -611,26 +611,29 @@ class ClassWirtingerSolver():
                     pylab.show(False)
                     pylab.pause(0.1)
 
-                if self.DoPlot==2:
-                    S=self.GiveSols()
-                    for ii in range(S.G.shape[1]):
-                        self.Graph.subplot(ii)
-                        self.Graph.imshow(np.abs(S.G[:,i,:,0,0]))
-                        print np.abs(S.G[:,i,:,0,0])
-                        self.Graph.text(0,0,self.VS.MS.StationNames[ii])
-                    self.Graph.draw()
-
 
 
             NDone+=1
             intPercent=int(100*  NDone / float(nt))
 
             pBAR.render(intPercent, '%4i/%i' % (NDone,nt))
+
                 
             
             self.SolsArray_done[self.iCurrentSol]=1
             self.SolsArray_G[self.iCurrentSol][:]=self.G[:]
             self.iCurrentSol+=1
+
+            if self.DoPlot==2:
+                S=self.GiveSols()
+
+                for ii in range(S.G.shape[1]):
+                    self.Graph.subplot(ii)
+                    self.Graph.imshow(np.abs(S.G[:,i,:,0,0]))
+                    print np.abs(S.G[:,i,:,0,0])
+                    self.Graph.text(0,0,self.VS.MS.StationNames[ii])
+                self.Graph.draw()
+
             
             if OnlyOne: break
 
