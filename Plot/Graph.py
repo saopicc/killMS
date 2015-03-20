@@ -45,7 +45,7 @@ class ClassMplWidget():
         self.SaveName=SaveName
 
         #######
-        pylab.ion()
+        #pylab.ion()
         self.fig=pylab.figure(1,figsize=(15,7))
         pylab.clf()
         self.mplwidget=self.fig.add_subplot(111)

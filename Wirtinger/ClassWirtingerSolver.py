@@ -293,13 +293,13 @@ class ClassWirtingerSolver():
 
     def InitPlotGraph(self):
         from Plot import Graph
-
-        pylab.ion()
+        print>>log,"Initialising plots ..." 
+        #pylab.ion()
         self.Graph=Graph.ClassMplWidget(self.VS.MS.na)
         
         for iAnt in range(self.VS.MS.na):
             self.Graph.subplot(iAnt)
-            self.Graph.imshow(np.zeros((10,10),dtype=np.float32),interpolation="nearest",aspect="auto",origin='lower',vmin=0,vmax=5)#,extent=(-3,3,-3,3))
+            self.Graph.imshow(np.zeros((10,10),dtype=np.float32),interpolation="nearest",aspect="auto",origin='lower',vmin=0.,vmax=2.)#,extent=(-3,3,-3,3))
             self.Graph.text(0,0,self.VS.MS.StationNames[iAnt])
             self.Graph.draw()
         pylab.draw()
