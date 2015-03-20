@@ -433,7 +433,7 @@ class ClassJacobianAntenna():
 
         evPa= PaOnes-evPa#(np.diag(np.diag(Pa-Pa_new)))#Pa-Pa_new#np.abs(np.diag(np.diag(Pa-Pa_new)))
         # evPa=np.diag(np.diag(evPa))
-        print evPa.min(),evPa.real.min()
+        #print evPa.min(),evPa.real.min()
         return evPa
            
             
