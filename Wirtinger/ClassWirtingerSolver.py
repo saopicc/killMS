@@ -629,7 +629,7 @@ class ClassWirtingerSolver():
                 
                 for ii in range(S.G.shape[1]):
                     self.Graph.subplot(ii)
-                    self.Graph.imshow(np.abs(S.G[:,ii,:,0,0]))
+                    self.Graph.imshow(np.abs(S.G[:,ii,:,0,0]).T)
                     self.Graph.text(0,0,self.VS.MS.StationNames[ii])
                 self.Graph.draw()
 
