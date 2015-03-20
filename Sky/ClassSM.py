@@ -276,6 +276,10 @@ class ClassSM():
     
         #s.fill(0.)
         #s[0]=1
+
+
+
+
         self.rarad=np.sum(self.SourceCat.I*self.SourceCat.ra)/np.sum(self.SourceCat.I)
         self.decrad=np.sum(self.SourceCat.I*self.SourceCat.dec)/np.sum(self.SourceCat.I)
         x,y,s=self.SourceCat.ra,self.SourceCat.dec,self.SourceCat.I

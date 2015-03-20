@@ -174,8 +174,7 @@ class ClassMplWidget():
                 self.DicoAxis[self.CurrentIAx]["xlims"]=ax.get_xlim()
                 self.DicoAxis[self.CurrentIAx]["ylims"]=ax.get_ylim()
             #self.mplwidget.draw()
-
-            #pylab.draw()
+            pylab.draw()
 
         if data==None:
             data=np.random.randn(200,200)
