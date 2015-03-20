@@ -486,11 +486,11 @@ class ClassWirtingerSolver():
         while True:
             Res=self.setNextData()
             if Res=="EndChunk": break
-            print "saving"
-            print "saving"
-            sols=self.GiveSols()
-            np.save("lastSols",sols)
-            print "done"
+            #print "saving"
+            #print "saving"
+            #sols=self.GiveSols()
+            #np.save("lastSols",sols)
+            #print "done"
             if SkipMode:
                 print iiCount
                 iiCount+=1
