@@ -6,7 +6,7 @@ from Array import NpShared
 from Data import ClassVisServer
 from Sky import ClassSM
 from Array import ModLinAlg
-import pylab
+import matplotlib.pyplot as pylab
 
 from Other import MyLogger
 log=MyLogger.getLogger("ClassWirtingerSolver")
@@ -123,7 +123,8 @@ class ClassWirtingerSolver():
         self.rmsFromData=None
         if SolverType=="KAFCA":
            self.NIter=1
-
+        self.DoPlotGraph=True
+        self.InitPlotGraph()
         self.EvolvePStepStart,EvolvePStep=evP_StepStart,evP_Step
         self.CounterEvolveP=Counter.Counter(EvolvePStep)
         self.ThisStep=0
@@ -289,6 +290,22 @@ class ClassWirtingerSolver():
 
     def SetRmsFromExt(self,rms):
         self.rmsFromExt=rms
+
+    def InitPlotGraph(self):
+        from Plot import Graph
+
+        pylab.ion()
+        self.Graph=Graph.ClassMplWidget(self.VS.MS.na)
+        
+        for iAnt in range(self.VS.MS.na):
+            self.Graph.subplot(iAnt)
+            self.Graph.imshow(np.zeros((10,10),dtype=np.float32),interpolation="nearest",aspect="auto",origin='lower',vmin=0,vmax=5)#,extent=(-3,3,-3,3))
+            self.Graph.text(0,0,self.VS.MS.StationNames[iAnt])
+            self.Graph.draw()
+        pylab.draw()
+        pylab.show(False)
+
+
         
 
     #################################
@@ -592,6 +609,15 @@ class ClassWirtingerSolver():
                     pylab.draw()
                     pylab.show(False)
                     pylab.pause(0.1)
+
+                if self.DoPlotGraph:
+                    S=self.GiveSols()
+                    for ii in range(S.G.shape[1]):
+                        self.Graph.subplot(ii)
+                        self.Graph.imshow(np.abs(S.G[:,i,:,0,0]))
+                        self.Graph.text(0,0,self.VS.MS.StationNames[ii])
+                    self.Graph.draw()
+
 
 
             NDone+=1
