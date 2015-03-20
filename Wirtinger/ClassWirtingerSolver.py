@@ -302,6 +302,7 @@ class ClassWirtingerSolver():
             self.Graph.imshow(np.zeros((10,10),dtype=np.float32),interpolation="nearest",aspect="auto",origin='lower',vmin=0.,vmax=2.)#,extent=(-3,3,-3,3))
             self.Graph.text(0,0,self.VS.MS.StationNames[iAnt])
             self.Graph.draw()
+
         pylab.draw()
         pylab.show(False)
 
@@ -615,6 +616,7 @@ class ClassWirtingerSolver():
                     for ii in range(S.G.shape[1]):
                         self.Graph.subplot(ii)
                         self.Graph.imshow(np.abs(S.G[:,i,:,0,0]))
+                        print np.abs(S.G[:,i,:,0,0])
                         self.Graph.text(0,0,self.VS.MS.StationNames[ii])
                     self.Graph.draw()
 
