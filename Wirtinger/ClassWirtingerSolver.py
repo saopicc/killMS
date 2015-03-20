@@ -182,8 +182,8 @@ class ClassWirtingerSolver():
         _,_,npol,_=self.G.shape
 
 
-        # print "!!!!!!!!!!"
-        # self.G+=np.random.randn(*self.G.shape)*0.1#sigP
+        #print "!!!!!!!!!!"
+        self.G+=np.random.randn(*self.G.shape)*0.1#sigP
         
         NSols=np.max([1,1.5*int(self.VS.MS.DTh/(self.VS.TVisSizeMin/60.))])
         
@@ -203,6 +203,9 @@ class ClassWirtingerSolver():
 
         self.SolsArray_Full=np.zeros((NSols,),dtype=[("t0",np.float64),("t1",np.float64),("G",np.complex64,(na,nd,2,2))])
         self.SolsArray_Full=self.SolsArray_Full.view(np.recarray)
+        self.ListKapa=[[] for iAnt in range(na)]
+        self.ListStd=[[] for iAnt in range(na)]
+        self.ListMax=[[] for iAnt in range(na)]
 
 
         self.G=NpShared.ToShared("%sSharedGains"%self.IdSharedMem,self.G)
@@ -245,16 +248,12 @@ class ClassWirtingerSolver():
 
 
         self.P=P
-        self.Q=Q
         self.evP=np.zeros_like(P)
         self.P=NpShared.ToShared("%sSharedCovariance"%self.IdSharedMem,self.P)
-        self.Q=NpShared.ToShared("%sSharedCovariance_Q"%self.IdSharedMem,self.Q)
+        self.Q=NpShared.ToShared("%sSharedCovariance_Q"%self.IdSharedMem,Q)
         self.Q_Init=self.Q.copy()
         self.evP=NpShared.ToShared("%sSharedEvolveCovariance"%self.IdSharedMem,self.evP)
         nbuff=10
-        self.ListKapa=[[] for iAnt in range(na)]
-        self.ListStd=[[] for iAnt in range(na)]
-        self.ListMax=[[] for iAnt in range(na)]
 
 
     def setNextData(self):
@@ -393,7 +392,7 @@ class ClassWirtingerSolver():
                     pylab.plot(np.abs(Gnew.flatten())-sig,color="black",ls="--")
                     self.P[:]=Pnew[:]
                 pylab.plot(np.abs(self.G.flatten()))
-                # pylab.ylim(0,2)
+                pylab.ylim(0,2)
                 pylab.draw()
                 pylab.show(False)
                 self.G[:]=Gnew[:]
@@ -544,8 +543,16 @@ class ClassWirtingerSolver():
                         expW=np.exp(-x/dt)[::-1]
                         expW/=np.sum(expW)
                         kapaW=np.sum(expW*np.array(TraceResidList))
-                        #self.Q[iAnt]=(kapaW**2)*self.Q_Init[iAnt]
-                        self.Q[iAnt]=(kapaW)*self.Q_Init[iAnt]
+                        self.Q[iAnt]=(kapaW**2)*self.Q_Init[iAnt]
+
+                        #self.Q[iAnt][:]=(kapaW)**2*self.Q_Init[iAnt][:]
+
+                        # self.Q[iAnt][:]=(kapaW)**2*self.Q_Init[iAnt][:]*1e6
+                        # QQ=NpShared.FromShared("%sSharedCovariance_Q"%self.IdSharedMem)[iAnt]
+                        # print self.Q[iAnt]-QQ[iAnt]
+                        
+                        #self.Q[iAnt]=self.Q_Init[iAnt]
+
                         #print iAnt,kapa,kapaW
                         #sig=np.sqrt(np.abs(np.array([np.diag(self.P[i]) for i in [iAnt]]))).flatten()
                         #print sig
@@ -561,19 +568,22 @@ class ClassWirtingerSolver():
                     pylab.clf()
                     pylab.plot(np.abs(self.G[AntPlot].flatten()))
                     pylab.plot(np.abs(Gold[AntPlot].flatten()))
-                    sig=[]
-                    for iiAnt in AntPlot:
-                        if iiAnt in ListAntSolve:
-                            sig.append(np.sqrt(np.abs(np.array([np.diag(self.P[iiAnt]) ]))).flatten())
-                        else:
-                            sig.append(np.zeros((self.SM.NDir,),self.P.dtype))
-                        
-                    sig=np.array(sig).flatten()
+                    
                     if self.SolverType=="KAFCA":
+
+                        sig=[]
+                        for iiAnt in AntPlot:
+                            if iiAnt in ListAntSolve:
+                                sig.append(np.sqrt(np.abs(np.array([np.diag(self.P[iiAnt]) ]))).flatten())
+                            else:
+                                sig.append(np.zeros((self.SM.NDir,),self.P.dtype))
+                        
+                        sig=np.array(sig).flatten()
+
                         pylab.plot(np.abs(self.G[AntPlot].flatten())+sig,color="black",ls="--")
                         pylab.plot(np.abs(self.G[AntPlot].flatten())-sig,color="black",ls="--")
 
-                    #pylab.ylim(0,2)
+                    pylab.ylim(0,2)
                     pylab.draw()
                     pylab.show(False)
                     pylab.pause(0.1)
@@ -650,8 +660,8 @@ class WorkerAntennaLM(multiprocessing.Process):
             evP=NpShared.GiveArray("%sSharedEvolveCovariance"%self.IdSharedMem)
 
             if self.SolverType=="CohJones":
-                x=JM.doLMStep(G)
-                self.result_queue.put([iAnt,x,None,None,None])
+                x,_,_=JM.doLMStep(G)
+                self.result_queue.put([iAnt,x,None,None,{"std":-1.,"max":-1.,"kapa":None}])
             elif self.SolverType=="KAFCA":
                 T=ClassTimeIt.ClassTimeIt()
                 T.disable()

@@ -43,7 +43,9 @@ class ClassModelEvolution():
         # return Ptot
         ##############
 
+
         if indDone.size<2: return Pa+Q
+
         t0=NpShared.GiveArray("%sSolsArray_t0"%self.IdSharedMem)[indDone]
         t1=NpShared.GiveArray("%sSolsArray_t1"%self.IdSharedMem)[indDone]
         tm=NpShared.GiveArray("%sSolsArray_tm"%self.IdSharedMem)[indDone]
