@@ -108,13 +108,13 @@ class ClassWirtingerSolver():
             Mode,TimeMin=BeamProps
             LofarBeam=(Mode,TimeMin,rabeam,decbeam)
             VS.SetBeam(LofarBeam)
-        self.DoPlot=DoPlot
-        if DoPlot==2:
-            self.InitPlotGraph()
         MS=VS.MS
         SM.Calc_LM(MS.rac,MS.decc)
         self.SM=SM
         self.VS=VS
+        self.DoPlot=DoPlot
+        if DoPlot==2:
+            self.InitPlotGraph()
         self.PolMode=PolMode
         self.G=None
         self.NIter=NIter
