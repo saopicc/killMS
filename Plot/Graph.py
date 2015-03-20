@@ -273,9 +273,9 @@ class ClassMplWidget():
 
     def savefig(self):
         filename="%s_%4.4i.png"%(self.SaveName,self.CounterSave)
-        print>>log, "   Saving figure in %s"%filename
+        #print>>log, "   Saving figure in %s"%filename
         self.fig.savefig(filename,dpi=100)
-        self.CounterSave+=1
+        #self.CounterSave+=1
 
     def draw(self):
         self.fig.canvas.update()

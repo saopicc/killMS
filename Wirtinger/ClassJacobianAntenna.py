@@ -342,7 +342,6 @@ class ClassJacobianAntenna():
         #T.timeit("J_x")
 
         
-        evPa=evP[self.iAnt]
 
         self.PrepareJHJ_EKF(Pa,rms)
         #T.timeit("PrepareJHJ")
@@ -392,6 +391,7 @@ class ClassJacobianAntenna():
 
 
         #Pa_new1=Pa-np.dot(evPa,Pa)
+        evPa=evP[self.iAnt]
         Pa_new1=np.dot(evPa,Pa)
         #Pa_new1=Pa
 
@@ -432,7 +432,7 @@ class ClassJacobianAntenna():
 
 
         evPa= PaOnes-evPa#(np.diag(np.diag(Pa-Pa_new)))#Pa-Pa_new#np.abs(np.diag(np.diag(Pa-Pa_new)))
-        # evPa=np.diag(np.diag(evPa))
+        evPa=np.diag(np.diag(evPa))
         #print evPa.min(),evPa.real.min()
         return evPa
            
