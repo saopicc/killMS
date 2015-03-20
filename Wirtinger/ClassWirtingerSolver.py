@@ -109,6 +109,8 @@ class ClassWirtingerSolver():
             LofarBeam=(Mode,TimeMin,rabeam,decbeam)
             VS.SetBeam(LofarBeam)
         self.DoPlot=DoPlot
+        if DoPlot==2:
+            self.InitPlotGraph()
         MS=VS.MS
         SM.Calc_LM(MS.rac,MS.decc)
         self.SM=SM
@@ -123,8 +125,6 @@ class ClassWirtingerSolver():
         self.rmsFromData=None
         if SolverType=="KAFCA":
            self.NIter=1
-        self.DoPlotGraph=True
-        self.InitPlotGraph()
         self.EvolvePStepStart,EvolvePStep=evP_StepStart,evP_Step
         self.CounterEvolveP=Counter.Counter(EvolvePStep)
         self.ThisStep=0
@@ -585,7 +585,7 @@ class ClassWirtingerSolver():
                 iResult=0
 
 
-                if self.DoPlot:
+                if self.DoPlot==1:
                     AntPlot=np.arange(self.VS.MS.na)#np.array(ListAntSolve)
                     pylab.clf()
                     pylab.plot(np.abs(self.G[AntPlot].flatten()))
@@ -610,7 +610,7 @@ class ClassWirtingerSolver():
                     pylab.show(False)
                     pylab.pause(0.1)
 
-                if self.DoPlotGraph:
+                if self.DoPlot==2:
                     S=self.GiveSols()
                     for ii in range(S.G.shape[1]):
                         self.Graph.subplot(ii)

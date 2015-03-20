@@ -129,7 +129,7 @@ def read_options():
     
     
     options, arguments = opt.parse_args()
-    options.DoPlot=(options.DoPlot==1)
+    #options.DoPlot=(options.DoPlot==1)
 
     if options.SolverType=="KAFCA":
         RejectGroup=["CohJones"]
