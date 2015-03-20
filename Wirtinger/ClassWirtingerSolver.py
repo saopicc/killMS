@@ -183,7 +183,7 @@ class ClassWirtingerSolver():
 
 
         #print "!!!!!!!!!!"
-        self.G+=np.random.randn(*self.G.shape)*0.1#sigP
+        #self.G+=np.random.randn(*self.G.shape)*0.1#sigP
         
         NSols=np.max([1,1.5*int(self.VS.MS.DTh/(self.VS.TVisSizeMin/60.))])
         
