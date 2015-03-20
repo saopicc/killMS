@@ -255,7 +255,7 @@ def main(options=None):
             rms,SolverInit_G=GiveNoise(options,
                                        DicoSelectOptions,
                                        IdSharedMem,
-                                       SM,PM,PM2)
+                                       SM,PM,PM2,ConfigJacobianAntenna)
 
             Solver.InitSol(G=SolverInit_G,TestMode=False)
             Solver.InitCovariance(FromG=True,sigP=options.CovP,sigQ=options.CovQ)
@@ -399,7 +399,7 @@ def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2,ConfigJacobianAnte
                                          TVisSizeMin=dtInit,
                                          DicoSelectOptions=DicoSelectOptions,
                                          TChunkSize=dtInit/60,IdSharedMem=IdSharedMem,
-                                         SM=SM,NCPU=options.NCP)
+                                         SM=SM,NCPU=options.NCPU)
     
     VSInit.LoadNextVisChunk()
     # # test

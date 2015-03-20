@@ -468,6 +468,11 @@ class ClassWirtingerSolver():
         while True:
             Res=self.setNextData()
             if Res=="EndChunk": break
+            print "saving"
+            print "saving"
+            sols=self.GiveSols()
+            np.save("lastSols",sols)
+            print "done"
             if SkipMode:
                 print iiCount
                 iiCount+=1
@@ -543,9 +548,9 @@ class ClassWirtingerSolver():
                         expW=np.exp(-x/dt)[::-1]
                         expW/=np.sum(expW)
                         kapaW=np.sum(expW*np.array(TraceResidList))
-                        self.Q[iAnt]=(kapaW**2)*self.Q_Init[iAnt]
+                        #self.Q[iAnt]=(kapaW**2)*self.Q_Init[iAnt]
 
-                        #self.Q[iAnt][:]=(kapaW)**2*self.Q_Init[iAnt][:]
+                        self.Q[iAnt][:]=(kapaW)*self.Q_Init[iAnt][:]
 
                         # self.Q[iAnt][:]=(kapaW)**2*self.Q_Init[iAnt][:]*1e6
                         # QQ=NpShared.FromShared("%sSharedCovariance_Q"%self.IdSharedMem)[iAnt]

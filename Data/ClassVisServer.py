@@ -22,7 +22,7 @@ class ClassVisServer():
                  LofarBeam=None,
                  AddNoiseJy=None,IdSharedMem="",
                  SM=None,NCPU=None,
-                 Robust=2,Weighting="Uniform"):
+                 Robust=2,Weighting="Natural"):
         self.IdSharedMem=IdSharedMem
         PrefixShared="%sSharedVis"%self.IdSharedMem
         self.AddNoiseJy=AddNoiseJy
