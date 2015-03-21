@@ -243,6 +243,11 @@ class ClassWirtingerSolver():
             for ipol in range(npol):
                 for jpol in range(npol):
                     Qa[:,ipol,jpol,:,ipol,jpol]=QQ[:,:]
+            F=SM.ClusterCat.I.copy()/
+            F/=F.max()
+            for idir in range(nd):
+                Qa[idir,:,:,idir,:,:]*=F**2
+
             Qa=Qa.reshape((nd*npol*npol,nd*npol*npol))
             Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*Qa for iAnt in range(na)])
 
