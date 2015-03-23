@@ -637,10 +637,11 @@ class ClassWirtingerSolver():
             #_T.timeit()
             if self.DoPlot==2:
                 S=self.GiveSols()
-                
+                #print S.G[-1,0,:,0,0]
                 for ii in range(S.G.shape[1]):
                     self.Graph.subplot(ii)
                     self.Graph.imshow(np.abs(S.G[:,ii,:,0,0]).T)
+                    #self.Graph.imshow(np.random.randn(*(S.G[:,ii,:,0,0]).shape))
                     self.Graph.text(0,0,self.VS.MS.StationNames[ii])
                 self.Graph.draw()
                 self.Graph.savefig()

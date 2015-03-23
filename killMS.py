@@ -260,7 +260,8 @@ def main(options=None):
                                        DicoSelectOptions,
                                        IdSharedMem,
                                        SM,PM,PM2,ConfigJacobianAntenna)
-
+            dtype=SolverInit_G.dtype
+            SolverInit_G=np.array(np.abs(SolverInit_G),dtype=dtype)
             Solver.InitSol(G=SolverInit_G,TestMode=False)
             Solver.InitCovariance(FromG=True,sigP=options.CovP,sigQ=options.CovQ)
             
@@ -415,7 +416,7 @@ def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2,ConfigJacobianAnte
     SolverInit=ClassWirtingerSolver(VSInit,SM,PolMode=options.PolMode,
                                     NIter=options.NIter,NCPU=options.NCPU,
                                     SolverType="CohJones",
-                                    DoPlot=options.DoPlot,
+                                    #DoPlot=options.DoPlot,
                                     DoPBar=False,IdSharedMem=IdSharedMem,
                                     ConfigJacobianAntenna=ConfigJacobianAntenna)
     SolverInit.InitSol(TestMode=False)

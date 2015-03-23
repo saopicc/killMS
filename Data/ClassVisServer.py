@@ -304,7 +304,7 @@ class ClassVisServer():
             Frac=nf/float(fA.size)
             if Frac>self.ThresholdFlag:
                 print>>log, "Taking antenna #%2.2i[%s] out of the solve (~%4.1f%% of flagged data, more than %4.1f%%)"%\
-                    (A,MS.StationNames[iAnt],Frac*100,self.ThresholdFlag*100)
+                    (A,MS.StationNames[A],Frac*100,self.ThresholdFlag*100)
                 self.FlagAntNumber.append(A)
                 
         if "FlagAnts" in self.DicoSelectOptions.keys():
