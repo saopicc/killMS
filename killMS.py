@@ -239,15 +239,17 @@ def main(options=None):
                            "gamma":1,
                            "AmpQx":.5}
 
-    Solver=ClassWirtingerSolver(VS,SM,PolMode=options.PolMode,
-                                BeamProps=BeamProps,
-                                NIter=options.NIter,NCPU=NCPU,
-                                SolverType=options.SolverType,
-                                evP_Step=options.evP_Step,evP_StepStart=options.evP_StepStart,
-                                DoPlot=options.DoPlot,
-                                IdSharedMem=IdSharedMem,
-                                ConfigJacobianAntenna=ConfigJacobianAntenna)
-    Solver.InitSol(TestMode=False)
+    if options.ExtSols=="":
+        Solver=ClassWirtingerSolver(VS,SM,PolMode=options.PolMode,
+                                    BeamProps=BeamProps,
+                                    NIter=options.NIter,NCPU=NCPU,
+                                    SolverType=options.SolverType,
+                                    evP_Step=options.evP_Step,evP_StepStart=options.evP_StepStart,
+                                    DoPlot=options.DoPlot,
+                                    IdSharedMem=IdSharedMem,
+                                    ConfigJacobianAntenna=ConfigJacobianAntenna)
+        Solver.InitSol(TestMode=False)
+
     PM=ClassPredict(NCPU=NCPU,IdMemShared=IdSharedMem,DoSmearing=DoSmearing)
     PM2=None#ClassPredict_orig(NCPU=NCPU,IdMemShared=IdSharedMem)
     SM=Solver.SM
@@ -333,7 +335,7 @@ def main(options=None):
 
                 nrows=Solver.VS.ThisDataChunk["times"].size
 
-                Solver.VS.ThisDataChunk["W"]=np.ones((nrows,),np.float32)
+                Weights=np.ones((nrows,Solver.VS.MS.ChanFreq.size),np.float32)
 
                 ################
                 # #PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones)
@@ -343,21 +345,25 @@ def main(options=None):
                 Diff=Solver.VS.ThisDataChunk["data"]-PredictData
                 std=np.std(Diff[Solver.VS.ThisDataChunk["flags"]==0])
                 ThresHold=3.
-                indRow,indChan,indPol=np.where(np.abs(Diff)>ThresHold*std)
-                print "std=%f"%std
-                print indRow.size
-                Solver.VS.ThisDataChunk["W"][indRow]=0.
-                print>>log, "   Set weights to Zero for %5.2f %% of data"%(100*float(indRow.size)/(Diff.size))
+                cond=(np.abs(Diff)>ThresHold*std)
+                ind=np.any(cond,axis=2)
+                Weights[ind]=0.
+
+                print>>log, "   Estimated standard deviation in the residual data: %f"%std
+                NFlagged=np.count_nonzero(ind)
+                #print indRow.size
+                #Solver.VS.ThisDataChunk["W"][ind]=0.
+                print>>log, "   Set weights to Zero for %5.2f %% of data"%(100*float(NFlagged)/(ind.size))
                 ################
 
 
-                Weights=Solver.VS.ThisDataChunk["W"]
-                Weights=Weights.reshape((Weights.size,1))*np.ones((1,4))
-                Solver.VS.MS.Weights[:]=Weights[:]
+                # Weights=Solver.VS.ThisDataChunk["W"]
+                # Weights=Weights.reshape((Weights.size,1))*np.ones((1,4))
+                # Solver.VS.MS.Weights[:]=Weights[:]
 
-                print>>log, "  Writting in WEIGHT column "
+                print>>log, "  Writting in IMAGING_WEIGHT column "
                 t=table(Solver.VS.MS.MSName,readonly=False,ack=False)
-                t.putcol("WEIGHT",Solver.VS.MS.Weights)
+                t.putcol("IMAGING_WEIGHT",Weights)
                 t.close()
 
                 
