@@ -400,9 +400,9 @@ class ClassPredict():
         na=DicoData["infos"][0]
 
 
-        #Predict=self.predictKernelPolCluster(DicoData,SM,ApplyTimeJones=ApplyTimeJones)
+        Predict=self.predictKernelPolCluster(DicoData,SM,ApplyTimeJones=ApplyTimeJones)
 
-        Resid=DicoData["data"]#-Predict
+        Resid=DicoData["data"]-Predict
         flags=DicoData["flags"]
 
         ListDirection=SM.Dirs
@@ -420,9 +420,9 @@ class ClassPredict():
 
             CVis[flags==1]=0.
             aCVis=np.abs(CVis)
-            ind=(aCVis>MaxMat)
             
             print "In direction %i: (std, max)=(%f, %f)"%(iCluster,np.std(aCVis),np.max(aCVis))
+            ind=(aCVis>MaxMat)
             MaxMat[ind]=aCVis[ind]
 
             # pylab.plot(np.abs(CVis[flags==0]))
