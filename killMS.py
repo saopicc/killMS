@@ -43,8 +43,8 @@ from Wirtinger.ClassWirtingerSolver import ClassWirtingerSolver
 from Other import ClassTimeIt
 from Data import ClassVisServer
 
-from Sky.PredictGaussPoints_NumExpr4 import ClassPredictParallel as ClassPredict 
-#from Sky.PredictGaussPoints_NumExpr4 import ClassPredict as ClassPredict 
+#from Sky.PredictGaussPoints_NumExpr4 import ClassPredictParallel as ClassPredict 
+from Sky.PredictGaussPoints_NumExpr4 import ClassPredict as ClassPredict 
 
 #from Sky.PredictGaussPoints_NumExpr2 import ClassPredictParallel as ClassPredict_orig 
 #from Sky.PredictGaussPoints_NumExpr3 import ClassPredict as ClassPredict 
@@ -338,28 +338,29 @@ def main(options=None):
 
                 ################
                 # #PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones)
-                # PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones,SM)
-                ################
-                T=ClassTimeIt.ClassTimeIt()
+                PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones,SM)
+
+                # ################
+                # T=ClassTimeIt.ClassTimeIt()
                 
-                #PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
-                #T.timeit("a")
-                PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
-                #T.timeit("b")
+                # #PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
+                # #T.timeit("a")
+                # PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
+                # #T.timeit("b")
 
-                Diff=Solver.VS.ThisDataChunk["data"]-PredictData
-                std=np.std(Diff[Solver.VS.ThisDataChunk["flags"]==0])
-                ThresHold=3.
-                cond=(np.abs(Diff)>ThresHold*std)
-                ind=np.any(cond,axis=2)
-                Weights[ind]=0.
+                # Diff=Solver.VS.ThisDataChunk["data"]-PredictData
+                # std=np.std(Diff[Solver.VS.ThisDataChunk["flags"]==0])
+                # ThresHold=3.
+                # cond=(np.abs(Diff)>ThresHold*std)
+                # ind=np.any(cond,axis=2)
+                # Weights[ind]=0.
 
-                print>>log, "   Estimated standard deviation in the residual data: %f"%std
-                NFlagged=np.count_nonzero(ind)
-                #print indRow.size
-                #Solver.VS.ThisDataChunk["W"][ind]=0.
-                print>>log, "   Set weights to Zero for %5.2f %% of data"%(100*float(NFlagged)/(ind.size))
-                ################
+                # print>>log, "   Estimated standard deviation in the residual data: %f"%std
+                # NFlagged=np.count_nonzero(ind)
+                # #print indRow.size
+                # #Solver.VS.ThisDataChunk["W"][ind]=0.
+                # print>>log, "   Set weights to Zero for %5.2f %% of data"%(100*float(NFlagged)/(ind.size))
+                # ################
 
 
                 # Weights=Solver.VS.ThisDataChunk["W"]

@@ -50,7 +50,7 @@ double complex *p_complex128(PyArrayObject *arrayin)  {
 
 static PyObject *predict(PyObject *self, PyObject *args);
 static PyObject *predictJones(PyObject *self, PyObject *args);
-
+static PyObject *CorrVis(PyObject *self, PyObject *args);
 static PyObject *GiveMaxCorr(PyObject *self, PyObject *args);
 
 /////////////////////////////////

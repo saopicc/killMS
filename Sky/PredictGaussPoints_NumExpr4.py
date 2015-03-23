@@ -266,6 +266,62 @@ class ClassPredict():
         self.DoSmearing=DoSmearing
 
     
+    # def ApplyCal(self,DicoData,ApplyTimeJones,iCluster):
+    #     D=ApplyTimeJones
+    #     Beam=D["Beam"]
+    #     BeamH=D["BeamH"]
+    #     lt0,lt1=D["t0"],D["t1"]
+    #     ColOutDir=DicoData["data"]
+    #     A0=DicoData["A0"]
+    #     A1=DicoData["A1"]
+    #     times=DicoData["times"]
+    #     na=DicoData["infos"][0]
+
+    #     # nt,nd,nd,nchan,_,_=Beam.shape
+    #     # med=np.median(np.abs(Beam))
+    #     # Threshold=med*1e-2
+        
+    #     for it in range(lt0.size):
+            
+    #         t0,t1=lt0[it],lt1[it]
+    #         ind=np.where((times>=t0)&(times<t1))[0]
+
+    #         if ind.size==0: continue
+    #         data=ColOutDir[ind]
+    #         # flags=DicoData["flags"][ind]
+    #         A0sel=A0[ind]
+    #         A1sel=A1[ind]
+            
+    #         if "ChanMap" in ApplyTimeJones.keys():
+    #             ChanMap=ApplyTimeJones["ChanMap"]
+    #         else:
+    #             ChanMap=range(nf)
+
+    #         for ichan in range(len(ChanMap)):
+    #             JChan=ChanMap[ichan]
+    #             if iCluster!=-1:
+    #                 J0=Beam[it,iCluster,:,JChan,:,:].reshape((na,4))
+    #                 JH0=BeamH[it,iCluster,:,JChan,:,:].reshape((na,4))
+    #             else:
+    #                 J0=np.mean(Beam[it,:,:,JChan,:,:],axis=1).reshape((na,4))
+    #                 JH0=np.mean(BeamH[it,:,:,JChan,:,:],axis=1).reshape((na,4))
+                
+    #             J=ModLinAlg.BatchInverse(J0)
+    #             JH=ModLinAlg.BatchInverse(JH0)
+
+    #             data[:,ichan,:]=ModLinAlg.BatchDot(J[A0sel,:],data[:,ichan,:])
+    #             data[:,ichan,:]=ModLinAlg.BatchDot(data[:,ichan,:],JH[A1sel,:])
+
+    #             # Abs_g0=(np.abs(J0[A0sel,0])<Threshold)
+    #             # Abs_g1=(np.abs(JH0[A1sel,0])<Threshold)
+    #             # flags[Abs_g0,ichan,:]=True
+    #             # flags[Abs_g1,ichan,:]=True
+
+    #         ColOutDir[ind]=data[:]
+
+    #         # DicoData["flags"][ind]=flags[:]
+
+
     def ApplyCal(self,DicoData,ApplyTimeJones,iCluster):
         D=ApplyTimeJones
         Beam=D["Beam"]
@@ -344,12 +400,37 @@ class ClassPredict():
         na=DicoData["infos"][0]
 
 
-        Predict=self.predictKernelPolCluster(DicoData,SM,ApplyTimeJones=ApplyTimeJones)
+        #Predict=self.predictKernelPolCluster(DicoData,SM,ApplyTimeJones=ApplyTimeJones)
 
-        Resid=DicoData["data"]-Predict
-        ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
-        
-        
+        Resid=DicoData["data"]#-Predict
+        flags=DicoData["flags"]
+
+        ListDirection=SM.Dirs
+
+        #import pylab
+        #pylab.clf()
+        import ppgplot
+
+
+        for iCluster in ListDirection:
+            ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
+            ParamJonesList=ParamJonesList+[iCluster]
+            CVis=predict.CorrVis(Resid,ParamJonesList)
+
+            ppgplot.pgopen('/xwin')
+            ppgplot.pglab('(x)', '(y)', 'direction= %i\u2'%iCluster)
+            ys=np.abs(CVis[flags==0])
+            xs=np.arange(ys.size)
+            ppgplot.pgenv(0.,np.max(xs),0.,np.max(ys),0,1)
+            ppgplot.pgpt(xs,ys,1)
+            ppgplot.pgclos()
+
+            # pylab.plot(np.abs(CVis[flags==0]))
+            # pylab.draw()
+            # pylab.show(False)
+            # pylab.pause(0.1)
+        return 
+
         MaxVis=predict.GiveMaxCorr(Resid,ParamJonesList)
         rms=findrms.findrms(MaxVis)
         med=np.median(MaxVis)
@@ -475,10 +556,11 @@ class ClassPredict():
         DT=DicoData["infos"][1]
         UVW_dt=DicoData["UVW_dt"]
         
+        ColOutDir=np.zeros(DataOut.shape,np.complex64)
         for iCluster in ListDirection:
-            indSources=np.where(self.SourceCat.Cluster==iCluster)[0]
-            ColOutDir=np.zeros(DataOut.shape,np.complex64)
+            ColOutDir.fill(0)
 
+            indSources=np.where(self.SourceCat.Cluster==iCluster)[0]
             T=ClassTimeIt("predict")
             T.disable()
             ### new
@@ -502,10 +584,12 @@ class ClassPredict():
             LSmearMode=[FSmear,TSmear]
             T.timeit("init")
 
-            ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
-            ParamJonesList=ParamJonesList+[iCluster]
-            #predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode)
-            predict.predictJones(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList)
+            if ApplyTimeJones!=None:
+                ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
+                ParamJonesList=ParamJonesList+[iCluster]
+                predict.predictJones(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList)
+            else:
+                predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode)
 
             T.timeit("predict0")
 
