@@ -334,11 +334,20 @@ def main(options=None):
 
                 nrows=Solver.VS.ThisDataChunk["times"].size
 
-                Weights=np.ones((nrows,Solver.VS.MS.ChanFreq.size),np.float32)
+                Solver.VS.ThisDataChunk["W"]=np.ones((nrows,Solver.VS.MS.ChanFreq.size),np.float64)
+
 
                 ################
                 # #PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones)
+
+                print>>log,"   Compute residual data"
+                Predict=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
+                print>>log,"   Compute corrected residual data in all direction"
+                Solver.VS.ThisDataChunk["resid"]=Solver.VS.ThisDataChunk["data"]-Predict
                 PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones,SM)
+                Weights=Solver.VS.ThisDataChunk["W"]
+                NNotFlagged=np.count_nonzero(Weights)
+                print>>log,"   Set weights to Zero for %5.2f %% of data"%(100*float(Weights.size-NNotFlagged)/(Weights.size))
 
                 # ################
                 # T=ClassTimeIt.ClassTimeIt()

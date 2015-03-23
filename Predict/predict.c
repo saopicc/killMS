@@ -49,15 +49,16 @@ void GiveJones(float complex *ptrJonesMatrices, int *JonesDims, float *ptrCoefs,
 
 static PyObject *CorrVis(PyObject *self, PyObject *args)
 {
-  PyObject *ObjVisIn;
+  PyObject *ObjVisIn, *ObjVisCorr;
   PyObject *LSM, *LJones;
-  PyArrayObject *NpVisIn, *NpUVWin, *matout;
+  PyArrayObject *NpVisIn,*NpVisCorr, *NpUVWin, *matout;
   float *p_l,*p_m,*p_alpha,*p_Flux, *WaveL;
 
   int nrow,npol,nsources,i,dim[2];
   
-  if (!PyArg_ParseTuple(args, "OO!",
+  if (!PyArg_ParseTuple(args, "OOO!",
 			&ObjVisIn,
+			&ObjVisCorr,
 			&PyList_Type, &LJones))  return NULL;
   
 
@@ -66,6 +67,18 @@ static PyObject *CorrVis(PyObject *self, PyObject *args)
   NpVisIn = (PyArrayObject *) PyArray_ContiguousFromObject(ObjVisIn, PyArray_COMPLEX64, 0, 3);
   float complex* __restrict__ VisIn=p_complex64(NpVisIn);
 
+  NpVisCorr = (PyArrayObject *) PyArray_ContiguousFromObject(ObjVisCorr, PyArray_COMPLEX64, 0, 3);
+  float complex* __restrict__ visCorr=p_complex64(NpVisCorr);
+
+
+
+  /* float complex *visCorr=malloc((nrow*nchan*4)*sizeof(float complex)); */
+  /* memset(visCorr, 0, (nrow*nchan*4)*sizeof(float complex)); */
+  /* npy_intp NpShape[3]; */
+  /* NpShape[0]=nrow; */
+  /* NpShape[1]=nchan; */
+  /* NpShape[2]=4; */
+  /* PyArrayObject * NpVisCorr = (PyArrayObject*)PyArray_SimpleNewFromData(3, NpShape, NPY_COMPLEX64, visCorr); */
   
 
 
@@ -153,13 +166,6 @@ static PyObject *CorrVis(PyObject *self, PyObject *args)
 
   
 
-  float complex *visCorr=malloc((nrow*nchan*4)*sizeof(float complex));
-  memset(visCorr, 0, (nrow*nchan*4)*sizeof(float complex));
-  npy_intp NpShape[3];
-  NpShape[0]=nrow;
-  NpShape[1]=nchan;
-  NpShape[2]=4;
-  PyArrayObject * NpVisCorr = (PyArrayObject*)PyArray_SimpleNewFromData(3, NpShape, NPY_COMPLEX64, visCorr);
 
 
   VisIn=p0;

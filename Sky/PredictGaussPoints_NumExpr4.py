@@ -226,6 +226,9 @@ class WorkerPredict(multiprocessing.Process):
             if "W" in D.keys():
                 DicoData["W"]=D["W"][Row0:Row1]
 
+            if "resid" in D.keys():
+                DicoData["resid"]=D["resid"][Row0:Row1]
+
             ApplyTimeJones=NpShared.SharedToDico("%sApplyTimeJones"%self.IdSharedMem)
 
             PM=ClassPredict(NCPU=1,DoSmearing=self.DoSmearing)
@@ -400,9 +403,12 @@ class ClassPredict():
         na=DicoData["infos"][0]
 
 
-        Predict=self.predictKernelPolCluster(DicoData,SM,ApplyTimeJones=ApplyTimeJones)
+        #print "predict...",times[0],times[-1]
+        #Predict=self.predictKernelPolCluster(DicoData,SM,ApplyTimeJones=ApplyTimeJones)
+        #print "done..."
 
-        Resid=DicoData["data"]-Predict
+
+        Resid=DicoData["resid"]#-Predict
         flags=DicoData["flags"]
 
         ListDirection=SM.Dirs
@@ -412,39 +418,51 @@ class ClassPredict():
         import ppgplot
 
         MaxMat=np.zeros(Resid.shape,dtype=np.float32)
+        CVis=np.zeros_like(Resid)
 
         for iCluster in ListDirection:
+            CVis.fill(0)
             ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
             ParamJonesList=ParamJonesList+[iCluster]
-            CVis=predict.CorrVis(Resid,ParamJonesList)
+            predict.CorrVis(Resid,CVis,ParamJonesList)
 
             CVis[flags==1]=0.
             aCVis=np.abs(CVis)
             
-            print "In direction %i: (std, max_abs)=(%f, %f)"%(iCluster,np.std(CVis),np.max(aCVis))
+            #print "In direction %i: (std, std_abs, med_abs, max_abs)=(%f, %f, %f, %f)"%(iCluster,np.std(CVis),np.std(aCVis),np.median(aCVis),np.max(aCVis))
             ind=(aCVis>MaxMat)
             MaxMat[ind]=aCVis[ind]
 
-            del(aCVis,CVis)
+            del(aCVis)
 
             # pylab.plot(np.abs(CVis[flags==0]))
             # pylab.draw()
             # pylab.show(False)
             # pylab.pause(0.1)
-        return 
 
-        MaxVis=predict.GiveMaxCorr(Resid,ParamJonesList)
-        rms=findrms.findrms(MaxVis)
-        med=np.median(MaxVis)
 
-        W=DicoData["W"]
-        diff=(MaxVis-med)/rms
-        print rms
-        diff[diff==0]=1e-6
-        dev=1./(1.+diff)**2
-        W[diff>3.]=0
-        # W*=dev
-        # W/=np.mean(W)
+        #MaxVis=predict.GiveMaxCorr(Resid,ParamJonesList)
+        #rms=findrms.findrms(MaxVis)
+        #med=np.median(MaxVis)
+
+
+        nrow,nch,_=Resid.shape
+        W=DicoData["W"]#np.ones((nrow,nch),np.float32)
+        rms=findrms.findrms(MaxMat)
+        diff=np.abs(MaxMat-np.median(MaxMat))/rms
+        cond=(diff>3.)
+        ind=np.any(cond,axis=2)
+        W[ind]=0.
+
+
+        # W=DicoData["W"]
+        # diff=(MaxVis-med)/rms
+        # print rms
+        # diff[diff==0]=1e-6
+        # dev=1./(1.+diff)**2
+        # W[diff>3.]=0
+        # # W*=dev
+        # # W/=np.mean(W)
         
 
 
