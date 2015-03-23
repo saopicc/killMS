@@ -16,6 +16,7 @@
 /* ==== Set up the methods table ====================== */
 static PyMethodDef predict_Methods[] = {
 	{"predict", predict, METH_VARARGS},
+	{"predictJones", predictJones, METH_VARARGS},
 	{"GiveMaxCorr", GiveMaxCorr, METH_VARARGS},
 	{NULL, NULL}     /* Sentinel - marks the end of this structure */
 };
@@ -469,10 +470,12 @@ static PyObject *predictJones(PyObject *self, PyObject *args)
   JonesDims[2]=na_Jones;
   JonesDims[3]=nch_Jones;
   
+  PyObject *_IDIR  = PyList_GetItem(LJones, 4);
+  i_dir=(int) PyFloat_AsDouble(_IDIR);
 
   /* ////////////////////////////////////////////// */
 
-
+  //i_dir=0;
 
 
 
@@ -486,7 +489,7 @@ static PyObject *predictJones(PyObject *self, PyObject *args)
 
   float complex* VisIn=p_complex64(NpVisIn);
   float complex* ThisVis;
-  float complex VisCorr[4];
+  float complex VisCorr[4]={0};
 
   PyArrayObject *Np_l;
   Np_l = (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LSM, 0), PyArray_FLOAT32, 0, 4);
@@ -580,7 +583,7 @@ static PyObject *predictJones(PyObject *self, PyObject *args)
   	//printf("cc %f \n",phase);
 
 
-	if(ApplyJones){
+	if(ApplyJones==1){
 	  int i_t=ptrTimeMappingJonesMatrices[irow];
 	  int i_ant0=ptrA0[irow];
 	  int i_ant1=ptrA1[irow];
@@ -596,12 +599,11 @@ static PyObject *predictJones(PyObject *self, PyObject *args)
 
   	for(ch=0;ch<nchan;ch++){
 	  ThisVis=VisIn+irow*nchan*4+ch*4;
-	  VisCorr[0]=ThisVis[0];
-	  VisCorr[1]=ThisVis[1];
-	  VisCorr[2]=ThisVis[2];
-	  VisCorr[3]=ThisVis[3];
+	  /* VisCorr[0]=ThisVis[0]; */
+	  /* VisCorr[1]=ThisVis[1]; */
+	  /* VisCorr[2]=ThisVis[2]; */
+	  /* VisCorr[3]=ThisVis[3]; */
 
-  	  //printf("ch: %i %f\n",ch,WaveL[ch]);
   	  result=p_Flux[dd*nchan+ch]*cexp(phase*c1[ch]);
   	  if(FSmear==1){
   	    phi=PI*PI_C*p_DFreqs[ch]*phase;
@@ -628,16 +630,20 @@ static PyObject *predictJones(PyObject *self, PyObject *args)
 
   	  //printf("\n");
 
-	  if(ApplyJones){
-	    MatDot(J0inv,VisCorr,VisCorr);
-	    MatDot(VisCorr,J1Hinv,VisCorr);
+	  if(ApplyJones==1){
+	    MatDot(J0,J1H,JJ);
+	    ThisVis[0]   += JJ[0]*result;
+	    ThisVis[1]   += JJ[1]*result;
+	    ThisVis[2]   += JJ[2]*result;
+	    ThisVis[3]   += JJ[3]*result;
 	  }
+	  else{
+	    ThisVis[0]   += result;
+	    ThisVis[3]   += result;
+	  }
+	  //printf("(%f,%f)\n",creal(ThisVis[0]),cimag(ThisVis[0]));
 
-	  VisIn[0]   += VisCorr[0];
-	  VisIn[1]   += VisCorr[1];
-	  VisIn[2]   += VisCorr[2];
-	  VisIn[3]   += VisCorr[3];
-	  VisIn+=4;
+
   	}
 	
     }

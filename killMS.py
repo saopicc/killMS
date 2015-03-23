@@ -43,8 +43,8 @@ from Wirtinger.ClassWirtingerSolver import ClassWirtingerSolver
 from Other import ClassTimeIt
 from Data import ClassVisServer
 
-from Sky.PredictGaussPoints_NumExpr4 import ClassPredictParallel as ClassPredict 
-#from Sky.PredictGaussPoints_NumExpr4 import ClassPredict as ClassPredict 
+#from Sky.PredictGaussPoints_NumExpr4 import ClassPredictParallel as ClassPredict 
+from Sky.PredictGaussPoints_NumExpr4 import ClassPredict as ClassPredict 
 
 #from Sky.PredictGaussPoints_NumExpr2 import ClassPredictParallel as ClassPredict_orig 
 #from Sky.PredictGaussPoints_NumExpr3 import ClassPredict as ClassPredict 
@@ -239,20 +239,19 @@ def main(options=None):
                            "gamma":1,
                            "AmpQx":.5}
 
-    if options.ExtSols=="":
-        Solver=ClassWirtingerSolver(VS,SM,PolMode=options.PolMode,
-                                    BeamProps=BeamProps,
-                                    NIter=options.NIter,NCPU=NCPU,
-                                    SolverType=options.SolverType,
-                                    evP_Step=options.evP_Step,evP_StepStart=options.evP_StepStart,
-                                    DoPlot=options.DoPlot,
-                                    IdSharedMem=IdSharedMem,
-                                    ConfigJacobianAntenna=ConfigJacobianAntenna)
-        Solver.InitSol(TestMode=False)
+    Solver=ClassWirtingerSolver(VS,SM,PolMode=options.PolMode,
+                                BeamProps=BeamProps,
+                                NIter=options.NIter,NCPU=NCPU,
+                                SolverType=options.SolverType,
+                                evP_Step=options.evP_Step,evP_StepStart=options.evP_StepStart,
+                                DoPlot=options.DoPlot,
+                                IdSharedMem=IdSharedMem,
+                                ConfigJacobianAntenna=ConfigJacobianAntenna)
+    Solver.InitSol(TestMode=False)
 
     PM=ClassPredict(NCPU=NCPU,IdMemShared=IdSharedMem,DoSmearing=DoSmearing)
     PM2=None#ClassPredict_orig(NCPU=NCPU,IdMemShared=IdSharedMem)
-    SM=Solver.SM
+
 
 
     if (options.SolverType=="KAFCA"):
@@ -341,7 +340,13 @@ def main(options=None):
                 # #PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones)
                 # PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones,SM)
                 ################
+                T=ClassTimeIt.ClassTimeIt()
+                
+                #PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
+                #T.timeit("a")
                 PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
+                #T.timeit("b")
+
                 Diff=Solver.VS.ThisDataChunk["data"]-PredictData
                 std=np.std(Diff[Solver.VS.ThisDataChunk["flags"]==0])
                 ThresHold=3.

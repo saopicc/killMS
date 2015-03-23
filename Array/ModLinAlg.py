@@ -192,7 +192,7 @@ def testInvertSVD():
 
 
 def invSVD(A):
-    u,s,v=np.linalg.svd(A+np.random.randn(*A.shape)*(1e-6*A.max()))
+    u,s,v=np.linalg.svd(A)#+np.random.randn(*A.shape)*(1e-6*A.max()))
     #s[s<0.]=1.e-6
     s[s<1.e-6*s.max()]=1.e-6*s.max()
     ssq=(1./s)

@@ -423,11 +423,6 @@ class ClassPredict():
     #     #return W
 
 
-
-
-
-
-
     def predictKernelPolCluster(self,DicoData,SM,iDirection=None,ApplyJones=None,ApplyTimeJones=None,Noise=None):
         self.DicoData=DicoData
         self.SourceCat=SM.SourceCat
@@ -506,74 +501,13 @@ class ClassPredict():
 
             LSmearMode=[FSmear,TSmear]
             T.timeit("init")
-            predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode)
+
+            ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
+            ParamJonesList=ParamJonesList+[iCluster]
+            #predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode)
+            predict.predictJones(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList)
+
             T.timeit("predict0")
-            ###### test
-            # ColOutDir0=ColOutDir.copy()
-            # ColOutDir.fill(0)
-
-            # T.reinit()
-            # for iSource in range(indSources.size):
-            #     out=self.PredictDirSPW(iCluster,iSource)
-            #     if type(out)==type(None): continue
-            #     ColOutDir+=out
-            # T.timeit("predict1")
-
-            # #print ColOutDir0-ColOutDir
-            # print np.max(ColOutDir0-ColOutDir)
-
-            # stop
-            
-            # print iCluster,ListDirection
-            # print ColOutDir.shape
-            # ColOutDir.fill(0)
-            # print ColOutDir.shape
-            # ColOutDir[:,:,0]=1
-            # print ColOutDir.shape
-            # ColOutDir[:,:,3]=1
-            # print ColOutDir.shape
-
-            # Apply Jones
-            if ApplyJones!=None:
-
-                J=Jones[iCluster]
-                JH=JonesH[iCluster]
-                for ichan in range(nf):
-                    ColOutDir[:,ichan,:]=ModLinAlg.BatchDot(J[A0,:],ColOutDir[:,ichan,:])
-                    ColOutDir[:,ichan,:]=ModLinAlg.BatchDot(ColOutDir[:,ichan,:],JH[A1,:])
-
-            if ApplyTimeJones!=None:#"DicoBeam" in DicoData.keys():
-                D=ApplyTimeJones#DicoData["DicoBeam"]
-                Beam=D["Beam"]
-                BeamH=D["BeamH"]
-
-                lt0,lt1=D["t0"],D["t1"]
-
-
-                for it in range(lt0.size):
-                    t0,t1=lt0[it],lt1[it]
-                    ind=np.where((times>=t0)&(times<t1))[0]
-                    if ind.size==0: continue
-                    data=ColOutDir[ind]
-                    
-                    A0sel=A0[ind]
-                    A1sel=A1[ind]
-
-                    if "ChanMap" in ApplyTimeJones.keys():
-                        ChanMap=ApplyTimeJones["ChanMap"]
-                    else:
-                        ChanMap=range(nf)
-
-
-                    for ichan in range(len(ChanMap)):
-                        JChan=ChanMap[ichan]
-
-                        J=Beam[it,iCluster,:,JChan,:,:].reshape((na,4))
-                        JH=BeamH[it,iCluster,:,JChan,:,:].reshape((na,4))
-                        data[:,ichan,:]=ModLinAlg.BatchDot(J[A0sel,:],data[:,ichan,:])
-                        data[:,ichan,:]=ModLinAlg.BatchDot(data[:,ichan,:],JH[A1sel,:])
-                    ColOutDir[ind]=data[:]
-
 
             if Noise!=None:
                 ColOutDir+=Noise*(np.random.randn(*ColOutDir.shape)+1j*np.random.randn(*ColOutDir.shape))
@@ -581,4 +515,167 @@ class ClassPredict():
 
 
         return DataOut
+
+
+
+
+
+
+
+    # def predictKernelPolCluster(self,DicoData,SM,iDirection=None,ApplyJones=None,ApplyTimeJones=None,Noise=None):
+    #     self.DicoData=DicoData
+    #     self.SourceCat=SM.SourceCat
+    #     self.SM=SM
+
+    #     freq=DicoData["freqs"]
+    #     times=DicoData["times"]
+    #     nf=freq.size
+    #     na=DicoData["infos"][0]
+        
+    #     nrows=DicoData["A0"].size
+    #     DataOut=np.zeros((nrows,nf,4),self.CType)
+    #     if nrows==0: return DataOut
+        
+    #     self.freqs=freq
+    #     self.wave=299792458./self.freqs
+        
+    #     if iDirection!=None:
+    #         ListDirection=[iDirection]
+    #     else:
+    #         ListDirection=SM.Dirs#range(SM.NDir)
+        
+    #     A0=DicoData["A0"]
+    #     A1=DicoData["A1"]
+    #     if ApplyJones!=None:
+    #         na,NDir,_=ApplyJones.shape
+    #         Jones=np.swapaxes(ApplyJones,0,1)
+    #         Jones=Jones.reshape((NDir,na,4))
+    #         JonesH=ModLinAlg.BatchH(Jones)
+
+    #     TSmear=0.
+    #     FSmear=0.
+
+    #     if "T" in self.DoSmearing:
+    #         TSmear=1.
+    #     if "F" in self.DoSmearing:
+    #         FSmear=1.
+    #     # self.SourceCat.m[:]=0
+    #     # self.SourceCat.l[:]=0.1
+    #     # self.SourceCat.I[:]=10
+    #     # self.SourceCat.alpha[:]=0
+
+    #     # DataOut=DataOut[1:2]
+    #     # self.DicoData["uvw"]=self.DicoData["uvw"][1:2]
+    #     # self.DicoData["A0"]=self.DicoData["A0"][1:2]
+    #     # self.DicoData["A1"]=self.DicoData["A1"][1:2]
+    #     # self.DicoData["IndexTimesThisChunk"]=self.DicoData["IndexTimesThisChunk"][1:2]
+    #     # self.SourceCat=self.SourceCat[0:1]
+
+    #     DT=DicoData["infos"][1]
+    #     UVW_dt=DicoData["UVW_dt"]
+        
+    #     for iCluster in ListDirection:
+    #         indSources=np.where(self.SourceCat.Cluster==iCluster)[0]
+    #         ColOutDir=np.zeros(DataOut.shape,np.complex64)
+
+    #         T=ClassTimeIt("predict")
+    #         T.disable()
+    #         ### new
+    #         SourceCat=self.SourceCat[indSources].copy()
+    #         l=np.float32(SourceCat.l)
+    #         m=np.float32(SourceCat.m)
+    #         I=np.float32(SourceCat.I)
+    #         alpha=np.float32(SourceCat.alpha)
+    #         WaveL=np.float32(299792458./self.freqs)
+    #         flux=np.float32(SourceCat.I)
+    #         alpha=SourceCat.alpha
+    #         dnu=np.float32(self.DicoData["dfreqs"])
+    #         f0=(self.freqs/SourceCat.RefFreq[0])
+    #         fluxFreq=np.float32(flux.reshape((flux.size,1))*(f0.reshape((1,f0.size)))**(alpha.reshape((alpha.size,1))))
+            
+
+    #         LSM=[l,m,fluxFreq]
+    #         LFreqs=[WaveL,np.float32(self.freqs),dnu]
+    #         LUVWSpeed=[UVW_dt,DT]
+
+    #         LSmearMode=[FSmear,TSmear]
+    #         T.timeit("init")
+            
+    #         predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode)
+    #         T.timeit("predict0")
+    #         ###### test
+    #         # ColOutDir0=ColOutDir.copy()
+    #         # ColOutDir.fill(0)
+
+    #         # T.reinit()
+    #         # for iSource in range(indSources.size):
+    #         #     out=self.PredictDirSPW(iCluster,iSource)
+    #         #     if type(out)==type(None): continue
+    #         #     ColOutDir+=out
+    #         # T.timeit("predict1")
+
+    #         # #print ColOutDir0-ColOutDir
+    #         # print np.max(ColOutDir0-ColOutDir)
+
+    #         # stop
+            
+    #         # print iCluster,ListDirection
+    #         # print ColOutDir.shape
+    #         # ColOutDir.fill(0)
+    #         # print ColOutDir.shape
+    #         # ColOutDir[:,:,0]=1
+    #         # print ColOutDir.shape
+    #         # ColOutDir[:,:,3]=1
+    #         # print ColOutDir.shape
+
+    #         # Apply Jones
+    #         if ApplyJones!=None:
+
+    #             J=Jones[iCluster]
+    #             JH=JonesH[iCluster]
+    #             for ichan in range(nf):
+    #                 ColOutDir[:,ichan,:]=ModLinAlg.BatchDot(J[A0,:],ColOutDir[:,ichan,:])
+    #                 ColOutDir[:,ichan,:]=ModLinAlg.BatchDot(ColOutDir[:,ichan,:],JH[A1,:])
+
+    #         if ApplyTimeJones!=None:#"DicoBeam" in DicoData.keys():
+    #             D=ApplyTimeJones#DicoData["DicoBeam"]
+    #             Beam=D["Beam"]
+    #             BeamH=D["BeamH"]
+
+    #             lt0,lt1=D["t0"],D["t1"]
+
+
+    #             for it in range(lt0.size):
+    #                 t0,t1=lt0[it],lt1[it]
+    #                 ind=np.where((times>=t0)&(times<t1))[0]
+    #                 if ind.size==0: continue
+    #                 data=ColOutDir[ind]
+                    
+    #                 A0sel=A0[ind]
+    #                 A1sel=A1[ind]
+
+    #                 if "ChanMap" in ApplyTimeJones.keys():
+    #                     ChanMap=ApplyTimeJones["ChanMap"]
+    #                 else:
+    #                     ChanMap=range(nf)
+
+
+    #                 for ichan in range(len(ChanMap)):
+    #                     JChan=ChanMap[ichan]
+
+    #                     J=Beam[it,iCluster,:,JChan,:,:].reshape((na,4))
+    #                     JH=BeamH[it,iCluster,:,JChan,:,:].reshape((na,4))
+    #                     data[:,ichan,:]=ModLinAlg.BatchDot(J[A0sel,:],data[:,ichan,:])
+    #                     data[:,ichan,:]=ModLinAlg.BatchDot(data[:,ichan,:],JH[A1sel,:])
+    #                 ColOutDir[ind]=data[:]
+
+
+    #         if Noise!=None:
+    #             ColOutDir+=Noise*(np.random.randn(*ColOutDir.shape)+1j*np.random.randn(*ColOutDir.shape))
+    #         DataOut+=ColOutDir
+
+
+    #     return DataOut
+
+
 
