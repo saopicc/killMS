@@ -417,11 +417,12 @@ class ClassPredict():
             ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
             ParamJonesList=ParamJonesList+[iCluster]
             CVis=predict.CorrVis(Resid,ParamJonesList)
-            CVis[flags==0]=0.
+
+            CVis[flags==1]=0.
             aCVis=np.abs(CVis)
             ind=(aCVis>MaxMat)
             
-            print "In direction %i: (std, max)=(%f, %f)"%(iCluster,np.max(aCVis),np.std(aCVis))
+            print "In direction %i: (std, max)=(%f, %f)"%(iCluster,np.std(aCVis),np.max(aCVis))
             MaxMat[ind]=aCVis[ind]
 
             # pylab.plot(np.abs(CVis[flags==0]))
