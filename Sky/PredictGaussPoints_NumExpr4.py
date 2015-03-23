@@ -411,19 +411,18 @@ class ClassPredict():
         #pylab.clf()
         import ppgplot
 
+        MaxMat=np.zeros(Resid.shape,dtype=np.float32)
 
         for iCluster in ListDirection:
             ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
             ParamJonesList=ParamJonesList+[iCluster]
             CVis=predict.CorrVis(Resid,ParamJonesList)
-
-            ppgplot.pgopen('/xwin')
-            ppgplot.pglab('(x)', '(y)', 'direction= %i\u2'%iCluster)
-            ys=np.abs(CVis[flags==0])
-            xs=np.arange(ys.size)
-            ppgplot.pgenv(0.,np.max(xs),0.,np.max(ys),0,1)
-            ppgplot.pgpt(xs,ys,1)
-            ppgplot.pgclos()
+            CVis[flags==0]=0.
+            aCVis=np.abs(CVis)
+            ind=(aCVis>MaxMat)
+            
+            print>>log, "In direction %i: (std, max)=(%f, %f)"%(iCuster,np.max(aCVis),np.std(aCVis))
+            MaxMat[ind]=CVis[ind]
 
             # pylab.plot(np.abs(CVis[flags==0]))
             # pylab.draw()
