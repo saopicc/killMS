@@ -8,7 +8,7 @@ from Other import ModColor
 from Other import MyLogger
 from Other import MyPickle
 from Other import PrintOptParse
-print "a"
+
 log=MyLogger.getLogger("killMS")
 MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
 
