@@ -421,9 +421,11 @@ class ClassPredict():
             CVis[flags==1]=0.
             aCVis=np.abs(CVis)
             
-            print "In direction %i: (std, max)=(%f, %f)"%(iCluster,np.std(aCVis),np.max(aCVis))
+            print "In direction %i: (std, max_abs)=(%f, %f)"%(iCluster,np.std(CVis),np.max(aCVis))
             ind=(aCVis>MaxMat)
             MaxMat[ind]=aCVis[ind]
+
+            del(aCVis,CVis)
 
             # pylab.plot(np.abs(CVis[flags==0]))
             # pylab.draw()
