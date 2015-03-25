@@ -4,7 +4,7 @@ import numpy as np
 from Array import NpShared
 
 from Data import ClassVisServer
-from Sky import ClassSM
+#from Sky import ClassSM
 from Array import ModLinAlg
 import matplotlib.pyplot as pylab
 
@@ -14,7 +14,7 @@ from Other import ModColor
 
 from Other.progressbar import ProgressBar
             
-from Sky.PredictGaussPoints_NumExpr import ClassPredict
+#from Sky.PredictGaussPoints_NumExpr import ClassPredict
 from Other import ClassTimeIt
 from Other import Counter
 from ClassEvolve import ClassModelEvolution

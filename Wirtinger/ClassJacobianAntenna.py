@@ -1,9 +1,9 @@
 import numpy as np
 from Array import NpShared
-from Sky.PredictGaussPoints_NumExpr4 import ClassPredict
+from Predict.PredictGaussPoints_NumExpr4 import ClassPredict
 
 from Data import ClassVisServer
-from Sky import ClassSM
+#from Sky import ClassSM
 from Array import ModLinAlg
 import pylab
 from Other import ClassTimeIt

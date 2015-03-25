@@ -9,7 +9,7 @@ from Other import ClassTimeIt
 from Other import ModColor
 from Array import ModLinAlg
 MyLogger.setSilent(["NpShared"])
-from Sky.PredictGaussPoints_NumExpr3 import ClassPredictParallel as ClassPredict 
+#from Sky.PredictGaussPoints_NumExpr3 import ClassPredictParallel as ClassPredict 
 #from Sky.PredictGaussPoints_NumExpr3 import ClassPredict as ClassPredict 
 import ClassWeighting
 

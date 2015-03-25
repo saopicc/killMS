@@ -37,13 +37,13 @@ import time
 import os
 import numpy as np
 import pickle
-from Sky import ClassSM
+from SkyModel.Sky import ClassSM
 from Wirtinger.ClassWirtingerSolver import ClassWirtingerSolver
 
 from Other import ClassTimeIt
 from Data import ClassVisServer
 
-from Sky.PredictGaussPoints_NumExpr4 import ClassPredictParallel as ClassPredict 
+from Predict.PredictGaussPoints_NumExpr4 import ClassPredictParallel as ClassPredict 
 #from Sky.PredictGaussPoints_NumExpr4 import ClassPredict as ClassPredict 
 
 #from Sky.PredictGaussPoints_NumExpr2 import ClassPredictParallel as ClassPredict_orig 
