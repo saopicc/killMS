@@ -10,14 +10,14 @@ log=MyLogger.getLogger("killMS")
 MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
 from Other import ClassTimeIt
 from Data import ClassVisServer
-from Sky.PredictGaussPoints_NumExpr import ClassPredict
+from Predict.PredictGaussPoints_NumExpr import ClassPredict
 from Array import ModLinAlg
 from Array import NpShared
 import time
 import os
 import numpy as np
 import pickle
-from Sky import ClassSM
+from SkyModel.Sky import ClassSM
 from pyrap.tables import table
 
 

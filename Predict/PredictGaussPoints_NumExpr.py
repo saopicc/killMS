@@ -1,7 +1,7 @@
 import numpy as np
 from pyrap.tables import table
 from Data.ClassMS import ClassMS
-from Sky.ClassSM import ClassSM
+from SkyModel.Sky.ClassSM import ClassSM
 from Other.ClassTimeIt import ClassTimeIt
 import numexpr as ne
 #import ModNumExpr

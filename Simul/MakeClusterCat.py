@@ -1,5 +1,5 @@
 import numpy as np
-from Sky.ClassSM import ClassSM
+from SkyModel.Sky import ClassSM
 from Other import rad2hmsdms
 import os
 from Data import ClassMS

@@ -453,6 +453,14 @@ def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2,ConfigJacobianAnte
     Jones["BeamH"]=ModLinAlg.BatchH(G)
     Jones["ChanMap"]=np.zeros((VSInit.MS.NSPWChan,))
 
+    ind=np.array([],np.int32)
+    for it in range(nt):
+        t0=Jones["t0"][it]
+        t1=Jones["t1"][it]
+        indMStime=np.where((SolverInit.VS.ThisDataChunk["times"]>=t0)&(SolverInit.VS.ThisDataChunk["times"]<t1))[0]
+        indMStime=np.ones((indMStime.size,),np.int32)*it
+        ind=np.concatenate((ind,indMStime))
+        Jones["MapJones"]=ind
     PredictData=PM.predictKernelPolCluster(SolverInit.VS.ThisDataChunk,SolverInit.SM,ApplyTimeJones=Jones)
 
     SolverInit.VS.ThisDataChunk["data"]-=PredictData
