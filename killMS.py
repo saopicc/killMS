@@ -101,7 +101,7 @@ def read_options():
     group = optparse.OptionGroup(opt, "* ApplyCal additional options", "Default values should give reasonable results, but all of them have noticeable influence on the results")
     group.add_option('--ExtSols',type="str",help='Substact selected sources. ',default="")
     group.add_option('--ApplyMode',type="str",help='Substact selected sources. ',default="AP")
-    group.add_option('--ReWeight',type="int",help=' . Default is %default',default=1)
+    group.add_option('--ClipMethod',type="str",help=' . Default is %default',default="Resid")
     group.add_option('--Decorrelation',type="str",help=' . Default is %default',default="FT")
     opt.add_option_group(group)
 
@@ -157,7 +157,7 @@ def main(options=None):
     IdSharedMem=str(int(os.getpid()))+"."
     DoApplyCal=(options.ApplyCal!=-2)
     ApplyCal=int(options.ApplyCal)
-    ReWeight=(options.ReWeight==1)
+    ReWeight=(options.ClipMethod!="")
 
     if options.ms=="":
         print "Give an MS name!"
@@ -320,8 +320,8 @@ def main(options=None):
 
 
             if ReWeight:
-                print>>log, ModColor.Str("Estimating imaging weights ... ",col="green")
-
+                print>>log, ModColor.Str("Clipping bad solution-based data ... ",col="green")
+                
                 ind=np.array([],np.int32)
                 for it in range(nt):
                     t0=Jones["t0"][it]
@@ -342,9 +342,24 @@ def main(options=None):
 
                 print>>log,"   Compute residual data"
                 Predict=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
-                print>>log,"   Compute corrected residual data in all direction"
                 Solver.VS.ThisDataChunk["resid"]=Solver.VS.ThisDataChunk["data"]-Predict
-                PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones,SM)
+                Weights=Solver.VS.ThisDataChunk["W"]
+
+                if "Resid" in options.ClipMethod:
+                    Diff=Solver.VS.ThisDataChunk["resid"]
+                    std=np.std(Diff[Solver.VS.ThisDataChunk["flags"]==0])
+                    print>>log, "   Estimated standard deviation in the residual data: %f"%std
+
+                    ThresHold=5.
+                    cond=(np.abs(Diff)>ThresHold*std)
+                    ind=np.any(cond,axis=2)
+                    Weights[ind]=0.
+
+
+                if "DDEResid" in options.ClipMethod:
+                    print>>log,"   Compute corrected residual data in all direction"
+                    PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones,SM)
+
                 Weights=Solver.VS.ThisDataChunk["W"]
                 NNotFlagged=np.count_nonzero(Weights)
                 print>>log,"   Set weights to Zero for %5.2f %% of data"%(100*float(Weights.size-NNotFlagged)/(Weights.size))
@@ -357,18 +372,6 @@ def main(options=None):
                 # PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
                 # #T.timeit("b")
 
-                # Diff=Solver.VS.ThisDataChunk["data"]-PredictData
-                # std=np.std(Diff[Solver.VS.ThisDataChunk["flags"]==0])
-                # ThresHold=3.
-                # cond=(np.abs(Diff)>ThresHold*std)
-                # ind=np.any(cond,axis=2)
-                # Weights[ind]=0.
-
-                # print>>log, "   Estimated standard deviation in the residual data: %f"%std
-                # NFlagged=np.count_nonzero(ind)
-                # #print indRow.size
-                # #Solver.VS.ThisDataChunk["W"][ind]=0.
-                # print>>log, "   Set weights to Zero for %5.2f %% of data"%(100*float(NFlagged)/(ind.size))
                 # ################
 
 
