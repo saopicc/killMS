@@ -57,6 +57,12 @@ from Other import reformat
 import multiprocessing
 NCPU_default=str(int(0.75*multiprocessing.cpu_count()))
 
+import MyOptParse
+
+global Parset
+Parset=ReadCFG.Parset("%s/Parset/DefaultParset.cfg"%os.environ["DDFACET_DIR"])
+
+
 def read_options():
     logo.print_logo()
     desc="""CohJones Questions and suggestions: cyril.tasse@obspm.fr"""
