@@ -8,6 +8,7 @@ from Other import ModColor
 from Other import MyLogger
 from Other import MyPickle
 from Other import PrintOptParse
+from Parset import MyOptParse
 
 log=MyLogger.getLogger("killMS")
 MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
@@ -15,6 +16,7 @@ MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
 sys.path=[name for name in sys.path if not(("pyrap" in name)&("/usr/local/lib/" in name))]
 from pyrap.tables import table
 # test
+SaveFile="last_killMS.obj"
 
 #import numpy
 #print numpy.__file__
@@ -57,115 +59,113 @@ from Other import reformat
 import multiprocessing
 NCPU_default=str(int(0.75*multiprocessing.cpu_count()))
 
-import MyOptParse
+from Parset import ReadCFG
 
 global Parset
-Parset=ReadCFG.Parset("%s/Parset/DefaultParset.cfg"%os.environ["DDFACET_DIR"])
+Parset=ReadCFG.Parset("%s/killMS2/Parset/DefaultParset.cfg"%os.environ["KILLMS_DIR"])
 
 
 def read_options():
     logo.print_logo()
-    desc="""CohJones Questions and suggestions: cyril.tasse@obspm.fr"""
-    
-    opt = optparse.OptionParser(usage='Usage: %prog --ms=somename.MS <options>',version='%prog version 1.0',description=desc)
-    group = optparse.OptionGroup(opt, "* Data-related options")
-    group.add_option('--ms',help='Input MS to draw [no default]',default='')
-    group.add_option('--SkyModel',help='List of targets [no default]',default='')
-    group.add_option('--TChunk',help='Time Chunk in hours. Default is %default',default=15)
-    group.add_option('--InCol',help='Column to work on. Default is %default',default="CORRECTED_DATA_BACKUP")
-    group.add_option('--OutCol',help='Column to write to. Default is %default',default="CORRECTED_DATA")
-    group.add_option('--LOFARBeam',help='(Mode, Time): Mode can be AE, E, or A for "Array factor" and "Element beam". Time is the estimation time step',default="")
-    group.add_option('--UVMinMax',help='Baseline length selection in km. For example --UVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default',default=None)
-    group.add_option('--FlagAnts',type="str",help='FlagAntenna patern. Default is %default',default="")
-    group.add_option('--DistMaxToCore',type="float",help='Maximum distance to core in km. Default is %default',default=1000.)
-    opt.add_option_group(group)
+    D=Parset.DicoPars
 
-    group = optparse.OptionGroup(opt, "* Weighting scheme")
-    group.add_option('--Resolution',type="float",help='Resolution in arcsec. Default is %default',default=0.)
-    group.add_option('--Weighting',type="str",help='Weighting scheme. Default is %default',default="Natural")
-    group.add_option('--Robust',type="float",help='Briggs Robust parameter. Default is %default',default=0)
-    opt.add_option_group(group)
+    desc="""Questions and suggestions: cyril.tasse@obspm.fr"""
+
+    OP=MyOptParse.MyOptParse(usage='Usage: %prog --ms=somename.MS <options>',description=desc,
+                             DefaultDict=D)
+
+
+    opt = optparse.OptionParser(usage='Usage: %prog --ms=somename.MS <options>',description=desc)
+    OP.OptionGroup("* Data-related options","VisData")
+    OP.add_option('MSName',help='Input MS to draw [no default]')
+    OP.add_option('TChunk',help='Time Chunk in hours. Default is %default')
+    OP.add_option('InCol',help='Column to work on. Default is %default')
+    OP.add_option('OutCol',help='Column to write to. Default is %default')
+
+    OP.OptionGroup("* Sky related options","SkyModel")
+    OP.add_option('SkyModel',help='List of targets [no default]')
+    OP.add_option('LOFARBeam',help='(Mode, Time): Mode can be AE, E, or A for "Array factor" and "Element beam". Time is the estimation time step')
+    OP.add_option('kills',help='Name or number index of sources to kill')
+    OP.add_option('invert',help='Invert the selected sources to kill')
+    OP.add_option('Decorrelation',type="str",help=' . Default is %default')
+
+    OP.OptionGroup("* Data Selection","DataSelection")
+    OP.add_option('UVMinMax',help='Baseline length selection in km. For example UVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default')
+    OP.add_option('FlagAnts',type="str",help='FlagAntenna patern. Default is %default')
+    OP.add_option('DistMaxToCore',type="float",help='Maximum distance to core in km. Default is %default')
+
+    OP.OptionGroup("* Weighting scheme","Weighting")
+    OP.add_option('Resolution',type="float",help='Resolution in arcsec. Default is %default')
+    OP.add_option('Weighting',type="str",help='Weighting scheme. Default is %default')
+    OP.add_option('Robust',type="float",help='Briggs Robust parameter. Default is %default')
 
     
-    group = optparse.OptionGroup(opt, "* Action options", "Default values should give reasonable results, but all of them have noticeable influence on the results")
-    #group.add_option('--SubOnly',help='Substract the skymodel assuming unity Jones matrices (no solve). Default is %default',default="0")
-    group.add_option('--DoPlot',type="int",help='Plot the solutions, for debugging. Default is %default',default=0)
-    group.add_option('--DoSub',type="int",help='Substact selected sources. Default is %default',default=1)
-    group.add_option('--ApplyCal',type="int",help='Apply direction averaged gains to residual data in the mentioned direction. \
-    If ApplyCal=-1 takes the mean gain over directions. -2 if off. Default is %default',default=-2)
-    
-    #group.add_option('--Steps',type="str",help='Number of cores to use. Default is %default ',default="Solve,Sustract")
-    group.add_option('--NCPU',type="int",help='Number of cores to use. Default is %default ',default=NCPU_default)
-    opt.add_option_group(group)
+    OP.OptionGroup("* Action options","Actions")
+    OP.add_option('DoPlot',type="int",help='Plot the solutions, for debugging. Default is %default')
+    OP.add_option('DoSub',type="int",help='Substact selected sources. Default is %default')
+    OP.add_option('DoBar',help=' Draw progressbar. Default is %default',default="1")
+    OP.add_option('NCPU',type="int",help='Number of cores to use. Default is %default ')
+    # OP.add_option('ApplyCal',type="int",help='Apply direction averaged gains to residual data in the mentioned direction. \
+    # If ApplyCal=-1 takes the mean gain over directions. -2 if off. Default is %default')
 
-    group = optparse.OptionGroup(opt, "* Source selection options")
-    group.add_option('--kills',help='Name or number index of sources to kill',default="")
-    group.add_option('--invert',help='Invert the selected sources to kill',default="0")
-    opt.add_option_group(group)
+    OP.OptionGroup("* Solution-related options","Solutions")
+    OP.add_option('ExtSols',type="str",help='External solution file. If set, will not solve.')
+    #OP.add_option('ApplyMode',type="str",help='Substact selected sources. ')
+    OP.add_option('ClipMethod',type="str",help='Clip data in the IMAGING_WEIGHT column. Can be set to Resid or DDEResid . Default is %default')
 
-   
-    group = optparse.OptionGroup(opt, "* ApplyCal additional options", "Default values should give reasonable results, but all of them have noticeable influence on the results")
-    group.add_option('--ExtSols',type="str",help='Substact selected sources. ',default="")
-    group.add_option('--ApplyMode',type="str",help='Substact selected sources. ',default="AP")
-    group.add_option('--ClipMethod',type="str",help=' . Default is %default',default="Resid")
-    group.add_option('--Decorrelation',type="str",help=' . Default is %default',default="FT")
-    opt.add_option_group(group)
+    OP.OptionGroup("* Solver options","Solvers")
+    OP.add_option('SolverType',help='Name of the solver to use (CohJones/KAFCA)')
+    OP.add_option('PolMode',help='Polarisation mode (Scalar/HalfFull). Default is %default')
+    OP.add_option('dt',type="float",help='Time interval for a solution [minutes]. Default is %default. ')
+    
+    OP.OptionGroup("* CohJones additional options","CohJones")
+    OP.add_option('NIter',type="int",help=' Number of iterations for the solve. Default is %default ',default=7)
+    OP.add_option('Lambda',type="float",help=' Lambda parameter. Default is %default ',default=1)
 
-    group = optparse.OptionGroup(opt, "* Solver options", "Default values should give reasonable results, but all of them have noticeable influence on the results")
-    group.add_option('--SolverType',help='Name of the solver to use (CohJones/KAFCA)',default="CohJones")
-    group.add_option('--PolMode',help='Polarisation mode (Scalar/HalfFull). Default is %default',default="Scalar")
-    group.add_option('--dt',type="float",help='Time interval for a solution [minutes]. Default is %default. ',default=30)
-    opt.add_option_group(group)
+    OP.OptionGroup("* KAFCA additional options","KAFCA")
+    OP.add_option('InitLM',type="int",help='Initialise Kalman filter with Levenberg Maquardt. Default is %default',default=1)
+    OP.add_option('InitLMdt',type="float",help='Time interval in minutes. Default is %default',default=5)
+    OP.add_option('CovP',type="float",help='Initial prior Covariance in fraction of the initial gain amplitude. Default is %default',default=0.1) 
+    OP.add_option('CovQ',type="float",help='Intrinsic process Covariance in fraction of the initial gain amplitude. Default is %default',default=0.01) 
+    OP.add_option('evPStep',type="int",help='Start calculation evP every evP_Step after that step. Default is %default',default=0)
+    OP.add_option('evPStepStart',type="int",help='Calcule (I-KJ) matrix every evP_Step steps. Default is %default',default=1)
     
-    
-    group = optparse.OptionGroup(opt, "* CohJones additional options")
-    group.add_option('--NIter',type="int",help=' Number of iterations for the solve. Default is %default ',default=7)
-    group.add_option('--Lambda',type="float",help=' Lambda parameter. Default is %default ',default=1)
-    group.add_option('--DoBar',help=' Draw progressbar. Default is %default',default="1")
-    opt.add_option_group(group)
 
-    group = optparse.OptionGroup(opt, "* KAFCA additional options")
-    group.add_option('--InitLM',type="int",help='Initialise Kalman filter with Levenberg Maquardt. Default is %default',default=1)
-    group.add_option('--InitLM_dt',type="float",help='Time interval in minutes. Default is %default',default=5)
-    group.add_option('--CovP',type="float",help='Initial prior Covariance in fraction of the initial gain amplitude. Default is %default',default=0.1) 
-    group.add_option('--CovQ',type="float",help='Intrinsic process Covariance in fraction of the initial gain amplitude. Default is %default',default=0.01) 
-    group.add_option('--evP_Step',type="int",help='Start calculation evP every evP_Step after that step. Default is %default',default=0)
-    group.add_option('--evP_StepStart',type="int",help='Calcule (I-KJ) matrix every evP_Step steps. Default is %default',default=1)
-    opt.add_option_group(group)
-    
-    
-    options, arguments = opt.parse_args()
-    #options.DoPlot=(options.DoPlot==1)
-
+    OP.Finalise()
+    OP.ReadInput()
+    options=OP.GiveOptionObject()
     if options.SolverType=="KAFCA":
         RejectGroup=["CohJones"]
     elif options.SolverType=="CohJones":
         RejectGroup=["KAFCA"]
 
-    PrintOptParse.PrintOptParse(opt,options,RejectGroup=RejectGroup)
-    # print options.ms
-    # MyPickle.Save([opt,options],"test")
-    # stop
-    f = open("last_killMS.obj","wb")
-    pickle.dump(options,f)
+    OP.Print(RejectGroup)
+
+    
+    # #optcomplete.autocomplete(opt)
+
+    # options, arguments = opt.parse_args()
+    MyPickle.Save(OP,SaveFile)
+    return OP
     
 
-def main(options=None):
+def main(OP=None):
     
 
-    if options==None:
-        f = open("last_killMS.obj",'rb')
-        options = pickle.load(f)
-    
+    if OP==None:
+        OP = MyPickle.Load(SaveFile)
+
+        
+    options=OP.GiveOptionObject()
 
     #IdSharedMem=str(int(np.random.rand(1)[0]*100000))+"."
     global IdSharedMem
     IdSharedMem=str(int(os.getpid()))+"."
-    DoApplyCal=(options.ApplyCal!=-2)
-    ApplyCal=int(options.ApplyCal)
+    DoApplyCal=0#(options.ApplyCal!=-2)
+    ApplyCal=0#int(options.ApplyCal)
     ReWeight=(options.ClipMethod!="")
 
-    if options.ms=="":
+    if options.MSName=="":
         print "Give an MS name!"
         exit()
     if options.SkyModel=="":
@@ -178,7 +178,7 @@ def main(options=None):
 
     TChunk=float(options.TChunk)
     dt=float(options.dt)
-    dtInit=float(options.InitLM_dt)
+    dtInit=float(options.InitLMdt)
     NCPU=int(options.NCPU)
     #SubOnly=(int(options.SubOnly)==1)
     invert=(options.invert=="1")
@@ -216,7 +216,7 @@ def main(options=None):
 
 
     #SM.SourceCat.I*=1000**2
-    VS=ClassVisServer.ClassVisServer(options.ms,ColName=ReadColName,
+    VS=ClassVisServer.ClassVisServer(options.MSName,ColName=ReadColName,
                                      TVisSizeMin=dt,
                                      DicoSelectOptions=DicoSelectOptions,
                                      TChunkSize=TChunk,IdSharedMem=IdSharedMem,
@@ -249,7 +249,7 @@ def main(options=None):
                                 BeamProps=BeamProps,
                                 NIter=options.NIter,NCPU=NCPU,
                                 SolverType=options.SolverType,
-                                evP_Step=options.evP_Step,evP_StepStart=options.evP_StepStart,
+                                evP_Step=options.evPStep,evP_StepStart=options.evPStepStart,
                                 DoPlot=options.DoPlot,
                                 IdSharedMem=IdSharedMem,
                                 ConfigJacobianAntenna=ConfigJacobianAntenna)
@@ -312,10 +312,10 @@ def main(options=None):
             nt,na,nd,_,_=Sols.G.shape
             G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
 
-            if not("A" in options.ApplyMode):
-                gabs=np.abs(G)
-                gabs[gabs==0]=1.
-                G/=gabs
+            # if not("A" in options.ApplyMode):
+            #     gabs=np.abs(G)
+            #     gabs[gabs==0]=1.
+            #     G/=gabs
 
 
             Jones["Beam"]=G
@@ -399,9 +399,9 @@ def main(options=None):
                 SM.RestoreCat()
 
 
-            if DoApplyCal:
-                print>>log, ModColor.Str("Apply calibration in direction: %i"%ApplyCal,col="green")
-                PM.ApplyCal(Solver.VS.ThisDataChunk,Jones,ApplyCal)
+            # if DoApplyCal:
+            #     print>>log, ModColor.Str("Apply calibration in direction: %i"%ApplyCal,col="green")
+            #     PM.ApplyCal(Solver.VS.ThisDataChunk,Jones,ApplyCal)
 
             Solver.VS.MS.data=Solver.VS.ThisDataChunk["data"]
             Solver.VS.MS.flags_all=Solver.VS.ThisDataChunk["flags"]
@@ -418,7 +418,7 @@ def main(options=None):
 
 
     if SaveSols:
-        FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.ms),options.SolverType)
+        FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.MSName),options.SolverType)
         print>>log, "Save Solutions in file: %s"%FileName
         Sols=Solver.GiveSols()
         StationNames=np.array(Solver.VS.MS.StationNames)
@@ -429,8 +429,8 @@ def main(options=None):
     
 def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2,ConfigJacobianAntenna):
     print>>log, ModColor.Str("Initialising Kalman filter with Levenberg-Maquardt estimate")
-    dtInit=float(options.InitLM_dt)
-    VSInit=ClassVisServer.ClassVisServer(options.ms,ColName=options.InCol,
+    dtInit=float(options.InitLMdt)
+    VSInit=ClassVisServer.ClassVisServer(options.MSName,ColName=options.InCol,
                                          TVisSizeMin=dtInit,
                                          DicoSelectOptions=DicoSelectOptions,
                                          TChunkSize=dtInit/60,IdSharedMem=IdSharedMem,
@@ -523,14 +523,26 @@ def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2,ConfigJacobianAnte
 
 
 if __name__=="__main__":
-    read_options()
-    f = open("last_killMS.obj",'rb')
-    options = pickle.load(f)
+    os.system('clear')
+    logo.print_logo()
+
+
+    ParsetFile=sys.argv[1]
+
+    TestParset=ReadCFG.Parset(ParsetFile)
+    if TestParset.Success==True:
+        #global Parset
+        Parset=TestParset
+        print >>log,ModColor.Str("Successfully read %s parset"%ParsetFile)
+
+    OP=read_options()
+    options=OP.GiveOptionObject()
+
     if options.DoBar=="0":
         from Other.progressbar import ProgressBar
         ProgressBar.silent=1
 
-    main(options=options)
+    main(OP=OP)
 
     # try:
     #     main(options=options)
