@@ -1,0 +1,59 @@
+
+ 
+[Parallel]
+Enable			= True
+NCPU			= 6
+
+[VisData]
+MSName			=  
+ColName 		=  CORRECTED_DATA
+TChunkSize		=  10 # In hours
+
+[DDESolutions]
+DDSols			= 
+GlobalNorm		= MeanAbs
+DDModeGrid		= P
+DDModeDeGrid		= AP
+ScaleAmp 		= True
+CalibErr 		= 10.
+Type			= Nearest # Krigging or Nearest
+Scale			= 1.      # in Degrees
+gamma			= 2.
+
+
+[DataSelection]
+FlagAnts		=   # RS,CS017LBA
+UVRangeKm  		= [0., 2000] # [0.1, 10] # [0.1, 20] # in km
+DistMaxToCore		= 1000
+
+##########################################################################################################################
+################################################ Imager Parset ###########################################################
+##########################################################################################################################
+
+[ImagerGlobal]
+Mode			= Dirty
+Weighting		= Briggs
+Robust			= 2
+Precision		= S # S: single precision - D: double precision
+PolMode			= I # I: I Stockes - IQUV: full stockes
+
+
+[ImagerCF]
+OverS			= 5
+Support			= 7
+Nw			= 200
+wmax			= 100000.
+
+[ImagerMainFacet]
+NFacets			= 3
+Npix			= 1000
+Cell			= 10.
+Padding			= 1.7
+ConstructMode		= Fader # Fader/Sharp
+
+[ImagerDeconv]
+MaxMajorIter		= 20
+Gain			= 0.1
+MaxMinorIter		= 10000
+CycleFactor		= 2.5
+
