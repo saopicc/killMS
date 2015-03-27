@@ -22,5 +22,6 @@ def print_logo():
     print """       | '' <  [  |  | |  | |   | |\  /| |   _.____`.    """
     print """       | |`\ \  | |  | |  | |  _| |_\/_| |_ | \____) |   """
     print """      [__|  \_][___][___][___]|_____||_____| \______.'   """
-    print """                              --> %s                           """%version
+    print """             This is version : %s""" %ModColor.Str(version)
+    print """                                                        """
 

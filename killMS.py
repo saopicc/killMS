@@ -322,21 +322,21 @@ def main(OP=None):
             Jones["BeamH"]=ModLinAlg.BatchH(G)
             Jones["ChanMap"]=np.zeros((VS.MS.NSPWChan,))
             
+            ind=np.array([],np.int32)
+            for it in range(nt):
+                t0=Jones["t0"][it]
+                t1=Jones["t1"][it]
+                indMStime=np.where((Solver.VS.ThisDataChunk["times"]>=t0)&(Solver.VS.ThisDataChunk["times"]<t1))[0]
+                indMStime=np.ones((indMStime.size,),np.int32)*it
+                ind=np.concatenate((ind,indMStime))
+                
+            Jones["MapJones"]=ind
 
 
 
             if ReWeight:
                 print>>log, ModColor.Str("Clipping bad solution-based data ... ",col="green")
                 
-                ind=np.array([],np.int32)
-                for it in range(nt):
-                    t0=Jones["t0"][it]
-                    t1=Jones["t1"][it]
-                    indMStime=np.where((Solver.VS.ThisDataChunk["times"]>=t0)&(Solver.VS.ThisDataChunk["times"]<t1))[0]
-                    indMStime=np.ones((indMStime.size,),np.int32)*it
-                    ind=np.concatenate((ind,indMStime))
-
-                Jones["MapJones"]=ind
 
                 nrows=Solver.VS.ThisDataChunk["times"].size
 
@@ -542,10 +542,11 @@ if __name__=="__main__":
         from Other.progressbar import ProgressBar
         ProgressBar.silent=1
 
-    main(OP=OP)
+    
+    #main(OP=OP)
 
-    # try:
-    #     main(options=options)
-    # except:
-    #     NpShared.DelAll(IdSharedMem)
+    try:
+        main(OP=OP)
+    except:
+        NpShared.DelAll(IdSharedMem)
             
