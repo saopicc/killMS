@@ -557,10 +557,13 @@ class ClassPredict():
         TSmear=0.
         FSmear=0.
 
-        if "T" in self.DoSmearing:
-            TSmear=1.
-        if "F" in self.DoSmearing:
-            FSmear=1.
+
+        if self.DoSmearing!=0:
+            if "T" in self.DoSmearing:
+                TSmear=1.
+            if "F" in self.DoSmearing:
+                FSmear=1.
+
         # self.SourceCat.m[:]=0
         # self.SourceCat.l[:]=0.1
         # self.SourceCat.I[:]=10
