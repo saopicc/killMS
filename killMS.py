@@ -187,7 +187,7 @@ def main(OP=None):
 
     
     if options.kills!="":
-        kills=options.kills.split(",")
+        kills=options.kills#.split(",")
     else:
         invert=True
         kills=[]
@@ -200,11 +200,11 @@ def main(OP=None):
 
     DicoSelectOptions= {}
     if options.UVMinMax!=None:
-        sUVmin,sUVmax=options.UVMinMax.split(",")
+        sUVmin,sUVmax=options.UVMinMax#.split(",")
         UVmin,UVmax=float(sUVmin),float(sUVmax)
         DicoSelectOptions["UVRangeKm"]=UVmin,UVmax
     if options.FlagAnts!="":
-        FlagAnts=options.FlagAnts.split(",")
+        FlagAnts=options.FlagAnts#.split(",")
         DicoSelectOptions["FlagAnts"]=FlagAnts
 
     DicoSelectOptions["DistMaxToCore"]=options.DistMaxToCore
