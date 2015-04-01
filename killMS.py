@@ -71,11 +71,11 @@ def read_options():
 
     desc="""Questions and suggestions: cyril.tasse@obspm.fr"""
 
-    OP=MyOptParse.MyOptParse(usage='Usage: %prog --ms=somename.MS <options>',description=desc,
+    OP=MyOptParse.MyOptParse(usage='Usage: %prog --MSName=somename.MS --SkyModel=SM.npy <options>',description=desc,
                              DefaultDict=D)
 
 
-    opt = optparse.OptionParser(usage='Usage: %prog --ms=somename.MS <options>',description=desc)
+    #opt = optparse.OptionParser(usage='Usage: %prog --ms=somename.MS <options>',description=desc)
     OP.OptionGroup("* Data-related options","VisData")
     OP.add_option('MSName',help='Input MS to draw [no default]')
     OP.add_option('TChunk',help='Time Chunk in hours. Default is %default')
