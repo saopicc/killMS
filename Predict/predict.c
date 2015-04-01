@@ -525,7 +525,7 @@ static PyObject *predict(PyObject *self, PyObject *args)
   	  //printf("ch: %i %f\n",ch,WaveL[ch]);
   	  result=p_Flux[dd*nchan+ch]*cexp(phase*c1[ch]);
   	  if(FSmear==1){
-  	    phi=PI*PI_C*p_DFreqs[ch]*phase;
+  	    phi=PI*(p_DFreqs[ch]/C)*phase;
 	    if(phi!=0.){
 	      phi=sin(phi)/(phi);
 	      result*=phi;
@@ -537,7 +537,7 @@ static PyObject *predict(PyObject *self, PyObject *args)
   	    dv=UVW_dt[3*i+1]*m;
   	    dw=UVW_dt[3*i+2]*n;
   	    dphase=(du+dv+dw)*DT;
-  	    phi=PI*PI_C*p_Freqs[ch]*dphase;
+  	    phi=PI*(p_Freqs[ch]/C)*dphase;
   	    //printf("phi = %f\n",phi);
   	    //printf("dphase = %f\n",dphase);
 	    if(phi!=0.){
