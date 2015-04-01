@@ -6,12 +6,11 @@ import subprocess
 
 
 def print_logo():
-    cwd=os.getcwd()
-    KILLMS_DIR="%s/killMS2"%os.environ["KILLMS_DIR"]
-    os.chdir(KILLMS_DIR)
-    version = subprocess.check_output(["git", "describe"])
-    os.chdir(cwd)
-
+    # cwd=os.getcwd()
+    # KILLMS_DIR="%s/killMS2"%os.environ["KILLMS_DIR"]
+    # os.chdir(KILLMS_DIR)
+    # version = subprocess.check_output(["git", "describe"])
+    # os.chdir(cwd)
     os.system('clear')
                                                        
 
@@ -22,6 +21,6 @@ def print_logo():
     print """       | '' <  [  |  | |  | |   | |\  /| |   _.____`.    """
     print """       | |`\ \  | |  | |  | |  _| |_\/_| |_ | \____) |   """
     print """      [__|  \_][___][___][___]|_____||_____| \______.'   """
-    print """             This is version : %s""" %ModColor.Str(version)
+    #print """             This is version : %s""" %ModColor.Str(version)
     print """                                                        """
 
