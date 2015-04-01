@@ -173,25 +173,25 @@ class ClassJacobianAntenna():
         QxInv=QxInv.reshape((self.NDir*self.NJacobBlocks,self.NDir*self.NJacobBlocks))
         self.LQxInv=[QxInv,QxInv]
 
-    def PrepareJHJ_EKF(self,Pa_in,rms):
-        self.L_JHJinv=[]
-        incr=1
-        # pylab.figure(1)
-        # pylab.clf()
-        # pylab.imshow(np.abs(self.JHJ),interpolation="nearest")
-        # pylab.draw()
-        # pylab.show(False)
-        # pylab.pause(0.1)
+    # def PrepareJHJ_EKF(self,Pa_in,rms):
+    #     self.L_JHJinv=[]
+    #     incr=1
+    #     # pylab.figure(1)
+    #     # pylab.clf()
+    #     # pylab.imshow(np.abs(self.JHJ),interpolation="nearest")
+    #     # pylab.draw()
+    #     # pylab.show(False)
+    #     # pylab.pause(0.1)
 
-        for ipol in range(self.NJacobBlocks):
-            PaPol=self.GivePaPol(Pa_in,ipol)
-            Pinv=ModLinAlg.invSVD(PaPol)
-            JHJ=self.L_JHJ[ipol]#*(1./rms**2)
-            JHJ+=Pinv
-            if self.DoReg:
-                JHJ+=self.LQxInv[ipol]*(self.gamma**2)
-            JHJinv=ModLinAlg.invSVD(JHJ)
-            self.L_JHJinv.append(JHJinv)
+    #     for ipol in range(self.NJacobBlocks):
+    #         PaPol=self.GivePaPol(Pa_in,ipol)
+    #         Pinv=ModLinAlg.invSVD(PaPol)
+    #         JHJ=self.L_JHJ[ipol]#*(1./rms**2)
+    #         JHJ+=Pinv
+    #         if self.DoReg:
+    #             JHJ+=self.LQxInv[ipol]*(self.gamma**2)
+    #         JHJinv=ModLinAlg.invSVD(JHJ)
+    #         self.L_JHJinv.append(JHJinv)
 
     def CalcKapa_i(self,yr,Pa,rms):
         J=self.Jacob
