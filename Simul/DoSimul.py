@@ -104,8 +104,10 @@ def main(options=None):
     t=table(MSName,readonly=False)
     f=t.getcol("FLAG")
     f.fill(0)
-    r=np.random.rand(*(f.shape))
-    f=(r>0.9)
+    r=np.random.rand(*(f.shape[0:2]))
+    ff=(r>0.9)
+    indr,indf=np.where(ff)
+    f[indr,indf,:]=True
     MS.flag_all=f
     #t.putcol("FLAG",f)
     #t.putcol("FLAG_BACKUP",f)
