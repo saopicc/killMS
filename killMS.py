@@ -411,8 +411,8 @@ def main(OP=None):
             if (DoSubstract|DoApplyCal):
                 print>>log, "Save visibilities in %s column"%WriteColName
                 t=table(Solver.VS.MS.MSName,readonly=False,ack=False)
-                t.putcol(WriteColName,Solver.VS.MS.data,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1)
-                t.putcol("FLAG",Solver.VS.MS.flags_all,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1)
+                t.putcol(WriteColName,Solver.VS.MS.data,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                t.putcol("FLAG",Solver.VS.MS.flags_all,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
                 
