@@ -66,7 +66,6 @@ Parset=ReadCFG.Parset("%s/killMS2/Parset/DefaultParset.cfg"%os.environ["KILLMS_D
 
 
 def read_options():
-    logo.print_logo()
     D=Parset.DicoPars
 
     desc="""Questions and suggestions: cyril.tasse@obspm.fr"""
