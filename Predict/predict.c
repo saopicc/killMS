@@ -497,7 +497,7 @@ static PyObject *predict(PyObject *self, PyObject *args)
   if(AllowChanEquidistant==0){
     ChanEquidistant=0;
   }
-  printf("ChanEquidistant %i\n",ChanEquidistant);
+  //printf("ChanEquidistant %i\n",ChanEquidistant);
   
   ndir=Np_l->dimensions[0];
 
