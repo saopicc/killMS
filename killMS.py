@@ -181,16 +181,14 @@ def main(OP=None):
     dtInit=float(options.InitLMdt)
     NCPU=int(options.NCPU)
     #SubOnly=(int(options.SubOnly)==1)
-    invert=(options.invert=="1")
+
+    invert=(options.invert==True)
+
     options.InitLM=(int(options.InitLM)==1)
     DoSmearing=options.Decorrelation
-
     
-    if options.kills!="":
-        kills=options.kills#.split(",")
-    else:
-        invert=True
-        kills=[]
+
+    kills=options.kills.split(",")
 
     ######################################
 
@@ -210,10 +208,9 @@ def main(OP=None):
     DicoSelectOptions["DistMaxToCore"]=options.DistMaxToCore
 
 
-
     SM=ClassSM.ClassSM(options.SkyModel,
                        killdirs=kills,invert=invert)
-
+    
 
     #SM.SourceCat.I*=1000**2
     VS=ClassVisServer.ClassVisServer(options.MSName,ColName=ReadColName,

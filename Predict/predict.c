@@ -420,17 +420,18 @@ static PyObject *predict(PyObject *self, PyObject *args)
   PyObject *LSM, *LUVWSpeed, *LFreqs,*LSmearMode;
   PyArrayObject *NpVisIn, *NpUVWin, *matout;
   float *p_l,*p_m,*p_alpha,*p_Flux, *WaveL;
-
+  int AllowChanEquidistant;
   double *UVWin;
   int nrow,npol,nsources,i,dim[2];
   
-  if (!PyArg_ParseTuple(args, "OO!O!O!O!O!",
+  if (!PyArg_ParseTuple(args, "OO!O!O!O!O!i",
 			&ObjVisIn,
 			&PyArray_Type, &NpUVWin, 
 			&PyList_Type, &LFreqs,
 			&PyList_Type, &LSM,
 			&PyList_Type, &LUVWSpeed,
-			&PyList_Type, &LSmearMode))  return NULL;
+			&PyList_Type, &LSmearMode,
+			&AllowChanEquidistant))  return NULL;
   
   NpVisIn = (PyArrayObject *) PyArray_ContiguousFromObject(ObjVisIn, PyArray_COMPLEX64, 0, 4);
 
@@ -451,6 +452,8 @@ static PyObject *predict(PyObject *self, PyObject *args)
   NpDFreqs= (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LFreqs, 2), PyArray_FLOAT32, 0, 4);
   float *p_DFreqs=p_float32(NpDFreqs);
   float *p_Freqs=p_float32(NpFreqs);
+
+
 
   PyArrayObject *NpUVW_dt;
   NpUVW_dt= (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LUVWSpeed, 0), PyArray_FLOAT32, 0, 4);
@@ -480,6 +483,21 @@ static PyObject *predict(PyObject *self, PyObject *args)
   nrow=NpVisIn->dimensions[0];
   nchan=NpVisIn->dimensions[1];
 
+  int ChanEquidistant=0;
+  if(nchan>2){
+    ChanEquidistant=1;
+    float dFChan0=p_Freqs[1]-p_Freqs[0];
+    for(ch=0; ch<(nchan-1); ch++){
+      float df=abs(p_Freqs[ch+1]-p_Freqs[ch]);
+      float ddf=abs(df-dFChan0);
+      if(ddf>1){ChanEquidistant=0;}
+    }
+  }
+  if(AllowChanEquidistant==0){
+    ChanEquidistant=0;
+  }
+  //printf("ChanEquidistant %i\n",ChanEquidistant);
+  
   ndir=Np_l->dimensions[0];
 
   /* Get the dimensions of the input */
@@ -504,6 +522,8 @@ static PyObject *predict(PyObject *self, PyObject *args)
   //float dnu=C/WaveL[0]-C/WaveL[nchan-1];
   float PI_C=PI/C;
   float phi,du,dv,dw,dphase;
+  float complex Kernel;
+  double complex dKernel;
   for(dd=0;dd<ndir;dd++){
     l=p_l[dd];
     m=p_m[dd];
@@ -522,8 +542,21 @@ static PyObject *predict(PyObject *self, PyObject *args)
   	//printf("cc %f \n",phase);
 
   	for(ch=0;ch<nchan;ch++){
+
+	  if(ChanEquidistant==0){
+	    Kernel=cexp(phase*c1[ch]);
+	  }else{
+	    if(ch==0){
+	      Kernel=cexp(phase*c1[ch]);
+	      dKernel=cexp(phase*(c1[ch+1]-c1[ch]));
+	    }
+	    else{
+	      Kernel*=dKernel;
+	    }
+	  }
+
   	  //printf("ch: %i %f\n",ch,WaveL[ch]);
-  	  result=p_Flux[dd*nchan+ch]*cexp(phase*c1[ch]);
+  	  result=p_Flux[dd*nchan+ch]*Kernel;
   	  if(FSmear==1){
   	    phi=PI*(p_DFreqs[ch]/C)*phase;
 	    if(phi!=0.){
@@ -582,15 +615,17 @@ static PyObject *predictJones(PyObject *self, PyObject *args)
 
   double *UVWin;
   int nrow,npol,nsources,i,dim[2];
+  int AllowChanEquidistant;
   
-  if (!PyArg_ParseTuple(args, "OO!O!O!O!O!O!",
+  if (!PyArg_ParseTuple(args, "OO!O!O!O!O!O!i",
 			&ObjVisIn,
 			&PyArray_Type, &NpUVWin, 
 			&PyList_Type, &LFreqs,
 			&PyList_Type, &LSM,
 			&PyList_Type, &LUVWSpeed,
 			&PyList_Type, &LSmearMode,
-			&PyList_Type, &LJones))  return NULL;
+			&PyList_Type, &LJones,
+			&AllowChanEquidistant))  return NULL;
   
 
   //////////////////////////////////////////////
@@ -695,6 +730,21 @@ static PyObject *predictJones(PyObject *self, PyObject *args)
   nrow=NpVisIn->dimensions[0];
   nchan=NpVisIn->dimensions[1];
 
+  int ChanEquidistant=0;
+  if(nchan>2){
+    ChanEquidistant=1;
+    float dFChan0=p_Freqs[1]-p_Freqs[0];
+    for(ch=0; ch<(nchan-1); ch++){
+      float df=abs(p_Freqs[ch+1]-p_Freqs[ch]);
+      float ddf=abs(df-dFChan0);
+      if(ddf>1){ChanEquidistant=0;}
+    }
+  }
+  if(AllowChanEquidistant==0){
+    ChanEquidistant=0;
+  }
+
+
   ndir=Np_l->dimensions[0];
 
   /* Get the dimensions of the input */
@@ -724,6 +774,9 @@ static PyObject *predictJones(PyObject *self, PyObject *args)
   
   int ApplyJones=1;
   int irow;
+
+  float complex Kernel;
+  double complex dKernel;
 
   for(dd=0;dd<ndir;dd++){
     l=p_l[dd];
@@ -764,9 +817,24 @@ static PyObject *predictJones(PyObject *self, PyObject *args)
 	  /* VisCorr[2]=ThisVis[2]; */
 	  /* VisCorr[3]=ThisVis[3]; */
 
-  	  result=p_Flux[dd*nchan+ch]*cexp(phase*c1[ch]);
+
+	  if(ChanEquidistant==0){
+	    Kernel=cexp(phase*c1[ch]);
+	  }else{
+	    if(ch==0){
+	      Kernel=cexp(phase*c1[ch]);
+	      dKernel=cexp(phase*(c1[ch+1]-c1[ch]));
+	    }
+	    else{
+	      Kernel*=dKernel;
+	    }
+	  }
+
+
+  	  result=p_Flux[dd*nchan+ch]*Kernel;
   	  if(FSmear==1){
-  	    phi=PI*PI_C*p_DFreqs[ch]*phase;
+  	    //phi=PI*PI_C*p_DFreqs[ch]*phase;
+  	    phi=PI*(p_DFreqs[ch]/C)*phase;
 	    if(phi!=0.){
 	      phi=sin(phi)/(phi);
 	      result*=phi;
@@ -778,7 +846,8 @@ static PyObject *predictJones(PyObject *self, PyObject *args)
   	    dv=UVW_dt[3*irow+1]*m;
   	    dw=UVW_dt[3*irow+2]*n;
   	    dphase=(du+dv+dw)*DT;
-  	    phi=PI*PI_C*p_Freqs[ch]*dphase;
+  	    //phi=PI*PI_C*p_Freqs[ch]*dphase;
+  	    phi=PI*(p_Freqs[ch]/C)*dphase;
   	    //printf("phi = %f\n",phi);
   	    //printf("dphase = %f\n",dphase);
 	    if(phi!=0.){

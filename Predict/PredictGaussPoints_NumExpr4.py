@@ -240,6 +240,7 @@ class WorkerPredict(multiprocessing.Process):
                 PredictData=PM.predictKernelPolCluster(DicoData,self.SM,ApplyTimeJones=ApplyTimeJones)
                 PredictArray=NpShared.GiveArray("%sPredictData"%(self.IdSharedMem))
                 PredictArray[Row0:Row1]=PredictData[:]
+
             elif self.Mode=="ApplyCal":
                 PM.ApplyCal(DicoData,ApplyTimeJones,self.iCluster)
             elif self.Mode=="GiveCovariance":
@@ -580,6 +581,7 @@ class ClassPredict():
         UVW_dt=DicoData["UVW_dt"]
         
         ColOutDir=np.zeros(DataOut.shape,np.complex64)
+
         for iCluster in ListDirection:
             ColOutDir.fill(0)
 
@@ -607,12 +609,35 @@ class ClassPredict():
             LSmearMode=[FSmear,TSmear]
             T.timeit("init")
 
+
             if ApplyTimeJones!=None:
+
                 ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
                 ParamJonesList=ParamJonesList+[iCluster]
-                predict.predictJones(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList)
+                #predict.predictJones(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList)
+
+                #ColOutDir.fill(0)
+                #predict.predictJones(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList,0)
+                #d0=ColOutDir.copy()
+                #ColOutDir.fill(0)
+                predict.predictJones(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList,1)
+                #d1=ColOutDir.copy()
+                #ind=np.where(d0!=0)
+                #print np.max((d0-d1)[ind]/(d0[ind]))
+                #stop
             else:
-                predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode)
+                #predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode)
+                #AllowEqualiseChan=0
+                #predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
+                #d0=ColOutDir.copy()
+                #ColOutDir.fill(0)
+                AllowEqualiseChan=1
+                predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
+                #d1=ColOutDir
+                #ind=np.where(d0!=0)
+                #print np.max((d0-d1)[ind]/(d0[ind]))
+                #stop
+                
 
             T.timeit("predict0")
 
