@@ -489,9 +489,9 @@ static PyObject *predict(PyObject *self, PyObject *args)
     float dFChan0=p_Freqs[1]-p_Freqs[0];
     for(ch=0; ch<(nchan-1); ch++){
       float df=abs(p_Freqs[ch+1]-p_Freqs[ch]);
-      float ddf=abs(df-dFChan0);
+      float ddf=abs(1.-df/dFChan0);
       printf("df,ddf %i %f %f\n",ch,df,ddf);
-      if(ddf>1){ChanEquidistant=0;}
+      if(ddf<1e-3){ChanEquidistant=0;}
     }
   }
   if(AllowChanEquidistant==0){
