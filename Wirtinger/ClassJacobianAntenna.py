@@ -752,9 +752,11 @@ class ClassJacobianAntenna():
 
             self.K_XX[iDir,:,:]=K_XX
             self.K_YY[iDir,:,:]=K_YY
-
             #self.K_XX.append(K_XX)
             #self.K_YY.append(K_YY)
+
+            del(K,K_XX,K_YY)
+
         gc.collect()
         self.HasKernelMatrix=True
         T.timeit("stuff 4")
