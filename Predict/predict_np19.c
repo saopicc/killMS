@@ -48,7 +48,7 @@ void GiveJones(float complex *ptrJonesMatrices, int *JonesDims, float *ptrCoefs,
 
 static PyObject *predict(PyObject *self, PyObject *args)
 {
-  //PyObject *ObjVisIn;
+  PyObject *ObjVisIn;
   PyObject *LSM, *LUVWSpeed, *LFreqs,*LSmearMode;
   PyArrayObject *NpVisIn, *NpUVWin, *matout;
 
@@ -57,8 +57,9 @@ static PyObject *predict(PyObject *self, PyObject *args)
   double *UVWin;
   int nrow,npol,nsources,i,dim[2];
   
-  if (!PyArg_ParseTuple(args, "O!O!O!O!O!O!i",
-			&PyArray_Type, &NpVisIn,
+  if (!PyArg_ParseTuple(args, "OO!O!O!O!O!i",
+			&ObjVisIn,
+			//&PyArray_Type, &NpVisIn,
 			&PyArray_Type, &NpUVWin, 
 			&PyList_Type, &LFreqs,
 			&PyList_Type, &LSM,
@@ -66,6 +67,8 @@ static PyObject *predict(PyObject *self, PyObject *args)
 			&PyList_Type, &LSmearMode,
 			&AllowChanEquidistant))  return NULL;
   
+
+  NpVisIn = (PyArrayObject *) PyArray_ContiguousFromObject(ObjVisIn, NPY_COMPLEX64, 0, 3);
   float complex* VisIn=PyArray_DATA(NpVisIn);
 
   PyArrayObject *Np_l;
@@ -224,9 +227,9 @@ static PyObject *predict(PyObject *self, PyObject *args)
     }
   }
 
-  Py_INCREF(Py_None);
-  return Py_None;  
-  //return PyArray_Return(NpVisIn);
+  //Py_INCREF(Py_None);
+  //return Py_None;  
+  return PyArray_Return(NpVisIn);
 }
 
 

@@ -638,11 +638,16 @@ class ClassPredict():
 
                 AllowEqualiseChan=1
                 
-                # ColOutDir=predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
-                # d0=ColOutDir.copy()
+                #ColOutDir=predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
+                #d0=ColOutDir.copy()
                 # ColOutDir.fill(0)
 
-                predict_np19.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
+                ColOutDir=predict_np19.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
+                #print 
+                #d1=ColOutDir.copy()
+                #ind=np.where(d0!=0)
+                #print np.max((d0-d1)[ind]/(d0[ind]))
+                
             del(l,m,I,SourceCat,alpha,WaveL,flux,dnu,f0,fluxFreq,LSM,LFreqs)
                 
 
