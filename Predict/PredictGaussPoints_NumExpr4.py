@@ -637,8 +637,8 @@ class ClassPredict():
                 #ColOutDir.fill(0)
 
                 AllowEqualiseChan=1
-                for ido in range(1000):
-                    ColOutDir=predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
+                
+                ColOutDir=predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
 
 
 
