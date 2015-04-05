@@ -425,8 +425,9 @@ static PyObject *predict(PyObject *self, PyObject *args)
   double *UVWin;
   int nrow,npol,nsources,i,dim[2];
   
-  if (!PyArg_ParseTuple(args, "OO!O!O!O!O!i",
-			&ObjVisIn,
+  if (!PyArg_ParseTuple(args, "O!O!O!O!O!O!i",
+			//&ObjVisIn,
+			&PyArray_Type, &NpVisIn, 
 			&PyArray_Type, &NpUVWin, 
 			&PyList_Type, &LFreqs,
 			&PyList_Type, &LSM,
@@ -434,7 +435,7 @@ static PyObject *predict(PyObject *self, PyObject *args)
 			&PyList_Type, &LSmearMode,
 			&AllowChanEquidistant))  return NULL;
   
-  NpVisIn = (PyArrayObject *) PyArray_ContiguousFromObject(ObjVisIn, PyArray_COMPLEX64, 0, 3);
+  //NpVisIn = (PyArrayObject *) PyArray_ContiguousFromObject(ObjVisIn, PyArray_COMPLEX64, 0, 3);
   float complex* VisIn=p_complex64(NpVisIn);
 
   PyArrayObject *Np_l;
@@ -591,7 +592,9 @@ static PyObject *predict(PyObject *self, PyObject *args)
   }
 
   //return Py_None;  
-  return PyArray_Return(NpVisIn);
+  Py_INCREF(Py_None);
+  return Py_None;
+  //  return PyArray_Return(NpVisIn);
 }
 
 
@@ -618,8 +621,9 @@ static PyObject *predictJones(PyObject *self, PyObject *args)
   int nrow,npol,nsources,i,dim[2];
   int AllowChanEquidistant;
   
-  if (!PyArg_ParseTuple(args, "OO!O!O!O!O!O!i",
-			&ObjVisIn,
+  if (!PyArg_ParseTuple(args, "O!O!O!O!O!O!O!i",
+			//&ObjVisIn,
+			&PyArray_Type, &NpVisIn, 
 			&PyArray_Type, &NpUVWin, 
 			&PyList_Type, &LFreqs,
 			&PyList_Type, &LSM,
@@ -681,7 +685,7 @@ static PyObject *predictJones(PyObject *self, PyObject *args)
 
 
 
-  NpVisIn = (PyArrayObject *) PyArray_ContiguousFromObject(ObjVisIn, PyArray_COMPLEX64, 0, 4);
+  //NpVisIn = (PyArrayObject *) PyArray_ContiguousFromObject(ObjVisIn, PyArray_COMPLEX64, 0, 4);
 
   float complex* VisIn=p_complex64(NpVisIn);
   float complex* ThisVis;
@@ -879,8 +883,10 @@ static PyObject *predictJones(PyObject *self, PyObject *args)
     }
   }
 
-  //return Py_None;  
-  return PyArray_Return(NpVisIn);
+  Py_INCREF(Py_None);
+  return Py_None;
+  ////return Py_None;  
+  //return PyArray_Return(NpVisIn);
 }
 
 

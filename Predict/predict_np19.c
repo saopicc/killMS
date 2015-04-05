@@ -57,9 +57,9 @@ static PyObject *predict(PyObject *self, PyObject *args)
   double *UVWin;
   int nrow,npol,nsources,i,dim[2];
   
-  if (!PyArg_ParseTuple(args, "OO!O!O!O!O!i",
-			&ObjVisIn,
-			//&PyArray_Type, &NpVisIn,
+  if (!PyArg_ParseTuple(args, "O!O!O!O!O!O!i",
+			//&ObjVisIn,
+			&PyArray_Type, &NpVisIn,
 			&PyArray_Type, &NpUVWin, 
 			&PyList_Type, &LFreqs,
 			&PyList_Type, &LSM,
@@ -68,8 +68,19 @@ static PyObject *predict(PyObject *self, PyObject *args)
 			&AllowChanEquidistant))  return NULL;
   
 
-  NpVisIn = (PyArrayObject *) PyArray_ContiguousFromObject(ObjVisIn, NPY_COMPLEX64, 0, 3);
+  //NpVisIn = (PyArrayObject *) PyArray_ContiguousFromObject(ObjVisIn, NPY_COMPLEX64, 0, 3);
   float complex* VisIn=PyArray_DATA(NpVisIn);
+
+  /* npy_intp size; */
+  /* float complex *dptr;  /\* could make this any variable type *\/ */
+  /* size = PyArray_SIZE(NpVisIn); */
+  /* dptr = PyArray_DATA(NpVisIn); */
+  /* for(i=0;i<size;i++){ */
+  /*   dptr[i]+=1; */
+  /* }; */
+  /* Py_INCREF(Py_None); */
+  /* return Py_None;   */
+
 
   PyArrayObject *Np_l;
   Np_l = (PyArrayObject *) PyList_GetItem(LSM, 0);
@@ -227,9 +238,10 @@ static PyObject *predict(PyObject *self, PyObject *args)
     }
   }
 
-  //Py_INCREF(Py_None);
-  //return Py_None;  
-  return PyArray_Return(NpVisIn);
+  Py_INCREF(Py_None);
+  return Py_None;
+  //return PyArray_Return(NpVisIn);
+
 }
 
 

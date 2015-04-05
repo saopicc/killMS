@@ -622,8 +622,8 @@ class ClassPredict():
                 #ColOutDir.fill(0)
 
 
-                ColOutDir=predict.predictJones(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList,1)
-
+                predict.predictJones(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList,1)
+                # print ColOutDir
 
                 #d1=ColOutDir.copy()
                 #ind=np.where(d0!=0)
@@ -638,16 +638,18 @@ class ClassPredict():
 
                 AllowEqualiseChan=1
                 
-                ColOutDir=predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
-                #d0=ColOutDir.copy()
+                predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
+                # d0=ColOutDir.copy()
                 # ColOutDir.fill(0)
 
-                #ColOutDir=predict_np19.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
-                #print 
-                #d1=ColOutDir.copy()
-                #ind=np.where(d0!=0)
-                #print np.max((d0-d1)[ind]/(d0[ind]))
-                
+                # predict_np19.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
+                # print ColOutDir,d0
+                # d1=ColOutDir.copy()
+                # ind=np.where(d0!=0)
+                # print np.max((d0-d1)[ind]/(d0[ind]))
+                # stop
+
+
             del(l,m,I,SourceCat,alpha,WaveL,flux,dnu,f0,fluxFreq,LSM,LFreqs)
                 
 
