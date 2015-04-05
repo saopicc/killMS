@@ -1,7 +1,7 @@
 import numpy as np
 from pyrap.tables import table
 from Data.ClassMS import ClassMS
-from Sky.ClassSM import ClassSM
+#from Sky.ClassSM import ClassSM
 from Other.ClassTimeIt import ClassTimeIt
 import numexpr as ne
 #import ModNumExpr
@@ -181,7 +181,7 @@ class WorkerPredict(multiprocessing.Process):
 
 
 class ClassPredict():
-    def __init__(self,Precision="D",NCPU=6,IdMemShared=None):
+    def __init__(self,Precision="D",NCPU=6,IdMemShared=None,DoSmearing=False):
         self.NCPU=NCPU
         ne.set_num_threads(self.NCPU)
         if Precision=="D":

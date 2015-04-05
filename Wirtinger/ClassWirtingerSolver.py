@@ -556,8 +556,8 @@ class ClassWirtingerSolver():
                         self.P[iAnt,:]=P[:]
 
                     kapa=InfoNoise["kapa"]
-                    self.ListStd[iAnt].append(InfoNoise["std"])
-                    self.ListMax[iAnt].append(InfoNoise["max"])
+                    #self.ListStd[iAnt].append(InfoNoise["std"])
+                    #self.ListMax[iAnt].append(InfoNoise["max"])
 
 
                     iResult+=1

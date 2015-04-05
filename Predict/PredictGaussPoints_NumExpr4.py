@@ -620,7 +620,11 @@ class ClassPredict():
                 #predict.predictJones(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList,0)
                 #d0=ColOutDir.copy()
                 #ColOutDir.fill(0)
-                ColOutDir=predict.predictJones(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList,1)
+
+
+                #ColOutDir=predict.predictJones(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList,1)
+
+
                 #d1=ColOutDir.copy()
                 #ind=np.where(d0!=0)
                 #print np.max((d0-d1)[ind]/(d0[ind]))
@@ -631,8 +635,12 @@ class ClassPredict():
                 #predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
                 #d0=ColOutDir.copy()
                 #ColOutDir.fill(0)
+
                 AllowEqualiseChan=1
                 ColOutDir=predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
+                ColOutDir.fill(1)
+
+
                 #d1=ColOutDir
                 #ind=np.where(d0!=0)
                 #print np.max((d0-d1)[ind]/(d0[ind]))
