@@ -740,8 +740,7 @@ class ClassJacobianAntenna():
 
         for iDir in range(NDir):
             
-            for ido in range(1000):
-                K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones)
+            K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones)
             K_XX=K[:,:,0]
             K_YY=K[:,:,3]
             if self.PolMode=="Scalar":
