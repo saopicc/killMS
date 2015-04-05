@@ -738,8 +738,8 @@ class ClassJacobianAntenna():
         if "DicoBeam" in self.DicoData.keys():
             ApplyTimeJones=self.DicoData["DicoBeam"]
 
-        #import gc
-        #gc.enable()
+        import gc
+        gc.enable()
         for iDir in range(NDir):
             
             for i in range(1000):
@@ -758,7 +758,7 @@ class ClassJacobianAntenna():
 
             del(K,K_XX,K_YY)
 
-        #gc.collect()
+        gc.collect()
         self.HasKernelMatrix=True
         T.timeit("stuff 4")
 
