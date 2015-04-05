@@ -601,7 +601,6 @@ class ClassPredict():
             dnu=np.float32(self.DicoData["dfreqs"])
             f0=(self.freqs/SourceCat.RefFreq[0])
             fluxFreq=np.float32(flux.reshape((flux.size,1))*(f0.reshape((1,f0.size)))**(alpha.reshape((alpha.size,1))))
-            
 
             LSM=[l,m,fluxFreq]
             LFreqs=[WaveL,np.float32(self.freqs),dnu]
@@ -644,6 +643,7 @@ class ClassPredict():
                 # ColOutDir.fill(0)
 
                 predict_np19.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
+            del(l,m,I,SourceCat,alpha,WaveL,flux,dnu,f0,fluxFreq,LSM,LFreqs)
                 
 
 
