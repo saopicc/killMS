@@ -644,18 +644,18 @@ static PyObject *predictJones(PyObject *self, PyObject *args)
   int ModeInterpolation=1;
   int *ptrModeInterpolation;
 
-  npTimeMappingJonesMatrices  = (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LJones, 0), PyArray_INT32, 0, 4);
+  npTimeMappingJonesMatrices  = (PyArrayObject *) (PyList_GetItem(LJones, 0));
   ptrTimeMappingJonesMatrices = p_int32(npTimeMappingJonesMatrices);
 
-  npA0 = (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LJones, 1), PyArray_INT32, 0, 4);
+  npA0 = (PyArrayObject *) (PyList_GetItem(LJones, 1));
   ptrA0 = p_int32(npA0);
 
-  npA1= (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LJones, 2), PyArray_INT32, 0, 4);
+  npA1= (PyArrayObject *) (PyList_GetItem(LJones, 2));
   ptrA1=p_int32(npA1);
  
       
   // (nt,nd,na,1,2,2)
-  npJonesMatrices = (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LJones, 3), PyArray_COMPLEX64, 0, 6);
+  npJonesMatrices = (PyArrayObject *) (PyList_GetItem(LJones, 3));
   ptrJonesMatrices=p_complex64(npJonesMatrices);
   nt_Jones=(int)npJonesMatrices->dimensions[0];
   nd_Jones=(int)npJonesMatrices->dimensions[1];
@@ -688,23 +688,23 @@ static PyObject *predictJones(PyObject *self, PyObject *args)
   float complex VisCorr[4]={0};
 
   PyArrayObject *Np_l;
-  Np_l = (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LSM, 0), PyArray_FLOAT32, 0, 4);
+  Np_l = (PyArrayObject *) (PyList_GetItem(LSM, 0));
   PyArrayObject *Np_m;
-  Np_m = (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LSM, 1), PyArray_FLOAT32, 0, 4);
+  Np_m = (PyArrayObject *) (PyList_GetItem(LSM, 1));
   PyArrayObject *Np_I;
-  Np_I = (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LSM, 2), PyArray_FLOAT32, 0, 4);
+  Np_I = (PyArrayObject *) (PyList_GetItem(LSM, 2));
   
   PyArrayObject *NpWaveL;
-  NpWaveL= (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LFreqs, 0), PyArray_FLOAT32, 0, 4);
+  NpWaveL= (PyArrayObject *)  (PyList_GetItem(LFreqs, 0));
   PyArrayObject *NpFreqs;
-  NpFreqs= (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LFreqs, 1), PyArray_FLOAT32, 0, 4);
+  NpFreqs= (PyArrayObject *)  (PyList_GetItem(LFreqs, 1));
   PyArrayObject *NpDFreqs;
-  NpDFreqs= (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LFreqs, 2), PyArray_FLOAT32, 0, 4);
+  NpDFreqs= (PyArrayObject *) (PyList_GetItem(LFreqs, 2));
   float *p_DFreqs=p_float32(NpDFreqs);
   float *p_Freqs=p_float32(NpFreqs);
 
   PyArrayObject *NpUVW_dt;
-  NpUVW_dt= (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LUVWSpeed, 0), PyArray_FLOAT32, 0, 4);
+  NpUVW_dt= (PyArrayObject *) (PyList_GetItem(LUVWSpeed, 0));
   //PyArrayObject *NpDFreqs;
   PyObject *_DT  = PyList_GetItem(LUVWSpeed, 1);
   float DT=(float) PyFloat_AsDouble(_DT);
