@@ -438,28 +438,25 @@ static PyObject *predict(PyObject *self, PyObject *args)
   float complex* VisIn=p_complex64(NpVisIn);
 
   PyArrayObject *Np_l;
-  Np_l = (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LSM, 0), PyArray_FLOAT32, 0, 4);
+  Np_l = (PyArrayObject *) PyList_GetItem(LSM, 0);
   PyArrayObject *Np_m;
-  Np_m = (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LSM, 1), PyArray_FLOAT32, 0, 4);
+  Np_m = (PyArrayObject *) PyList_GetItem(LSM, 1);
   PyArrayObject *Np_I;
-  Np_I = (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LSM, 2), PyArray_FLOAT32, 0, 4);
+  Np_I = (PyArrayObject *) PyList_GetItem(LSM, 2);
   
   PyArrayObject *NpWaveL;
-  PyObject *LFreq0=PyList_GetItem(LFreqs, 0);
-  PyObject *LFreq1=PyList_GetItem(LFreqs, 1);
-  PyObject *LFreq2=PyList_GetItem(LFreqs, 2);
-  NpWaveL= (PyArrayObject *) PyArray_ContiguousFromObject(LFreq0, PyArray_FLOAT32, 0, 4);
+  NpWaveL= (PyArrayObject *)  PyList_GetItem(LFreqs, 0);
   PyArrayObject *NpFreqs;
-  NpFreqs= (PyArrayObject *) PyArray_ContiguousFromObject(LFreq1, PyArray_FLOAT32, 0, 4);
+  NpFreqs= (PyArrayObject *)  PyList_GetItem(LFreqs, 1);
   PyArrayObject *NpDFreqs;
-  NpDFreqs= (PyArrayObject *) PyArray_ContiguousFromObject(LFreq2, PyArray_FLOAT32, 0, 4);
+  NpDFreqs= (PyArrayObject *) PyList_GetItem(LFreqs, 2);
   float *p_DFreqs=p_float32(NpDFreqs);
   float *p_Freqs=p_float32(NpFreqs);
 
 
 
   PyArrayObject *NpUVW_dt;
-  NpUVW_dt= (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LUVWSpeed, 0), PyArray_FLOAT32, 0, 4);
+  NpUVW_dt= (PyArrayObject *) (PyList_GetItem(LUVWSpeed, 0));
   //PyArrayObject *NpDFreqs;
   PyObject *_DT  = PyList_GetItem(LUVWSpeed, 1);
   float DT=(float) PyFloat_AsDouble(_DT);

@@ -638,11 +638,11 @@ class ClassPredict():
 
                 AllowEqualiseChan=1
                 
-                #ColOutDir=predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
+                ColOutDir=predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
                 #d0=ColOutDir.copy()
                 # ColOutDir.fill(0)
 
-                ColOutDir=predict_np19.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
+                #ColOutDir=predict_np19.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
                 #print 
                 #d1=ColOutDir.copy()
                 #ind=np.where(d0!=0)
