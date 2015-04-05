@@ -742,7 +742,8 @@ class ClassJacobianAntenna():
         #gc.enable()
         for iDir in range(NDir):
             
-            K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones)
+            for i in range(1000):
+                K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones)
 
             K_XX=K[:,:,0]
             K_YY=K[:,:,3]
