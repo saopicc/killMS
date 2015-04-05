@@ -743,7 +743,6 @@ class ClassJacobianAntenna():
         for iDir in range(NDir):
             
             K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones)
-            gc.collect()
 
             K_XX=K[:,:,0]
             K_YY=K[:,:,3]
@@ -756,6 +755,7 @@ class ClassJacobianAntenna():
 
             #self.K_XX.append(K_XX)
             #self.K_YY.append(K_YY)
+        gc.collect()
         self.HasKernelMatrix=True
         T.timeit("stuff 4")
 
