@@ -738,9 +738,13 @@ class ClassJacobianAntenna():
         if "DicoBeam" in self.DicoData.keys():
             ApplyTimeJones=self.DicoData["DicoBeam"]
 
+        import gc
+        gc.enable()
         for iDir in range(NDir):
             
             K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones)
+            gc.collect()
+
             K_XX=K[:,:,0]
             K_YY=K[:,:,3]
             if self.PolMode=="Scalar":

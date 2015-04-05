@@ -433,8 +433,7 @@ static PyObject *predict(PyObject *self, PyObject *args)
 			&PyList_Type, &LSmearMode,
 			&AllowChanEquidistant))  return NULL;
   
-  NpVisIn = (PyArrayObject *) PyArray_ContiguousFromObject(ObjVisIn, PyArray_COMPLEX64, 0, 4);
-
+  NpVisIn = (PyArrayObject *) PyArray_ContiguousFromObject(ObjVisIn, PyArray_COMPLEX64, 0, 3);
   float complex* VisIn=p_complex64(NpVisIn);
 
   PyArrayObject *Np_l;
@@ -445,11 +444,14 @@ static PyObject *predict(PyObject *self, PyObject *args)
   Np_I = (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LSM, 2), PyArray_FLOAT32, 0, 4);
   
   PyArrayObject *NpWaveL;
-  NpWaveL= (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LFreqs, 0), PyArray_FLOAT32, 0, 4);
+  PyObject *LFreq0=PyList_GetItem(LFreqs, 0);
+  PyObject *LFreq1=PyList_GetItem(LFreqs, 1);
+  PyObject *LFreq2=PyList_GetItem(LFreqs, 2);
+  NpWaveL= (PyArrayObject *) PyArray_ContiguousFromObject(LFreq0, PyArray_FLOAT32, 0, 4);
   PyArrayObject *NpFreqs;
-  NpFreqs= (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LFreqs, 1), PyArray_FLOAT32, 0, 4);
+  NpFreqs= (PyArrayObject *) PyArray_ContiguousFromObject(LFreq1, PyArray_FLOAT32, 0, 4);
   PyArrayObject *NpDFreqs;
-  NpDFreqs= (PyArrayObject *) PyArray_ContiguousFromObject(PyList_GetItem(LFreqs, 2), PyArray_FLOAT32, 0, 4);
+  NpDFreqs= (PyArrayObject *) PyArray_ContiguousFromObject(LFreq2, PyArray_FLOAT32, 0, 4);
   float *p_DFreqs=p_float32(NpDFreqs);
   float *p_Freqs=p_float32(NpFreqs);
 
@@ -544,26 +546,26 @@ static PyObject *predict(PyObject *self, PyObject *args)
 
   	for(ch=0;ch<nchan;ch++){
 
-	  if(ChanEquidistant==0){
-	    Kernel=cexp(phase*c1[ch]);
-	  }else{
-	    if(ch==0){
-	      Kernel=cexp(phase*c1[ch]);
-	      dKernel=cexp(phase*(c1[ch+1]-c1[ch]));
-	    }
-	    else{
-	      Kernel*=dKernel;
-	    }
-	  }
+  	  if(ChanEquidistant==0){
+  	    Kernel=cexp(phase*c1[ch]);
+  	  }else{
+  	    if(ch==0){
+  	      Kernel=cexp(phase*c1[ch]);
+  	      dKernel=cexp(phase*(c1[ch+1]-c1[ch]));
+  	    }
+  	    else{
+  	      Kernel*=dKernel;
+  	    }
+  	  }
 
   	  //printf("ch: %i %f\n",ch,WaveL[ch]);
   	  result=p_Flux[dd*nchan+ch]*Kernel;
   	  if(FSmear==1){
   	    phi=PI*(p_DFreqs[ch]/C)*phase;
-	    if(phi!=0.){
-	      phi=sin(phi)/(phi);
-	      result*=phi;
-	    };
+  	    if(phi!=0.){
+  	      phi=sin(phi)/(phi);
+  	      result*=phi;
+  	    };
   	  };
   	  if(TSmear==1){
 	    
@@ -574,10 +576,10 @@ static PyObject *predict(PyObject *self, PyObject *args)
   	    phi=PI*(p_Freqs[ch]/C)*dphase;
   	    //printf("phi = %f\n",phi);
   	    //printf("dphase = %f\n",dphase);
-	    if(phi!=0.){
-	      phi=sin(phi)/(phi);
-	      result*=phi;
-	    };
+  	    if(phi!=0.){
+  	      phi=sin(phi)/(phi);
+  	      result*=phi;
+  	    };
   	  };
 
 

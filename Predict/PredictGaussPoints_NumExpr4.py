@@ -654,6 +654,8 @@ class ClassPredict():
                 ColOutDir+=Noise*(np.random.randn(*ColOutDir.shape)+1j*np.random.randn(*ColOutDir.shape))
             DataOut+=ColOutDir
 
+        #del(LFreqs,LSM,LUVWSpeed,LSmearMode)
+        #del(ColOutDir)
 
         return DataOut
 
