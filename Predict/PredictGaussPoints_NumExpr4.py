@@ -622,7 +622,7 @@ class ClassPredict():
                 #ColOutDir.fill(0)
 
 
-                #ColOutDir=predict.predictJones(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList,1)
+                ColOutDir=predict.predictJones(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList,1)
 
 
                 #d1=ColOutDir.copy()
@@ -638,7 +638,7 @@ class ClassPredict():
 
                 AllowEqualiseChan=1
                 ColOutDir=predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
-                ColOutDir.fill(1)
+
 
 
                 #d1=ColOutDir

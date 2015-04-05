@@ -1,7 +1,7 @@
 import numpy as np
 from Array import NpShared
 
-from Predict.PredictGaussPoints_NumExpr2 import ClassPredict
+from Predict.PredictGaussPoints_NumExpr4 import ClassPredict
 
 from Data import ClassVisServer
 #from Sky import ClassSM
@@ -740,7 +740,8 @@ class ClassJacobianAntenna():
 
         for iDir in range(NDir):
             
-            K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones)
+            for ido in range(1000):
+                K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones)
             K_XX=K[:,:,0]
             K_YY=K[:,:,3]
             if self.PolMode=="Scalar":
