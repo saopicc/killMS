@@ -12,6 +12,7 @@ from Array import NpShared
 #ne.evaluate=lambda sin: ("return %s"%sin)
 import time
 from Predict import predict 
+from Predict import predict_np19 
 from Other import findrms
 
 def SolsToDicoJones(Sols,nf):
@@ -638,14 +639,18 @@ class ClassPredict():
 
                 AllowEqualiseChan=1
                 
-                ColOutDir=predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
+                # ColOutDir=predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
+                # d0=ColOutDir.copy()
+                # ColOutDir.fill(0)
+
+                predict_np19.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
+                
 
 
-
-                #d1=ColOutDir
-                #ind=np.where(d0!=0)
-                #print np.max((d0-d1)[ind]/(d0[ind]))
-                #stop
+                # d1=ColOutDir
+                # ind=np.where(d0!=0)
+                # print np.max((d0-d1)[ind]/(d0[ind]))
+                # stop
                 
 
             T.timeit("predict0")
