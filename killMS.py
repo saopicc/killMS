@@ -186,8 +186,11 @@ def main(OP=None):
     options.InitLM=(int(options.InitLM)==1)
     DoSmearing=options.Decorrelation
     
-
-    kills=options.kills.split(",")
+    if type(options.kills)==str:
+        kills=options.kills.split(",")
+    elif type(options.kills)==list:
+        kills=options.kills
+        
 
     ######################################
 
