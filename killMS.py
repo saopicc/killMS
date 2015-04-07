@@ -97,11 +97,10 @@ def read_options():
     OP.add_option('Resolution',type="float",help='Resolution in arcsec. Default is %default')
     OP.add_option('Weighting',type="str",help='Weighting scheme. Default is %default')
     OP.add_option('Robust',type="float",help='Briggs Robust parameter. Default is %default')
-
     
     OP.OptionGroup("* Action options","Actions")
     OP.add_option('DoPlot',type="int",help='Plot the solutions, for debugging. Default is %default')
-    OP.add_option('DoSub',type="int",help='Substact selected sources. Default is %default')
+    OP.add_option('SubOnly',type="int",help='Substact selected sources. Default is %default')
     OP.add_option('DoBar',help=' Draw progressbar. Default is %default',default="1")
     OP.add_option('NCPU',type="int",help='Number of cores to use. Default is %default ')
     # OP.add_option('ApplyCal',type="int",help='Apply direction averaged gains to residual data in the mentioned direction. \
@@ -279,7 +278,9 @@ def main(OP=None):
             #Solver.SetRmsFromExt(100)
 
 
-    DoSubstract=(options.DoSub==1)
+    #DoSubstract=(options.DoSub==1)
+    ind=np.where(SM.SourceCat.kill==1)[0]
+    DoSubstract=(ind.size>0)
     #print "!!!!!!!!!!!!!!"
     #
     # Solver.InitCovariance(FromG=True,sigP=options.CovP,sigQ=options.CovQ)
@@ -348,6 +349,7 @@ def main(OP=None):
 
                 print>>log,"   Compute residual data"
                 Predict=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
+                
                 Solver.VS.ThisDataChunk["resid"]=Solver.VS.ThisDataChunk["data"]-Predict
                 Weights=Solver.VS.ThisDataChunk["W"]
 
@@ -394,7 +396,10 @@ def main(OP=None):
             if DoSubstract:
                 print>>log, ModColor.Str("Substract sources ... ",col="green")
                 SM.SelectSubCat(SM.SourceCat.kill==1)
-                PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
+                if options.SubOnly==1:
+                    PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM)
+                else:
+                    PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
                 Solver.VS.ThisDataChunk["data"]-=PredictData
                 SM.RestoreCat()
 
