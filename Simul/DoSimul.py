@@ -51,8 +51,8 @@ def main(options=None):
     NSols=MS.F_ntimes
     Sols=np.zeros((NSols,),dtype=[("t0",np.float64),("t1",np.float64),("tm",np.float64),("G",np.complex64,(na,nd,2,2))])
     Sols=Sols.view(np.recarray)
-    Sols.G[:,:,:,0,0]=1e-3
-    Sols.G[:,:,:,1,1]=1e-3
+    Sols.G[:,:,:,0,0]=1#e-3
+    Sols.G[:,:,:,1,1]=1#e-3
 
     dt=MS.dt
     Sols.t0=MS.F_times-dt/2.
@@ -86,18 +86,18 @@ def main(options=None):
     Jones["t1"]=Sols.t1
     nt,na,nd,_,_=Sols.G.shape
     G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
-    G.fill(0)
-    G[:,:,:,:,0,0]=1.
-    G[:,:,:,:,1,1]=1.
+    # G.fill(0)
+    # G[:,:,:,:,0,0]=1.
+    # G[:,:,:,:,1,1]=1.
     Jones["Beam"]=G
     Jones["BeamH"]=ModLinAlg.BatchH(G)
     Jones["ChanMap"]=np.zeros((VS.MS.NSPWChan,)).tolist()
 
     print>>log, ModColor.Str("Substract sources ... ",col="green")
-    SM.SelectSubCat(SM.SourceCat.kill==0)
+    #SM.SelectSubCat(SM.SourceCat.kill==0)
     PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones,Noise=Noise)
 
-    SM.RestoreCat()
+    #SM.RestoreCat()
 
     MS.data=PredictData
 
@@ -105,10 +105,10 @@ def main(options=None):
     f=t.getcol("FLAG")
     f.fill(0)
 
-    # r=np.random.rand(*(f.shape[0:2]))
-    # ff=(r>0.9)
-    # indr,indf=np.where(ff)
-    # f[indr,indf,:]=True
+    r=np.random.rand(*(f.shape[0:2]))
+    ff=(r>0.9)
+    indr,indf=np.where(ff)
+    f[indr,indf,:]=True
     # MS.flag_all=f
     t.putcol("FLAG",f)
     t.putcol("FLAG_BACKUP",f)
