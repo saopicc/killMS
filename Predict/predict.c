@@ -470,19 +470,21 @@ static PyObject *predict(PyObject *self, PyObject *args)
   nchan=NpVisIn->dimensions[1];
 
   int ChanEquidistant=0;
-  if(nchan>2){
-    ChanEquidistant=1;
-    float dFChan0=p_Freqs[1]-p_Freqs[0];
-    for(ch=0; ch<(nchan-1); ch++){
-      float df=abs(p_Freqs[ch+1]-p_Freqs[ch]);
-      float ddf=abs(1.-df/dFChan0);
-      //printf("df,ddf %i %f %f\n",ch,df,ddf);
-      if(ddf>1e-3){ChanEquidistant=0;}
-    }
-  }
-  if(AllowChanEquidistant==0){
-    ChanEquidistant=0;
-  }
+  /* if(nchan>2){ */
+  /*   ChanEquidistant=1; */
+  /*   float dFChan0=p_Freqs[1]-p_Freqs[0]; */
+  /*   for(ch=0; ch<(nchan-1); ch++){ */
+  /*     float df=abs(p_Freqs[ch+1]-p_Freqs[ch]); */
+  /*     float ddf=abs(1.-df/dFChan0); */
+  /*     //printf("df,ddf %i %f %f\n",ch,df,ddf); */
+  /*     if(ddf>1e-3){ChanEquidistant=0;} */
+  /*   } */
+  /* } */
+  /* if(AllowChanEquidistant==0){ */
+  /*   ChanEquidistant=0; */
+  /* } */
+
+  ChanEquidistant=AllowChanEquidistant;
   //printf("ChanEquidistant %i\n",ChanEquidistant);
   
   ndir=Np_l->dimensions[0];
@@ -720,20 +722,21 @@ static PyObject *predictJones(PyObject *self, PyObject *args)
   nchan=NpVisIn->dimensions[1];
 
   int ChanEquidistant=0;
-  if(nchan>2){
-    ChanEquidistant=1;
-    float dFChan0=p_Freqs[1]-p_Freqs[0];
-    for(ch=0; ch<(nchan-1); ch++){
-      float df=abs(p_Freqs[ch+1]-p_Freqs[ch]);
-      float ddf=abs(1.-df/dFChan0);
-      //printf("df,ddf %i %f %f\n",ch,df,ddf);
-      if(ddf>1e-3){ChanEquidistant=0;}
-    }
-  }
-  if(AllowChanEquidistant==0){
-    ChanEquidistant=0;
-  }
-ChanEquidistant=0;
+  /* if(nchan>2){ */
+  /*   ChanEquidistant=1; */
+  /*   float dFChan0=p_Freqs[1]-p_Freqs[0]; */
+  /*   for(ch=0; ch<(nchan-1); ch++){ */
+  /*     float df=abs(p_Freqs[ch+1]-p_Freqs[ch]); */
+  /*     float ddf=abs(1.-df/dFChan0); */
+  /*     //printf("df,ddf %i %f %f\n",ch,df,ddf); */
+  /*     if(ddf>1e-3){ChanEquidistant=0;} */
+  /*   } */
+  /* } */
+  /* if(AllowChanEquidistant==0){ */
+  /*   ChanEquidistant=0; */
+  /* } */
+
+  ChanEquidistant=AllowChanEquidistant;
 
   ndir=Np_l->dimensions[0];
 

@@ -14,6 +14,7 @@ import time
 from Predict import predict 
 from Predict import predict_np19 
 from Other import findrms
+from Other.ModChanEquidistant import IsChanEquidistant
 
 def SolsToDicoJones(Sols,nf):
     Jones={}
@@ -612,6 +613,7 @@ class ClassPredict():
             LSmearMode=[FSmear,TSmear]
             T.timeit("init")
 
+            AllowEqualiseChan=IsChanEquidistant(DicoData["freqs"])
 
             if ApplyTimeJones!=None:
 
@@ -625,7 +627,7 @@ class ClassPredict():
                 #ColOutDir.fill(0)
 
 
-                predict.predictJones(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList,1)
+                predict.predictJones(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList,AllowEqualiseChan)
                 # print ColOutDir
 
                 #d1=ColOutDir.copy()
@@ -639,7 +641,6 @@ class ClassPredict():
                 #d0=ColOutDir.copy()
                 #ColOutDir.fill(0)
 
-                AllowEqualiseChan=1
                 
                 predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
                 # d0=ColOutDir.copy()

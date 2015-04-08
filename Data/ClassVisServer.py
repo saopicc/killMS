@@ -13,6 +13,8 @@ MyLogger.setSilent(["NpShared"])
 #from Sky.PredictGaussPoints_NumExpr3 import ClassPredict as ClassPredict 
 import ClassWeighting
 
+from Other.ModChanEquidistant import IsChanEquidistant
+
 class ClassVisServer():
     def __init__(self,MSName,
                  ColName="DATA",
@@ -292,7 +294,12 @@ class ClassVisServer():
         # iAFlag=12
         # ind=np.where((A0==iAFlag)|(A1==iAFlag))[0]
         # flags[ind,:,:]=1
-
+        
+        Equidistant=IsChanEquidistant(freqs)
+        if Equidistant:
+            print>>log, "Channels are equidistant, can go fast"
+        else:
+            print>>log, ModColor.Str("Channels are not equidistant, cannot go fast")
 
         MS=self.MS
         self.ThresholdFlag=0.9
