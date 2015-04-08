@@ -778,7 +778,7 @@ static PyObject *predictJones(PyObject *self, PyObject *args)
 
   float complex J0[4]={0},J1[4]={0},J0inv[4]={0},J1H[4]={0},J1Hinv[4]={0},JJ[4]={0};
   
-  int ApplyJones=0;
+  int ApplyJones=1;
   int irow;
 
   float complex Kernel;
