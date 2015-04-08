@@ -19,12 +19,17 @@ import numpy as np
 import pickle
 from SkyModel.Sky import ClassSM
 from pyrap.tables import table
+import glob
 
 
 def main(options=None):
-    
+    ll=glob.glob("000?.MS")
+    for l in ll:
+        DoSimul(l)
 
-    MSName="0000.MS"
+
+def DoSimul(MSName="0000.MS"):
+
     SMName="ModelRandom00.txt.npy"
     ReadColName="DATA"
     WriteColName="DATA"
