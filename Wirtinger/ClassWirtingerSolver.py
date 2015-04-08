@@ -380,7 +380,7 @@ class ClassWirtingerSolver():
                     JM=self.DicoJM[iAnt]
                     if self.SolverType=="CohJones":
 
-                        x=JM.doLMStep(self.G)
+                        x,_,_=JM.doLMStep(self.G)
 
                     if self.SolverType=="KAFCA":
                         EM=ClassModelEvolution(iAnt,
