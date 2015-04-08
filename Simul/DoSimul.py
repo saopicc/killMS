@@ -29,7 +29,7 @@ def main(options=None):
     ReadColName="DATA"
     WriteColName="DATA"
     NCPU=6
-    Noise=10
+    Noise=0
 
     SM=ClassSM.ClassSM(SMName)
 
@@ -67,7 +67,11 @@ def main(options=None):
     DeltaT_Phase=np.random.randn(na,nd)*60
     period_Phase=300+np.random.randn(na,nd)*10
     PhaseAbs=np.random.randn(na,nd)*np.pi
-    Amp_Phase=np.random.randn(na,nd)*np.pi*0.2
+    Amp_Phase=np.random.randn(na,nd)*np.pi*0.1
+
+    #Amp_Amp=np.zeros((na,nd))
+    PhaseAbs.fill(0)
+    #Amp_Phase=np.zeros((na,nd))
 
     for itime in range(0,NSols):
         for iAnt in range(na):

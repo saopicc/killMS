@@ -31,21 +31,6 @@ void initpredict()  {
 }
 
 
-void GiveJones(float complex *ptrJonesMatrices, int *JonesDims, float *ptrCoefs, int i_t, int i_ant0, int i_dir, float complex *Jout){
-  int nd_Jones,na_Jones,nch_Jones;
-  nd_Jones=JonesDims[1];
-  na_Jones=JonesDims[2];
-  nch_Jones=JonesDims[3];
-  
-  int ipol,idir;
-  int offJ0=i_t*nd_Jones*na_Jones*nch_Jones*4
-    +i_dir*na_Jones*nch_Jones*4
-    +i_ant0*nch_Jones*4;
-  for(ipol=0; ipol<4; ipol++){
-    Jout[ipol]=*(ptrJonesMatrices+offJ0+ipol);
-  }
-  
-}
 
 
 static PyObject *CorrVis(PyObject *self, PyObject *args)
@@ -609,7 +594,6 @@ static PyObject *predict(PyObject *self, PyObject *args)
 
 
 
-
 static PyObject *predictJones(PyObject *self, PyObject *args)
 {
   PyObject *ObjVisIn;
@@ -749,7 +733,7 @@ static PyObject *predictJones(PyObject *self, PyObject *args)
   if(AllowChanEquidistant==0){
     ChanEquidistant=0;
   }
-
+ChanEquidistant=0;
 
   ndir=Np_l->dimensions[0];
 
@@ -794,25 +778,32 @@ static PyObject *predictJones(PyObject *self, PyObject *args)
     VisIn=p0;
     UVWin=p1;
     for ( irow=0; irow<nrow; irow++)  {
+    //for ( irow=1997; irow<1999; irow++)  {
+      //printf("\n");
   	phase=(*UVWin++)*l;
   	//printf("cc %f \n",phase);
   	phase+=(*UVWin++)*m;
   	//printf("cc %f \n",phase);
   	phase+=(*UVWin++)*n;
-  	//printf("cc %f \n",phase);
+  	//printf("phase %f \n",phase);
 
 
 	if(ApplyJones==1){
 	  int i_t=ptrTimeMappingJonesMatrices[irow];
 	  int i_ant0=ptrA0[irow];
 	  int i_ant1=ptrA1[irow];
-	  //printf("%i %i %i %i | ",dd, i_t,i_ant0,i_ant1);
+	  //printf("r=%i d=%i t=%i a0=%i a1=%i \n ",irow,i_dir, i_t,i_ant0,i_ant1);
 	  
 	  GiveJones(ptrJonesMatrices, JonesDims, ptrCoefsInterp, i_t, i_ant0, i_dir, J0);
 	  GiveJones(ptrJonesMatrices, JonesDims, ptrCoefsInterp, i_t, i_ant1, i_dir, J1);
 	  
 	  MatH(J1,J1H);
+	  MatDot(J0,J1H,JJ);
 	}
+	//int ipol;
+	//for(ipol=0;ipol<4;ipol++){
+	//  printf("J0[%i]=(%f,%f)\n",ipol,creal(J0[ipol]),cimag(J0[ipol]));
+	//}
 
 
 
@@ -838,6 +829,8 @@ static PyObject *predictJones(PyObject *self, PyObject *args)
 
 
   	  result=p_Flux[dd*nchan+ch]*Kernel;
+	  //printf("result (%f,%f) \n",creal(result),cimag(result));
+
   	  if(FSmear==1){
   	    //phi=PI*PI_C*p_DFreqs[ch]*phase;
   	    phi=PI*(p_DFreqs[ch]/C)*phase;
@@ -866,7 +859,6 @@ static PyObject *predictJones(PyObject *self, PyObject *args)
   	  //printf("\n");
 
 	  if(ApplyJones==1){
-	    MatDot(J0,J1H,JJ);
 	    ThisVis[0]   += JJ[0]*result;
 	    ThisVis[1]   += JJ[1]*result;
 	    ThisVis[2]   += JJ[2]*result;

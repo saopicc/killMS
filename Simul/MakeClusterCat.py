@@ -25,7 +25,7 @@ def test():
     #                       "finfo":(100e6,250e6,10)}
 
     DicoPropPointings[0]={"offset":(0,0),
-                          "Ns":2,
+                          "Ns":-1,
                           "Nc":0,
                           "Diam":1,
                           "finfo":(50e6,250e6,1),
@@ -53,7 +53,7 @@ def test():
     #                       "Ns":-1,
     #                       "Nc":0,
     #                       "Diam":1,
-    #                       "SI":np.array([100],dtype=np.float32),
+   #                       "SI":np.array([100],dtype=np.float32),
     #                       "finfo":(70e6,150e6,10)}
     # DicoPropPointings[1]={"offset":(5,5),
     #                       "Ns":-1,
@@ -112,7 +112,7 @@ def BBSprintRandomSM(Ns,Ddeg,(ra_mean,dec_mean),OutFile="ModelRandom0",ra_dec_of
     #Cat.I[0]=0
     Cat.I.fill(1)
     Cat.I/=np.sum(Cat.I)
-    Cat.I*=100
+    #Cat.I*=100
     if SI!=None:
         Cat.I=SI
         Cat.Sref=SI
@@ -182,7 +182,7 @@ class MakeMultipleObs():
             if "SI" in D.keys():
                 SI=D["SI"]
             BBSprintRandomSM(Ns,Diam,(rac,decc),OutFile=SMName,ra_dec_offset=(0,0),SI=SI,Mode=Mode)
-            sExec="MakeModel.py --SkyModel=%s --NCluster=%i --CMethod=1 --DoPlot=0"%(SMName,Nc)
+            sExec="MakeModel.py --SkyModel=%s --NCluster=%i --CMethod=4 --DoPlot=0"%(SMName,Nc)
             print sExec
             os.system(sExec)
 

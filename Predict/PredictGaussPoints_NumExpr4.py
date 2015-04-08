@@ -231,7 +231,10 @@ class WorkerPredict(multiprocessing.Process):
                 DicoData["resid"]=D["resid"][Row0:Row1]
 
             ApplyTimeJones=NpShared.SharedToDico("%sApplyTimeJones"%self.IdSharedMem)
-
+            #JonesMatrices=ApplyTimeJones["Beam"]
+            #print ApplyTimeJones["Beam"].flags
+            ApplyTimeJones["MapJones"]=ApplyTimeJones["MapJones"][Row0:Row1]
+            
             PM=ClassPredict(NCPU=1,DoSmearing=self.DoSmearing)
 
             #print DicoData.keys()

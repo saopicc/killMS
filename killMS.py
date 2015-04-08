@@ -46,6 +46,9 @@ from Other import ClassTimeIt
 from Data import ClassVisServer
 
 from Predict.PredictGaussPoints_NumExpr4 import ClassPredictParallel as ClassPredict 
+#from Predict.PredictGaussPoints_NumExpr2 import ClassPredictParallel as ClassPredict_orig
+#from Predict.PredictGaussPoints_NumExpr4 import ClassPredict as ClassPredict 
+#from Predict.PredictGaussPoints_NumExpr2 import ClassPredict as ClassPredict_orig
 #from Sky.PredictGaussPoints_NumExpr4 import ClassPredict as ClassPredict 
 
 #from Sky.PredictGaussPoints_NumExpr2 import ClassPredictParallel as ClassPredict_orig 
@@ -294,9 +297,9 @@ def main(OP=None):
 
         if options.ExtSols=="":
             SaveSols=True
-            #Solver.doNextTimeSolve_Parallel()
+            Solver.doNextTimeSolve_Parallel()
             #Solver.doNextTimeSolve_Parallel(SkipMode=True)
-            Solver.doNextTimeSolve()
+            #Solver.doNextTimeSolve()
             Sols=Solver.GiveSols()
         else:
             Sols=np.load(options.ExtSols)["Sols"]
@@ -312,6 +315,7 @@ def main(OP=None):
             Jones["t1"]=Sols.t1
             nt,na,nd,_,_=Sols.G.shape
             G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
+            G=np.require(G, dtype=np.complex64, requirements="C_CONTIGUOUS")
 
             # if not("A" in options.ApplyMode):
             #     gabs=np.abs(G)
@@ -396,10 +400,25 @@ def main(OP=None):
             if DoSubstract:
                 print>>log, ModColor.Str("Substract sources ... ",col="green")
                 SM.SelectSubCat(SM.SourceCat.kill==1)
+
+                
+
                 if options.SubOnly==1:
+                    print>>log, ModColor.Str(" Sublonly ... ",col="green")
                     PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM)
                 else:
+                    #print "timemap:",Jones["MapJones"][1997:1999]
+                    #print "Jt0d0a35",Jones["Beam"][0,0,35]
+                    #print "Jt1d0a0",Jones["Beam"][1,0,0]
                     PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
+                    #PredictData2=PM2.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
+                    #diff=(PredictData-PredictData2)
+                    #print diff
+                    #ind=np.where(diff==np.max(diff))
+                    #print ind
+                    #print np.max(PredictData-PredictData2)
+                    #print np.where(np.isnan(diff))
+                    #print PredictData[1997:1999],PredictData[1997:1999]
                 Solver.VS.ThisDataChunk["data"]-=PredictData
                 SM.RestoreCat()
 

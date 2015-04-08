@@ -25,7 +25,7 @@ def SolsToDicoJones(Sols,nf):
 
 
 class ClassPredictParallel():
-    def __init__(self,Precision="D",NCPU=6,IdMemShared=""):
+    def __init__(self,Precision="D",NCPU=6,IdMemShared="",DoSmearing=None):
         self.NCPU=NCPU
         ne.set_num_threads(self.NCPU)
         if Precision=="D":
