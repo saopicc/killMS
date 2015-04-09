@@ -326,15 +326,31 @@ def main(OP=None):
             Jones["Beam"]=G
             Jones["BeamH"]=ModLinAlg.BatchH(G)
             Jones["ChanMap"]=np.zeros((VS.MS.NSPWChan,))
-            
-            ind=np.array([],np.int32)
+            times=Solver.VS.ThisDataChunk["times"]
+
+            # ind=np.array([],np.int32)
+            # for it in range(nt):
+            #     t0=Jones["t0"][it]
+            #     t1=Jones["t1"][it]
+            #     indMStime=np.where((times>=t0)&(times<t1))[0]
+            #     indMStime=np.ones((indMStime.size,),np.int32)*it
+            #     ind=np.concatenate((ind,indMStime))
+
+            DicoJonesMatrices=Jones
+            ind=np.zeros((times.size,),np.int32)
+            nt,na,nd,_,_,_=G.shape
+            ii=0
             for it in range(nt):
-                t0=Jones["t0"][it]
-                t1=Jones["t1"][it]
-                indMStime=np.where((Solver.VS.ThisDataChunk["times"]>=t0)&(Solver.VS.ThisDataChunk["times"]<t1))[0]
+                t0=DicoJonesMatrices["t0"][it]
+                t1=DicoJonesMatrices["t1"][it]
+                indMStime=np.where((times>=t0)&(times<t1))[0]
                 indMStime=np.ones((indMStime.size,),np.int32)*it
-                ind=np.concatenate((ind,indMStime))
-                
+                ind[ii:ii+indMStime.size]=indMStime[:]
+                ii+=indMStime.size
+
+
+
+
             Jones["MapJones"]=ind
 
 
@@ -486,14 +502,29 @@ def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2,ConfigJacobianAnte
     Jones["BeamH"]=ModLinAlg.BatchH(G)
     Jones["ChanMap"]=np.zeros((VSInit.MS.NSPWChan,))
 
-    ind=np.array([],np.int32)
+    # ind=np.array([],np.int32)
+    # for it in range(nt):
+    #     t0=Jones["t0"][it]
+    #     t1=Jones["t1"][it]
+    #     indMStime=np.where((SolverInit.VS.ThisDataChunk["times"]>=t0)&(SolverInit.VS.ThisDataChunk["times"]<t1))[0]
+    #     indMStime=np.ones((indMStime.size,),np.int32)*it
+    #     ind=np.concatenate((ind,indMStime))
+
+    times=SolverInit.VS.ThisDataChunk["times"]
+    DicoJonesMatrices=Jones
+    ind=np.zeros((times.size,),np.int32)
+    nt,na,nd,_,_,_=G.shape
+    ii=0
     for it in range(nt):
-        t0=Jones["t0"][it]
-        t1=Jones["t1"][it]
-        indMStime=np.where((SolverInit.VS.ThisDataChunk["times"]>=t0)&(SolverInit.VS.ThisDataChunk["times"]<t1))[0]
+        t0=DicoJonesMatrices["t0"][it]
+        t1=DicoJonesMatrices["t1"][it]
+        indMStime=np.where((times>=t0)&(times<t1))[0]
         indMStime=np.ones((indMStime.size,),np.int32)*it
-        ind=np.concatenate((ind,indMStime))
-        Jones["MapJones"]=ind
+        ind[ii:ii+indMStime.size]=indMStime[:]
+        ii+=indMStime.size
+
+
+    Jones["MapJones"]=ind
     PredictData=PM.predictKernelPolCluster(SolverInit.VS.ThisDataChunk,SolverInit.SM,ApplyTimeJones=Jones)
 
     SolverInit.VS.ThisDataChunk["data"]-=PredictData
