@@ -150,7 +150,7 @@ def read_options():
     return OP
     
 
-def main(OP=None):
+def main(OP=None,MSName=None):
     
 
     if OP==None:
@@ -165,6 +165,9 @@ def main(OP=None):
     DoApplyCal=0#(options.ApplyCal!=-2)
     ApplyCal=0#int(options.ApplyCal)
     ReWeight=(options.ClipMethod!="")
+
+    if MSName!=None:
+        options.MSName=MSName
 
     if options.MSName=="":
         print "Give an MS name!"
@@ -600,8 +603,21 @@ if __name__=="__main__":
     
     #main(OP=OP)
 
+    import glob
+    if "*" in options.MSName:
+        Patern=options.MSName
+        lMS=sorted(glob.glob(Patern))
+        print>>log, "In batch mode, running killMS on the following MS:"
+        for MS in lMS:
+            print>>log, "  %s"%MS
+    else:
+        lMS=[options.MSName]
+
+    
+ 
     try:
-        main(OP=OP)
+        for MSName in lMS:
+            main(OP=OP,MSName=MSName)
     except:
         NpShared.DelAll(IdSharedMem)
             

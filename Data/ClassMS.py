@@ -814,15 +814,20 @@ class ClassMS():
             print>>log, "  ... Copying column %s to %s"%(Colin,Colout)
             TimesInt=np.arange(0,self.DTh,self.TimeChunkSize).tolist()
             if not(self.DTh in TimesInt): TimesInt.append(self.DTh)
-            for i in range(len(TimesInt)-1):
-                t0,t1=TimesInt[i],TimesInt[i+1]
-                print>>log, "      ... Copy in [%5.2f,%5.2f] hours"%( t0,t1)
-                t0=t0*3600.+self.F_tstart
-                t1=t1*3600.+self.F_tstart
-                ind0=np.argmin(np.abs(t0-self.F_times))
-                ind1=np.argmin(np.abs(t1-self.F_times))
-                row0=ind0*self.nbl
-                row1=ind1*self.nbl
+
+            RowsChunk=int(self.TimeChunkSize*3600/self.dt)*self.nbl
+            NChunk=np.max([2,int(self.DTh/self.TimeChunkSize)])
+            Rows=(np.int64(np.linspace(0,self.F_nrows,NChunk))).tolist()
+
+            for i in range(len(Rows)-1):
+                #t0,t1=TimesInt[i],TimesInt[i+1]
+                #t0=t0*3600.+self.F_tstart
+                #t1=t1*3600.+self.F_tstart
+                #ind0=np.argmin(np.abs(t0-self.F_times))
+                #ind1=np.argmin(np.abs(t1-self.F_times))
+                row0=Rows[i]#ind0*self.nbl
+                row1=Rows[i+1]#ind1*self.nbl
+                print>>log, "      ... Copy in [%i, %i] rows"%( row0,row1)
                 NRow=row1-row0
                 t.putcol(Colout,t.getcol(Colin,row0,NRow),row0,NRow)
         t.close()
