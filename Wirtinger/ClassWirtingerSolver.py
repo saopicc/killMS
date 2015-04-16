@@ -1,22 +1,22 @@
 
 from ClassJacobianAntenna import ClassJacobianAntenna
 import numpy as np
-from Array import NpShared
+from killMS2.Array import NpShared
 
-from Data import ClassVisServer
+from killMS2.Data import ClassVisServer
 #from Sky import ClassSM
-from Array import ModLinAlg
+from killMS2.Array import ModLinAlg
 import matplotlib.pyplot as pylab
 
-from Other import MyLogger
+from killMS2.Other import MyLogger
 log=MyLogger.getLogger("ClassWirtingerSolver")
-from Other import ModColor
+from killMS2.Other import ModColor
 
-from Other.progressbar import ProgressBar
+from killMS2.Other.progressbar import ProgressBar
             
 #from Sky.PredictGaussPoints_NumExpr import ClassPredict
-from Other import ClassTimeIt
-from Other import Counter
+from killMS2.Other import ClassTimeIt
+from killMS2.Other import Counter
 from ClassEvolve import ClassModelEvolution
 
 

@@ -1,19 +1,19 @@
 import numpy as np
 import ClassMS
 from pyrap.tables import table
-from Other import MyLogger
+from killMS2.Other import MyLogger
 log=MyLogger.getLogger("ClassVisServer")
 # import MyPickle
-from Array import NpShared
-from Other import ClassTimeIt
-from Other import ModColor
-from Array import ModLinAlg
+from killMS2.Array import NpShared
+from killMS2.Other import ClassTimeIt
+from killMS2.Other import ModColor
+from killMS2.Array import ModLinAlg
 MyLogger.setSilent(["NpShared"])
 #from Sky.PredictGaussPoints_NumExpr3 import ClassPredictParallel as ClassPredict 
 #from Sky.PredictGaussPoints_NumExpr3 import ClassPredict as ClassPredict 
 import ClassWeighting
 
-from Other.ModChanEquidistant import IsChanEquidistant
+from killMS2.Other.ModChanEquidistant import IsChanEquidistant
 
 class ClassVisServer():
     def __init__(self,MSName,

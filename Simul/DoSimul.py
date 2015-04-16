@@ -2,17 +2,17 @@
 
 import optparse
 import sys
-from Other import MyPickle
-from Other import logo
-from Other import ModColor
-from Other import MyLogger
+from killMS2.Other import MyPickle
+from killMS2.Other import logo
+from killMS2.Other import ModColor
+from killMS2.Other import MyLogger
 log=MyLogger.getLogger("killMS")
 MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
-from Other import ClassTimeIt
-from Data import ClassVisServer
-from Predict.PredictGaussPoints_NumExpr import ClassPredict
-from Array import ModLinAlg
-from Array import NpShared
+from killMS2.Other import ClassTimeIt
+from killMS2.Data import ClassVisServer
+from killMS2.Predict.PredictGaussPoints_NumExpr import ClassPredict
+from killMS2.Array import ModLinAlg
+from killMS2.Array import NpShared
 import time
 import os
 import numpy as np
@@ -95,9 +95,9 @@ def DoSimul(MSName="0000.MS"):
     Jones["t1"]=Sols.t1
     nt,na,nd,_,_=Sols.G.shape
     G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
-    # G.fill(0)
-    # G[:,:,:,:,0,0]=1.
-    # G[:,:,:,:,1,1]=1.
+    G.fill(0)
+    G[:,:,:,:,0,0]=1.
+    G[:,:,:,:,1,1]=1.
     Jones["Beam"]=G
     Jones["BeamH"]=ModLinAlg.BatchH(G)
     Jones["ChanMap"]=np.zeros((VS.MS.NSPWChan,)).tolist()
@@ -118,7 +118,7 @@ def DoSimul(MSName="0000.MS"):
     ff=(r>0.9)
     indr,indf=np.where(ff)
     f[indr,indf,:]=True
-    # MS.flag_all=f
+    MS.flag_all=f
     t.putcol("FLAG",f)
     t.putcol("FLAG_BACKUP",f)
     t.close()

@@ -1,13 +1,13 @@
 import numpy as np
 from pyrap.tables import table
-from Data.ClassMS import ClassMS
+from killMS2.Data.ClassMS import ClassMS
 from SkyModel.Sky.ClassSM import ClassSM
-from Other.ClassTimeIt import ClassTimeIt
+from killMS2.Other.ClassTimeIt import ClassTimeIt
 import numexpr as ne
 #import ModNumExpr
-from Other.progressbar import ProgressBar
+from killMS2.Other.progressbar import ProgressBar
 import multiprocessing
-from Array import ModLinAlg
+from killMS2.Array import ModLinAlg
 
 #ne.evaluate=lambda sin: ("return %s"%sin)
 

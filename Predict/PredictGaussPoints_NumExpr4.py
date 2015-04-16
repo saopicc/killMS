@@ -1,20 +1,20 @@
 import numpy as np
 from pyrap.tables import table
-from Data.ClassMS import ClassMS
+from killMS2.Data.ClassMS import ClassMS
 #from Sky.ClassSM import ClassSM
-from Other.ClassTimeIt import ClassTimeIt
+from killMS2.Other.ClassTimeIt import ClassTimeIt
 import numexpr as ne
 #import ModNumExpr
-from Other.progressbar import ProgressBar
+from killMS2.Other.progressbar import ProgressBar
 import multiprocessing
-from Array import ModLinAlg
-from Array import NpShared
+from killMS2.Array import ModLinAlg
+from killMS2.Array import NpShared
 #ne.evaluate=lambda sin: ("return %s"%sin)
 import time
-from Predict import predict 
-from Predict import predict_np19 
-from Other import findrms
-from Other.ModChanEquidistant import IsChanEquidistant
+from killMS2.Predict import predict 
+from killMS2.Predict import predict_np19 
+from killMS2.Other import findrms
+from killMS2.Other.ModChanEquidistant import IsChanEquidistant
 
 def SolsToDicoJones(Sols,nf):
     Jones={}

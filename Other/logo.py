@@ -1,6 +1,6 @@
 import getpass
 import os
-from Other import ModColor
+from killMS2.Other import ModColor
 
 import subprocess
 

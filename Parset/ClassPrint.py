@@ -1,5 +1,5 @@
 import os
-from Other import ModColor
+from killMS2.Other import ModColor
 
 class ClassPrint():
     def __init__(self,HW=20,quote='"'):

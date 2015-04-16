@@ -1,13 +1,14 @@
 import numpy as np
-from Array import NpShared
+from killMS2.Array import NpShared
 
-from Predict.PredictGaussPoints_NumExpr4 import ClassPredict
+from killMS2.Predict.PredictGaussPoints_NumExpr4 import ClassPredict
 
-from Data import ClassVisServer
+from killMS2.Data import ClassVisServer
 #from Sky import ClassSM
-from Array import ModLinAlg
+from killMS2.Array import ModLinAlg
 import pylab
-from Other import ClassTimeIt
+from killMS2.Other import ClassTimeIt
+
 
 def testLM():
     SM=ClassSM.ClassSM("../TEST/ModelRandom00.txt.npy")
@@ -111,7 +112,6 @@ def testLM():
     stop    
     
 
-from Other import ClassTimeIt
 
 
 class ClassJacobianAntenna():

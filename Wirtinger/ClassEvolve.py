@@ -2,7 +2,7 @@
 
 import numpy as np
 import pylab
-from Array import NpShared
+from killMS2.Array import NpShared
 
 class ClassModelEvolution():
     def __init__(self,iAnt,WeightType="exp",WeigthScale=1,order=1,StepStart=5,BufferNPoints=10,sigQ=0.01,DoEvolve=True,IdSharedMem=""):

@@ -1,7 +1,7 @@
 import sharedarray.SharedArray as SharedArray
-from Other import ModColor
+from killMS2.Other import ModColor
 import numpy as np
-from Other import MyLogger
+from killMS2.Other import MyLogger
 log=MyLogger.getLogger("NpShared")
 
 def zeros(*args,**kwargs):

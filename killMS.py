@@ -2,13 +2,15 @@
 
 import optparse
 import sys
-from Other import MyPickle
-from Other import logo
-from Other import ModColor
-from Other import MyLogger
-from Other import MyPickle
-from Other import PrintOptParse
-from Parset import MyOptParse
+from killMS2.Other import MyPickle
+from killMS2.Other import logo
+from killMS2.Other import ModColor
+from killMS2.Other import MyLogger
+from killMS2.Other import MyPickle
+from killMS2.Other import PrintOptParse
+from killMS2.Parset import MyOptParse
+
+from DDFacet.Imager import ClassFacetMachine
 
 log=MyLogger.getLogger("killMS")
 MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
@@ -40,10 +42,10 @@ import os
 import numpy as np
 import pickle
 from SkyModel.Sky import ClassSM
-from Wirtinger.ClassWirtingerSolver import ClassWirtingerSolver
+from killMS2.Wirtinger.ClassWirtingerSolver import ClassWirtingerSolver
 
-from Other import ClassTimeIt
-from Data import ClassVisServer
+from killMS2.Other import ClassTimeIt
+from killMS2.Data import ClassVisServer
 
 from Predict.PredictGaussPoints_NumExpr4 import ClassPredictParallel as ClassPredict 
 #from Predict.PredictGaussPoints_NumExpr2 import ClassPredictParallel as ClassPredict_orig
@@ -55,14 +57,14 @@ from Predict.PredictGaussPoints_NumExpr4 import ClassPredictParallel as ClassPre
 #from Sky.PredictGaussPoints_NumExpr3 import ClassPredict as ClassPredict 
 #from Sky.PredictGaussPoints_NumExpr2 import ClassPredict as ClassPredict_orig 
 
-from Array import ModLinAlg
-from Array import NpShared
-from Other import reformat
+from killMS2.Array import ModLinAlg
+from killMS2.Array import NpShared
+from killMS2.Other import reformat
 
 import multiprocessing
 NCPU_default=str(int(0.75*multiprocessing.cpu_count()))
 
-from Parset import ReadCFG
+from killMS2.Parset import ReadCFG
 
 global Parset
 Parset=ReadCFG.Parset("%s/killMS2/Parset/DefaultParset.cfg"%os.environ["KILLMS_DIR"])

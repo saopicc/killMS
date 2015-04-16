@@ -1,10 +1,10 @@
 import numpy as np
 from SkyModel.Sky import ClassSM
-from Other import rad2hmsdms
+from killMS2.Other import rad2hmsdms
 import os
-from Data import ClassMS
+from killMS2.Data import ClassMS
 import ephem
-from Other import ModParsetType
+from killMS2.Other import ModParsetType
 from pyrap.tables import table
 
 def test():
@@ -25,10 +25,10 @@ def test():
     #                       "finfo":(100e6,250e6,10)}
 
     DicoPropPointings[0]={"offset":(0,0),
-                          "Ns":2,
+                          "Ns":-1,
                           "Nc":0,
                           "Diam":1,
-                          "finfo":(100e6,250e6,2),
+                          "finfo":(100e6,250e6,1),
                           "Mode":"Random"}
 
 
