@@ -122,7 +122,7 @@ def DoSimul(MSName="0000.MS"):
     t.putcol("FLAG",f)
     t.putcol("FLAG_BACKUP",f)
     t.close()
-    # MS.data[f]=1.e10
+    MS.data[f]=1.e10
 
     VS.MS.SaveVis(Col="DATA")
     VS.MS.SaveVis(Col="CORRECTED_DATA")
