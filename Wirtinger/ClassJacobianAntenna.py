@@ -1,7 +1,7 @@
 import numpy as np
 from killMS2.Array import NpShared
 
-from killMS2.Predict.PredictGaussPoints_NumExpr4 import ClassPredict
+from killMS2.Predict.PredictGaussPoints_NumExpr5 import ClassPredict
 
 from killMS2.Data import ClassVisServer
 #from Sky import ClassSM
@@ -115,9 +115,10 @@ def testLM():
 
 
 class ClassJacobianAntenna():
-    def __init__(self,SM,iAnt,PolMode="HalfFull",Precision="S",IdSharedMem="",**kwargs):
+    def __init__(self,SM,iAnt,PolMode="HalfFull",Precision="S",IdSharedMem="",GD=None,**kwargs):
         T=ClassTimeIt.ClassTimeIt("ClassJacobianAntenna")
         T.disable()
+        self.GD=GD
         self.IdSharedMem=IdSharedMem
         self.PolMode=PolMode
         #self.PM=ClassPredict(Precision="S")
@@ -125,7 +126,7 @@ class ClassJacobianAntenna():
         for key in kwargs.keys():
             setattr(self,key,kwargs[key])
         
-        self.PM=ClassPredict(Precision=Precision,DoSmearing=self.DoSmearing)
+        self.PM=ClassPredict(Precision=Precision,DoSmearing=self.DoSmearing,IdMemShared=IdSharedMem)
         T.timeit("PM")
         if Precision=="D":
             self.CType=np.complex128
@@ -482,17 +483,17 @@ class ClassJacobianAntenna():
         
         
         
-        # if self.iAnt==5:
-        #     f=(self.DicoData["flags_flat"]==0)
-        #     pylab.figure(2)
-        #     pylab.clf()
-        #     pylab.plot((z[f])[::11])#[::11])
-        #     pylab.plot((Jx[f])[::11])#[::11])
-        #     pylab.plot(zr[f][::11])#[::11])
-        #     pylab.draw()
-        #     pylab.show(False)
-        #     pylab.pause(0.1)
-        #     #stop
+        if self.iAnt==5:
+            f=(self.DicoData["flags_flat"]==0)
+            pylab.figure(2)
+            pylab.clf()
+            pylab.plot((z[f])[::1])#[::11])
+            pylab.plot((Jx[f])[::1])#[::11])
+            pylab.plot(zr[f][::1])#[::11])
+            pylab.draw()
+            pylab.show(False)
+            pylab.pause(0.1)
+            #stop
 
         # # pylab.figure(2)
         # # pylab.clf()
@@ -742,7 +743,40 @@ class ClassJacobianAntenna():
         # gc.set_debug(gc.DEBUG_LEAK)
         for iDir in range(NDir):
             
-            K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones)
+
+            #K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones)
+            K=self.PM.predictKernelPolCluster(self.DicoData,self.SM)
+            indRow,indChan=np.where(np.all((K==0),axis=-1))
+            self.DicoData["flags"][indRow,indChan,:]=1
+            # from SkyModel.Sky import ClassSM
+            # SM=ClassSM.ClassSM("ModelRandom00.txt.npy")
+            # SM.Type="Catalog"
+            # SM.Calc_LM(self.SM.rac,self.SM.decc)
+            # K1=self.PM.predictKernelPolCluster(self.DicoData,SM)
+
+            # A0=self.DicoData["A0"]
+            # A1=self.DicoData["A1"]
+            # ind=np.where((A0==0)&(A1==10))[0]
+            # d0=K[ind,0,0] 
+            # d1=K1[ind,0,0]
+            # import pylab
+            # op0=np.abs
+            # op1=np.angle
+            # op0=np.real
+            # op1=np.imag
+            # pylab.clf()
+            # pylab.subplot(1,2,1)
+            # pylab.plot(op0(d0))
+            # pylab.plot(op0(d1))
+            # pylab.ylim(-1,1)
+            # pylab.subplot(1,2,2)
+            # pylab.plot(op1(d0))
+            # pylab.plot(op1(d1))
+            # pylab.ylim(-1,1)
+            # pylab.draw()
+            # pylab.show(False)
+            # stop            
+            
                 #gc.collect()
                 #print gc.garbage
 
@@ -802,6 +836,10 @@ class ClassJacobianAntenna():
             D1[:,:,2]=c1
             DicoData["flags"] = np.concatenate([D0, D1])
 
+            if self.SM.Type=="Image":
+                DicoData["flags_image"]=DicoData["flags"].copy()
+                DicoData["flags_image"].fill(0)
+
             npol=4
             if self.PolMode=="Scalar":
                 nr,nch,_=DicoData["data"].shape
@@ -813,6 +851,7 @@ class ClassJacobianAntenna():
                 npol=1
 
 
+
             DicoData["freqs"]   = DATA['freqs']
             DicoData["dfreqs"]   = DATA['dfreqs']
             DicoData["times"] = np.concatenate([DATA['times'][ind0], DATA['times'][ind1]])
@@ -821,6 +860,8 @@ class ClassJacobianAntenna():
             nr,nch,_=DicoData["data"].shape
             DicoData["flags"]=DicoData["flags"].reshape(nr,nch,self.NJacobBlocks,self.NJacobBlocks)
             DicoData["data"]=DicoData["data"].reshape(nr,nch,self.NJacobBlocks,self.NJacobBlocks)
+
+
 
             DicoData["flags_flat"]=np.rollaxis(DicoData["flags"],2).reshape(self.NJacobBlocks,nr*nch*self.NJacobBlocks)
             DicoData["data_flat"]=np.rollaxis(DicoData["data"],2).reshape(self.NJacobBlocks,nr*nch*self.NJacobBlocks)

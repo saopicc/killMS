@@ -10,7 +10,6 @@ from killMS2.Other import MyPickle
 from killMS2.Other import PrintOptParse
 from killMS2.Parset import MyOptParse
 
-from DDFacet.Imager import ClassFacetMachine
 
 log=MyLogger.getLogger("killMS")
 MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
@@ -86,12 +85,17 @@ def read_options():
     OP.add_option('InCol',help='Column to work on. Default is %default')
     OP.add_option('OutCol',help='Column to write to. Default is %default')
 
-    OP.OptionGroup("* Sky related options","SkyModel")
+    OP.OptionGroup("* Sky catalog related options","SkyModel")
     OP.add_option('SkyModel',help='List of targets [no default]')
     OP.add_option('LOFARBeam',help='(Mode, Time): Mode can be AE, E, or A for "Array factor" and "Element beam". Time is the estimation time step')
     OP.add_option('kills',help='Name or number index of sources to kill')
     OP.add_option('invert',help='Invert the selected sources to kill')
     OP.add_option('Decorrelation',type="str",help=' . Default is %default')
+
+    OP.OptionGroup("* Sky image related options","ImageSkyModel")
+    OP.add_option('BaseImageName')
+    OP.add_option('ImagePredictParset')
+    OP.add_option('OverS')
 
     OP.OptionGroup("* Data Selection","DataSelection")
     OP.add_option('UVMinMax',help='Baseline length selection in km. For example UVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default')
@@ -217,18 +221,35 @@ def main(OP=None,MSName=None):
     DicoSelectOptions["DistMaxToCore"]=options.DistMaxToCore
 
 
-    SM=ClassSM.ClassSM(options.SkyModel,
-                       killdirs=kills,invert=invert)
-    
+    GD=OP.DicoConfig
+    if GD["ImageSkyModel"]["BaseImageName"]=="":
+        print>>log,"Predict Mode: Catalog"
+        PredictMode="Catalog"
+    else:
+        print>>log,"Predict Mode: Image"
+        PredictMode="Image"
+        BaseImageName=GD["ImageSkyModel"]["BaseImageName"]
+        ModelImage="%s.model.fits"%BaseImageName
+        ParsetName=GD["ImageSkyModel"]["ImagePredictParset"]
+        if ParsetName=="":
+            ParsetName="%s.parset"%BaseImageName
+        GDPredict=ReadCFG.Parset(ParsetName).DicoPars
+        if options.OverS!=None:
+            GDPredict["ImagerCF"]["OverS"]=options.OverS
+        GD["GDImage"]=GDPredict
+
+
 
     #SM.SourceCat.I*=1000**2
     VS=ClassVisServer.ClassVisServer(options.MSName,ColName=ReadColName,
                                      TVisSizeMin=dt,
                                      DicoSelectOptions=DicoSelectOptions,
                                      TChunkSize=TChunk,IdSharedMem=IdSharedMem,
-                                     SM=SM,NCPU=NCPU,
+                                     NCPU=NCPU,
                                      Weighting=options.Weighting,
-                                     Robust=options.Robust)
+                                     Robust=options.Robust,
+                                     GD=GD)
+
     print VS.MS
     if not(WriteColName in VS.MS.ColNames):
         print>>log, "Column %s not in MS "%WriteColName
@@ -236,6 +257,18 @@ def main(OP=None,MSName=None):
     if not(ReadColName in VS.MS.ColNames):
         print>>log, "Column %s not in MS "%ReadColName
         exit()
+
+    from killMS2.Predict import ClassImageSM
+    if PredictMode=="Catalog":
+        SM=ClassSM.ClassSM(options.SkyModel,
+                           killdirs=kills,
+                           invert=invert)
+        SM.Type="Catalog"
+    else:
+        PreparePredict=ClassImageSM.ClassPreparePredict(ModelImage,VS,GD=GDPredict,DoDeconvolve=False,IdSharedMem=IdSharedMem)
+        SM=PreparePredict.SM
+        VS.setGridProps(PreparePredict.FacetMachine.Cell,PreparePredict.FacetMachine.NpixPaddedFacet)
+
 
     BeamProps=None
     if options.LOFARBeam!="":
@@ -259,7 +292,8 @@ def main(OP=None,MSName=None):
                                 DoPlot=options.DoPlot,
                                 DoPBar=options.DoBar,
                                 IdSharedMem=IdSharedMem,
-                                ConfigJacobianAntenna=ConfigJacobianAntenna)
+                                ConfigJacobianAntenna=ConfigJacobianAntenna,
+                                GD=GD)
     Solver.InitSol(TestMode=False)
 
     PM=ClassPredict(NCPU=NCPU,IdMemShared=IdSharedMem,DoSmearing=DoSmearing)
@@ -287,9 +321,14 @@ def main(OP=None,MSName=None):
 
 
     #DoSubstract=(options.DoSub==1)
-    ind=np.where(SM.SourceCat.kill==1)[0]
-    DoSubstract=(ind.size>0)
-    #print "!!!!!!!!!!!!!!"
+
+    if SM.Type=="Catalog":
+        ind=np.where(SM.SourceCat.kill==1)[0]
+        DoSubstract=(ind.size>0)
+    else:
+        DoSubstract=0
+
+    # print "!!!!!!!!!!!!!!"
     #
     # Solver.InitCovariance(FromG=True,sigP=options.CovP,sigQ=options.CovQ)
 

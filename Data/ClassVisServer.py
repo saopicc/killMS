@@ -24,7 +24,10 @@ class ClassVisServer():
                  LofarBeam=None,
                  AddNoiseJy=None,IdSharedMem="",
                  SM=None,NCPU=None,
-                 Robust=2,Weighting="Natural"):
+                 Robust=2,Weighting="Natural",
+                 GD=None):
+        self.GD=GD
+        self.CalcGridBasedFlags=False
         self.IdSharedMem=IdSharedMem
         PrefixShared="%sSharedVis"%self.IdSharedMem
         self.AddNoiseJy=AddNoiseJy
@@ -249,6 +252,12 @@ class ClassVisServer():
 
         return DATA
 
+    def setGridProps(self,Cell,nx):
+        self.Cell=Cell
+        self.nx=nx
+        self.CalcGridBasedFlags=True
+
+
 
 
 
@@ -314,6 +323,32 @@ class ClassVisServer():
                     (A,MS.StationNames[A],Frac*100,self.ThresholdFlag*100)
                 self.FlagAntNumber.append(A)
                 
+        if self.CalcGridBasedFlags:
+            Cell=self.Cell
+            nx=self.nx
+            MS=self.MS
+            u,v,w=MS.uvw.T
+            d=np.sqrt(u**2+v**2)
+            CellRad=(Cell/3600.)*np.pi/180
+            #_,_,nx,ny=GridShape
+            S=CellRad*nx
+            C=3e8
+            freqs=MS.ChanFreq
+            x=d.reshape((d.size,1))*(freqs.reshape((1,freqs.size))/C)*S
+            fA_all=(x>(nx/2))
+            
+            for A in range(MS.na):
+                ind=np.where((MS.A0==A)|(MS.A1==A))[0]
+                fA=fA_all[ind].ravel()
+                nf=np.count_nonzero(fA)
+                Frac=nf/float(fA.size)
+                if Frac>self.ThresholdFlag:
+                    print>>log, "Taking antenna #%2.2i[%s] out of the solve (~%4.1f%% of out-grid data, more than %4.1f%%)"%\
+                        (A,MS.StationNames[A],Frac*100,self.ThresholdFlag*100)
+                    self.FlagAntNumber.append(A)
+
+
+
         if "FlagAnts" in self.DicoSelectOptions.keys():
             FlagAnts=self.DicoSelectOptions["FlagAnts"]
             for Name in FlagAnts:

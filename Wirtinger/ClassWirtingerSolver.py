@@ -96,20 +96,22 @@ class ClassWirtingerSolver():
                  IdSharedMem="",
                  evP_StepStart=0, evP_Step=1,
                  DoPlot=False,
-                 DoPBar=True,
+                 DoPBar=True,GD=None,
                  ConfigJacobianAntenna={}):
         self.IdSharedMem=IdSharedMem
         self.ConfigJacobianAntenna=ConfigJacobianAntenna
         self.Lambda=Lambda
         self.NCPU=NCPU
         self.DoPBar=DoPBar
+        self.GD=GD
         if BeamProps!=None:
             rabeam,decbeam=SM.ClusterCat.ra,SM.ClusterCat.dec
             Mode,TimeMin=BeamProps
             LofarBeam=(Mode,TimeMin,rabeam,decbeam)
             VS.SetBeam(LofarBeam)
         MS=VS.MS
-        SM.Calc_LM(MS.rac,MS.decc)
+        if SM.Type=="Catalog":
+            SM.Calc_LM(MS.rac,MS.decc)
         self.SM=SM
         self.VS=VS
         self.DoPlot=DoPlot
@@ -349,7 +351,8 @@ class ClassWirtingerSolver():
             ThisTime=tm
             T.timeit("stuff")
             for iAnt in ListAntSolve:
-                JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Precision="D",IdSharedMem=self.IdSharedMem,**self.ConfigJacobianAntenna)
+                JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Precision="D",IdSharedMem=self.IdSharedMem,GD=self.GD,
+                                        **self.ConfigJacobianAntenna)
                 T.timeit("JM")
                 JM.setDATA_Shared()
                 T.timeit("Setdata_Shared")
@@ -471,7 +474,8 @@ class ClassWirtingerSolver():
         T.disable()
         for ii in range(NCPU):
              
-            W=WorkerAntennaLM(work_queue, result_queue,self.SM,self.PolMode,self.SolverType,self.IdSharedMem,ConfigJacobianAntenna=self.ConfigJacobianAntenna)#,args=(e,))
+            W=WorkerAntennaLM(work_queue, result_queue,self.SM,self.PolMode,self.SolverType,self.IdSharedMem,
+                              ConfigJacobianAntenna=self.ConfigJacobianAntenna,GD=self.GD)#,args=(e,))
             workerlist.append(W)
             workerlist[ii].start()
 
@@ -674,7 +678,7 @@ import multiprocessing
 class WorkerAntennaLM(multiprocessing.Process):
     def __init__(self,
                  work_queue,
-                 result_queue,SM,PolMode,SolverType,IdSharedMem,ConfigJacobianAntenna):
+                 result_queue,SM,PolMode,SolverType,IdSharedMem,ConfigJacobianAntenna=None,GD=None):
         multiprocessing.Process.__init__(self)
         self.work_queue = work_queue
         self.result_queue = result_queue
@@ -685,6 +689,7 @@ class WorkerAntennaLM(multiprocessing.Process):
         self.SolverType=SolverType
         self.IdSharedMem=IdSharedMem
         self.ConfigJacobianAntenna=ConfigJacobianAntenna
+        self.GD=GD
         #self.DoCalcEvP=DoCalcEvP
         #self.ThisTime=ThisTime
         #self.e,=kwargs["args"]
@@ -699,8 +704,8 @@ class WorkerAntennaLM(multiprocessing.Process):
                 break
             #self.e.wait()
 
-            JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,IdSharedMem=self.IdSharedMem,
-                                    **self.ConfigJacobianAntenna)
+            JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,IdSharedMem=self.IdSharedMem,GD=self.GD,
+                                    **dict(self.ConfigJacobianAntenna))
             JM.setDATA_Shared()
 
             G=NpShared.GiveArray("%sSharedGains"%self.IdSharedMem)
