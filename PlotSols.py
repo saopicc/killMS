@@ -2,10 +2,10 @@
 
 import optparse
 import sys
-from Other import MyPickle
-from Other import logo
-from Other import ModColor
-from Other import MyLogger
+from killMS2.Other import MyPickle
+from killMS2.Other import logo
+from killMS2.Other import ModColor
+from killMS2.Other import MyLogger
 log=MyLogger.getLogger("killMS")
 MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
 
@@ -60,7 +60,7 @@ def GiveNXNYPanels(Ns,ratio=800/500):
     if nx*ny<Ns: ny+=1
     return nx,ny
 
-from Array import ModLinAlg
+from killMS2.Array import ModLinAlg
 
 def NormMatrices(G):
     nt,na,_,_=G.shape

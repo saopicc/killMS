@@ -2,15 +2,15 @@
 
 import optparse
 import sys
-from Other import MyPickle
-from Other import ModColor
+from killMS2.Other import MyPickle
+from killMS2.Other import ModColor
 
 sys.path=[name for name in sys.path if not(("pyrap" in name)&("/usr/local/lib/" in name))]
 
 
 import numpy as np
-from Data import ClassMS
-from Other import MyLogger
+from killMS2.Data import ClassMS
+from killMS2.Other import MyLogger
 log=MyLogger.getLogger("MSTools")
 
 def read_options():
