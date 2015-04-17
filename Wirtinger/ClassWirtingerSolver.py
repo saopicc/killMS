@@ -704,21 +704,24 @@ class WorkerAntennaLM(multiprocessing.Process):
                 break
             #self.e.wait()
 
+            T=ClassTimeIt.ClassTimeIt("Worker")
             JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,IdSharedMem=self.IdSharedMem,GD=self.GD,
                                     **dict(self.ConfigJacobianAntenna))
+            T.timeit("ClassJacobianAntenna")
             JM.setDATA_Shared()
+            T.timeit("setDATA_Shared")
 
             G=NpShared.GiveArray("%sSharedGains"%self.IdSharedMem)
             P=NpShared.GiveArray("%sSharedCovariance"%self.IdSharedMem)
             #Q=NpShared.GiveArray("%sSharedCovariance_Q"%self.IdSharedMem)
             evP=NpShared.GiveArray("%sSharedEvolveCovariance"%self.IdSharedMem)
+            T.timeit("GiveArray")
 
             if self.SolverType=="CohJones":
                 x,_,_=JM.doLMStep(G)
                 self.result_queue.put([iAnt,x,None,None,{"std":-1.,"max":-1.,"kapa":None}])
             elif self.SolverType=="KAFCA":
-                T=ClassTimeIt.ClassTimeIt()
-                T.disable()
+                #T.disable()
                 if DoCalcEvP:
                     evP[iAnt]=JM.CalcMatrixEvolveCov(G,P,rms)
                     T.timeit("Estimate Evolve")
