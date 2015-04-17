@@ -483,17 +483,17 @@ class ClassJacobianAntenna():
         
         
         
-        if self.iAnt==5:
-            f=(self.DicoData["flags_flat"]==0)
-            pylab.figure(2)
-            pylab.clf()
-            pylab.plot((z[f])[::1])#[::11])
-            pylab.plot((Jx[f])[::1])#[::11])
-            pylab.plot(zr[f][::1])#[::11])
-            pylab.draw()
-            pylab.show(False)
-            pylab.pause(0.1)
-            #stop
+        # if self.iAnt==5:
+        #     f=(self.DicoData["flags_flat"]==0)
+        #     pylab.figure(2)
+        #     pylab.clf()
+        #     pylab.plot((z[f])[::1])#[::11])
+        #     pylab.plot((Jx[f])[::1])#[::11])
+        #     pylab.plot(zr[f][::1])#[::11])
+        #     pylab.draw()
+        #     pylab.show(False)
+        #     pylab.pause(0.1)
+        #     stop
 
         # # pylab.figure(2)
         # # pylab.clf()
@@ -745,7 +745,7 @@ class ClassJacobianAntenna():
             
 
             #K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones)
-            K=self.PM.predictKernelPolCluster(self.DicoData,self.SM)
+            K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones)
             indRow,indChan=np.where(np.all((K==0),axis=-1))
             self.DicoData["flags"][indRow,indChan,:]=1
             # from SkyModel.Sky import ClassSM

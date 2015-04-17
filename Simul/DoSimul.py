@@ -34,7 +34,7 @@ def DoSimul(MSName="0000.MS"):
     ReadColName="DATA"
     WriteColName="DATA"
     NCPU=6
-    Noise=0
+    Noise=1
 
     SM=ClassSM.ClassSM(SMName)
 
