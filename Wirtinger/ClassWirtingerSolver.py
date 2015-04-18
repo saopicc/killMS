@@ -705,6 +705,7 @@ class WorkerAntennaLM(multiprocessing.Process):
             #self.e.wait()
 
             T=ClassTimeIt.ClassTimeIt("Worker")
+            T.disable()
             JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,IdSharedMem=self.IdSharedMem,GD=self.GD,
                                     **dict(self.ConfigJacobianAntenna))
             T.timeit("ClassJacobianAntenna")

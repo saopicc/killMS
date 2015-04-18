@@ -746,8 +746,10 @@ class ClassJacobianAntenna():
 
             #K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones)
             K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones)
+            T.timeit("Calc K0")
             indRow,indChan=np.where(np.all((K==0),axis=-1))
             self.DicoData["flags"][indRow,indChan,:]=1
+            T.timeit("Calc K1")
             # from SkyModel.Sky import ClassSM
             # SM=ClassSM.ClassSM("ModelRandom00.txt.npy")
             # SM.Type="Catalog"
