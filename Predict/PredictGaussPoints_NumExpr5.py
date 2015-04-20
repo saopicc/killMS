@@ -258,6 +258,7 @@ class ClassPredict():
 
         for iCluster in ListDirection:
             iFacet=iCluster
+            if SM.ClusterCat.SumI[iFacet]==0: continue
             GridMachine=self.DicoGM[iFacet]#self.GiveGM(iFacet,SM)
             T.timeit("2: GM")
             uvwThis=DATA["uvw"]

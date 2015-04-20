@@ -7,6 +7,7 @@ from killMS2.Array import NpShared
 from killMS2.Other import MyLogger
 log=MyLogger.getLogger("ClassImageSM")
 from killMS2.Other.progressbar import ProgressBar
+from DDFacet.ToolsDir.GiveEdges import GiveEdges
 
 class ClassImageSM():
     def __init__(self):

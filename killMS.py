@@ -258,13 +258,14 @@ def main(OP=None,MSName=None):
         print>>log, "Column %s not in MS "%ReadColName
         exit()
 
-    from killMS2.Predict import ClassImageSM
     if PredictMode=="Catalog":
         SM=ClassSM.ClassSM(options.SkyModel,
                            killdirs=kills,
                            invert=invert)
         SM.Type="Catalog"
     else:
+        from killMS2.Predict import ClassImageSM2 as ClassImageSM
+        #from killMS2.Predict import ClassImageSM as ClassImageSM
         PreparePredict=ClassImageSM.ClassPreparePredict(ModelImage,VS,GD=GDPredict,DoDeconvolve=False,IdSharedMem=IdSharedMem)
         SM=PreparePredict.SM
         VS.setGridProps(PreparePredict.FacetMachine.Cell,PreparePredict.FacetMachine.NpixPaddedFacet)
