@@ -115,7 +115,8 @@ def testLM():
 
 
 class ClassJacobianAntenna():
-    def __init__(self,SM,iAnt,PolMode="HalfFull",Precision="S",IdSharedMem="",GD=None,**kwargs):
+    def __init__(self,SM,iAnt,PolMode="HalfFull",Precision="S",IdSharedMem="",
+                 PM=None,GD=None,**kwargs):
         T=ClassTimeIt.ClassTimeIt("ClassJacobianAntenna")
         T.disable()
         self.GD=GD
@@ -126,7 +127,10 @@ class ClassJacobianAntenna():
         for key in kwargs.keys():
             setattr(self,key,kwargs[key])
         
-        self.PM=ClassPredict(Precision=Precision,DoSmearing=self.DoSmearing,IdMemShared=IdSharedMem)
+        self.PM=PM
+        if PM==None:
+            self.PM=ClassPredict(Precision=Precision,DoSmearing=self.DoSmearing,IdMemShared=IdSharedMem)
+
         T.timeit("PM")
         if Precision=="D":
             self.CType=np.complex128

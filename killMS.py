@@ -268,7 +268,8 @@ def main(OP=None,MSName=None):
         PreparePredict=ClassImageSM.ClassPreparePredict(ModelImage,VS,GD=GDPredict,DoDeconvolve=False,IdSharedMem=IdSharedMem)
         SM=PreparePredict.SM
         VS.setGridProps(PreparePredict.FacetMachine.Cell,PreparePredict.FacetMachine.NpixPaddedFacet)
-
+        FacetMachine=PreparePredict.FacetMachine
+        VS.setFOV(FacetMachine.OutImShape,FacetMachine.PaddedGridShape,FacetMachine.FacetShape,FacetMachine.CellSizeRad)
 
     BeamProps=None
     if options.LOFARBeam!="":

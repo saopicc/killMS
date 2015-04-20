@@ -675,6 +675,7 @@ class ClassWirtingerSolver():
 
 #======================================
 import multiprocessing
+from killMS2.Predict.PredictGaussPoints_NumExpr5 import ClassPredict
 class WorkerAntennaLM(multiprocessing.Process):
     def __init__(self,
                  work_queue,
@@ -690,9 +691,18 @@ class WorkerAntennaLM(multiprocessing.Process):
         self.IdSharedMem=IdSharedMem
         self.ConfigJacobianAntenna=ConfigJacobianAntenna
         self.GD=GD
+
+        self.InitPM()
+
         #self.DoCalcEvP=DoCalcEvP
         #self.ThisTime=ThisTime
         #self.e,=kwargs["args"]
+        
+
+    def InitPM(self):
+        self.PM=ClassPredict(Precision="S",DoSmearing=self.GD["SkyModel"]["Decorrelation"],IdMemShared=self.IdSharedMem)
+        if self.GD["ImageSkyModel"]["BaseImageName"]!="":
+            self.PM.InitGM(self.SM)
 
     def shutdown(self):
         self.exit.set()
@@ -706,7 +716,7 @@ class WorkerAntennaLM(multiprocessing.Process):
 
             T=ClassTimeIt.ClassTimeIt("Worker")
             T.disable()
-            JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,IdSharedMem=self.IdSharedMem,GD=self.GD,
+            JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,PM=self.PM,IdSharedMem=self.IdSharedMem,GD=self.GD,
                                     **dict(self.ConfigJacobianAntenna))
             T.timeit("ClassJacobianAntenna")
             JM.setDATA_Shared()

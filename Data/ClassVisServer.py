@@ -12,7 +12,8 @@ MyLogger.setSilent(["NpShared"])
 #from Sky.PredictGaussPoints_NumExpr3 import ClassPredictParallel as ClassPredict 
 #from Sky.PredictGaussPoints_NumExpr3 import ClassPredict as ClassPredict 
 import ClassWeighting
-
+from killMS2.Other import reformat
+import os
 from killMS2.Other.ModChanEquidistant import IsChanEquidistant
 
 class ClassVisServer():
@@ -25,8 +26,9 @@ class ClassVisServer():
                  AddNoiseJy=None,IdSharedMem="",
                  SM=None,NCPU=None,
                  Robust=2,Weighting="Natural",
-                 GD=None):
+                 GD=None,GDImag=None):
         self.GD=GD
+        self.GDImag=GDImag
         self.CalcGridBasedFlags=False
         self.IdSharedMem=IdSharedMem
         PrefixShared="%sSharedVis"%self.IdSharedMem
@@ -368,6 +370,8 @@ class ClassVisServer():
                 self.FlagAntNumber.append(iAnt)
             
 
+
+
         #############################
         #############################
 
@@ -483,6 +487,7 @@ class ClassVisServer():
                      }
         
         self.ThisDataChunk=ThisDataChunk#NpShared.DicoToShared("%sThisDataChunk"%self.IdSharedMem,ThisDataChunk)
+        #self.UpdateCompression()
 
         if self.ApplyBeam:
             print>>log, "Update LOFAR beam .... "
@@ -513,6 +518,45 @@ class ClassVisServer():
             print>>log, "       .... done Update LOFAR beam "
 
         return "LoadOK"
+
+
+    def setFOV(self,FullImShape,PaddedFacetShape,FacetShape,CellSizeRad):
+        self.FullImShape=FullImShape
+        self.PaddedFacetShape=PaddedFacetShape
+        self.FacetShape=FacetShape
+        self.CellSizeRad=CellSizeRad
+
+    def UpdateCompression(self):
+        ThisMSName=reformat.reformat(os.path.abspath(self.MS.MSName),LastSlash=False)
+
+        D=self.ThisDataChunk
+
+        DATA={}
+        DATA["flags"]=D["flags"]
+        DATA["data"]=D["data"]
+        DATA["uvw"]=D["uvw"]
+        DATA["A0"]=D["A0"]
+        DATA["A1"]=D["A1"]
+        DATA["times"]=D["times"]
+
+        GD=self.GD["GDImage"]
+        if GD["Compression"]["CompDeGridMode"]:
+            MapName="%s/Mapping.CompDeGrid.npy"%ThisMSName
+            try:
+                FinalMapping=np.load(MapName)
+            except:
+                if GD["Compression"]["CompDeGridFOV"]=="Facet":
+                    _,_,nx,ny=self.FacetShape
+                elif GD["Compression"]["CompDeGridFOV"]=="Full":
+                    _,_,nx,ny=self.FullImShape
+                FOV=self.CellSizeRad*nx*(np.sqrt(2.)/2.)*180./np.pi
+                SmearMapMachine=ClassSmearMapping.ClassSmearMapping(self.MS,radiusDeg=FOV,Decorr=(1.-GD["Compression"]["CompDeGridDecorr"]),IdSharedMem=self.IdSharedMem,NCPU=self.NCPU)
+                #SmearMapMachine.BuildSmearMapping(DATA)
+                FinalMapping,fact=SmearMapMachine.BuildSmearMappingParallel(DATA)
+                np.save(MapName,FinalMapping)
+                print>>log, ModColor.Str("  Effective compression [DeGrid]:   %.2f%%"%fact,col="green")
+
+            Map=NpShared.ToShared("%sMappingSmearing.DeGrid"%(self.IdSharedMem),FinalMapping)
 
 
     def GiveAllUVW(self):

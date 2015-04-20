@@ -179,6 +179,13 @@ class ClassPredict():
                                                             SpheNorm=False)
         return GridMachine
 
+    def InitGM(self,SM):
+        self.DicoGM={}
+        LFacets=SM.DicoImager.keys()
+        for iFacet in LFacets:
+            self.DicoGM[iFacet]=self.GiveGM(iFacet,SM)
+
+
     def predictKernelPolCluster(self,DicoData,SM,**kwargs):
         if SM.Type=="Catalog":
             return self.predictKernelPolClusterCatalog(DicoData,SM,**kwargs)
@@ -187,6 +194,8 @@ class ClassPredict():
 
 
     def predictKernelPolClusterImage(self,DicoData,SM,iDirection=None,ApplyJones=None,ApplyTimeJones=None,Noise=None):
+        T=ClassTimeIt("predictKernelPolClusterImage")
+        T.disable()
         self.DicoData=DicoData
         self.SM=SM
         
@@ -196,6 +205,7 @@ class ClassPredict():
         na=DicoData["infos"][0]
         
         nrows=DicoData["A0"].size
+        T.timeit("0")
         DataOut=np.zeros((nrows,nf,4),self.CType)
         if nrows==0: return DataOut
         
@@ -242,9 +252,14 @@ class ClassPredict():
         
         ColOutDir=np.zeros(DataOut.shape,np.complex64)
         DATA=DicoData
+
+        T.timeit("1")
+
+
         for iCluster in ListDirection:
             iFacet=iCluster
-            GridMachine=self.GiveGM(iFacet,SM)
+            GridMachine=self.DicoGM[iFacet]#self.GiveGM(iFacet,SM)
+            T.timeit("2: GM")
             uvwThis=DATA["uvw"]
             flagsThis=DATA["flags_image"]
             times=DATA["times"]
@@ -256,11 +271,14 @@ class ClassPredict():
 
             ModelIm = NpShared.UnPackListArray("%sGrids"%self.IdSharedMem)[iFacet]
             visThis=ColOutDir
+            T.timeit("2: Stuff")
             vis=GridMachine.get(times,uvwThis,visThis,flagsThis,A0A1,ModelIm,DicoJonesMatrices=DicoJonesMatrices,freqs=freqs,
                                 ImToGrid=False)
+            T.timeit("2: Predict")
             # get() is substracting
             DataOut-=ColOutDir
             visThis.fill(0)
+            T.timeit("2: End")
 
 
         return DataOut
