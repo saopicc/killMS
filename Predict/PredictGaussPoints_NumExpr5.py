@@ -175,7 +175,7 @@ class ClassPredict():
                                                             SM.DicoImager[iFacet]["DicoConfigGM"]["ChanFreq"],
                                                             SM.DicoImager[iFacet]["DicoConfigGM"]["Npix"],
                                                             lmShift=SM.DicoImager[iFacet]["lmShift"],
-                                                            IdSharedMem=self.IdSharedMem,IDFacet=iFacet,
+                                                            IdSharedMem=self.IdSharedMem,IDFacet=SM.DicoImager[iFacet]["IDFacet"],
                                                             SpheNorm=False)
         return GridMachine
 
@@ -271,14 +271,13 @@ class ClassPredict():
             DicoJonesMatrices=None
 
             ModelIm = NpShared.UnPackListArray("%sGrids"%self.IdSharedMem)[iFacet]
-            visThis=ColOutDir
             T.timeit("2: Stuff")
-            vis=GridMachine.get(times,uvwThis,visThis,flagsThis,A0A1,ModelIm,DicoJonesMatrices=DicoJonesMatrices,freqs=freqs,
+            vis=GridMachine.get(times,uvwThis,ColOutDir,flagsThis,A0A1,ModelIm,DicoJonesMatrices=DicoJonesMatrices,freqs=freqs,
                                 ImToGrid=False)
             T.timeit("2: Predict")
             # get() is substracting
             DataOut-=ColOutDir
-            visThis.fill(0)
+            ColOutDir.fill(0)
             T.timeit("2: End")
 
 

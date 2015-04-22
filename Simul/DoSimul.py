@@ -34,7 +34,7 @@ def DoSimul(MSName="0000.MS"):
     ReadColName="DATA"
     WriteColName="DATA"
     NCPU=6
-    Noise=1
+    Noise=0
 
     SM=ClassSM.ClassSM(SMName)
 
@@ -95,9 +95,9 @@ def DoSimul(MSName="0000.MS"):
     Jones["t1"]=Sols.t1
     nt,na,nd,_,_=Sols.G.shape
     G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
-    G.fill(0)
-    G[:,:,:,:,0,0]=1.
-    G[:,:,:,:,1,1]=1.
+    # G.fill(0)
+    # G[:,:,:,:,0,0]=1.
+    # G[:,:,:,:,1,1]=1.
     Jones["Beam"]=G
     Jones["BeamH"]=ModLinAlg.BatchH(G)
     Jones["ChanMap"]=np.zeros((VS.MS.NSPWChan,)).tolist()

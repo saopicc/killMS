@@ -701,6 +701,7 @@ class WorkerAntennaLM(multiprocessing.Process):
 
     def InitPM(self):
         self.PM=ClassPredict(Precision="S",DoSmearing=self.GD["SkyModel"]["Decorrelation"],IdMemShared=self.IdSharedMem)
+
         if self.GD["ImageSkyModel"]["BaseImageName"]!="":
             self.PM.InitGM(self.SM)
 

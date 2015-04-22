@@ -128,8 +128,12 @@ class ClassJacobianAntenna():
             setattr(self,key,kwargs[key])
         
         self.PM=PM
+        self.SM=SM
+        
         if PM==None:
             self.PM=ClassPredict(Precision=Precision,DoSmearing=self.DoSmearing,IdMemShared=IdSharedMem)
+            if self.GD["ImageSkyModel"]["BaseImageName"]!="":
+                self.PM.InitGM(self.SM)
 
         T.timeit("PM")
         if Precision=="D":
@@ -139,7 +143,6 @@ class ClassJacobianAntenna():
             self.CType=np.complex64
             self.FType=np.float32
             
-        self.SM=SM
         self.iAnt=iAnt
         self.SharedDataDicoName="%sDicoData.%2.2i"%(self.IdSharedMem,self.iAnt)
         self.HasKernelMatrix=False
@@ -497,7 +500,7 @@ class ClassJacobianAntenna():
         #     pylab.draw()
         #     pylab.show(False)
         #     pylab.pause(0.1)
-        #     stop
+        #     #stop
 
         # # pylab.figure(2)
         # # pylab.clf()
@@ -745,44 +748,31 @@ class ClassJacobianAntenna():
         #import gc
         #gc.enable()
         # gc.set_debug(gc.DEBUG_LEAK)
+
+
+        # ##############################################
+        # from SkyModel.Sky import ClassSM
+        # SM=ClassSM.ClassSM("ModelRandom00.txt.npy")
+        # SM.Type="Catalog"
+        # SM.Calc_LM(self.SM.rac,self.SM.decc)
+        # self.KernelMat1=np.zeros((1,NDir,n4vis/nchan,nchan),dtype=self.CType)
+        # self.K1_XX=self.KernelMat1[0]
+        # self.K1_YY=self.K1_XX
+        # import pylab
+        # pylab.clf()
+
+
         for iDir in range(NDir):
             
 
             #K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones)
             K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones)
+            #K*=-1
             T.timeit("Calc K0")
             indRow,indChan=np.where(np.all((K==0),axis=-1))
             self.DicoData["flags"][indRow,indChan,:]=1
             T.timeit("Calc K1")
-            # from SkyModel.Sky import ClassSM
-            # SM=ClassSM.ClassSM("ModelRandom00.txt.npy")
-            # SM.Type="Catalog"
-            # SM.Calc_LM(self.SM.rac,self.SM.decc)
-            # K1=self.PM.predictKernelPolCluster(self.DicoData,SM)
 
-            # A0=self.DicoData["A0"]
-            # A1=self.DicoData["A1"]
-            # ind=np.where((A0==0)&(A1==10))[0]
-            # d0=K[ind,0,0] 
-            # d1=K1[ind,0,0]
-            # import pylab
-            # op0=np.abs
-            # op1=np.angle
-            # op0=np.real
-            # op1=np.imag
-            # pylab.clf()
-            # pylab.subplot(1,2,1)
-            # pylab.plot(op0(d0))
-            # pylab.plot(op0(d1))
-            # pylab.ylim(-1,1)
-            # pylab.subplot(1,2,2)
-            # pylab.plot(op1(d0))
-            # pylab.plot(op1(d1))
-            # pylab.ylim(-1,1)
-            # pylab.draw()
-            # pylab.show(False)
-            # stop            
-            
                 #gc.collect()
                 #print gc.garbage
 
@@ -797,8 +787,51 @@ class ClassJacobianAntenna():
             #self.K_XX.append(K_XX)
             #self.K_YY.append(K_YY)
 
-            del(K,K_XX,K_YY)
 
+
+        #     ######################
+        #     K1=self.PM.predictKernelPolCluster(self.DicoData,SM,iDirection=iDir)
+
+        #     A0=self.DicoData["A0"]
+        #     A1=self.DicoData["A1"]
+        #     ind=np.where((A0==0)&(A1==26))[0]
+        #     d0=K[ind,0,0] 
+        #     d1=K1[ind,0,0]
+        #     #op0=np.abs
+        #     op1=np.angle
+        #     op0=np.real
+        #     #op1=np.imag
+        #     pylab.subplot(2,1,1)
+        #     pylab.plot(op0(d0))
+        #     pylab.plot(op0(d1))
+        #     pylab.plot(op0(d1)-op0(d0))
+            
+        #     #pylab.ylim(-1,1)
+        #     pylab.subplot(2,1,2)
+        #     #pylab.plot(op1(d0))
+        #     pylab.plot(op1(d1*d0.conj()))#,ls="--")
+        #     #pylab.plot(op1(d0*d1.conj()),ls="--")
+        #     #pylab.ylim(-1,1)
+        #     pylab.draw()
+        #     pylab.show(False)
+            
+        #     K1_XX=K1[:,:,0]
+        #     K1_YY=K1[:,:,3]
+        #     if self.PolMode=="Scalar":
+        #         K1_XX=(K1_XX+K1_YY)/2.
+        #         K1_YY=K1_XX
+
+        #     self.K1_XX[iDir,:,:]=K1_XX
+        #     self.K1_YY[iDir,:,:]=K1_YY
+        #     #self.K_XX.append(K_XX)
+        #     #self.K_YY.append(K_YY)
+
+        #     del(K1,K1_XX,K1_YY)
+        #     del(K,K_XX,K_YY)
+
+
+
+        # stop
         #gc.collect()
         self.HasKernelMatrix=True
         T.timeit("stuff 4")

@@ -123,9 +123,10 @@ class ClassPreparePredict(ClassImagerDeconv):
                     
                 ClusterCat.SumI[iFacet]=np.real(DicoResult["SumFlux"])
                 ra,dec=self.FacetMachine.DicoImager[iFacet]["RaDec"]
-                l0,m0=self.FacetMachine.DicoImager[iFacet]["l0m0"]
-                ClusterCat.l[iFacet]=l0
-                ClusterCat.m[iFacet]=m0
+                #l0,m0=self.FacetMachine.DicoImager[iFacet]["l0m0"]
+                l,m=self.FacetMachine.DicoImager[iFacet]["lmShift"]
+                ClusterCat.l[iFacet]=l
+                ClusterCat.m[iFacet]=m
 
                 ClusterCat.ra[iFacet]=ra
                 ClusterCat.dec[iFacet]=dec
