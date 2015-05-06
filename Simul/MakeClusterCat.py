@@ -7,6 +7,10 @@ import ephem
 from killMS2.Other import ModParsetType
 from pyrap.tables import table
 
+MSTemplate="/media/6B5E-87D0/MS/SimulTec/L102479_SB144_uv.dppp.MS.dppp.tsel_fixed"
+#MSTemplate="/media/tasse/data/TestMarcelin/vlac-hires-1.0s-1.0MHz.MS_p0"
+
+
 def test():
 
     # Random catalog
@@ -25,10 +29,10 @@ def test():
     #                       "finfo":(100e6,250e6,10)}
 
     DicoPropPointings[0]={"offset":(0,0),
-                          "Ns":4,
+                          "Ns":-1,
                           "Nc":0,
                           "Diam":2,
-                          "finfo":(100e6,250e6,1),
+                          "finfo":(100e6,250e6,3),
                           "Mode":"Grid"}
 
 
@@ -109,6 +113,7 @@ def BBSprintRandomSM(Ns,Ddeg,(ra_mean,dec_mean),OutFile="ModelRandom0",ra_dec_of
     Cat.ra=ra
     Cat.dec=dec
     Cat.I=np.random.rand(Ns)
+    Cat.alpha=-0.4
     #Cat.I[0]=0
     Cat.I.fill(1)
     Cat.I/=np.sum(Cat.I)
@@ -127,7 +132,7 @@ def BBSprintRandomSM(Ns,Ddeg,(ra_mean,dec_mean),OutFile="ModelRandom0",ra_dec_of
         SRa=rad2hmsdms.rad2hmsdms(Cat.ra[i],Type="ra").replace(" ",":")
         SDec=rad2hmsdms.rad2hmsdms(Cat.dec[i]).replace(" ",".")
         sI=str(Cat.I[i])
-        sAlpha=0#str(np.random.randn(1)[0]*0.2-0.8)
+        sAlpha=str(Cat.alpha[i])#0#str(np.random.randn(1)[0]*0.2-0.8)
         ss="%s, POINT, %s,  %s, %s, 0.0, 0.0, 0.0, 7.38000e+07, [%s], 0, 0.00000e+00, 0.0"%(Names[i],SRa,SDec,sI,sAlpha)
         print ss
         f.write(ss+'\n')        
@@ -137,7 +142,7 @@ def BBSprintRandomSM(Ns,Ddeg,(ra_mean,dec_mean),OutFile="ModelRandom0",ra_dec_of
 class MakeMultipleObs():
 
     def __init__(self,DicoPropPointings,
-                 MSTemplateName="/media/6B5E-87D0/MS/SimulTec/L102479_SB144_uv.dppp.MS.dppp.tsel_fixed",
+                 MSTemplateName=MSTemplate,
                  BaseDir="/media/6B5E-87D0/MS/SimulTec/"):
         self.DicoMS={}
         self.MSTemplateName=MSTemplateName

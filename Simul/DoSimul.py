@@ -126,8 +126,8 @@ def DoSimul(MSName="0000.MS"):
     # MS.data[f]=1.e10
 
     VS.MS.SaveVis(Col="DATA")
-    VS.MS.SaveVis(Col="CORRECTED_DATA")
-    VS.MS.SaveVis(Col="CORRECTED_DATA_BACKUP")
+    #VS.MS.SaveVis(Col="CORRECTED_DATA")
+    #VS.MS.SaveVis(Col="CORRECTED_DATA_BACKUP")
     
 
     FileName="Simul.npz"
