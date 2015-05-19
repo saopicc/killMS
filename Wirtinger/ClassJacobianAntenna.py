@@ -169,6 +169,9 @@ class ClassJacobianAntenna():
         #     key=SharedNames.split(".")[1]
         #     self.DATA[key]=NpShared.GiveArray(SharedName)
         self.DATA=NpShared.SharedToDico("%sSharedVis"%self.IdSharedMem)
+        self.DATA["DicoBeam"]=NpShared.SharedToDico("%sDicoBeam"%self.IdSharedMem)
+        self.DATA["DicoClusterDirs"]=NpShared.SharedToDico("%sDicoClusterDirs"%self.IdSharedMem)
+
         #self.DATA["UVW_RefAnt"]=NpShared.GiveArray("%sUVW_RefAnt"%self.IdSharedMem)
 
     def GivePaPol(self,Pa_in,ipol):
@@ -742,6 +745,7 @@ class ClassJacobianAntenna():
         #self.K_YY=[]
 
         ApplyTimeJones=None
+        print self.DicoData.keys()
         if "DicoBeam" in self.DicoData.keys():
             ApplyTimeJones=self.DicoData["DicoBeam"]
 
@@ -760,7 +764,7 @@ class ClassJacobianAntenna():
         # self.K1_YY=self.K1_XX
         # import pylab
         # pylab.clf()
-
+        
 
         for iDir in range(NDir):
             
@@ -955,10 +959,10 @@ class ClassJacobianAntenna():
             #stop
 
 
-
         if "DicoBeam" in DATA.keys():
             DicoData["DicoBeam"] = DATA["DicoBeam"]
-
+            DicoData["DicoBeam"]["MapJones"]=DATA["MapJones"]
+            DicoData["DicoBeam"]["DicoClusterDirs"] = DATA["DicoClusterDirs"]
 
         # DicoData["A0"] = np.concatenate([DATA['A0'][ind0]])
         # DicoData["A1"] = np.concatenate([DATA['A1'][ind0]])

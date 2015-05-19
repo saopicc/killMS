@@ -87,7 +87,7 @@ def read_options():
 
     OP.OptionGroup("* Sky catalog related options","SkyModel")
     OP.add_option('SkyModel',help='List of targets [no default]')
-    OP.add_option('LOFARBeam',help='(Mode, Time): Mode can be AE, E, or A for "Array factor" and "Element beam". Time is the estimation time step')
+    #OP.add_option('LOFARBeam',help='(Mode, Time): Mode can be AE, E, or A for "Array factor" and "Element beam". Time is the estimation time step')
     OP.add_option('kills',help='Name or number index of sources to kill')
     OP.add_option('invert',help='Invert the selected sources to kill')
     OP.add_option('Decorrelation',type="str",help=' . Default is %default')
@@ -178,12 +178,13 @@ def main(OP=None,MSName=None):
     if options.MSName=="":
         print "Give an MS name!"
         exit()
-    if options.SkyModel=="":
-        print "Give a Sky Model!"
-        exit()
-    if not(".npy" in options.SkyModel):
-        print "Give a numpy sky model!"
-        exit()
+
+    # if options.SkyModel=="":
+    #     print "Give a Sky Model!"
+    #     exit()
+    # if not(".npy" in options.SkyModel):
+    #     print "Give a numpy sky model!"
+    #     exit()
 
 
     TChunk=float(options.TChunk)
@@ -229,7 +230,6 @@ def main(OP=None,MSName=None):
         print>>log,"Predict Mode: Image"
         PredictMode="Image"
         BaseImageName=GD["ImageSkyModel"]["BaseImageName"]
-        ModelImage="%s.model.fits"%BaseImageName
         ParsetName=GD["ImageSkyModel"]["ImagePredictParset"]
         if ParsetName=="":
             ParsetName="%s.parset"%BaseImageName
@@ -266,17 +266,17 @@ def main(OP=None,MSName=None):
     else:
         from killMS2.Predict import ClassImageSM2 as ClassImageSM
         #from killMS2.Predict import ClassImageSM as ClassImageSM
-        PreparePredict=ClassImageSM.ClassPreparePredict(ModelImage,VS,GD=GDPredict,DoDeconvolve=False,IdSharedMem=IdSharedMem)
+        PreparePredict=ClassImageSM.ClassPreparePredict(BaseImageName,VS,GD=GDPredict,DoDeconvolve=False,IdSharedMem=IdSharedMem)
         SM=PreparePredict.SM
         VS.setGridProps(PreparePredict.FacetMachine.Cell,PreparePredict.FacetMachine.NpixPaddedFacet)
         FacetMachine=PreparePredict.FacetMachine
         VS.setFOV(FacetMachine.OutImShape,FacetMachine.PaddedGridShape,FacetMachine.FacetShape,FacetMachine.CellSizeRad)
-
-    BeamProps=None
-    if options.LOFARBeam!="":
-        Mode,sTimeMin=options.LOFARBeam.split(",")
-        TimeMin=float(sTimeMin)
-        BeamProps=Mode,TimeMin
+    VS.SM=SM
+    # BeamProps=None
+    # if options.LOFARBeam!="":
+    #     Mode,sTimeMin=options.LOFARBeam.split(",")
+    #     TimeMin=float(sTimeMin)
+    #     BeamProps=Mode,TimeMin
 
     ResolutionRad=(options.Resolution/3600)*(np.pi/180)
     ConfigJacobianAntenna={"DoSmearing":DoSmearing,
@@ -287,7 +287,7 @@ def main(OP=None,MSName=None):
                            "AmpQx":.5}
 
     Solver=ClassWirtingerSolver(VS,SM,PolMode=options.PolMode,
-                                BeamProps=BeamProps,
+                                #BeamProps=BeamProps,
                                 NIter=options.NIter,NCPU=NCPU,
                                 SolverType=options.SolverType,
                                 evP_Step=options.evPStep,evP_StepStart=options.evPStepStart,

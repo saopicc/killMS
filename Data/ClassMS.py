@@ -126,13 +126,13 @@ class ClassMS():
         # t.close()
                
         import lofar.stationresponse as lsr
-        f=self.ChanFreq.flatten()
-        if f.shape[0]>1:
-            t=table(self.MSName+"/SPECTRAL_WINDOW/",ack=False)
-            c=t.getcol("CHAN_WIDTH")
-            c.fill(np.abs((f[0:-1]-f[1::])[0]))
-            t.putcol("CHAN_WIDTH",c)
-            t.close()
+        # f=self.ChanFreq.flatten()
+        # if f.shape[0]>1:
+        #     t=table(self.MSName+"/SPECTRAL_WINDOW/",ack=False)
+        #     c=t.getcol("CHAN_WIDTH")
+        #     c.fill(np.abs((f[0:-1]-f[1::])[0]))
+        #     t.putcol("CHAN_WIDTH",c)
+        #     t.close()
 
         self.SR = lsr.stationresponse(self.MSName,
                                       useElementResponse=useElementBeam,

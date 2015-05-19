@@ -8,6 +8,7 @@ from killMS2.Other import MyLogger
 log=MyLogger.getLogger("ClassImageSM")
 from killMS2.Other.progressbar import ProgressBar
 from DDFacet.ToolsDir.GiveEdges import GiveEdges
+from DDFacet.Imager.ClassModelMachine import ClassModelMachine
 
 class ClassImageSM():
     def __init__(self):
@@ -16,9 +17,12 @@ class ClassImageSM():
 
 class ClassPreparePredict(ClassImagerDeconv):
 
-    def __init__(self,ModelImageName,VS,*args,**kwargs):
+    def __init__(self,BaseImageName,VS,*args,**kwargs):
         ClassImagerDeconv.__init__(self,**kwargs)
-        self.ModelImageName=ModelImageName
+
+        self.BaseImageName=BaseImageName
+        self.DicoModel="%s.DicoModel"%self.BaseImageName
+        self.ModelImageName="%s.model.fits"%self.BaseImageName
         self.VS=VS
         self.IdSharedMem=kwargs["IdSharedMem"]
         self.SM=ClassImageSM()
@@ -26,17 +30,23 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.LoadModel()
 
     def LoadModel(self):
-        im=image(self.ModelImageName)
-        data=im.getdata()
 
-        nch,npol,_,_=data.shape
-        for ch in range(nch):
-            for pol in range(npol):
-                data[ch,pol]=data[ch,pol].T[::-1]
-        self.ModelImage=data
+        
+        # im=image(self.ModelImageName)
+        # data=im.getdata()
+        # nch,npol,_,_=data.shape
+        # for ch in range(nch):
+        #     for pol in range(npol):
+        #         data[ch,pol]=data[ch,pol].T[::-1]
+        # self.ModelImage=data
+
+        
+        self.MM=ClassModelMachine(self.GD)
+        self.MM.FromFile(self.DicoModel)
+        self.ModelImage=self.MM.GiveModelImage(np.mean(self.VS.MS.ChanFreq))
         
         self.ModelImage=NpShared.ToShared("%sModelImage"%(self.IdSharedMem),self.ModelImage)
-        del(data)
+        #del(data)
         self.DicoImager=self.FacetMachine.DicoImager
         
         NFacets=len(self.FacetMachine.DicoImager)

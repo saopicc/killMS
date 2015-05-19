@@ -145,13 +145,12 @@ class ClassVisServer():
         DATA={}
         for key in D.keys():
             if type(D[key])!=np.ndarray: continue
-            if not(key in ['times', 'A1', 'A0', 'flags', 'uvw', 'data', #"IndexTimesThisChunk", 
+            if not(key in ['times', 'A1', 'A0', 'flags', 'uvw', 'data', 'MapJones', #"IndexTimesThisChunk", 
                            "W"]):             
                 DATA[key]=D[key]
             else:
                 DATA[key]=D[key][ind]
 
-        
         #############################
         ### data selection
         #############################
@@ -162,6 +161,7 @@ class ClassVisServer():
         A1=DATA["A1"]
         times=DATA["times"]
         W=DATA["W"]
+        MapJones=DATA["MapJones"]
         # IndexTimesThisChunk=DATA["IndexTimesThisChunk"]
 
 
@@ -185,7 +185,7 @@ class ClassVisServer():
                 times=times[ind]
                 #IndexTimesThisChunk=IndexTimesThisChunk[ind]
                 W=W[ind]
-
+                MapJones=MapJones[ind]
 
 
         for A in self.FlagAntNumber:
@@ -198,6 +198,7 @@ class ClassVisServer():
             times=times[ind]
             # IndexTimesThisChunk=IndexTimesThisChunk[ind]
             W=W[ind]
+            MapJones=MapJones[ind]
         
             
 
@@ -210,6 +211,7 @@ class ClassVisServer():
         times=times[ind]
         #IndexTimesThisChunk=IndexTimesThisChunk[ind]
         W=W[ind]
+        MapJones=MapJones[ind]
 
         DATA["flags"]=flags
         DATA["uvw"]=uvw
@@ -219,6 +221,7 @@ class ClassVisServer():
         DATA["times"]=times
         #DATA["IndexTimesThisChunk"]=IndexTimesThisChunk
         DATA["W"]=W
+        DATA["MapJones"]=MapJones
 
         DATA["UVW_dt"]=self.MS.Give_dUVW_dt(times,A0,A1)
         
@@ -232,14 +235,16 @@ class ClassVisServer():
         # # DATA["Kp"]=PM.GiveKp(DATA,self.SM)
 
         #stop
+
+
         if self.VisInSharedMem:
             self.ClearSharedMemory()
             DATA=self.PutInShared(DATA)
             DATA["A0A1"]=(DATA["A0"],DATA["A1"])
 
+        
         if "DicoBeam" in D.keys():
-            DATA["DicoBeam"]=D["DicoBeam"]
-
+            NpShared.DicoToShared("%sDicoBeam"%self.IdSharedMem,D["DicoBeam"])
 
         #it0=np.min(DATA["IndexTimesThisChunk"])
         #it1=np.max(DATA["IndexTimesThisChunk"])+1
@@ -488,34 +493,62 @@ class ClassVisServer():
         
         self.ThisDataChunk=ThisDataChunk#NpShared.DicoToShared("%sThisDataChunk"%self.IdSharedMem,ThisDataChunk)
         #self.UpdateCompression()
+        self.ThisDataChunk["MapJones"]=np.zeros((times.size,),np.int32)
 
-        if self.ApplyBeam:
-            print>>log, "Update LOFAR beam .... "
-            DtBeamSec=self.DtBeamMin*60
-            tmin,tmax=np.min(times),np.max(times)
-            TimesBeam=np.arange(np.min(times),np.max(times),DtBeamSec).tolist()
-            if not(tmax in TimesBeam): TimesBeam.append(tmax)
-            TimesBeam=np.array(TimesBeam)
-            T0s=TimesBeam[:-1]
-            T1s=TimesBeam[1:]
-            Tm=(T0s+T1s)/2.
-            RA,DEC=self.BeamRAs,self.BeamDECs
-            NDir=RA.size
-            Beam=np.zeros((Tm.size,NDir,self.MS.na,self.MS.NSPWChan,2,2),np.complex64)
-            for itime in range(Tm.size):
-                ThisTime=Tm[itime]
-                Beam[itime]=self.MS.GiveBeam(ThisTime,self.BeamRAs,self.BeamDECs)
-            BeamH=ModLinAlg.BatchH(Beam)
+        if self.GD["Beam"]["BeamModel"]!=None:
+            if self.GD["Beam"]["BeamModel"]=="LOFAR":
+                self.DtBeamMin=self.GD["Beam"]["DtBeamMin"]
+                print>>log, "Update LOFAR beam [Dt = %3.1f min] ... "%self.DtBeamMin
+                DtBeamSec=self.DtBeamMin*60
+                tmin,tmax=np.min(times),np.max(times)
+                TimesBeam=np.arange(np.min(times),np.max(times),DtBeamSec).tolist()
+                if not(tmax in TimesBeam): TimesBeam.append(tmax)
+                TimesBeam=np.array(TimesBeam)
+                T0s=TimesBeam[:-1]
+                T1s=TimesBeam[1:]
+                Tm=(T0s+T1s)/2.
+                RA,DEC=self.SM.ClusterCat.ra,self.SM.ClusterCat.dec
+                NDir=RA.size
+                Beam=np.zeros((Tm.size,NDir,self.MS.na,self.MS.NSPWChan,2,2),np.complex64)
+                for itime in range(Tm.size):
+                    ThisTime=Tm[itime]
+                    Beam[itime]=self.MS.GiveBeam(ThisTime,RA,DEC)
 
-            DicoBeam={}
-            DicoBeam["t0"]=T0s
-            DicoBeam["t1"]=T1s
-            DicoBeam["tm"]=Tm
-            DicoBeam["Beam"]=Beam
-            DicoBeam["BeamH"]=BeamH
-            self.ThisDataChunk["DicoBeam"]=DicoBeam
-            
-            print>>log, "       .... done Update LOFAR beam "
+                nt,nd,na,nch,_,_= Beam.shape
+                Beam=np.mean(Beam,axis=3).reshape((nt,nd,na,1,2,2))
+                
+
+                DicoBeam={}
+                DicoBeam["t0"]=T0s
+                DicoBeam["t1"]=T1s
+                DicoBeam["tm"]=Tm
+
+                ind=np.zeros((times.size,),np.int32)
+                nt,na,nd,_,_,_=Beam.shape
+                ii=0
+                for it in range(nt):
+                    t0=DicoBeam["t0"][it]
+                    t1=DicoBeam["t1"][it]
+                    indMStime=np.where((times>=t0)&(times<t1))[0]
+                    indMStime=np.ones((indMStime.size,),np.int32)*it
+                    ind[ii:ii+indMStime.size]=indMStime[:]
+                    ii+=indMStime.size
+                TimeMapping=ind
+                DicoBeam["Jones"]=Beam
+                self.ThisDataChunk["MapJones"]=TimeMapping
+                self.ThisDataChunk["DicoBeam"]=DicoBeam
+
+                DicoClusterDirs={}
+                DicoClusterDirs["l"]=self.SM.ClusterCat.l
+                DicoClusterDirs["m"]=self.SM.ClusterCat.m
+                DicoClusterDirs["ra"]=self.SM.ClusterCat.ra
+                DicoClusterDirs["dec"]=self.SM.ClusterCat.dec
+                DicoClusterDirs["I"]=self.SM.ClusterCat.SumI
+                DicoClusterDirs["Cluster"]=self.SM.ClusterCat.Cluster
+
+                NpShared.DicoToShared("%sDicoClusterDirs"%self.IdSharedMem,DicoClusterDirs)
+
+                print>>log, "       .... done Update LOFAR beam "
 
         return "LoadOK"
 

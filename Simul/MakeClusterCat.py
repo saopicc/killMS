@@ -32,7 +32,7 @@ def test():
                           "Ns":-1,
                           "Nc":0,
                           "Diam":2,
-                          "finfo":(100e6,250e6,3),
+                          "finfo":(40e6,80e6,3),
                           "Mode":"Grid"}
 
 
@@ -113,7 +113,7 @@ def BBSprintRandomSM(Ns,Ddeg,(ra_mean,dec_mean),OutFile="ModelRandom0",ra_dec_of
     Cat.ra=ra
     Cat.dec=dec
     Cat.I=np.random.rand(Ns)
-    Cat.alpha=-0.4
+    Cat.alpha=-np.random.rand(Ns)
     #Cat.I[0]=0
     Cat.I.fill(1)
     Cat.I/=np.sum(Cat.I)

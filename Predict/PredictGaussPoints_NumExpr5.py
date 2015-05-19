@@ -219,11 +219,11 @@ class ClassPredict():
         
         A0=DicoData["A0"]
         A1=DicoData["A1"]
-        if ApplyJones!=None:
-            na,NDir,_=ApplyJones.shape
-            Jones=np.swapaxes(ApplyJones,0,1)
-            Jones=Jones.reshape((NDir,na,4))
-            JonesH=ModLinAlg.BatchH(Jones)
+        # if ApplyJones!=None:
+        #     na,NDir,_=ApplyJones.shape
+        #     Jones=np.swapaxes(ApplyJones,0,1)
+        #     Jones=Jones.reshape((NDir,na,4))
+        #     JonesH=ModLinAlg.BatchH(Jones)
 
         TSmear=0.
         FSmear=0.
@@ -268,7 +268,9 @@ class ClassPredict():
             A1=DATA["A1"]
             A0A1=A0,A1
             freqs=DATA["freqs"]
-            DicoJonesMatrices=None
+
+            # DicoJonesMatrices=None
+            DicoJonesMatrices=ApplyTimeJones
 
             ModelIm = NpShared.UnPackListArray("%sGrids"%self.IdSharedMem)[iFacet]
             T.timeit("2: Stuff")
