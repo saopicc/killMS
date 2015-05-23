@@ -60,7 +60,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.DicoImager=self.FacetMachine.DicoImager
         self.ClusterCat=ClusterCat
 
-        print>>log, "Splitting model image"
+        print>>log, "  Splitting model image"
         self.BuildGridsParallel()
 
         #ind=np.where(self.ClusterCat.SumI!=0)[0]
@@ -76,6 +76,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         NFacets=self.ClusterCat.shape[0]
         self.SM.NDir=NFacets
         self.SM.Dirs=self.Dirs
+        print>>log, "  There are %i non-zero facets"%self.SM.NDir
         self.SM.ClusterCat=self.ClusterCat
         self.SM.GD=self.FacetMachine.GD
         self.SM.DicoImager=self.FacetMachine.DicoImager
@@ -90,7 +91,7 @@ class ClassPreparePredict(ClassImagerDeconv):
 
 
     def BuildGridsParallel(self):
-        print>>log, "Building the grids"
+        print>>log, "  Building the grids"
         ListGrid=[]
 
 
@@ -222,6 +223,7 @@ class Worker(multiprocessing.Process):
 
             Image=NpShared.GiveArray("%sModelImage"%(self.IdSharedMem))
             Grid,SumFlux=self.ClassImToGrid.GiveGridSharp(Image,self.DicoImager,iFacet)
+            # Grid,SumFlux=self.ClassImToGrid.GiveGridSharp(Image,self.DicoImager,iFacet)
             
             #NormImage=NpShared.GiveArray("%sNormImage"%self.IdSharedMem)
             #Grid,SumFlux=self.ClassImToGrid.GiveGridFader(Image,self.DicoImager,iFacet,NormImage)

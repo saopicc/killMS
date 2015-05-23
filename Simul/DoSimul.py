@@ -28,7 +28,7 @@ def main(options=None):
     CS=ClassSimul(ll[0],SMName)
     Sols=CS.GiveSols()
     for l in ll:
-        CS=ClassSimul(l,SMName,Sols=Sols)
+        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
         CS.DoSimul()
 
 class ClassSimul():
@@ -64,7 +64,7 @@ class ClassSimul():
     
         DeltaT_Phase=np.random.randn(na,nd)*60
         period_Phase=300+np.random.randn(na,nd)*10
-        period_Phase=np.random.randn(na,nd)*10
+        #period_Phase=np.random.randn(na,nd)*10
         PhaseAbs=np.random.randn(na,nd)*np.pi
         Amp_Phase=np.random.randn(na,nd)*np.pi*0.1
     
@@ -105,9 +105,9 @@ class ClassSimul():
         nt,na,nd,_,_=Sols.G.shape
         G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
 
-        #G.fill(0)
-        #G[:,:,:,:,0,0]=1.
-        #G[:,:,:,:,1,1]=1.
+        G.fill(0)
+        G[:,:,:,:,0,0]=1.
+        G[:,:,:,:,1,1]=1.
     
     
         useArrayFactor=True

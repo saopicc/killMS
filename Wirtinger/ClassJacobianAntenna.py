@@ -745,7 +745,7 @@ class ClassJacobianAntenna():
         #self.K_YY=[]
 
         ApplyTimeJones=None
-        print self.DicoData.keys()
+        #print self.DicoData.keys()
         if "DicoBeam" in self.DicoData.keys():
             ApplyTimeJones=self.DicoData["DicoBeam"]
 
