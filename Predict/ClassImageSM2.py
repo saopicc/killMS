@@ -106,11 +106,12 @@ class ClassPreparePredict(ClassImagerDeconv):
         for iFacet in range(NFacets):
             work_queue.put(iFacet)
 
-        GM=self.FacetMachine.GiveGM(0)
-        argsImToGrid=(GM.GridShape,GM.PaddingInnerCoord,GM.OverS,GM.Padding,GM.dtype)
 
         NormImage=self.FacetMachine.GiveNormImage()
         _=NpShared.ToShared("%sNormImage"%self.IdSharedMem,NormImage)
+
+        GM=self.FacetMachine.GiveGM(0)
+        argsImToGrid=(GM.GridShape,GM.PaddingInnerCoord,GM.OverS,GM.Padding,GM.dtype)
         
         workerlist=[]
         for ii in range(NCPU):

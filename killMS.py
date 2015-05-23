@@ -227,13 +227,16 @@ def main(OP=None,MSName=None):
         print>>log,"Predict Mode: Catalog"
         PredictMode="Catalog"
     else:
-        print>>log,"Predict Mode: Image"
         PredictMode="Image"
         BaseImageName=GD["ImageSkyModel"]["BaseImageName"]
         ParsetName=GD["ImageSkyModel"]["ImagePredictParset"]
         if ParsetName=="":
             ParsetName="%s.parset"%BaseImageName
+        print>>log,"Predict Mode: Image, with Parset: %s"%ParsetName
         GDPredict=ReadCFG.Parset(ParsetName).DicoPars
+
+        GDPredict["Compression"]["CompDeGridMode"]=False
+
         if options.OverS!=None:
             GDPredict["ImagerCF"]["OverS"]=options.OverS
         GD["GDImage"]=GDPredict
@@ -343,9 +346,9 @@ def main(OP=None,MSName=None):
 
         if options.ExtSols=="":
             SaveSols=True
-            Solver.doNextTimeSolve_Parallel()
+            #Solver.doNextTimeSolve_Parallel()
             #Solver.doNextTimeSolve_Parallel(SkipMode=True)
-            #Solver.doNextTimeSolve()
+            Solver.doNextTimeSolve()
             Sols=Solver.GiveSols()
         else:
             Sols=np.load(options.ExtSols)["Sols"]
