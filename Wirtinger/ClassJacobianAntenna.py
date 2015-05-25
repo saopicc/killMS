@@ -960,9 +960,13 @@ class ClassJacobianAntenna():
 
 
         if "DicoBeam" in DATA.keys():
-            DicoData["DicoBeam"] = DATA["DicoBeam"]
-            DicoData["DicoBeam"]["MapJones"]=DATA["MapJones"]
-            DicoData["DicoBeam"]["DicoClusterDirs"] = DATA["DicoClusterDirs"]
+            DicoJonesMatrices={}
+            DicoJones_Beam=NpShared.SharedToDico("%sJonesFile_Beam"%self.IdSharedMem)
+            DicoJonesMatrices["DicoJones_Beam"]=DATA["DicoBeam"]
+            DicoJonesMatrices["DicoJones_Beam"]["MapJones"]=DATA["MapJones"]
+            DicoJonesMatrices["DicoJones_Beam"]["DicoClusterDirs"]=DATA["DicoClusterDirs"]
+            DicoData["DicoBeam"]=DicoJonesMatrices
+
 
         # DicoData["A0"] = np.concatenate([DATA['A0'][ind0]])
         # DicoData["A1"] = np.concatenate([DATA['A1'][ind0]])
