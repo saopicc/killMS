@@ -176,13 +176,15 @@ def main(options=None):
                 for iSol in [0]:
                     Sols=LSols[iSol]
                     ax.imshow(np.abs(Sols.G[:,iAnt,:,0,0]).T,vmin=0,vmax=2,interpolation="nearest")
+                    nt,na,nd,_,_=Sols.G.shape
 
-                    #ax.set_ylim(ylim0)
                     ax.set_xticks([])
                     ax.set_yticks([])
+                    ax.set_ylim(0,nd)
+                    ax.set_xlim(0,nt)
     
                 iAnt+=1
-        pylab.suptitle('Direction %i'%iDir)
+#        pylab.suptitle('Direction %i'%iDir)
         pylab.tight_layout(pad=3., w_pad=0.5, h_pad=2.0)
         pylab.draw()
         pylab.show()
