@@ -136,60 +136,59 @@ def main(options=None):
     else:
         DirList=range(nd)
 
+    pylab.figure(0,figsize=(13,8))
+    iAnt=0
     for iDir in DirList:
-        pylab.figure(0,figsize=(13,8))
-        iAnt=0
         for iSol in range(nSol):
             Sols=LSols[iSol]
             G=Sols.G[:,:,iDir,:,:]
             Sols.G[:,:,iDir,:,:]=NormMatrices(G)
+        
+    ampMax=1.5*np.max(np.median(np.abs(LSols[0].G),axis=1))
+    if options.PlotMode==0:
+        op0=np.abs
+        op1=np.angle
+        ylim0=0,ampMax
+        ylim1=-np.pi,np.pi
+    else:
+        op0=np.real
+        op1=np.imag
+        ylim0=-ampMax,ampMax
+        ylim1=-ampMax,ampMax
+        
+    # if options.DoResid!=-1:
+    #     LSols[-1].G[:,:,iDir,:,:]=LSols[1].G[:,:,iDir,:,:]-LSols[0].G[:,:,iDir,:,:]
+    #     nSol+=1
             
-        ampMax=1.5*np.max(np.median(np.abs(LSols[0].G),axis=1))
-        if options.PlotMode==0:
-            op0=np.abs
-            op1=np.angle
-            ylim0=0,ampMax
-            ylim1=-np.pi,np.pi
-        else:
-            op0=np.real
-            op1=np.imag
-            ylim0=-ampMax,ampMax
-            ylim1=-ampMax,ampMax
 
-        if options.DoResid!=-1:
-            LSols[-1].G[:,:,iDir,:,:]=LSols[1].G[:,:,iDir,:,:]-LSols[0].G[:,:,iDir,:,:]
-            nSol+=1
-            
+    pylab.clf()
 
-        pylab.clf()
+    for i in range(nx):
+        for j in range(ny):
+            if iAnt>=na:continue
+            if iAnt>=1:
+                ax=pylab.subplot(nx,ny,iAnt+1,sharex=axRef,sharey=axRef)
+            else:
+                axRef=pylab.subplot(nx,ny,iAnt+1)
+                ax=axRef
+            ax2 = ax.twinx()
+            pylab.title(StationNames[iAnt], fontsize=9)
+            for iSol in [0]:
+                Sols=LSols[iSol]
+                ax.imshow(np.abs(Sols.G[:,iAnt,:,0,0]).T,vmin=0,vmax=2,interpolation="nearest")
+                nt,na,nd,_,_=Sols.G.shape
+                ax.set_xticks([])
+                ax.set_yticks([])
+                ax.set_ylim(0,nd)
+                ax.set_xlim(0,nt)
 
-        for i in range(nx):
-            for j in range(ny):
-                if iAnt>=na:continue
-                if iAnt>=1:
-                    ax=pylab.subplot(nx,ny,iAnt+1,sharex=axRef,sharey=axRef)
-                else:
-                    axRef=pylab.subplot(nx,ny,iAnt+1)
-                    ax=axRef
-                ax2 = ax.twinx()
-                pylab.title(StationNames[iAnt], fontsize=9)
-                for iSol in [0]:
-                    Sols=LSols[iSol]
-                    ax.imshow(np.abs(Sols.G[:,iAnt,:,0,0]).T,vmin=0,vmax=2,interpolation="nearest")
-                    nt,na,nd,_,_=Sols.G.shape
-
-                    ax.set_xticks([])
-                    ax.set_yticks([])
-                    ax.set_ylim(0,nd)
-                    ax.set_xlim(0,nt)
-    
-                iAnt+=1
-#        pylab.suptitle('Direction %i'%iDir)
-        pylab.tight_layout(pad=3., w_pad=0.5, h_pad=2.0)
-        pylab.draw()
-        pylab.show()
-        #pylab.pause(0.1)
-        #time.sleep(1)
+            iAnt+=1
+    pylab.suptitle('Direction %i'%iDir)
+    pylab.tight_layout(pad=3., w_pad=0.5, h_pad=2.0)
+    pylab.draw()
+    pylab.show()
+    #pylab.pause(0.1)
+    #time.sleep(1)
 
 
 if __name__=="__main__":
