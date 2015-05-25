@@ -115,8 +115,8 @@ class ClassPreparePredict(ClassImagerDeconv):
         argsImToGrid=(GM.GridShape,GM.PaddingInnerCoord,GM.OverS,GM.Padding,GM.dtype)
         
         workerlist=[]
-#        FacetMode="Sharp"
-        FacetMode="Fader"
+        FacetMode="Sharp"
+        # FacetMode="Fader"
         
 
 
