@@ -9,6 +9,7 @@ log=MyLogger.getLogger("ClassImageSM")
 from killMS2.Other.progressbar import ProgressBar
 from DDFacet.ToolsDir.GiveEdges import GiveEdges
 from DDFacet.Imager.ClassModelMachine import ClassModelMachine
+from DDFacet.Imager.ClassImToGrid import ClassImToGrid
 
 class ClassImageSM():
     def __init__(self):
@@ -114,15 +115,56 @@ class ClassPreparePredict(ClassImagerDeconv):
         argsImToGrid=(GM.GridShape,GM.PaddingInnerCoord,GM.OverS,GM.Padding,GM.dtype)
         
         workerlist=[]
+#        FacetMode="Sharp"
+        FacetMode="Fader"
+        
+
+
+        # #### test
+        # self.SharedMemNameSphe="%sSpheroidal"%(self.IdSharedMem)
+        # self.ifzfCF=NpShared.GiveArray(self.SharedMemNameSphe)
+        # self.ClassImToGrid=ClassImToGrid(*argsImToGrid,ifzfCF=self.ifzfCF)
+        
+        # Image=NpShared.GiveArray("%sModelImage"%(self.IdSharedMem))
+        # Image[:,:,:,:]=np.random.randn(*(Image.shape))
+
+        # for iFacet in range(9):
+        #     Grid0,SumFlux0=self.ClassImToGrid.GiveGridSharp(Image,self.DicoImager,iFacet)
+            
+        #     NormImage=NpShared.GiveArray("%sNormImage"%self.IdSharedMem)
+        #     Grid1,SumFlux1=self.ClassImToGrid.GiveGridFader(Image,self.DicoImager,iFacet,NormImage)
+
+
+        #     print "================= %i"%iFacet
+        #     #print np.where(Grid0==np.max(Grid0)),np.max(Grid0)
+        #     #print np.where(Grid1==np.max(Grid1)),np.max(Grid1)
+        #     print np.max(np.abs(Grid0-Grid1))
+
+        #     # import pylab
+        #     # pylab.clf()
+        #     # pylab.subplot(1,2,1)
+        #     # pylab.imshow(Grid0[0,0].real,interpolation="nearest")
+        #     # pylab.subplot(1,2,2)
+        #     # pylab.imshow(Grid1[0,0].real,interpolation="nearest")
+        #     # pylab.draw()
+        #     # pylab.show(False)
+
+        # stop
+
+        # ####
+
+
+
         for ii in range(NCPU):
             W=Worker(work_queue, result_queue,argsImToGrid=argsImToGrid,
                      IdSharedMem=self.IdSharedMem,
-                     DicoImager=self.FacetMachine.DicoImager)
+                     DicoImager=self.FacetMachine.DicoImager,FacetMode=FacetMode)#"Fader")
             workerlist.append(W)
             workerlist[ii].start()
 
 
         pBAR= ProgressBar('white', width=50, block='=', empty=' ',Title="Make Grids ", HeaderSize=10,TitleSize=13)
+        pBAR.disable()
         pBAR.render(0, '%4i/%i' % (0,NFacets))
         iResult=0
 
@@ -184,7 +226,6 @@ class ClassPreparePredict(ClassImagerDeconv):
 
 
 
-from DDFacet.Imager.ClassImToGrid import ClassImToGrid
  
 import multiprocessing
 from killMS2.Predict.PredictGaussPoints_NumExpr5 import ClassPredict
@@ -194,7 +235,8 @@ class Worker(multiprocessing.Process):
                  result_queue,
                  argsImToGrid=None,
                  IdSharedMem=None,
-                 DicoImager=None):
+                 DicoImager=None,
+                 FacetMode="Fader"):
         multiprocessing.Process.__init__(self)
         self.work_queue = work_queue
         self.result_queue = result_queue
@@ -202,6 +244,7 @@ class Worker(multiprocessing.Process):
         self.exit = multiprocessing.Event()
         self.IdSharedMem=IdSharedMem
         self.DicoImager=DicoImager
+        self.FacetMode=FacetMode
         self.SharedMemNameSphe="%sSpheroidal"%(self.IdSharedMem)
         self.ifzfCF=NpShared.GiveArray(self.SharedMemNameSphe)
         self.ClassImToGrid=ClassImToGrid(*argsImToGrid,ifzfCF=self.ifzfCF)
@@ -223,11 +266,13 @@ class Worker(multiprocessing.Process):
             # self.result_queue.put({"Success":True})
 
             Image=NpShared.GiveArray("%sModelImage"%(self.IdSharedMem))
-            Grid,SumFlux=self.ClassImToGrid.GiveGridSharp(Image,self.DicoImager,iFacet)
-            # Grid,SumFlux=self.ClassImToGrid.GiveGridSharp(Image,self.DicoImager,iFacet)
-            
-            #NormImage=NpShared.GiveArray("%sNormImage"%self.IdSharedMem)
-            #Grid,SumFlux=self.ClassImToGrid.GiveGridFader(Image,self.DicoImager,iFacet,NormImage)
+
+            if self.FacetMode=="Sharp":
+                Grid,SumFlux=self.ClassImToGrid.GiveGridSharp(Image,self.DicoImager,iFacet)
+            elif self.FacetMode=="Fader":
+                NormImage=NpShared.GiveArray("%sNormImage"%self.IdSharedMem)
+                Grid,SumFlux=self.ClassImToGrid.GiveGridFader(Image,self.DicoImager,iFacet,NormImage)
+
             _=NpShared.ToShared("%sModelGrid.%3.3i"%(self.IdSharedMem,iFacet),Grid)
             self.result_queue.put({"Success":True,"iFacet":iFacet,"SumFlux":SumFlux})
             

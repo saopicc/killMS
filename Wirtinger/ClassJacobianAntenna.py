@@ -169,8 +169,10 @@ class ClassJacobianAntenna():
         #     key=SharedNames.split(".")[1]
         #     self.DATA[key]=NpShared.GiveArray(SharedName)
         self.DATA=NpShared.SharedToDico("%sSharedVis"%self.IdSharedMem)
-        self.DATA["DicoBeam"]=NpShared.SharedToDico("%sDicoBeam"%self.IdSharedMem)
-        self.DATA["DicoClusterDirs"]=NpShared.SharedToDico("%sDicoClusterDirs"%self.IdSharedMem)
+        DicoBeam=NpShared.SharedToDico("%sDicoBeam"%self.IdSharedMem)
+        if DicoBeam!=None:
+            self.DATA["DicoBeam"]=DicoBeam
+            self.DATA["DicoClusterDirs"]=NpShared.SharedToDico("%sDicoClusterDirs"%self.IdSharedMem)
 
         #self.DATA["UVW_RefAnt"]=NpShared.GiveArray("%sUVW_RefAnt"%self.IdSharedMem)
 

@@ -168,7 +168,7 @@ class ClassSimul():
 
     def DoSimul(self):
     
-        Noise=0
+        Noise=1
         MS=self.MS
         SM=self.SM
         VS=self.VS

@@ -102,6 +102,12 @@ def read_options():
     OP.add_option('FlagAnts',type="str",help='FlagAntenna patern. Default is %default')
     OP.add_option('DistMaxToCore',type="float",help='Maximum distance to core in km. Default is %default')
 
+    OP.OptionGroup("* Beam Options","Beam")
+    OP.add_option('BeamModel')
+    OP.add_option('LOFARBeamMode')
+    OP.add_option('DtBeamMin')
+    OP.add_option('CenterNorm')
+
     OP.OptionGroup("* Weighting scheme","Weighting")
     OP.add_option('Resolution',type="float",help='Resolution in arcsec. Default is %default')
     OP.add_option('Weighting',type="str",help='Weighting scheme. Default is %default')
