@@ -115,8 +115,8 @@ class ClassPreparePredict(ClassImagerDeconv):
         argsImToGrid=(GM.GridShape,GM.PaddingInnerCoord,GM.OverS,GM.Padding,GM.dtype)
         
         workerlist=[]
-        FacetMode="Sharp"
-        # FacetMode="Fader"
+        # FacetMode="Sharp"
+        FacetMode="Fader"
         
 
 
@@ -126,7 +126,14 @@ class ClassPreparePredict(ClassImagerDeconv):
         # self.ClassImToGrid=ClassImToGrid(*argsImToGrid,ifzfCF=self.ifzfCF)
         
         # Image=NpShared.GiveArray("%sModelImage"%(self.IdSharedMem))
-        # Image[:,:,:,:]=np.random.randn(*(Image.shape))
+
+        # _,_,nx,ny=Image.shape
+        # x,y=np.mgrid[0:nx,0:ny]
+        # x=x.reshape((1,1,nx,ny))
+        # y=y.reshape((1,1,nx,ny))
+        
+        # #Image[:,:,:,:]=np.random.randn(*(Image.shape))
+        # Image=np.sqrt(x**2+2.*y**2)
 
         # for iFacet in range(9):
         #     Grid0,SumFlux0=self.ClassImToGrid.GiveGridSharp(Image,self.DicoImager,iFacet)
@@ -138,17 +145,26 @@ class ClassPreparePredict(ClassImagerDeconv):
         #     print "================= %i"%iFacet
         #     #print np.where(Grid0==np.max(Grid0)),np.max(Grid0)
         #     #print np.where(Grid1==np.max(Grid1)),np.max(Grid1)
-        #     print np.max(np.abs(Grid0-Grid1))
+        #     #print np.max(np.abs(Grid0-Grid1))
 
-        #     # import pylab
-        #     # pylab.clf()
-        #     # pylab.subplot(1,2,1)
-        #     # pylab.imshow(Grid0[0,0].real,interpolation="nearest")
-        #     # pylab.subplot(1,2,2)
-        #     # pylab.imshow(Grid1[0,0].real,interpolation="nearest")
-        #     # pylab.draw()
-        #     # pylab.show(False)
+        #     vmin,vmax=Grid0.min(),Grid0.max()
+        #     vmin=0
+        #     vmax=2000
+        #     import pylab
+        #     pylab.clf()
+        #     pylab.subplot(1,3,1)
+        #     pylab.imshow(Image[0,0].real,interpolation="nearest",vmin=vmin,vmax=vmax)
+        #     pylab.colorbar()
+        #     pylab.subplot(1,3,2)
+        #     pylab.imshow(Grid0[0,0].real,interpolation="nearest",vmin=vmin,vmax=vmax)
+        #     #pylab.imshow(Grid1[0,0].real,interpolation="nearest",vmin=vmin,vmax=vmax)
+        #     pylab.subplot(1,3,3)
+        #     #pylab.imshow(Grid1[0,0].real,interpolation="nearest",vmin=vmin,vmax=vmax)
+        #     pylab.imshow(Grid1[0,0].real-Grid0[0,0].real,interpolation="nearest",vmin=vmin,vmax=vmax)
 
+        #     pylab.draw()
+        #     pylab.show(False)
+        #     print Grid1[0,0,nx/2,ny/2].real-Grid0[0,0,nx/2,ny/2].real
         # stop
 
         # ####
