@@ -44,8 +44,8 @@ class ClassPreparePredict(ClassImagerDeconv):
         
         self.MM=ClassModelMachine(self.GD)
         self.MM.FromFile(self.DicoModel)
+        self.MM.CleanNegComponants(box=20,sig=3)
         self.ModelImage=self.MM.GiveModelImage(np.mean(self.VS.MS.ChanFreq))
-        
         self.ModelImage=NpShared.ToShared("%sModelImage"%(self.IdSharedMem),self.ModelImage)
         #del(data)
         self.DicoImager=self.FacetMachine.DicoImager
