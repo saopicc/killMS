@@ -23,12 +23,14 @@ import glob
 
 def main(options=None):
     MSName="0000.MS"
-    SMName="ModelRandom00.txt.npy"
-    ll=sorted(glob.glob("000?.MS"))
+    #SMName="ModelRandom00.txt.npy"
+    SMName="MultiFreqs2.restored.corr.pybdsm.point.sky_in.npy"
+
+    ll=sorted(glob.glob("000?.point.w0.MS"))
     CS=ClassSimul(ll[0],SMName)
     Sols=CS.GiveSols()
     for l in ll:
-        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
+        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
         CS.DoSimul()
 
 class ClassSimul():

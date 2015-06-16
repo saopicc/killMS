@@ -656,7 +656,17 @@ if __name__=="__main__":
     #main(OP=OP)
 
     import glob
-    if "*" in options.MSName:
+    MSName=options.MSName
+    if ".txt" in MSName:
+        f=open(MSName)
+        Ls=f.readlines()
+        f.close()
+        MSName=[]
+        for l in Ls:
+            ll=l.replace("\n","")
+            MSName.append(ll)
+        lMS=MSName
+    elif "*" in options.MSName:
         Patern=options.MSName
         lMS=sorted(glob.glob(Patern))
         print>>log, "In batch mode, running killMS on the following MS:"
