@@ -126,9 +126,9 @@ class ClassWirtingerSolver():
         self.SolverType=SolverType
         self.rms=None
         self.rmsFromData=None
-        if SolverType=="KAFCA":
-            print>>log, ModColor.Str("niter=%i"%self.NIter)
-            # self.NIter=1
+        # if SolverType=="KAFCA":
+        #     print>>log, ModColor.Str("niter=%i"%self.NIter)
+        #     #self.NIter=1
         self.EvolvePStepStart,EvolvePStep=evP_StepStart,evP_Step
         self.CounterEvolveP=Counter.Counter(EvolvePStep)
         self.ThisStep=0
@@ -537,16 +537,18 @@ class ClassWirtingerSolver():
 
 
             Gold=self.G.copy()
+            DoCalcEvP=False
+            if (self.CounterEvolveP())&(self.SolverType=="KAFCA")&(self.iCurrentSol>self.EvolvePStepStart):
+                DoCalcEvP=True
+            elif (self.SolverType=="KAFCA")&(self.iCurrentSol<=self.EvolvePStepStart):
+                DoCalcEvP=True
+
             for LMIter in range(NIter):
                 #print
                 # for EKF
-                DoCalcEvP=False
-                if (self.CounterEvolveP())&(self.SolverType=="KAFCA")&(self.iCurrentSol>self.EvolvePStepStart):
-                    DoCalcEvP=True
-                elif (self.SolverType=="KAFCA")&(self.iCurrentSol<=self.EvolvePStepStart):
-                    DoCalcEvP=True
 
                 #########
+                if LMIter>0: DoCalcEvP=False
 
                 for iAnt in ListAntSolve:
                     work_queue.put((iAnt,DoCalcEvP,tm,self.rms))
@@ -567,7 +569,7 @@ class ClassWirtingerSolver():
 
 
                     iResult+=1
-                    if kapa!=None:
+                    if (kapa!=None)&(LMIter==0):
                         if kapa==-1.:
                             if len(self.ListKapa[iAnt])>0:
                                 kapa=self.ListKapa[iAnt][-1]

@@ -132,16 +132,17 @@ def read_options():
     OP.add_option('dt',type="float",help='Time interval for a solution [minutes]. Default is %default. ')
     
     OP.OptionGroup("* CohJones additional options","CohJones")
-    OP.add_option('NIter',type="int",help=' Number of iterations for the solve. Default is %default ',default=7)
+    OP.add_option('NIterLM',type="int",help=' Number of iterations for the solve. Default is %default ')
     OP.add_option('Lambda',type="float",help=' Lambda parameter. Default is %default ',default=1)
 
     OP.OptionGroup("* KAFCA additional options","KAFCA")
-    OP.add_option('InitLM',type="int",help='Initialise Kalman filter with Levenberg Maquardt. Default is %default',default=1)
-    OP.add_option('InitLMdt',type="float",help='Time interval in minutes. Default is %default',default=5)
-    OP.add_option('CovP',type="float",help='Initial prior Covariance in fraction of the initial gain amplitude. Default is %default',default=0.1) 
-    OP.add_option('CovQ',type="float",help='Intrinsic process Covariance in fraction of the initial gain amplitude. Default is %default',default=0.01) 
-    OP.add_option('evPStep',type="int",help='Start calculation evP every evP_Step after that step. Default is %default',default=0)
-    OP.add_option('evPStepStart',type="int",help='Calcule (I-KJ) matrix every evP_Step steps. Default is %default',default=1)
+    OP.add_option('NIterKF',type="int",help=' Number of iterations for the solve. Default is %default ')
+    OP.add_option('InitLM',type="int",help='Initialise Kalman filter with Levenberg Maquardt. Default is %default')
+    OP.add_option('InitLMdt',type="float",help='Time interval in minutes. Default is %default')
+    OP.add_option('CovP',type="float",help='Initial prior Covariance in fraction of the initial gain amplitude. Default is %default') 
+    OP.add_option('CovQ',type="float",help='Intrinsic process Covariance in fraction of the initial gain amplitude. Default is %default') 
+    OP.add_option('evPStep',type="int",help='Start calculation evP every evP_Step after that step. Default is %default')
+    OP.add_option('evPStepStart',type="int",help='Calcule (I-KJ) matrix every evP_Step steps. Default is %default')
     
 
     OP.Finalise()
@@ -295,9 +296,15 @@ def main(OP=None,MSName=None):
                            "gamma":1,
                            "AmpQx":.5}
 
+    if (options.SolverType=="KAFCA"):
+        NIter=options.NIterKF
+    elif options.SolverType=="CohJones":
+        NIter=options.NIterLM
+
     Solver=ClassWirtingerSolver(VS,SM,PolMode=options.PolMode,
                                 #BeamProps=BeamProps,
-                                NIter=options.NIter,NCPU=NCPU,
+                                NIter=NIter,
+                                NCPU=NCPU,
                                 SolverType=options.SolverType,
                                 evP_Step=options.evPStep,evP_StepStart=options.evPStepStart,
                                 DoPlot=options.DoPlot,
@@ -539,7 +546,7 @@ def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2,ConfigJacobianAnte
     # stop
     # #######
     SolverInit=ClassWirtingerSolver(VSInit,SM,PolMode=options.PolMode,
-                                    NIter=options.NIter,NCPU=options.NCPU,
+                                    NIter=options.NIterLM,NCPU=options.NCPU,
                                     SolverType="CohJones",
                                     #DoPlot=options.DoPlot,
                                     DoPBar=False,IdSharedMem=IdSharedMem,

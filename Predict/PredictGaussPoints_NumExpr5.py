@@ -105,8 +105,9 @@ class ClassPredict():
             # DicoData["flags"][ind]=flags[:]
 
 
-    def GiveParamJonesList(self,DicoJonesMatrices,A0,A1):
-        JonesMatrices=np.complex64(DicoJonesMatrices["Beam"])
+    def GiveParamJonesList(self,DicoJonesMatricesIn,A0,A1):
+        DicoJonesMatrices=DicoJonesMatricesIn["DicoJones_Beam"]
+        JonesMatrices=np.complex64(DicoJonesMatrices["Jones"])
         MapJones=np.int32(DicoJonesMatrices["MapJones"])
         #MapJones=np.int32(np.arange(A0.shape[0]))
         #print DicoJonesMatrices["MapJones"].shape

@@ -23,10 +23,10 @@ import glob
 
 def main(options=None):
     MSName="0000.MS"
-    #SMName="ModelRandom00.txt.npy"
-    SMName="MultiFreqs2.restored.corr.pybdsm.point.sky_in.npy"
-
-    ll=sorted(glob.glob("000?.point.w0.MS"))
+    #SMName="MultiFreqs2.restored.corr.pybdsm.point.sky_in.npy"
+    #ll=sorted(glob.glob("000?.point.w0.MS"))
+    SMName="ModelRandom00.txt.npy"
+    ll=sorted(glob.glob("0000.MS"))
     CS=ClassSimul(ll[0],SMName)
     Sols=CS.GiveSols()
     for l in ll:
@@ -165,14 +165,14 @@ class ClassSimul():
         MS.PutBackupCol(incol="CORRECTED_DATA")
         self.MS=MS
         self.SM=SM
-        SM.SourceCat.l[:]=-0.009453866781636
-        SM.SourceCat.m[:]=0.009453866781636
-        stop
+        # SM.SourceCat.l[:]=-0.009453866781636
+        # SM.SourceCat.m[:]=0.009453866781636
+        # stop
 
 
     def DoSimul(self):
     
-        Noise=0.0
+        Noise=1.0
         MS=self.MS
         SM=self.SM
         VS=self.VS
