@@ -671,7 +671,6 @@ if __name__=="__main__":
         MSName=[]
         for l in Ls:
             ll=l.replace("\n","")
-            if ll[0]=="#": continue
             MSName.append(ll)
         lMS=MSName
         print>>log, "In batch mode, running killMS on the following MS:"
