@@ -283,7 +283,7 @@ class ClassWirtingerSolver():
         #self.DATA["data"]+=(self.rms/np.sqrt(2.))*(np.random.randn(*d.shape)+1j*np.random.randn(*d.shape))
 
         self.rms=-1
-        if (self.TypeRMS=="Resid")&(self.rmsFromData)!=None:
+        if (self.TypeRMS=="Resid")&(self.rmsFromData!=None):
             self.rms=self.rmsFromData
             #print>>log," rmsFromDataJacobAnt: %s"%self.rms
         elif self.rmsFromExt!=None:
@@ -293,8 +293,7 @@ class ClassWirtingerSolver():
             Dpol=DATA["data"][:,:,1:3]
             Fpol=DATA["flags"][:,:,1:3]
             self.rms=np.std(Dpol[Fpol==0])/np.sqrt(2.)
-            
-            print>>log," rmsFromGlobalData: %s"%self.rms
+            #print>>log," rmsFromGlobalData: %s"%self.rms
         else:
             stop
 
@@ -523,9 +522,6 @@ class ClassWirtingerSolver():
 
             NJobs=len(ListAntSolve)
             NTotJobs=NJobs*self.NIter
-
-        
-
 
             lold=0
             iResult=0
