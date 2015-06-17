@@ -97,7 +97,8 @@ class ClassWirtingerSolver():
                  evP_StepStart=0, evP_Step=1,
                  DoPlot=False,
                  DoPBar=True,GD=None,
-                 ConfigJacobianAntenna={}):
+                 ConfigJacobianAntenna={},TypeRMS="GlobalData"):
+        self.TypeRMS=TypeRMS
         self.IdSharedMem=IdSharedMem
         self.ConfigJacobianAntenna=ConfigJacobianAntenna
         self.Lambda=Lambda
@@ -282,17 +283,20 @@ class ClassWirtingerSolver():
         #self.DATA["data"]+=(self.rms/np.sqrt(2.))*(np.random.randn(*d.shape)+1j*np.random.randn(*d.shape))
 
         self.rms=-1
-        if self.rmsFromData!=None:
+        if (self.TypeRMS=="Resid")&(self.rmsFromData)!=None:
             self.rms=self.rmsFromData
             #print>>log," rmsFromDataJacobAnt: %s"%self.rms
         elif self.rmsFromExt!=None:
             self.rms=self.rmsFromExt
             #print>>log," rmsFromExt: %s"%self.rms
-        else:
+        elif (self.TypeRMS=="GlobalData"):
             Dpol=DATA["data"][:,:,1:3]
             Fpol=DATA["flags"][:,:,1:3]
             self.rms=np.std(Dpol[Fpol==0])/np.sqrt(2.)
             #print>>log," rmsFromGlobalData: %s"%self.rms
+        else:
+            stop
+
 
         #print "rms=",self.rms
 
@@ -572,7 +576,7 @@ class ClassWirtingerSolver():
                             else:
                                 kapa=1.
                         self.ListKapa[iAnt].append(kapa)
-                        dt=1.
+                        dt=.5
                         TraceResidList=self.ListKapa[iAnt]
                         x=np.arange(len(TraceResidList))
                         expW=np.exp(-x/dt)[::-1]

@@ -165,12 +165,14 @@ class ClassSimul():
         MS.PutBackupCol(incol="CORRECTED_DATA")
         self.MS=MS
         self.SM=SM
-        
+        SM.SourceCat.l[:]=-0.009453866781636
+        SM.SourceCat.m[:]=0.009453866781636
+        stop
 
 
     def DoSimul(self):
     
-        Noise=0.01
+        Noise=0.0
         MS=self.MS
         SM=self.SM
         VS=self.VS
@@ -191,7 +193,7 @@ class ClassSimul():
         print>>log, ModColor.Str("Substract sources ... ",col="green")
         #SM.SelectSubCat(SM.SourceCat.kill==0)
         PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones,Noise=Noise)
-    
+        
         #SM.RestoreCat()
     
         MS.data=PredictData
