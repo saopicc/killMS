@@ -293,7 +293,8 @@ class ClassWirtingerSolver():
             Dpol=DATA["data"][:,:,1:3]
             Fpol=DATA["flags"][:,:,1:3]
             self.rms=np.std(Dpol[Fpol==0])/np.sqrt(2.)
-            #print>>log," rmsFromGlobalData: %s"%self.rms
+            
+            print>>log," rmsFromGlobalData: %s"%self.rms
         else:
             stop
 
