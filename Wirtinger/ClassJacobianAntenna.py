@@ -348,9 +348,6 @@ class ClassJacobianAntenna():
         
         self.CalcJacobianAntenna(Gains)
         #T.timeit("Jacob")
-
-        
-
         
         Jx=self.J_x(Ga)
         #T.timeit("J_x")

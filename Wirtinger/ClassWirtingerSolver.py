@@ -548,10 +548,13 @@ class ClassWirtingerSolver():
                 # for EKF
 
                 #########
-                if LMIter>0: DoCalcEvP=False
+                DoEvP=True
+                if LMIter>0:
+                    DoCalcEvP=False
+                    DoEvP=False
 
                 for iAnt in ListAntSolve:
-                    work_queue.put((iAnt,DoCalcEvP,tm,self.rms))
+                    work_queue.put((iAnt,DoCalcEvP,tm,self.rms,DoEvP))
  
                 rmsFromDataList=[]
                 while iResult < NJobs:
@@ -575,6 +578,7 @@ class ClassWirtingerSolver():
                                 kapa=self.ListKapa[iAnt][-1]
                             else:
                                 kapa=1.
+
                         self.ListKapa[iAnt].append(kapa)
                         dt=.5
                         TraceResidList=self.ListKapa[iAnt]
@@ -714,7 +718,7 @@ class WorkerAntennaLM(multiprocessing.Process):
     def run(self):
         while not self.kill_received:
             try:
-                iAnt,DoCalcEvP,ThisTime,rms = self.work_queue.get()
+                iAnt,DoCalcEvP,ThisTime,rms,DoEvP = self.work_queue.get()
             except:
                 break
             #self.e.wait()
@@ -767,8 +771,12 @@ class WorkerAntennaLM(multiprocessing.Process):
                 x,Pout,InfoNoise=JM.doEKFStep(G,P,evP,rms)
                 T.timeit("EKFStep")
                 rmsFromData=JM.rmsFromData
-                Pa=EM.Evolve0(x,Pout)#,kapa=kapa)
-                T.timeit("Evolve")
+
+                if DoEvP:
+                    Pa=EM.Evolve0(x,Pout)#,kapa=kapa)
+                    T.timeit("Evolve")
+                else:
+                    Pa=P.copy()
                 #_,Pa=EM.Evolve(x,Pout,ThisTime)
 
                 if type(Pa)!=type(None):
