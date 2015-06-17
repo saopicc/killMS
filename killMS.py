@@ -666,6 +666,9 @@ if __name__=="__main__":
             ll=l.replace("\n","")
             MSName.append(ll)
         lMS=MSName
+        print>>log, "In batch mode, running killMS on the following MS:"
+        for MS in lMS:
+            print>>log, "  %s"%MS
     elif "*" in options.MSName:
         Patern=options.MSName
         lMS=sorted(glob.glob(Patern))
