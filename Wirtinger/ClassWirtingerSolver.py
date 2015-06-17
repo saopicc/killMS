@@ -128,7 +128,7 @@ class ClassWirtingerSolver():
         self.rmsFromData=None
         if SolverType=="KAFCA":
             print>>log, ModColor.Str("niter=%i"%self.NIter)
-            #self.NIter=1
+            # self.NIter=1
         self.EvolvePStepStart,EvolvePStep=evP_StepStart,evP_Step
         self.CounterEvolveP=Counter.Counter(EvolvePStep)
         self.ThisStep=0
