@@ -214,6 +214,7 @@ class ClassWirtingerSolver():
 
 
         self.G=NpShared.ToShared("%sSharedGains"%self.IdSharedMem,self.G)
+        self.G0Iter=NpShared.ToShared("%sSharedGains0Iter"%self.IdSharedMem,self.G.copy())
         self.InitCovariance()
 
     def InitCovariance(self,FromG=False,sigP=0.1,sigQ=0.01):
@@ -548,10 +549,12 @@ class ClassWirtingerSolver():
                 # for EKF
 
                 #########
-                DoEvP=True
                 if LMIter>0:
                     DoCalcEvP=False
                     DoEvP=False
+                elif LMIter==0:
+                    self.G0Iter[:]=self.G[:]
+                    DoEvP=True
 
                 for iAnt in ListAntSolve:
                     work_queue.put((iAnt,DoCalcEvP,tm,self.rms,DoEvP))
@@ -732,6 +735,7 @@ class WorkerAntennaLM(multiprocessing.Process):
             T.timeit("setDATA_Shared")
 
             G=NpShared.GiveArray("%sSharedGains"%self.IdSharedMem)
+            G0Iter=NpShared.GiveArray("%sSharedGains0Iter"%self.IdSharedMem)
             P=NpShared.GiveArray("%sSharedCovariance"%self.IdSharedMem)
             #Q=NpShared.GiveArray("%sSharedCovariance_Q"%self.IdSharedMem)
             evP=NpShared.GiveArray("%sSharedEvolveCovariance"%self.IdSharedMem)
@@ -768,7 +772,7 @@ class WorkerAntennaLM(multiprocessing.Process):
                 #     G[iAnt]=Ga
                 #     P[iAnt]=Pa
 
-                x,Pout,InfoNoise=JM.doEKFStep(G,P,evP,rms)
+                x,Pout,InfoNoise=JM.doEKFStep(G,P,evP,rms,Gains0Iter=G0Iter)
                 T.timeit("EKFStep")
                 rmsFromData=JM.rmsFromData
 

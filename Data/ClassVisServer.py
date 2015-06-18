@@ -200,6 +200,19 @@ class ClassVisServer():
             W=W[ind]
             MapJones=MapJones[ind]
         
+        if self.GD["DataSelection"]["FillFactor"]!=1.:
+            Mask=np.random.rand(flags.shape[0])<self.GD["DataSelection"]["FillFactor"]
+            ind=np.where(Mask)[0]
+            flags=flags[ind]
+            data=data[ind]
+            A0=A0[ind]
+            A1=A1[ind]
+            uvw=uvw[ind]
+            times=times[ind]
+            # IndexTimesThisChunk=IndexTimesThisChunk[ind]
+            W=W[ind]
+            MapJones=MapJones[ind]
+            
             
 
         ind=np.where(A0!=A1)[0]

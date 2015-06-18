@@ -101,6 +101,7 @@ def read_options():
     OP.add_option('UVMinMax',help='Baseline length selection in km. For example UVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default')
     OP.add_option('FlagAnts',type="str",help='FlagAntenna patern. Default is %default')
     OP.add_option('DistMaxToCore',type="float",help='Maximum distance to core in km. Default is %default')
+    OP.add_option('FillFactor',type="float")
 
     OP.OptionGroup("* Beam Options","Beam")
     OP.add_option('BeamModel')
