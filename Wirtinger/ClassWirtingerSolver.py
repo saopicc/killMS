@@ -554,6 +554,8 @@ class ClassWirtingerSolver():
                     DoEvP=False
                 elif LMIter==0:
                     self.G0Iter[:]=self.G[:]
+
+                if LMIter==(NIter-1):
                     DoEvP=True
 
                 for iAnt in ListAntSolve:
