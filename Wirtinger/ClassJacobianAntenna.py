@@ -349,8 +349,8 @@ class ClassJacobianAntenna():
         self.CalcJacobianAntenna(Gains)
         #T.timeit("Jacob")
         
-        if Gains0Iter!=None:
-            Ga=self.GiveSubVecGainAnt(Gains0Iter)
+        # if Gains0Iter!=None:
+        #     Ga=self.GiveSubVecGainAnt(Gains0Iter)
 
         Jx=self.J_x(Ga)
         #T.timeit("J_x")
