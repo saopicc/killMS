@@ -47,7 +47,7 @@ class ClassPreparePredict(ClassImagerDeconv):
 
         #ModelImage0=self.MM.GiveModelImage(np.mean(self.VS.MS.ChanFreq))
 
-        self.MM.CleanNegComponants(box=10,sig=1)
+        self.MM.CleanNegComponants(box=15,sig=1)
         self.ModelImage=self.MM.GiveModelImage(np.mean(self.VS.MS.ChanFreq))
 
 
