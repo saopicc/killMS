@@ -952,8 +952,9 @@ class ClassJacobianAntenna():
             DicoData=NpShared.DicoToShared(self.SharedDataDicoName,DicoData)
 
         else:
-            self.Rinv_flat=DicoData["Rinv_flat"]
-            self.R_flat=DicoData["R_flat"]
+            if rms!=0.:
+                self.Rinv_flat=DicoData["Rinv_flat"]
+                self.R_flat=DicoData["R_flat"]
 
             #print "DATA From shared"
             #print np.max(DicoData["A0"])

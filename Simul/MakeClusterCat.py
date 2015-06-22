@@ -29,11 +29,11 @@ def test():
     #                       "finfo":(100e6,250e6,10)}
 
     DicoPropPointings[0]={"offset":(0,0),
-                          "Ns":-1,
+                          "Ns":10,
                           "Nc":0,
-                          "Diam":2,
+                          "Diam":0.2,
                           "finfo":(40e6,80e6,3),
-                          "Mode":"Grid"}
+                          "Mode":"Random"}
 
 
     # DicoPropPointings[0]={"offset":(0,0),
@@ -114,6 +114,7 @@ def BBSprintRandomSM(Ns,Ddeg,(ra_mean,dec_mean),OutFile="ModelRandom0",ra_dec_of
     Cat.dec=dec
     Cat.I=np.random.rand(Ns)
     Cat.alpha=-np.random.rand(Ns)
+    Cat.alpha=0.
     #Cat.I[0]=0
     Cat.I.fill(1)
     Cat.I/=np.sum(Cat.I)

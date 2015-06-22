@@ -30,7 +30,7 @@ def main(options=None):
     CS=ClassSimul(ll[0],SMName)
     Sols=CS.GiveSols()
     for l in ll:
-        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
+        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
         CS.DoSimul()
 
 class ClassSimul():
@@ -172,7 +172,7 @@ class ClassSimul():
 
     def DoSimul(self):
     
-        Noise=1.0
+        Noise=0.
         MS=self.MS
         SM=self.SM
         VS=self.VS
@@ -213,9 +213,9 @@ class ClassSimul():
         # t.close()
         # MS.data[f]=1.e10
     
-        VS.MS.SaveVis(Col="DATA")
+        #VS.MS.SaveVis(Col="DATA")
         #VS.MS.SaveVis(Col="CORRECTED_DATA")
-        #VS.MS.SaveVis(Col="CORRECTED_DATA_BACKUP")
+        VS.MS.SaveVis(Col="CORRECTED_DATA_BACKUP")
         
         Sols=self.Sols
         FileName="Simul.npz"

@@ -36,6 +36,7 @@ if "nox" in sys.argv:
     
 
 
+from killMS2.Data import MergeJones
 import time
 import os
 import numpy as np
@@ -489,7 +490,34 @@ def main(OP=None,MSName=None):
                     #print "timemap:",Jones["MapJones"][1997:1999]
                     #print "Jt0d0a35",Jones["Beam"][0,0,35]
                     #print "Jt1d0a0",Jones["Beam"][1,0,0]
-                    PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
+
+
+                    if options.BeamModel==None:
+                        JonesMerged=Jones
+                    else:
+                        Jones["Jones"]=Jones["Beam"]
+                        Jones["tm"]=(Jones["t0"]+Jones["t1"])/2.
+                        Beam=Solver.VS.ThisDataChunk["DicoBeam"]
+                        Beam["tm"]=(Beam["t0"]+Beam["t1"])/2.
+                        JonesMerged=MergeJones.MergeJones(Jones,Beam)
+
+                        DicoJonesMatrices=JonesMerged
+                        G=JonesMerged["Jones"]
+                        ## mapJones
+                        ind=np.zeros((times.size,),np.int32)
+                        nt,na,nd,_,_,_=G.shape
+                        ii=0
+                        for it in range(nt):
+                            t0=DicoJonesMatrices["t0"][it]
+                            t1=DicoJonesMatrices["t1"][it]
+                            indMStime=np.where((times>=t0)&(times<t1))[0]
+                            indMStime=np.ones((indMStime.size,),np.int32)*it
+                            ind[ii:ii+indMStime.size]=indMStime[:]
+                            ii+=indMStime.size
+                            JonesMerged["MapJones"]=ind
+                            JonesMerged["Beam"]=JonesMerged["Jones"]
+                    # end
+                    PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=JonesMerged)
                     #PredictData2=PM2.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
                     #diff=(PredictData-PredictData2)
                     #print diff
