@@ -130,7 +130,7 @@ def read_options():
 
     OP.OptionGroup("* Solver options","Solvers")
     OP.add_option('SolverType',help='Name of the solver to use (CohJones/KAFCA)')
-    OP.add_option('PolMode',help='Polarisation mode (Scalar/HalfFull). Default is %default')
+    OP.add_option('PolMode',help='Polarisation mode (Scalar/IFull). Default is %default')
     OP.add_option('dt',type="float",help='Time interval for a solution [minutes]. Default is %default. ')
     
     OP.OptionGroup("* CohJones additional options","CohJones")

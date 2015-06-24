@@ -35,7 +35,7 @@ def testLM():
     #Gains[:,0,:]=GainsOrig[:,0,:]
     ###############
 
-    PolMode="HalfFull"
+    PolMode="IFull"
     # ### Scalar gains
     # PolMode="Scalar"
     # g=np.random.randn(*(Gains[:,:,0].shape))+1j*np.random.randn(*(Gains[:,:,0].shape))
@@ -115,7 +115,7 @@ def testLM():
 
 
 class ClassJacobianAntenna():
-    def __init__(self,SM,iAnt,PolMode="HalfFull",Precision="S",IdSharedMem="",
+    def __init__(self,SM,iAnt,PolMode="IFull",Precision="S",IdSharedMem="",
                  PM=None,GD=None,**kwargs):
         T=ClassTimeIt.ClassTimeIt("ClassJacobianAntenna")
         T.disable()
@@ -148,7 +148,7 @@ class ClassJacobianAntenna():
         self.HasKernelMatrix=False
         self.LQxInv=None
 
-        if self.PolMode=="HalfFull":
+        if self.PolMode=="IFull":
             self.NJacobBlocks_X=2
             self.NJacobBlocks_Y=2
             self.npolData=4
@@ -638,7 +638,7 @@ class ClassJacobianAntenna():
         Gains=GainsIn.reshape((na,NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y))
         Jacob=np.zeros((n4vis,self.NJacobBlocks_Y,NDir,self.NJacobBlocks_Y),self.CType)
 
-        if (self.PolMode=="HalfFull")|(self.PolMode=="Scalar"):
+        if (self.PolMode=="IFull")|(self.PolMode=="Scalar"):
             self.LJacob=[Jacob]*self.NJacobBlocks_X
         elif self.PolMode=="IDiag":
             self.LJacob=[Jacob,Jacob.copy()]
@@ -658,7 +658,7 @@ class ClassJacobianAntenna():
                 J0[:]=(g0_conj*K_XX).reshape((K_XX.size,))
 
             
-            elif self.PolMode=="HalfFull":
+            elif self.PolMode=="IFull":
                 J0=Jacob[:,0,iDir,0]
                 g0_conj=G[:,0,0].reshape((nr,1))
                 J0[:]=(g0_conj*K_XX).reshape((K_XX.size,))
@@ -735,7 +735,7 @@ class ClassJacobianAntenna():
         self.KernelMat=NpShared.GiveArray(KernelSharedName)
         if type(self.KernelMat)!=type(None):
             self.HasKernelMatrix=True
-            if self.PolMode=="HalfFull":
+            if self.PolMode=="IFull":
                 self.K_XX=self.KernelMat[0]
                 self.K_YY=self.KernelMat[1]
                 self.NJacobBlocks_X=2
@@ -767,7 +767,7 @@ class ClassJacobianAntenna():
         n4vis=self.DicoData["data_flat"].size/self.npolData
         self.n4vis=n4vis
             
-        if self.PolMode=="HalfFull":
+        if self.PolMode=="IFull":
             #self.K_XX=np.zeros((NDir,n4vis/nchan,nchan),np.complex64)
             #self.K_YY=np.zeros((NDir,n4vis/nchan,nchan),np.complex64)
             self.KernelMat=NpShared.zeros(KernelSharedName,(2,NDir,n4vis/nchan,nchan),dtype=self.CType)
@@ -1077,7 +1077,7 @@ def testPredict():
     DATA["data"]=PM.predictKernelPolCluster(DATA,SM,ApplyJones=Gains)
     
     ############################
-    PolMode="HalfFull"#"Scalar"
+    PolMode="IFull"#"Scalar"
     iAnt=10
     JM=ClassJacobianAntenna(SM,iAnt,PolMode=PolMode)
     JM.setDATA(DATA)

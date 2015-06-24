@@ -89,7 +89,7 @@ class ClassWirtingerSolver():
 
     def __init__(self,VS,SM,
                  BeamProps=None,
-                 PolMode="HalfFull",
+                 PolMode="IFull",
                  Lambda=1,NIter=20,
                  NCPU=6,
                  SolverType="CohJones",
@@ -235,7 +235,7 @@ class ClassWirtingerSolver():
             elif self.PolMode=="Scalar":
                 npolx=1
                 npoly=1
-            elif self.PolMode=="HalfFull":
+            elif self.PolMode=="IFull":
                 npolx=2
                 npoly=2
             P=(sigP**2)*np.array([np.diag(np.ones((nd*npolx*npoly,),np.complex128)) for iAnt in range(na)])

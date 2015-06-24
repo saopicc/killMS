@@ -30,8 +30,8 @@ def main(options=None):
     CS=ClassSimul(ll[0],SMName)
     Sols=CS.GiveSols()
     for l in ll:
-        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
-        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
+        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
+        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
         CS.DoSimul()
 
 class ClassSimul():
@@ -109,8 +109,10 @@ class ClassSimul():
         G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
 
         G.fill(0)
-        G[:,:,:,:,0,0]=.1
-        G[:,:,:,:,1,1]=.1
+        G[:,:,:,:,0,0]=1
+        G[:,:,:,:,1,1]=1
+        # G[:,:,:,:,0,1]=0.
+        # G[:,:,:,:,1,0]=0.
     
     
         useArrayFactor=True
