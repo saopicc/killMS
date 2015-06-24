@@ -149,14 +149,26 @@ class ClassJacobianAntenna():
         self.LQxInv=None
 
         if self.PolMode=="HalfFull":
-            self.NJacobBlocks=2
+            self.NJacobBlocks_X=2
+            self.NJacobBlocks_Y=2
+            self.npolData=4
+
         elif self.PolMode=="Scalar":
-            self.NJacobBlocks=1
+            self.NJacobBlocks_X=1
+            self.NJacobBlocks_Y=1
+            self.npolData=1
+
+        elif self.PolMode=="IDiag":
+            self.NJacobBlocks_X=2
+            self.NJacobBlocks_Y=1
+            self.npolData=2
+
+
         T.timeit("rest")
     
     def GiveSubVecGainAnt(self,GainsIn):
         # if (GainsIn.size==self.NDir*2*2): return GainsIn.copy()
-        Gains=GainsIn.copy().reshape((self.na,self.NDir,self.NJacobBlocks,self.NJacobBlocks))[self.iAnt]
+        Gains=GainsIn.copy().reshape((self.na,self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y))[self.iAnt]
         return Gains
         
     def setDATA(self,DATA):
@@ -177,14 +189,14 @@ class ClassJacobianAntenna():
         #self.DATA["UVW_RefAnt"]=NpShared.GiveArray("%sUVW_RefAnt"%self.IdSharedMem)
 
     def GivePaPol(self,Pa_in,ipol):
-        PaPol=Pa_in.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks,self.NDir,self.NJacobBlocks,self.NJacobBlocks))
-        PaPol=PaPol[:,ipol,:,:,ipol,:].reshape((self.NDir*self.NJacobBlocks,self.NDir*self.NJacobBlocks))
+        PaPol=Pa_in.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y,self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y))
+        PaPol=PaPol[:,ipol,:,:,ipol,:].reshape((self.NDir*self.NJacobBlocks_Y,self.NDir*self.NJacobBlocks_Y))
         return PaPol
 
     def setQxInvPol(self):
-        QxInv=np.ones((self.NDir,1,self.NJacobBlocks,self.NDir,1,self.NJacobBlocks),np.float32)
+        QxInv=np.ones((self.NDir,1,self.NJacobBlocks_Y,self.NDir,1,self.NJacobBlocks_Y),np.float32)
         QxInv*=1./(self.AmpQx**2)
-        QxInv=QxInv.reshape((self.NDir*self.NJacobBlocks,self.NDir*self.NJacobBlocks))
+        QxInv=QxInv.reshape((self.NDir*self.NJacobBlocks_Y,self.NDir*self.NJacobBlocks_Y))
         self.LQxInv=[QxInv,QxInv]
 
     def PrepareJHJ_EKF(self,Pa_in,rms):
@@ -197,7 +209,7 @@ class ClassJacobianAntenna():
         # pylab.show(False)
         # pylab.pause(0.1)
 
-        for ipol in range(self.NJacobBlocks):
+        for ipol in range(self.NJacobBlocks_X):
             PaPol=self.GivePaPol(Pa_in,ipol)
             Pinv=ModLinAlg.invSVD(PaPol)
             JHJ=self.L_JHJ[ipol]#*(1./rms**2)
@@ -208,9 +220,9 @@ class ClassJacobianAntenna():
             self.L_JHJinv.append(JHJinv)
 
     def CalcKapa_i(self,yr,Pa,rms):
-        J=self.Jacob
         kapaout=0
-        for ipol in range(self.NJacobBlocks):
+        for ipol in range(self.NJacobBlocks_X):
+            J=self.LJacob[ipol]
             PaPol=self.GivePaPol(Pa,ipol)
             pa=np.abs(np.diag(PaPol))
             pa=pa.reshape(1,pa.size)
@@ -228,7 +240,7 @@ class ClassJacobianAntenna():
 
     def PrepareJHJ_LM(self):
         self.L_JHJinv=[]
-        for ipol in range(self.NJacobBlocks):
+        for ipol in range(self.NJacobBlocks_X):
             JHJinv=ModLinAlg.invSVD(self.L_JHJ[ipol])
             #JHJinv=ModLinAlg.invSVD(self.JHJ)
             self.L_JHJinv.append(JHJinv)
@@ -309,11 +321,11 @@ class ClassJacobianAntenna():
             x2+=dx2.reshape(x2.shape)
 
         x3=[]
-        for ipol in range(self.NJacobBlocks):
+        for ipol in range(self.NJacobBlocks_X):
             PaPol=self.GivePaPol(Pa,ipol)
             #print PaPol,PaPol.shape
             Prod=np.dot(PaPol,x2[:,ipol,:].flatten())
-            x3.append(Prod.reshape((self.NDir,1,self.NJacobBlocks)))
+            x3.append(Prod.reshape((self.NDir,1,self.NJacobBlocks_Y)))
 
             
 
@@ -342,7 +354,7 @@ class ClassJacobianAntenna():
 
         self.rmsFromData=None
         if ind.size==0:
-            return Ga.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks)),Pa,{"std":-1.,"max":-1.,"kapa":-1.}
+            return Ga.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),Pa,{"std":-1.,"max":-1.,"kapa":-1.}
         if self.DoReg:
             self.setQxInvPol()
         
@@ -419,10 +431,10 @@ class ClassJacobianAntenna():
         # evPa= Pa-evPa
         # Pa_new1=evPa
 
-        del(self.Jacob)
+        del(self.LJacob)
         T.timeit("Rest")
         
-        return x4.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks)),Pa_new1,InfoNoise
+        return x4.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),Pa_new1,InfoNoise
 
 
     def CalcMatrixEvolveCov(self,Gains,P,rms):
@@ -464,7 +476,7 @@ class ClassJacobianAntenna():
         f=(self.DicoData["flags_flat"]==0)
         ind=np.where(f)[0]
         if ind.size==0:
-            return Ga.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks)),None,{"std":-1.,"max":-1.,"kapa":None}
+            return Ga.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),None,{"std":-1.,"max":-1.,"kapa":None}
 
 
         z=self.DicoData["data_flat"]#self.GiveDataVec()
@@ -505,7 +517,7 @@ class ClassJacobianAntenna():
         #     pylab.draw()
         #     pylab.show(False)
         #     pylab.pause(0.1)
-        #     #stop
+        #     stop
 
         # # pylab.figure(2)
         # # pylab.clf()
@@ -527,21 +539,21 @@ class ClassJacobianAntenna():
 
         x0=Ga.flatten()
         x1+=x0
-        del(self.Jacob)
+        del(self.LJacob)
         T.timeit("rest")
         # print self.iAnt,np.mean(x1),x1.size,ind.size
-        return x1.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks)),None,{"std":-1.,"max":-1.,"kapa":None}
+        return x1.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),None,{"std":-1.,"max":-1.,"kapa":None}
 
                                         
     def JHJinv_x(self,Gains):
         G=[]
         #nd,_,_=Gains.shape
-        Gains=Gains.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks))
-        for polIndex in range(self.NJacobBlocks):
+        Gains=Gains.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y))
+        for polIndex in range(self.NJacobBlocks_X):
             Gain=Gains[:,polIndex,:]
             #print "JHJinv_x: %i %s . %s "%(polIndex,str(self.L_JHJinv[polIndex].shape),str(Gain.flatten().shape))
             Vec=np.dot(self.L_JHJinv[polIndex],Gain.flatten())
-            Vec=Vec.reshape((self.NDir,1,self.NJacobBlocks))
+            Vec=Vec.reshape((self.NDir,1,self.NJacobBlocks_Y))
             G.append(Vec)
             
         Gout=np.concatenate(G,axis=1)
@@ -552,26 +564,27 @@ class ClassJacobianAntenna():
 
     def J_x(self,Gains):
         z=[]
-        Jacob=self.Jacob
-        Gains=Gains.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks))
-        for polIndex in range(self.NJacobBlocks):
+        Gains=Gains.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y))
+        for polIndex in range(self.NJacobBlocks_X):
+            Jacob=self.LJacob[polIndex]
             
             Gain=Gains[:,polIndex,:].flatten()
 
             #flags=self.DicoData["flags_flat"][polIndex]
             J=Jacob#[flags==0]
+            # print J.shape, Gain.shape
             z.append(np.dot(J,Gain))
         z=np.array(z)
         return z
 
     def Msq_x(self,LM,Gains):
         G=[]
-        Gains=Gains.reshape((self.NDir,self.NJacobBlocks,self.NJacobBlocks))
-        for polIndex in range(self.NJacobBlocks):
+        Gains=Gains.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y))
+        for polIndex in range(self.NJacobBlocks_X):
             Gain=Gains[:,polIndex,:]
             #print "Msq_x: %i %s . %s"%(polIndex,str(LM[polIndex].shape),str(Gain.flatten().shape))
             Vec=np.dot(LM[polIndex],Gain.flatten())
-            Vec=Vec.reshape((self.NDir,1,self.NJacobBlocks))
+            Vec=Vec.reshape((self.NDir,1,self.NJacobBlocks_Y))
             G.append(Vec)
             
         Gout=np.concatenate(G,axis=1)
@@ -585,9 +598,9 @@ class ClassJacobianAntenna():
     def JH_z(self,zin):
         #z=zin.reshape((self.NJacobBlocks,zin.size/self.NJacobBlocks))
         #z=zin.reshape((1,zin.size))
-        Jacob=self.Jacob
-        Gains=np.zeros((self.NDir,self.NJacobBlocks,self.NJacobBlocks),self.CType)
-        for polIndex in range(self.NJacobBlocks):
+        Gains=np.zeros((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y),self.CType)
+        for polIndex in range(self.NJacobBlocks_X):
+            Jacob=self.LJacob[polIndex]
             
             flags=self.DicoData["flags_flat"][polIndex]
             ThisZ=zin[polIndex][flags==0]#self.DicoData["flags_flat"[polIndex]
@@ -595,7 +608,7 @@ class ClassJacobianAntenna():
             J=Jacob[flags==0]
 
             Gain=np.dot(J.T.conj(),ThisZ.flatten())
-            Gains[:,polIndex,:]=Gain.reshape((self.NDir,self.NJacobBlocks))
+            Gains[:,polIndex,:]=Gain.reshape((self.NDir,self.NJacobBlocks_Y))
 
         return Gains
 
@@ -619,11 +632,18 @@ class ClassJacobianAntenna():
         iAnt=self.iAnt
         NDir=self.NDir
         n4vis=self.n4vis
+        #print "n4vis",n4vis
         na=self.na
         #print GainsIn.shape,na,NDir,self.NJacobBlocks,self.NJacobBlocks
-        Gains=GainsIn.reshape((na,NDir,self.NJacobBlocks,self.NJacobBlocks))
-        Jacob=np.zeros((n4vis,self.NJacobBlocks,NDir,self.NJacobBlocks),self.CType)
+        Gains=GainsIn.reshape((na,NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y))
+        Jacob=np.zeros((n4vis,self.NJacobBlocks_Y,NDir,self.NJacobBlocks_Y),self.CType)
 
+        if (self.PolMode=="HalfFull")|(self.PolMode=="Scalar"):
+            self.LJacob=[Jacob]*self.NJacobBlocks_X
+        elif self.PolMode=="IDiag":
+            self.LJacob=[Jacob,Jacob.copy()]
+        LJacob=self.LJacob
+        
         for iDir in range(NDir):
             G=Gains[self.A1,iDir].conj()
 
@@ -631,15 +651,21 @@ class ClassJacobianAntenna():
             K_YY=self.K_YY[iDir]
 
             nr=G.shape[0]
-            J0=Jacob[:,0,iDir,0]
-            g0_conj=G[:,0,0].reshape((nr,1))
-            J0[:]=(g0_conj*K_XX).reshape((K_XX.size,))
+
+            if self.PolMode=="Scalar":
+                J0=Jacob[:,0,iDir,0]
+                g0_conj=G[:,0,0].reshape((nr,1))
+                J0[:]=(g0_conj*K_XX).reshape((K_XX.size,))
+
             
-            if self.PolMode=="HalfFull":
+            elif self.PolMode=="HalfFull":
+                J0=Jacob[:,0,iDir,0]
+                g0_conj=G[:,0,0].reshape((nr,1))
+                J0[:]=(g0_conj*K_XX).reshape((K_XX.size,))
+
                 J1=Jacob[:,0,iDir,1]
                 J2=Jacob[:,1,iDir,0]
                 J3=Jacob[:,1,iDir,1]
-
                 g1_conj=G[:,1,0].reshape((nr,1))
                 g2_conj=G[:,0,1].reshape((nr,1))
                 g3_conj=G[:,1,1].reshape((nr,1))
@@ -648,17 +674,25 @@ class ClassJacobianAntenna():
                 J2[:]=(g1_conj*K_XX).reshape((K_XX.size,))
                 J3[:]=(g3_conj*K_YY).reshape((K_XX.size,))
 
+            elif self.PolMode=="IDiag":
+                J0=LJacob[0][:,0,iDir,0]
+                g0_conj=G[:,0,0].reshape((nr,1))
+                J0[:]=(g0_conj*K_XX).reshape((K_XX.size,))
 
-        Jacob.shape=(n4vis*self.NJacobBlocks,NDir*self.NJacobBlocks)
-        self.Jacob=Jacob
-        J=Jacob
+                J1=LJacob[1][:,0,iDir,0]
+                g1_conj=G[:,1,0].reshape((nr,1))
+                J1[:]=(g1_conj*K_YY).reshape((K_XX.size,))
 
-#        self.JHJ=np.dot(J.T.conj(),J)
+
+        for J in LJacob:
+            J.shape=(n4vis*self.NJacobBlocks_Y,NDir*self.NJacobBlocks_Y)
+
+
 
         self.L_JHJ=[]
-        for polIndex in range(self.NJacobBlocks):
+        for polIndex in range(self.NJacobBlocks_X):
             flags=self.DicoData["flags_flat"][polIndex]
-            J=Jacob[flags==0]
+            J=self.LJacob[polIndex][flags==0]
             nrow,_=J.shape
             if self.Rinv_flat!=None:
                 Rinv=self.Rinv_flat[polIndex][flags==0].reshape((nrow,1))
@@ -681,8 +715,9 @@ class ClassJacobianAntenna():
         NDir=self.SM.NDir
         self.NDir=NDir
         self.iAnt=iAnt
-        if self.PolMode=="HalfFull":
-            npol=4
+
+
+
         T.timeit("stuff")
         self.DicoData=self.GiveData(DATA,iAnt,rms=rms)
         T.timeit("data")
@@ -703,13 +738,22 @@ class ClassJacobianAntenna():
             if self.PolMode=="HalfFull":
                 self.K_XX=self.KernelMat[0]
                 self.K_YY=self.KernelMat[1]
-                self.NJacobBlocks=2
+                self.NJacobBlocks_X=2
+                self.NJacobBlocks_Y=2
             elif self.PolMode=="Scalar":
                 #n4vis=self.DicoData["data_flat"].size
                 self.K_XX=self.KernelMat[0]
                 self.K_YY=self.K_XX
-                self.n4vis=n4vis
-                self.NJacobBlocks=1
+                #self.n4vis=n4vis
+                self.NJacobBlocks_X=1
+                self.NJacobBlocks_Y=1
+            elif self.PolMode=="IDiag":
+                #n4vis=self.DicoData["data_flat"].size
+                self.K_XX=self.KernelMat[0]
+                self.K_YY=self.KernelMat[1]
+                #self.n4vis=n4vis
+                self.NJacobBlocks_X=2
+                self.NJacobBlocks_Y=1
             # self.Data=self.Data.reshape((nrows,nchan,self.NJacobBlocks,self.NJacobBlocks))
 
             #print "Kernel From shared"
@@ -720,7 +764,9 @@ class ClassJacobianAntenna():
 
         T.timeit("stuff 2")
         # GiveArray(Name)
-
+        n4vis=self.DicoData["data_flat"].size/self.npolData
+        self.n4vis=n4vis
+            
         if self.PolMode=="HalfFull":
             #self.K_XX=np.zeros((NDir,n4vis/nchan,nchan),np.complex64)
             #self.K_YY=np.zeros((NDir,n4vis/nchan,nchan),np.complex64)
@@ -728,17 +774,23 @@ class ClassJacobianAntenna():
             self.K_XX=self.KernelMat[0]
             self.K_YY=self.KernelMat[1]
             # KernelMatrix=NpShared.zeros(KernelSharedName,(n4vis,NDir,2),dtype=np.complex64)
-            self.NJacobBlocks=2
+            self.NJacobBlocks_X=2
+            self.NJacobBlocks_Y=2
         elif self.PolMode=="Scalar":
             #n4vis=self.Data.size
-            n4vis=self.DicoData["data_flat"].size
             # KernelMatrix_XX=np.zeros((NDir,n4vis,nchan),np.complex64)
             # KernelMatrix=NpShared.zeros(KernelSharedName,(n4vis,NDir,1),dtype=np.complex64)
             self.KernelMat=NpShared.zeros(KernelSharedName,(1,NDir,n4vis/nchan,nchan),dtype=self.CType)
             self.K_XX=self.KernelMat[0]
             self.K_YY=self.K_XX
-            self.n4vis=n4vis
-            self.NJacobBlocks=1
+            self.NJacobBlocks_X=1
+            self.NJacobBlocks_Y=1
+        elif self.PolMode=="IDiag":
+            self.KernelMat=NpShared.zeros(KernelSharedName,(2,NDir,n4vis/nchan,nchan),dtype=self.CType)
+            self.K_XX=self.KernelMat[0]
+            self.K_YY=self.KernelMat[1]
+            self.NJacobBlocks_X=2
+            self.NJacobBlocks_Y=1
         T.timeit("stuff 3")
 
         #self.Data=self.Data.reshape((nrows,nchan,self.NJacobBlocks,self.NJacobBlocks))
@@ -885,15 +937,17 @@ class ClassJacobianAntenna():
                 DicoData["flags_image"]=DicoData["flags"].copy()
                 DicoData["flags_image"].fill(0)
 
-            npol=4
+            nr,nch,_=DicoData["data"].shape
             if self.PolMode=="Scalar":
-                nr,nch,_=DicoData["data"].shape
                 d=(DicoData["data"][:,:,0]+DicoData["data"][:,:,-1])/2
                 DicoData["data"] = d.reshape((nr,nch,1))
-
                 f=(DicoData["flags"][:,:,0]|DicoData["flags"][:,:,-1])
                 DicoData["flags"] = f.reshape((nr,nch,1))
-                npol=1
+            elif self.PolMode=="IDiag":
+                d=DicoData["data"][:,:,0::3]
+                DicoData["data"] = d.copy().reshape((nr,nch,2))
+                f=DicoData["flags"][:,:,0::3]
+                DicoData["flags"] = f.copy().reshape((nr,nch,2))
 
 
 
@@ -903,13 +957,14 @@ class ClassJacobianAntenna():
             DicoData["infos"] = DATA['infos']
 
             nr,nch,_=DicoData["data"].shape
-            DicoData["flags"]=DicoData["flags"].reshape(nr,nch,self.NJacobBlocks,self.NJacobBlocks)
-            DicoData["data"]=DicoData["data"].reshape(nr,nch,self.NJacobBlocks,self.NJacobBlocks)
+            DicoData["flags"]=DicoData["flags"].reshape(nr,nch,self.NJacobBlocks_X,self.NJacobBlocks_Y)
+            DicoData["data"]=DicoData["data"].reshape(nr,nch,self.NJacobBlocks_X,self.NJacobBlocks_Y)
 
 
 
-            DicoData["flags_flat"]=np.rollaxis(DicoData["flags"],2).reshape(self.NJacobBlocks,nr*nch*self.NJacobBlocks)
-            DicoData["data_flat"]=np.rollaxis(DicoData["data"],2).reshape(self.NJacobBlocks,nr*nch*self.NJacobBlocks)
+            DicoData["flags_flat"]=np.rollaxis(DicoData["flags"],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
+            DicoData["data_flat"]=np.rollaxis(DicoData["data"],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
+            #print "data_flat:",DicoData["data_flat"].shape
             #DicoData["data_flat"]=DicoData["data_flat"][DicoData["flags_flat"]==0]
 
             del(DicoData["data"])
@@ -926,9 +981,9 @@ class ClassJacobianAntenna():
                     sig=self.ResolutionRad/FWHMFact
                     V=(1./np.exp(-d**2*np.pi*sig**2))**2
                     
-                    V=V.reshape((V.size,1,1))*np.ones((1,freqs.size,npol))
+                    V=V.reshape((V.size,1,1))*np.ones((1,freqs.size,self.npolData))
                 else:
-                    V=np.ones((u.size,freqs.size,npol),np.float32)
+                    V=np.ones((u.size,freqs.size,self.npolData),np.float32)
                     
                 if "W" in DicoData.keys():
                     W=DicoData["W"]
@@ -939,8 +994,8 @@ class ClassJacobianAntenna():
                 
                 Rinv=1./R
                 
-                self.R_flat=np.rollaxis(R,2).reshape(self.NJacobBlocks,nr*nch*self.NJacobBlocks)
-                self.Rinv_flat=np.rollaxis(Rinv,2).reshape(self.NJacobBlocks,nr*nch*self.NJacobBlocks)
+                self.R_flat=np.rollaxis(R,2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
+                self.Rinv_flat=np.rollaxis(Rinv,2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
                 Rmin=np.min(R)
                 #Rmax=np.max(R)
                 Flag=(self.R_flat>1e3*Rmin)

@@ -148,6 +148,9 @@ class ClassWirtingerSolver():
         if self.PolMode=="Scalar":
             self.SolsArray_Full.G[0:ind.size,:,:,0,0]=self.SolsArray_G[0:ind.size,:,:,0,0]
             self.SolsArray_Full.G[0:ind.size,:,:,1,1]=self.SolsArray_G[0:ind.size,:,:,0,0]
+        elif self.PolMode=="IDiag":
+            self.SolsArray_Full.G[0:ind.size,:,:,0,0]=self.SolsArray_G[0:ind.size,:,:,0,0]
+            self.SolsArray_Full.G[0:ind.size,:,:,1,1]=self.SolsArray_G[0:ind.size,:,:,1,0]
         else:                
             self.SolsArray_Full.G[0:ind.size]=self.SolsArray_G[0:ind.size]
 
@@ -171,10 +174,10 @@ class ClassWirtingerSolver():
 
         if type(G)==type(None):
             if self.PolMode=="Scalar":
-                npol=1
                 G=np.ones((na,nd,1,1),np.complex128)
+            elif self.PolMode=="IDiag":
+                G=np.ones((na,nd,2,1),np.complex128)
             else:
-                npol=2
                 G=np.zeros((na,nd,2,2),np.complex128)
                 G[:,:,0,0]=1
                 G[:,:,1,1]=1
@@ -184,7 +187,7 @@ class ClassWirtingerSolver():
             self.HasFirstGuessed=True
         self.G=G
         #self.G*=0.001
-        _,_,npol,_=self.G.shape
+        _,_,npolx,npoly=self.G.shape
 
 
         #print "!!!!!!!!!!"
@@ -198,7 +201,7 @@ class ClassWirtingerSolver():
         self.SolsArray_t1=np.zeros((NSols,),dtype=np.float64)
         self.SolsArray_tm=np.zeros((NSols,),dtype=np.float64)
         self.SolsArray_done=np.zeros((NSols,),dtype=np.bool8)
-        self.SolsArray_G=np.zeros((NSols,na,nd,npol,npol),dtype=np.complex64)
+        self.SolsArray_G=np.zeros((NSols,na,nd,npolx,npoly),dtype=np.complex64)
 
         self.SolsArray_t0=NpShared.ToShared("%sSolsArray_t0"%self.IdSharedMem,self.SolsArray_t0)
         self.SolsArray_t1=NpShared.ToShared("%sSolsArray_t1"%self.IdSharedMem,self.SolsArray_t1)
@@ -226,12 +229,17 @@ class ClassWirtingerSolver():
         _,_,npol,_=self.G.shape
         
         if FromG==False:
-            if self.PolMode=="Scalar":
-                P=(sigP**2)*np.array([np.diag(np.ones((nd,),np.complex128)) for iAnt in range(na)])
-                Q=(sigQ**2)*np.array([np.diag(np.ones((nd,),np.complex128)) for iAnt in range(na)])
-            else:
-                P=(sigP**2)*np.array([np.diag(np.ones((nd*2*2),np.complex128)) for iAnt in range(na)])
-                Q=(sigQ**2)*np.array([np.diag(np.ones((nd*2*2),np.complex128)) for iAnt in range(na)])
+            if self.PolMode=="IDiag":
+                npolx=2
+                npoly=1
+            elif self.PolMode=="Scalar":
+                npolx=1
+                npoly=1
+            elif self.PolMode=="HalfFull":
+                npolx=2
+                npoly=2
+            P=(sigP**2)*np.array([np.diag(np.ones((nd*npolx*npoly,),np.complex128)) for iAnt in range(na)])
+            Q=(sigQ**2)*np.array([np.diag(np.ones((nd*npolx*npoly,),np.complex128)) for iAnt in range(na)])
         else:
 
             P=(sigP**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*np.diag(np.ones((nd*npol*npol),np.complex128)) for iAnt in range(na)])
@@ -243,20 +251,22 @@ class ClassWirtingerSolver():
             dec=self.SM.ClusterCat.dec
             ns=ra.size
             
-            d=np.sqrt((ra.reshape((ns,1))-ra.reshape((1,ns)))**2+(dec.reshape((ns,1))-dec.reshape((1,ns)))**2)
-            d0=1e-5*np.pi/180
-            QQ=(1./(1.+d/d0))**2
-            Qa=np.zeros((nd,npol,npol,nd,npol,npol),np.complex128)
-            for ipol in range(npol):
-                for jpol in range(npol):
-                    Qa[:,ipol,jpol,:,ipol,jpol]=QQ[:,:]
+            # d=np.sqrt((ra.reshape((ns,1))-ra.reshape((1,ns)))**2+(dec.reshape((ns,1))-dec.reshape((1,ns)))**2)
+            # d0=1e-5*np.pi/180
+            # QQ=(1./(1.+d/d0))**2
+            # Qa=np.zeros((nd,npol,npol,nd,npol,npol),np.complex128)
+            # for ipol in range(npol):
+            #     for jpol in range(npol):
+            #         Qa[:,ipol,jpol,:,ipol,jpol]=QQ[:,:]
+
+            Qa=np.zeros((nd,npolx,npoly,nd,npolx,npoly),np.complex128)
             F=self.SM.ClusterCat.SumI.copy()
             F/=F.max()
 
             for idir in range(nd):
                 Qa[idir,:,:,idir,:,:]*=F[idir]**2
 
-            Qa=Qa.reshape((nd*npol*npol,nd*npol*npol))
+            Qa=Qa.reshape((nd*npolx*npoly,nd*npolx*npoly))
             Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*Qa for iAnt in range(na)])
 
 

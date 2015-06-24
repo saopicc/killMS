@@ -30,7 +30,8 @@ def main(options=None):
     CS=ClassSimul(ll[0],SMName)
     Sols=CS.GiveSols()
     for l in ll:
-        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
+        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
+        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
         CS.DoSimul()
 
 class ClassSimul():
@@ -172,7 +173,7 @@ class ClassSimul():
 
     def DoSimul(self):
     
-        Noise=0.
+        Noise=.1
         MS=self.MS
         SM=self.SM
         VS=self.VS

@@ -54,7 +54,7 @@ class ClassModelEvolution():
         G=NpShared.GiveArray("%sSolsArray_G"%self.IdSharedMem)[indDone][:,self.iAnt,:,:,:]
 
         
-        nt,nd,npol,_=G.shape
+        nt,nd,npolx,npoly=G.shape
 
         #if nt<=self.StepStart: return None
 
@@ -65,7 +65,7 @@ class ClassModelEvolution():
         G=G.copy()
 
         nt,_,_,_=G.shape
-        NPars=nd*npol*npol
+        NPars=nd*npolx*npoly
         G=G.reshape((nt,NPars))
         
 
