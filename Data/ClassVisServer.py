@@ -255,9 +255,9 @@ class ClassVisServer():
             DATA=self.PutInShared(DATA)
             DATA["A0A1"]=(DATA["A0"],DATA["A1"])
 
-        
-        if "DicoBeam" in D.keys():
-            NpShared.DicoToShared("%sDicoBeam"%self.IdSharedMem,D["DicoBeam"])
+
+        if "PreApplyJones" in D.keys():
+            NpShared.DicoToShared("%sPreApplyJones"%self.IdSharedMem,D["PreApplyJones"])
 
         #it0=np.min(DATA["IndexTimesThisChunk"])
         #it1=np.max(DATA["IndexTimesThisChunk"])+1
@@ -551,7 +551,7 @@ class ClassVisServer():
                     TimeMapping=ind
                     DicoBeam["Jones"]=Beam
                     self.ThisDataChunk["MapJones"]=TimeMapping
-                    self.ThisDataChunk["DicoBeam"]=DicoBeam
+                    self.ThisDataChunk["PreApplyJones"]=DicoBeam
     
                     DicoClusterDirs={}
                     DicoClusterDirs["l"]=self.SM.ClusterCat.l

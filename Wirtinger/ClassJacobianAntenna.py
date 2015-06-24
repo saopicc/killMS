@@ -181,9 +181,9 @@ class ClassJacobianAntenna():
         #     key=SharedNames.split(".")[1]
         #     self.DATA[key]=NpShared.GiveArray(SharedName)
         self.DATA=NpShared.SharedToDico("%sSharedVis"%self.IdSharedMem)
-        DicoBeam=NpShared.SharedToDico("%sDicoBeam"%self.IdSharedMem)
+        DicoBeam=NpShared.SharedToDico("%sPreApplyJones"%self.IdSharedMem)
         if DicoBeam!=None:
-            self.DATA["DicoBeam"]=DicoBeam
+            self.DATA["DicoPreApplyJones"]=DicoBeam
             self.DATA["DicoClusterDirs"]=NpShared.SharedToDico("%sDicoClusterDirs"%self.IdSharedMem)
 
         #self.DATA["UVW_RefAnt"]=NpShared.GiveArray("%sUVW_RefAnt"%self.IdSharedMem)
@@ -800,8 +800,8 @@ class ClassJacobianAntenna():
 
         ApplyTimeJones=None
         #print self.DicoData.keys()
-        if "DicoBeam" in self.DicoData.keys():
-            ApplyTimeJones=self.DicoData["DicoBeam"]
+        if "DicoPreApplyJones" in self.DicoData.keys():
+            ApplyTimeJones=self.DicoData["DicoPreApplyJones"]
 
         #import gc
         #gc.enable()
@@ -1021,14 +1021,13 @@ class ClassJacobianAntenna():
 
             #stop
 
-
-        if "DicoBeam" in DATA.keys():
+        if "DicoPreApplyJones" in DATA.keys():
             DicoJonesMatrices={}
-            DicoJones_Beam=NpShared.SharedToDico("%sJonesFile_Beam"%self.IdSharedMem)
-            DicoJonesMatrices["DicoJones_Beam"]=DATA["DicoBeam"]
-            DicoJonesMatrices["DicoJones_Beam"]["MapJones"]=DATA["MapJones"]
-            DicoJonesMatrices["DicoJones_Beam"]["DicoClusterDirs"]=DATA["DicoClusterDirs"]
-            DicoData["DicoBeam"]=DicoJonesMatrices
+            #DicoApplyJones=NpShared.SharedToDico("%sPreApplyJonesFile"%self.IdSharedMem)
+            DicoJonesMatrices["DicoApplyJones"]=DATA["DicoPreApplyJones"]
+            DicoJonesMatrices["DicoApplyJones"]["MapJones"]=DATA["MapJones"]
+            DicoJonesMatrices["DicoApplyJones"]["DicoClusterDirs"]=DATA["DicoClusterDirs"]
+            DicoData["DicoPreApplyJones"]=DicoJonesMatrices
 
 
         # DicoData["A0"] = np.concatenate([DATA['A0'][ind0]])

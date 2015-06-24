@@ -47,7 +47,7 @@ from killMS2.Wirtinger.ClassWirtingerSolver import ClassWirtingerSolver
 from killMS2.Other import ClassTimeIt
 from killMS2.Data import ClassVisServer
 
-from Predict.PredictGaussPoints_NumExpr4 import ClassPredictParallel as ClassPredict 
+from Predict.PredictGaussPoints_NumExpr5 import ClassPredictParallel as ClassPredict 
 #from Predict.PredictGaussPoints_NumExpr2 import ClassPredictParallel as ClassPredict_orig
 #from Predict.PredictGaussPoints_NumExpr4 import ClassPredict as ClassPredict 
 #from Predict.PredictGaussPoints_NumExpr2 import ClassPredict as ClassPredict_orig
@@ -387,8 +387,8 @@ def main(OP=None,MSName=None):
             #     G/=gabs
 
 
-            Jones["Beam"]=G
-            Jones["BeamH"]=ModLinAlg.BatchH(G)
+            Jones["Jones"]=G
+            Jones["JonesH"]=ModLinAlg.BatchH(G)
             Jones["ChanMap"]=np.zeros((VS.MS.NSPWChan,))
             times=Solver.VS.ThisDataChunk["times"]
 
@@ -495,11 +495,10 @@ def main(OP=None,MSName=None):
                     if options.BeamModel==None:
                         JonesMerged=Jones
                     else:
-                        Jones["Jones"]=Jones["Beam"]
                         Jones["tm"]=(Jones["t0"]+Jones["t1"])/2.
-                        Beam=Solver.VS.ThisDataChunk["DicoBeam"]
-                        Beam["tm"]=(Beam["t0"]+Beam["t1"])/2.
-                        JonesMerged=MergeJones.MergeJones(Jones,Beam)
+                        PreApplyJones=Solver.VS.ThisDataChunk["PreApplyJones"]
+                        PreApplyJones["tm"]=(PreApplyJones["t0"]+PreApplyJones["t1"])/2.
+                        JonesMerged=MergeJones.MergeJones(Jones,PreApplyJones)
 
                         DicoJonesMatrices=JonesMerged
                         G=JonesMerged["Jones"]

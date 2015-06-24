@@ -31,7 +31,7 @@ def test():
     DicoPropPointings[0]={"offset":(0,0),
                           "Ns":10,
                           "Nc":0,
-                          "Diam":0.2,
+                          "Diam":2,
                           "finfo":(40e6,80e6,3),
                           "Mode":"Random"}
 

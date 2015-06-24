@@ -54,8 +54,8 @@ class ClassPredict():
 
     def ApplyCal(self,DicoData,ApplyTimeJones,iCluster):
         D=ApplyTimeJones
-        Beam=D["Beam"]
-        BeamH=D["BeamH"]
+        Beam=D["Jones"]
+        BeamH=D["JonesH"]
         lt0,lt1=D["t0"],D["t1"]
         ColOutDir=DicoData["data"]
         A0=DicoData["A0"]
@@ -83,11 +83,11 @@ class ClassPredict():
             for ichan in range(len(ChanMap)):
                 JChan=ChanMap[ichan]
                 if iCluster!=-1:
-                    J0=Beam[it,iCluster,:,JChan,:,:].reshape((na,4))
-                    JH0=BeamH[it,iCluster,:,JChan,:,:].reshape((na,4))
+                    J0=Jones[it,iCluster,:,JChan,:,:].reshape((na,4))
+                    JH0=JonesH[it,iCluster,:,JChan,:,:].reshape((na,4))
                 else:
-                    J0=np.mean(Beam[it,:,:,JChan,:,:],axis=1).reshape((na,4))
-                    JH0=np.mean(BeamH[it,:,:,JChan,:,:],axis=1).reshape((na,4))
+                    J0=np.mean(Jones[it,:,:,JChan,:,:],axis=1).reshape((na,4))
+                    JH0=np.mean(JonesH[it,:,:,JChan,:,:],axis=1).reshape((na,4))
                 
                 J=ModLinAlg.BatchInverse(J0)
                 JH=ModLinAlg.BatchInverse(JH0)
@@ -106,7 +106,10 @@ class ClassPredict():
 
 
     def GiveParamJonesList(self,DicoJonesMatricesIn,A0,A1):
-        DicoJonesMatrices=DicoJonesMatricesIn["DicoJones_Beam"]
+        if "DicoApplyJones" in DicoJonesMatricesIn.keys():
+            DicoJonesMatrices=DicoJonesMatricesIn["DicoApplyJones"]
+        else:
+            DicoJonesMatrices=DicoJonesMatricesIn
         JonesMatrices=np.complex64(DicoJonesMatrices["Jones"])
         MapJones=np.int32(DicoJonesMatrices["MapJones"])
         #MapJones=np.int32(np.arange(A0.shape[0]))
@@ -382,7 +385,6 @@ class ClassPredict():
                 #d0=ColOutDir.copy()
                 #ColOutDir.fill(0)
 
-
                 predict.predictJones(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList,AllowEqualiseChan)
                 # print ColOutDir
 
@@ -646,7 +648,7 @@ class WorkerPredict(multiprocessing.Process):
             ApplyTimeJones["MapJones"]=ApplyTimeJones["MapJones"][Row0:Row1]
             
             PM=ClassPredict(NCPU=1,DoSmearing=self.DoSmearing)
-
+            
             #print DicoData.keys()
 
 
