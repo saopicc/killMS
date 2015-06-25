@@ -35,6 +35,7 @@ def main(options=None):
         CS.DoSimul()
 
 class ClassSimul():
+
     def __init__(self,MSName,SMName,Sols=None,ApplyBeam=True):
         self.MSName=MSName
         self.SMName=SMName
@@ -60,7 +61,6 @@ class ClassSimul():
         Sols.t1=MS.F_times+dt/2.
         Sols.tm=MS.F_times
     
-    
         DeltaT_Amp=np.random.randn(na,nd)*60
         period_Amp=120+np.random.randn(na,nd)*10
         Amp_Amp=np.random.randn(na,nd)*.1
@@ -80,7 +80,7 @@ class ClassSimul():
                 for iDir in range(nd):
                     t=Sols.tm[itime]
                     t0=Sols.tm[0]
-                    A=1.+Amp_Amp[iAnt,iDir]*np.sin(DeltaT_Amp[iAnt,iDir]+(t-t0)/period_Amp[iAnt,iDir])
+                    A=.5+Amp_Amp[iAnt,iDir]*np.sin(DeltaT_Amp[iAnt,iDir]+(t-t0)/period_Amp[iAnt,iDir])
                     Phase=PhaseAbs[iAnt,iDir]+Amp_Phase[iAnt,iDir]*np.sin(DeltaT_Phase[iAnt,iDir]+(t-t0)/period_Phase[iAnt,iDir])
                     g0=A*np.exp(1j*Phase)
                     Sols.G[itime,iAnt,iDir,0,0]=g0
@@ -108,11 +108,12 @@ class ClassSimul():
         nt,na,nd,_,_=Sols.G.shape
         G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
 
-        G.fill(0)
-        G[:,:,:,:,0,0]=1
-        G[:,:,:,:,1,1]=1
-        # G[:,:,:,:,0,1]=0.
-        # G[:,:,:,:,1,0]=0.
+        # G.fill(0)
+        # G[:,:,:,:,0,0]=1
+        # G[:,:,:,:,1,1]=1
+
+        G[:,:,:,:,0,1]=0.
+        G[:,:,:,:,1,0]=0.
     
     
         useArrayFactor=True
@@ -175,7 +176,7 @@ class ClassSimul():
 
     def DoSimul(self):
     
-        Noise=0.
+        Noise=0.01
         MS=self.MS
         SM=self.SM
         VS=self.VS
