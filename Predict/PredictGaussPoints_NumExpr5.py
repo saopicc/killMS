@@ -54,8 +54,8 @@ class ClassPredict():
 
     def ApplyCal(self,DicoData,ApplyTimeJones,iCluster):
         D=ApplyTimeJones
-        Beam=D["Jones"]
-        BeamH=D["JonesH"]
+        Jones=D["Jones"]
+        JonesH=D["JonesH"]
         lt0,lt1=D["t0"],D["t1"]
         ColOutDir=DicoData["data"]
         A0=DicoData["A0"]

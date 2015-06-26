@@ -333,7 +333,7 @@ def main(OP=None,MSName=None):
             rms,SolverInit_G=GiveNoise(options,
                                        DicoSelectOptions,
                                        IdSharedMem,
-                                       SM,PM,PM2,ConfigJacobianAntenna)
+                                       SM,PM,PM2,ConfigJacobianAntenna,GD)
             dtype=SolverInit_G.dtype
             SolverInit_G=np.array(np.abs(SolverInit_G),dtype=dtype)
             Solver.InitSol(G=SolverInit_G,TestMode=False)
@@ -567,14 +567,14 @@ def main(OP=None,MSName=None):
     NpShared.DelAll(IdSharedMem)
 
     
-def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2,ConfigJacobianAntenna):
+def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2,ConfigJacobianAntenna,GD):
     print>>log, ModColor.Str("Initialising Kalman filter with Levenberg-Maquardt estimate")
     dtInit=float(options.InitLMdt)
     VSInit=ClassVisServer.ClassVisServer(options.MSName,ColName=options.InCol,
                                          TVisSizeMin=dtInit,
                                          DicoSelectOptions=DicoSelectOptions,
                                          TChunkSize=dtInit/60,IdSharedMem=IdSharedMem,
-                                         SM=SM,NCPU=options.NCPU)
+                                         SM=SM,NCPU=options.NCPU,GD=GD)
     
     VSInit.LoadNextVisChunk()
     # # test
@@ -588,7 +588,7 @@ def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2,ConfigJacobianAnte
                                     SolverType="CohJones",
                                     #DoPlot=options.DoPlot,
                                     DoPBar=False,IdSharedMem=IdSharedMem,
-                                    ConfigJacobianAntenna=ConfigJacobianAntenna)
+                                    ConfigJacobianAntenna=ConfigJacobianAntenna,GD=GD)
     SolverInit.InitSol(TestMode=False)
     SolverInit.doNextTimeSolve_Parallel(OnlyOne=True)
     #SolverInit.doNextTimeSolve()
@@ -598,8 +598,8 @@ def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2,ConfigJacobianAnte
     Jones["t1"]=Sols.t1
     nt,na,nd,_,_=Sols.G.shape
     G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
-    Jones["Beam"]=G
-    Jones["BeamH"]=ModLinAlg.BatchH(G)
+    Jones["Jones"]=G
+    Jones["JonesH"]=ModLinAlg.BatchH(G)
     Jones["ChanMap"]=np.zeros((VSInit.MS.NSPWChan,))
 
     # ind=np.array([],np.int32)

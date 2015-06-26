@@ -228,22 +228,24 @@ class ClassWirtingerSolver():
         
         _,_,npol,_=self.G.shape
         
+
+        if self.PolMode=="IDiag":
+            npolx=2
+            npoly=1
+        elif self.PolMode=="Scalar":
+            npolx=1
+            npoly=1
+        elif self.PolMode=="IFull":
+            npolx=2
+            npoly=2
+
         if FromG==False:
-            if self.PolMode=="IDiag":
-                npolx=2
-                npoly=1
-            elif self.PolMode=="Scalar":
-                npolx=1
-                npoly=1
-            elif self.PolMode=="IFull":
-                npolx=2
-                npoly=2
             P=(sigP**2)*np.array([np.diag(np.ones((nd*npolx*npoly,),np.complex128)) for iAnt in range(na)])
             Q=(sigQ**2)*np.array([np.diag(np.ones((nd*npolx*npoly,),np.complex128)) for iAnt in range(na)])
         else:
 
-            P=(sigP**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*np.diag(np.ones((nd*npol*npol),np.complex128)) for iAnt in range(na)])
-            Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*np.diag(np.ones((nd*npol*npol),np.complex128)) for iAnt in range(na)])
+            P=(sigP**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*np.diag(np.ones((nd*npolx*npoly),np.complex128)) for iAnt in range(na)])
+            Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*np.diag(np.ones((nd*npolx*npoly),np.complex128)) for iAnt in range(na)])
 
 
         if True:
@@ -254,9 +256,9 @@ class ClassWirtingerSolver():
             d=np.sqrt((ra.reshape((ns,1))-ra.reshape((1,ns)))**2+(dec.reshape((ns,1))-dec.reshape((1,ns)))**2)
             d0=1e-5*np.pi/180
             QQ=(1./(1.+d/d0))**2
-            Qa=np.zeros((nd,npol,npol,nd,npol,npol),np.complex128)
-            for ipol in range(npol):
-                for jpol in range(npol):
+            Qa=np.zeros((nd,npolx,npoly,nd,npolx,npoly),np.complex128)
+            for ipol in range(npolx):
+                for jpol in range(npoly):
                     Qa[:,ipol,jpol,:,ipol,jpol]=QQ[:,:]
 
             #Qa=np.zeros((nd,npolx,npoly,nd,npolx,npoly),np.complex128)
