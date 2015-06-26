@@ -208,9 +208,9 @@ class ClassModelEvolution():
         PaOut=F.reshape((NPars,1))*Pa*F.reshape((1,NPars)).conj()+Q
         
         
-
+        
         Gout=Gout.reshape((nd,npol,npol))
-
+        print np.diag(PaOut)
 
         return Gout,PaOut
   

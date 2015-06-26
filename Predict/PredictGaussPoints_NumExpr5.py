@@ -385,7 +385,10 @@ class ClassPredict():
                 #d0=ColOutDir.copy()
                 #ColOutDir.fill(0)
 
-                predict.predictJones(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList,AllowEqualiseChan)
+                # predict.predictJones(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList,AllowEqualiseChan)
+                # ColOutDir0=ColOutDir.copy()
+                # ColOutDir.fill(0)
+                predict.predictJones2(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList,AllowEqualiseChan)
                 # print ColOutDir
 
                 #d1=ColOutDir.copy()

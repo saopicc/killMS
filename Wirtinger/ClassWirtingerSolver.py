@@ -251,15 +251,15 @@ class ClassWirtingerSolver():
             dec=self.SM.ClusterCat.dec
             ns=ra.size
             
-            # d=np.sqrt((ra.reshape((ns,1))-ra.reshape((1,ns)))**2+(dec.reshape((ns,1))-dec.reshape((1,ns)))**2)
-            # d0=1e-5*np.pi/180
-            # QQ=(1./(1.+d/d0))**2
-            # Qa=np.zeros((nd,npol,npol,nd,npol,npol),np.complex128)
-            # for ipol in range(npol):
-            #     for jpol in range(npol):
-            #         Qa[:,ipol,jpol,:,ipol,jpol]=QQ[:,:]
+            d=np.sqrt((ra.reshape((ns,1))-ra.reshape((1,ns)))**2+(dec.reshape((ns,1))-dec.reshape((1,ns)))**2)
+            d0=1e-5*np.pi/180
+            QQ=(1./(1.+d/d0))**2
+            Qa=np.zeros((nd,npol,npol,nd,npol,npol),np.complex128)
+            for ipol in range(npol):
+                for jpol in range(npol):
+                    Qa[:,ipol,jpol,:,ipol,jpol]=QQ[:,:]
 
-            Qa=np.zeros((nd,npolx,npoly,nd,npolx,npoly),np.complex128)
+            #Qa=np.zeros((nd,npolx,npoly,nd,npolx,npoly),np.complex128)
             F=self.SM.ClusterCat.SumI.copy()
             F/=F.max()
 
@@ -267,8 +267,8 @@ class ClassWirtingerSolver():
                 Qa[idir,:,:,idir,:,:]*=F[idir]**2
 
             Qa=Qa.reshape((nd*npolx*npoly,nd*npolx*npoly))
+            
             Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*Qa for iAnt in range(na)])
-
 
 
         self.P=P

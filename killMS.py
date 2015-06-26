@@ -361,9 +361,9 @@ def main(OP=None,MSName=None):
 
         if options.ExtSols=="":
             SaveSols=True
-            Solver.doNextTimeSolve_Parallel()
+            #Solver.doNextTimeSolve_Parallel()
             #Solver.doNextTimeSolve_Parallel(SkipMode=True)
-            #Solver.doNextTimeSolve()
+            Solver.doNextTimeSolve()
             Sols=Solver.GiveSols()
         else:
             Sols=np.load(options.ExtSols)["Sols"]
