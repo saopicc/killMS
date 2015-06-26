@@ -409,7 +409,7 @@ class ClassVisServer():
 
         if self.AddNoiseJy!=None:
             data+=(self.AddNoiseJy/np.sqrt(2.))*(np.random.randn(*data.shape)+1j*np.random.randn(*data.shape))
-        
+            stop
         # Building uvw infos
         #################################################
         #################################################
