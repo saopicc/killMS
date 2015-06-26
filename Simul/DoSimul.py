@@ -212,8 +212,8 @@ class ClassSimul():
         # indr,indf=np.where(ff)
         # f[indr,indf,:]=True
         # MS.flag_all=f
-        # t.putcol("FLAG",f)
-        # t.putcol("FLAG_BACKUP",f)
+        t.putcol("FLAG",f)
+        t.putcol("FLAG_BACKUP",f)
         # t.close()
         # MS.data[f]=1.e10
     

@@ -105,10 +105,15 @@ def read_options():
     OP.add_option('FillFactor',type="float")
 
     OP.OptionGroup("* Beam Options","Beam")
-    OP.add_option('BeamModel')
-    OP.add_option('LOFARBeamMode')
-    OP.add_option('DtBeamMin')
-    OP.add_option('CenterNorm')
+    OP.add_option('BeamModel',type="str",help='Apply beam model, Can be set to: None/LOFAR. Default is %default')
+    OP.add_option('LOFARBeamMode',type="str",help='LOFAR beam mode. "AE" sets the beam model to Array and Element. Default is %default')
+    OP.add_option('DtBeamMin',type="float",help='Estimate the beam every this interval [in minutes]. Default is %default')
+    OP.add_option('CenterNorm',type="str",help='Normalise the beam at the field center. Default is %default')
+
+    OP.OptionGroup("* PreApply killMS Solutions","PreApply")
+    OP.add_option('PreApplySols',type="str",help='Pre-apply killMS solutions in the predict step. Has to be a list. Default is %default')
+    OP.add_option('PreApplyMode',type="str",help='Mode for the pre-applied killMS solutions ("A", "P" and "AP" for Amplitude, Phase and Amplitude+Phase). Has to be a list. Default is %default')
+
 
     OP.OptionGroup("* Weighting scheme","Weighting")
     OP.add_option('Resolution',type="float",help='Resolution in arcsec. Default is %default')
@@ -127,7 +132,8 @@ def read_options():
     OP.add_option('ExtSols',type="str",help='External solution file. If set, will not solve.')
     #OP.add_option('ApplyMode',type="str",help='Substact selected sources. ')
     OP.add_option('ClipMethod',type="str",help='Clip data in the IMAGING_WEIGHT column. Can be set to Resid or DDEResid . Default is %default')
-
+    OP.add_option('OutSolsName',type="str",help='If specified will save the estimated solutions in this file. Default is %default')
+    
     OP.OptionGroup("* Solver options","Solvers")
     OP.add_option('SolverType',help='Name of the solver to use (CohJones/KAFCA)')
     OP.add_option('PolMode',help='Polarisation mode (Scalar/IFull). Default is %default')
@@ -549,6 +555,10 @@ def main(OP=None,MSName=None):
 
     if SaveSols:
         FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.MSName),options.SolverType)
+        if options.OutSolsName!="":
+            FileName="%s%s"%(reformat.reformat(options.MSName),options.OutSolsName)
+            if not(FileName[-4::]==".npz"): FileName+=".npz"
+
         print>>log, "Save Solutions in file: %s"%FileName
         Sols=Solver.GiveSols()
         StationNames=np.array(Solver.VS.MS.StationNames)
