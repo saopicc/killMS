@@ -264,6 +264,7 @@ class ClassWirtingerSolver():
             #Qa=np.zeros((nd,npolx,npoly,nd,npolx,npoly),np.complex128)
             F=self.SM.ClusterCat.SumI.copy()
             F/=F.max()
+
             for idir in range(nd):
                 Qa[idir,:,:,idir,:,:]*=F[idir]**2
     
