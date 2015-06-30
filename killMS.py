@@ -354,10 +354,13 @@ def main(OP=None,MSName=None):
     else:
         DoSubstract=0
 
+
+
     # print "!!!!!!!!!!!!!!"
     #
     # Solver.InitCovariance(FromG=True,sigP=options.CovP,sigQ=options.CovQ)
 
+    SourceCatSub=None
     SaveSols=False
     while True:
 
@@ -482,12 +485,11 @@ def main(OP=None,MSName=None):
                 t.putcol("IMAGING_WEIGHT",Weights)
                 t.close()
 
-                
             if DoSubstract:
                 print>>log, ModColor.Str("Substract sources ... ",col="green")
                 SM.SelectSubCat(SM.SourceCat.kill==1)
 
-                
+                SourceCatSub=SM.SourceCat.copy()
 
                 if options.SubOnly==1:
                     print>>log, ModColor.Str(" Sublonly ... ",col="green")
@@ -562,7 +564,15 @@ def main(OP=None,MSName=None):
         print>>log, "Save Solutions in file: %s"%FileName
         Sols=Solver.GiveSols()
         StationNames=np.array(Solver.VS.MS.StationNames)
-        np.savez(FileName,Sols=Sols,StationNames=StationNames,SkyModel=SM.ClusterCat,ClusterCat=SM.ClusterCat)
+            
+
+        np.savez(FileName,
+                 Sols=Sols,
+                 StationNames=StationNames,
+                 SkyModel=SM.ClusterCat,
+                 ClusterCat=SM.ClusterCat,
+                 SourceCatSub=SourceCatSub,
+                 ModelName=options.SkyModel)
 
     NpShared.DelAll(IdSharedMem)
 

@@ -3,6 +3,8 @@ from killMS2.Other import ModColor
 import numpy as np
 from killMS2.Other import MyLogger
 log=MyLogger.getLogger("NpShared")
+from killMS2.Other import ClassTimeIt
+
 
 def zeros(*args,**kwargs):
     return SharedArray.create(*args,**kwargs)
@@ -68,15 +70,19 @@ def DicoToShared(Prefix,Dico,DelInput=False):
 def SharedToDico(Prefix):
 
     print>>log, ModColor.Str("SharedToDico: start [prefix = %s]"%Prefix)
+    T=ClassTimeIt.ClassTimeIt("   SharedToDico")
     Lnames=ListNames()
+    T.timeit("0: ListNames")
     keys=[Name for Name in Lnames if Prefix in Name]
     if len(keys)==0: return None
     DicoOut={}
+    T.timeit("1")
     for Sharedkey in keys:
         key=Sharedkey.split(".")[-1]
         print>>log, ModColor.Str("  %s -> %s"%(Sharedkey,key))
         Shared=GiveArray(Sharedkey)
         DicoOut[key]=Shared
+    T.timeit("2a")
     print>>log, ModColor.Str("SharedToDico: done")
 
 

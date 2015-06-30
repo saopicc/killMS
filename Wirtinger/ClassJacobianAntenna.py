@@ -180,11 +180,18 @@ class ClassJacobianAntenna():
         # for SharedName in SharedNames:
         #     key=SharedNames.split(".")[1]
         #     self.DATA[key]=NpShared.GiveArray(SharedName)
+
+        T=ClassTimeIt.ClassTimeIt("setDATA_Shared")
+        #T.disable()
+        
         self.DATA=NpShared.SharedToDico("%sSharedVis"%self.IdSharedMem)
+        T.timeit("SharedToDico0")
         DicoBeam=NpShared.SharedToDico("%sPreApplyJones"%self.IdSharedMem)
+        T.timeit("SharedToDico1")
         if DicoBeam!=None:
             self.DATA["DicoPreApplyJones"]=DicoBeam
             self.DATA["DicoClusterDirs"]=NpShared.SharedToDico("%sDicoClusterDirs"%self.IdSharedMem)
+        T.timeit("SharedToDico2")
 
         #self.DATA["UVW_RefAnt"]=NpShared.GiveArray("%sUVW_RefAnt"%self.IdSharedMem)
 
