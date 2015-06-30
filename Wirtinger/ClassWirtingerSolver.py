@@ -744,6 +744,7 @@ class WorkerAntennaLM(multiprocessing.Process):
 
             print "============"
             T=ClassTimeIt.ClassTimeIt("Worker")
+            T.disable()
             # if DoCalcEvP:
             #     T.disable()
             JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,PM=self.PM,IdSharedMem=self.IdSharedMem,GD=self.GD,
