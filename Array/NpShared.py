@@ -28,6 +28,9 @@ def DelArray(Name):
         pass
 
 def ListNames():
+    
+    T=ClassTimeIt.ClassTimeIt("   SharedToDico")
+    
     ll=list(SharedArray.list())
     return [AR.name for AR in ll]
     
