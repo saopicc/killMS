@@ -366,24 +366,24 @@ class ClassJacobianAntenna():
             self.setQxInvPol()
         
         self.CalcJacobianAntenna(Gains)
-        #T.timeit("Jacob")
+        T.timeit("Jacob")
         
         # if Gains0Iter!=None:
         #     Ga=self.GiveSubVecGainAnt(Gains0Iter)
 
         Jx=self.J_x(Ga)
-        #T.timeit("J_x")
+        T.timeit("J_x")
 
         
 
         self.PrepareJHJ_EKF(Pa,rms)
-        #T.timeit("PrepareJHJ")
+        T.timeit("PrepareJHJ")
 
         # estimate x
         zr=(z-Jx)
         
 
-        #T.timeit("Resid")
+        T.timeit("Resid")
 
         kapa=self.CalcKapa_i(zr,Pa,rms)
 
@@ -392,7 +392,7 @@ class ClassJacobianAntenna():
         #T.timeit("kapa")
 
         self.rmsFromData=np.std(zr[f])
-        #T.timeit("rmsFromData")
+        T.timeit("rmsFromData")
 
         # if np.isnan(self.rmsFromData):
         #     print zr
@@ -416,7 +416,7 @@ class ClassJacobianAntenna():
 
         x3=self.ApplyK_vec(zr,rms,Pa)
 
-        #T.timeit("ApplyK_vec")
+        T.timeit("ApplyK_vec")
         x0=Ga.flatten()
         x4=x0+self.Lambda*x3.flatten()
 
@@ -429,7 +429,7 @@ class ClassJacobianAntenna():
         #Pa_new1=Pa
 
 
-        #T.timeit("EstimateP")
+        T.timeit("EstimateP")
         # ##################
         # for iPar in range(Pa.shape[0]):
         #     J_Px=self.J_x(Pa[iPar,:])
