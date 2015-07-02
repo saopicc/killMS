@@ -7,7 +7,7 @@ def dot_A_BT(A,BT):
     nxA,nyA=A.shape
     nxB,nyB=B.shape
     
-    if nyA!=nyB: raise NameError("Matrices should have the same height [%i vs %i]"%(nxA,nyA))
+    if nyA!=nyB: raise NameError("Matrices should have the same height [%i vs %i]"%(nyA,nyA))
     if A.dtype!=np.complex64: raise NameError("Has to be complex [is %s]"%(str(A.dtype)))
     if B.dtype!=np.complex64: raise NameError("Has to be complex [is %s]"%(str(B.dtype)))
     

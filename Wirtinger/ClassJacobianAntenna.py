@@ -8,7 +8,7 @@ from killMS2.Data import ClassVisServer
 from killMS2.Array import ModLinAlg
 import pylab
 from killMS2.Other import ClassTimeIt
-
+from killMS2.Array.Dot import NpDotSSE
 
 def testLM():
     SM=ClassSM.ClassSM("../TEST/ModelRandom00.txt.npy")
@@ -142,7 +142,6 @@ class ClassJacobianAntenna():
         if Precision=="S":
             self.CType=np.complex64
             self.FType=np.float32
-            
         self.iAnt=iAnt
         self.SharedDataDicoName="%sDicoData.%2.2i"%(self.IdSharedMem,self.iAnt)
         self.HasKernelMatrix=False
@@ -331,7 +330,15 @@ class ClassJacobianAntenna():
         for ipol in range(self.NJacobBlocks_X):
             PaPol=self.GivePaPol(Pa,ipol)
             #print PaPol,PaPol.shape
-            Prod=np.dot(PaPol,x2[:,ipol,:].flatten())
+
+            # # DOT_np
+            # Prod=np.dot(PaPol,x2[:,ipol,:].flatten())
+            # # DOT_SSE
+            X2=x2[:,ipol,:].flatten()
+            X2=X2.reshape((1,X2.size))
+            Prod=NpDotSSE.dot_A_BT(PaPol,X2)
+            
+
             x3.append(Prod.reshape((self.NDir,1,self.NJacobBlocks_Y)))
 
             
@@ -580,7 +587,18 @@ class ClassJacobianAntenna():
             #flags=self.DicoData["flags_flat"][polIndex]
             J=Jacob#[flags==0]
             # print J.shape, Gain.shape
-            z.append(np.dot(J,Gain))
+
+            # # Numpy
+            # Z=np.dot(J,Gain)
+
+            # SSE
+            Gain=Gain.reshape((1,Gain.size))
+            Z=NpDotSSE.dot_A_BT(J,Gain).ravel()
+
+            z.append(Z)
+
+
+
         z=np.array(z)
         return z
 
@@ -614,7 +632,17 @@ class ClassJacobianAntenna():
             
             J=Jacob[flags==0]
 
-            Gain=np.dot(J.T.conj(),ThisZ.flatten())
+
+            ThisZ=ThisZ.flatten()
+            # # Numpy
+            # Gain=np.dot(J.T.conj(),ThisZ)
+
+            # # SSE
+            ThisZ=ThisZ.reshape((1,ThisZ.size))
+            JTc=self.LJacobTc[polIndex]#.copy()
+            Gain=NpDotSSE.dot_A_BT(JTc,ThisZ)
+
+
             Gains[:,polIndex,:]=Gain.reshape((self.NDir,self.NJacobBlocks_Y))
 
         return Gains
@@ -695,6 +723,11 @@ class ClassJacobianAntenna():
             J.shape=(n4vis*self.NJacobBlocks_Y,NDir*self.NJacobBlocks_Y)
 
 
+        self.LJacobTc=[]
+        for polIndex in range(self.NJacobBlocks_X):
+            flags=self.DicoData["flags_flat"][polIndex]
+            J=self.LJacob[polIndex][flags==0]
+            self.LJacobTc.append(J.T.conj().copy())
 
         self.L_JHJ=[]
         for polIndex in range(self.NJacobBlocks_X):
@@ -703,11 +736,27 @@ class ClassJacobianAntenna():
             nrow,_=J.shape
             if self.Rinv_flat!=None:
                 Rinv=self.Rinv_flat[polIndex][flags==0].reshape((nrow,1))
-                JHJ=np.dot(J.T.conj(),Rinv*J)
+
+                # # Numpy
+                # JHJ=np.dot(J.T.conj(),Rinv*J)
+
+                # SSE
+                RinvJ_T=(Rinv*J).T.copy()
+                JTc=self.LJacobTc[polIndex]#.copy()
+                JHJ=NpDotSSE.dot_A_BT(JTc,RinvJ_T)
+
             else:
-                JHJ=np.dot(J.T.conj(),J)
+                # # Numpy
+                # JHJ=np.dot(J.T.conj(),J)
+                # SSE
+                J_T=J.T.copy()
+                JTc=self.LJacobTc[polIndex]#.copy()
+                JHJ=NpDotSSE.dot_A_BT(JTc,J_T)
                 
-            self.L_JHJ.append(JHJ)
+
+            self.L_JHJ.append(self.CType(JHJ))
+
+
         # self.JHJinv=np.linalg.inv(self.JHJ)
         # self.JHJinv=np.diag(np.diag(self.JHJinv))
 
@@ -1003,6 +1052,10 @@ class ClassJacobianAntenna():
                 
                 self.R_flat=np.rollaxis(R,2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
                 self.Rinv_flat=np.rollaxis(Rinv,2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
+
+                self.R_flat=np.require(self.R_flat,dtype=self.CType)
+                self.Rinv_flat=np.require(self.Rinv_flat,dtype=self.CType)
+
                 Rmin=np.min(R)
                 #Rmax=np.max(R)
                 Flag=(self.R_flat>1e3*Rmin)

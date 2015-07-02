@@ -69,7 +69,7 @@ class ClassModelEvolution():
         G=G.reshape((nt,NPars))
         
 
-        F=np.ones((NPars,),np.complex128)
+        F=np.ones((NPars,),G.dtype)
         PaOut=np.zeros_like(Pa)
 
         tm0=tm.copy()
@@ -145,7 +145,7 @@ class ClassModelEvolution():
         Gout[:]=G[-1]
 
 
-        F=np.ones((NPars,),np.complex128)
+        F=np.ones((NPars,),G.dtype)
         if self.DoEvolve:
             if self.WeightType=="exp":
                 w=np.exp(-tm0/self.WeigthScale)
