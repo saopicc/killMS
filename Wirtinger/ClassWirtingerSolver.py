@@ -98,6 +98,7 @@ class ClassWirtingerSolver():
                  DoPlot=False,
                  DoPBar=True,GD=None,
                  ConfigJacobianAntenna={},TypeRMS="GlobalData"):
+        self.DType=np.complex64
         self.TypeRMS=TypeRMS
         self.IdSharedMem=IdSharedMem
         self.ConfigJacobianAntenna=ConfigJacobianAntenna
@@ -171,14 +172,13 @@ class ClassWirtingerSolver():
         nd=self.SM.NDir
         
 
-
         if type(G)==type(None):
             if self.PolMode=="Scalar":
-                G=np.ones((na,nd,1,1),np.complex128)
+                G=np.ones((na,nd,1,1),self.DType)
             elif self.PolMode=="IDiag":
-                G=np.ones((na,nd,2,1),np.complex128)
+                G=np.ones((na,nd,2,1),self.DType)
             else:
-                G=np.zeros((na,nd,2,2),np.complex128)
+                G=np.zeros((na,nd,2,2),self.DType)
                 G[:,:,0,0]=1
                 G[:,:,1,1]=1
             self.HasFirstGuessed=False
@@ -240,12 +240,12 @@ class ClassWirtingerSolver():
             npoly=2
 
         if FromG==False:
-            P=(sigP**2)*np.array([np.diag(np.ones((nd*npolx*npoly,),np.complex128)) for iAnt in range(na)])
-            Q=(sigQ**2)*np.array([np.diag(np.ones((nd*npolx*npoly,),np.complex128)) for iAnt in range(na)])
+            P=(sigP**2)*np.array([np.diag(np.ones((nd*npolx*npoly,),self.DType)) for iAnt in range(na)])
+            Q=(sigQ**2)*np.array([np.diag(np.ones((nd*npolx*npoly,),self.DType)) for iAnt in range(na)])
         else:
 
-            P=(sigP**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*np.diag(np.ones((nd*npolx*npoly),np.complex128)) for iAnt in range(na)])
-            Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*np.diag(np.ones((nd*npolx*npoly),np.complex128)) for iAnt in range(na)])
+            P=(sigP**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*np.diag(np.ones((nd*npolx*npoly),self.DType)) for iAnt in range(na)])
+            Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*np.diag(np.ones((nd*npolx*npoly),self.DType)) for iAnt in range(na)])
 
 
         if True:
@@ -256,12 +256,12 @@ class ClassWirtingerSolver():
             d=np.sqrt((ra.reshape((ns,1))-ra.reshape((1,ns)))**2+(dec.reshape((ns,1))-dec.reshape((1,ns)))**2)
             d0=1e-5*np.pi/180
             QQ=(1./(1.+d/d0))**2
-            Qa=np.zeros((nd,npolx,npoly,nd,npolx,npoly),np.complex128)
+            Qa=np.zeros((nd,npolx,npoly,nd,npolx,npoly),self.DType)
             for ipol in range(npolx):
                 for jpol in range(npoly):
                     Qa[:,ipol,jpol,:,ipol,jpol]=QQ[:,:]
 
-            #Qa=np.zeros((nd,npolx,npoly,nd,npolx,npoly),np.complex128)
+            #Qa=np.zeros((nd,npolx,npoly,nd,npolx,npoly),self.DType)
             F=self.SM.ClusterCat.SumI.copy()
             F/=F.max()
 
@@ -369,7 +369,7 @@ class ClassWirtingerSolver():
             ThisTime=tm
             T.timeit("stuff")
             for iAnt in ListAntSolve:
-                JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Precision="D",IdSharedMem=self.IdSharedMem,GD=self.GD,
+                JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Precision="S",IdSharedMem=self.IdSharedMem,GD=self.GD,
                                         **self.ConfigJacobianAntenna)
                 T.timeit("JM")
                 JM.setDATA_Shared()
@@ -750,7 +750,6 @@ class WorkerAntennaLM(multiprocessing.Process):
             #self.e.wait()
             
 
-            #print "============"
             T=ClassTimeIt.ClassTimeIt("Worker")
             T.disable()
             # if DoCalcEvP:
