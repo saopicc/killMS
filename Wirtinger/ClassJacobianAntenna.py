@@ -126,7 +126,7 @@ class ClassJacobianAntenna():
         self.Rinv_flat=None
         for key in kwargs.keys():
             setattr(self,key,kwargs[key])
-        
+        self.TypeDot="Numpy"
         self.PM=PM
         self.SM=SM
         
@@ -142,6 +142,7 @@ class ClassJacobianAntenna():
         if Precision=="S":
             self.CType=np.complex64
             self.FType=np.float32
+        self.CType=np.complex128
         self.iAnt=iAnt
         self.SharedDataDicoName="%sDicoData.%2.2i"%(self.IdSharedMem,self.iAnt)
         self.HasKernelMatrix=False
@@ -331,12 +332,13 @@ class ClassJacobianAntenna():
             PaPol=self.GivePaPol(Pa,ipol)
             #print PaPol,PaPol.shape
 
-            # # DOT_np
-            # Prod=np.dot(PaPol,x2[:,ipol,:].flatten())
-            # # DOT_SSE
-            X2=x2[:,ipol,:].flatten()
-            X2=X2.reshape((1,X2.size))
-            Prod=NpDotSSE.dot_A_BT(PaPol,X2)
+
+            if self.TypeDot=="Numpy":
+                Prod=np.dot(PaPol,x2[:,ipol,:].flatten())
+            elif self.TypeDot=="SSE":
+                X2=x2[:,ipol,:].flatten()
+                X2=X2.reshape((1,X2.size))
+                Prod=NpDotSSE.dot_A_BT(PaPol,X2)
             
 
             x3.append(Prod.reshape((self.NDir,1,self.NJacobBlocks_Y)))
@@ -481,23 +483,25 @@ class ClassJacobianAntenna():
     def doLMStep(self,Gains):
         #print
         
-        #T=ClassTimeIt.ClassTimeIt("doLMStep")
-        #T.disable()
-
-        A=np.random.randn(10000,100)+1j*np.random.randn(10000,100)
-        B=np.random.randn(10000,100)+1j*np.random.randn(10000,100)
-        AT=A.T#.conj().copy()
-#        AT=A.T
-        # A=np.require(A,requirements='F_CONTIGUOUS')
-        # AT=np.require(AT,requirements='F_CONTIGUOUS')
-        # A=np.require(A,requirements='F')
-        # AT=np.require(AT,requirements='F')
-
         T=ClassTimeIt.ClassTimeIt("doLMStep")
-        for i in range(20):
-            np.dot(AT,B)
+        T.disable()
 
-        T.timeit("%i"%i)
+#         A=np.random.randn(10000,100)+1j*np.random.randn(10000,100)
+#         B=np.random.randn(10000,100)+1j*np.random.randn(10000,100)
+#         AT=A.T#.conj().copy()
+# #        AT=A.T
+#         # A=np.require(A,requirements='F_CONTIGUOUS')
+#         # AT=np.require(AT,requirements='F_CONTIGUOUS')
+#         # A=np.require(A,requirements='F')
+#         # AT=np.require(AT,requirements='F')
+
+
+#         T=ClassTimeIt.ClassTimeIt("doLMStep")
+#         for i in range(20):
+#             np.dot(AT,B)
+
+#         T.timeit("%i"%i)
+
         
         if not(self.HasKernelMatrix):
             self.CalcKernelMatrix()
@@ -606,11 +610,12 @@ class ClassJacobianAntenna():
             # print J.shape, Gain.shape
 
             # # Numpy
-            # Z=np.dot(J,Gain)
 
-            # SSE
-            Gain=Gain.reshape((1,Gain.size))
-            Z=NpDotSSE.dot_A_BT(J,Gain).ravel()
+            if self.TypeDot=="Numpy":
+                Z=np.dot(J,Gain)
+            elif self.TypeDot=="SSE":
+                Gain=Gain.reshape((1,Gain.size))
+                Z=NpDotSSE.dot_A_BT(J,Gain).ravel()
 
             z.append(Z)
 
@@ -651,13 +656,13 @@ class ClassJacobianAntenna():
 
 
             ThisZ=ThisZ.flatten()
-            # # Numpy
-            # Gain=np.dot(J.T.conj(),ThisZ)
 
-            # # SSE
-            ThisZ=ThisZ.reshape((1,ThisZ.size))
-            JTc=self.LJacobTc[polIndex]#.copy()
-            Gain=NpDotSSE.dot_A_BT(JTc,ThisZ)
+            if self.TypeDot=="Numpy":
+                Gain=np.dot(J.T.conj(),ThisZ)
+            elif self.TypeDot=="SSE":
+                ThisZ=ThisZ.reshape((1,ThisZ.size))
+                JTc=self.LJacobTc[polIndex]#.copy()
+                Gain=NpDotSSE.dot_A_BT(JTc,ThisZ)
 
 
             Gains[:,polIndex,:]=Gain.reshape((self.NDir,self.NJacobBlocks_Y))
@@ -755,21 +760,20 @@ class ClassJacobianAntenna():
             if self.Rinv_flat!=None:
                 Rinv=self.Rinv_flat[polIndex][flags==0].reshape((nrow,1))
 
-                # # Numpy
-                # JHJ=np.dot(J.T.conj(),Rinv*J)
-
-                # SSE
-                RinvJ_T=(Rinv*J).T.copy()
-                JTc=self.LJacobTc[polIndex]#.copy()
-                JHJ=NpDotSSE.dot_A_BT(JTc,RinvJ_T)
+                if self.TypeDot=="Numpy":
+                    JHJ=np.dot(J.T.conj(),Rinv*J)
+                elif self.TypeDot=="SSE":
+                    RinvJ_T=(Rinv*J).T.copy()
+                    JTc=self.LJacobTc[polIndex]#.copy()
+                    JHJ=NpDotSSE.dot_A_BT(JTc,RinvJ_T)
 
             else:
-                # # Numpy
-                # JHJ=np.dot(J.T.conj(),J)
-                # SSE
-                J_T=J.T.copy()
-                JTc=self.LJacobTc[polIndex]#.copy()
-                JHJ=NpDotSSE.dot_A_BT(JTc,J_T)
+                if self.TypeDot=="Numpy":
+                    JHJ=np.dot(J.T.conj(),J)
+                elif self.TypeDot=="SSE":
+                    J_T=J.T.copy()
+                    JTc=self.LJacobTc[polIndex]#.copy()
+                    JHJ=NpDotSSE.dot_A_BT(JTc,J_T)
                 
 
             self.L_JHJ.append(self.CType(JHJ))
