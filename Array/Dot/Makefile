@@ -1,6 +1,9 @@
-
-
 all: dotSSE.so
+
+# remove compilation products
+clean:
+	rm -f *.o *.so
+
 
 # ---- Link --------------------------- 
 dotSSE.so:  dotSSE.o 
