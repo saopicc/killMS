@@ -143,7 +143,8 @@ class ClassJacobianAntenna():
             self.FType=np.float32
 
         self.CType=np.complex128
-        self.TypeDot="SSE"
+        self.TypeDot="Numpy"
+        #self.TypeDot="SSE"
 
         self.iAnt=iAnt
         self.SharedDataDicoName="%sDicoData.%2.2i"%(self.IdSharedMem,self.iAnt)
@@ -340,7 +341,7 @@ class ClassJacobianAntenna():
             elif self.TypeDot=="SSE":
                 X2=x2[:,ipol,:].flatten()
                 X2=X2.reshape((1,X2.size))
-                Prod=NpDotSSE.dot_A_BT(PaPol,X2)
+                Prod=NpDotSSE.dot_A_BT(PaPol.copy(),X2)
             
 
             x3.append(Prod.reshape((self.NDir,1,self.NJacobBlocks_Y)))
