@@ -8,11 +8,19 @@ def dot_A_BT(A,BT):
     nxB,nyB=B.shape
     
     if nyA!=nyB: raise NameError("Matrices should have the same height [%i vs %i]"%(nyA,nyA))
-    if A.dtype!=np.complex64: raise NameError("Has to be complex [is %s]"%(str(A.dtype)))
-    if B.dtype!=np.complex64: raise NameError("Has to be complex [is %s]"%(str(B.dtype)))
-    
-    C=np.zeros((nxA,nxB),np.complex64)
-    dotSSE.dot(A,B,C)
+
+    DType=A.dtype
+    if DType==np.complex64:
+        IntType=0
+    if DType==np.complex128:
+        IntType=1
+
+    if not((A.dtype==np.complex64)|(A.dtype==np.complex128)): raise NameError("wrong dtype [%s]"%(str(A.dtype)))
+    if not((B.dtype==np.complex64)|(B.dtype==np.complex128)): raise NameError("wrong dtype [%s]"%(str(B.dtype)))
+    if not(A.dtype==B.dtype): raise NameError("A and B must have the same dtype [%s vs %s]"%(str(A.dtype),str(B.dtype)))
+
+    C=np.zeros((nxA,nxB),DType)
+    dotSSE.dot(A,B,C,IntType)
     
     return C
 

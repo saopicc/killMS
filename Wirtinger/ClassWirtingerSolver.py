@@ -98,7 +98,7 @@ class ClassWirtingerSolver():
                  DoPlot=False,
                  DoPBar=True,GD=None,
                  ConfigJacobianAntenna={},TypeRMS="GlobalData"):
-        self.DType=np.complex64
+        self.DType=np.complex128
         self.TypeRMS=TypeRMS
         self.IdSharedMem=IdSharedMem
         self.ConfigJacobianAntenna=ConfigJacobianAntenna

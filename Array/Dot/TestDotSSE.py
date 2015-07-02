@@ -5,11 +5,13 @@ import dotSSE
 
 def test():
 
+
+    DType=np.complex128
     nx=10
     nyA=2
-    A=np.complex64(np.random.randn(nyA,nx)+1j*np.random.randn(nyA,nx))
+    A=DType(np.random.randn(nyA,nx)+1j*np.random.randn(nyA,nx))
     nyB=3
-    B=np.complex64(np.random.randn(nyB,nx)+1j*np.random.randn(nyB,nx))
+    B=DType(np.random.randn(nyB,nx)+1j*np.random.randn(nyB,nx))
 
     #A.fill(1)
     #B.fill(1)
@@ -17,19 +19,22 @@ def test():
     # A=A.T.copy()
     # B=B.T.copy()
 
-    C=np.zeros((nyA,nyB),np.complex64)
+    C=np.zeros((nyA,nyB),DType)
 
     print "==================================="
     print "A",A
     print "B",B
-    
-    print "=========="
-    dotSSE.dot(A,B,C)
-    print C
+    if DType==np.complex64:
+        IntType=0
+    if DType==np.complex128:
+        IntType=1
 
     print "=========="
-    print np.dot(A,B.T)
+    dotSSE.dot(A,B,C,IntType)
 
+    print "=========="
+    D=np.dot(A,B.T)
+    print C-D
 
     # T=ClassTimeIt.ClassTimeIt()
     # for i in range(10):

@@ -33,29 +33,44 @@ void initdotSSE()  {
 static PyObject *dot0(PyObject *self, PyObject *args)
 {
   PyArrayObject *NpA,*NpB,*NpC;
-  
-  if (!PyArg_ParseTuple(args, "O!O!O!",
+  int IntType;
+  if (!PyArg_ParseTuple(args, "O!O!O!i",
 			&PyArray_Type, &NpA,
 			&PyArray_Type, &NpB,
-			&PyArray_Type, &NpC))  return NULL;
+			&PyArray_Type, &NpC,
+			&IntType))  return NULL;
 
-  float complex *A,*B,*C;
-
-  A=p_complex64(NpA);
-  B=p_complex64(NpB);
-  C=p_complex64(NpC);
-
-  size_t sxA, syA, sxB, syB;
-  sxA=NpA->dimensions[0];
-  syA=NpA->dimensions[1];
-  sxB=NpB->dimensions[0];
-  syB=NpB->dimensions[1];
+  if(IntType==0){
+    float complex *A,*B,*C;
+    
+    A=p_complex64(NpA);
+    B=p_complex64(NpB);
+    C=p_complex64(NpC);
+    
+    size_t sxA, syA, sxB, syB;
+    sxA=NpA->dimensions[0];
+    syA=NpA->dimensions[1];
+    sxB=NpB->dimensions[0];
+    syB=NpB->dimensions[1];
+    
+    dotSSE0_64(A, B, C, sxA, syA, sxB, syB);
+  }
+  if(IntType==1){
+    double complex *A,*B,*C;
+    
+    A=p_complex128(NpA);
+    B=p_complex128(NpB);
+    C=p_complex128(NpC);
+    
+    size_t sxA, syA, sxB, syB;
+    sxA=NpA->dimensions[0];
+    syA=NpA->dimensions[1];
+    sxB=NpB->dimensions[0];
+    syB=NpB->dimensions[1];
+    
+    dotSSE0_128(A, B, C, sxA, syA, sxB, syB);
+  }
   
-  //printf("shape A = [%i, %i]\n",(int)(NpA->dimensions[0]),(int)(NpA->dimensions[1]));
-  //printf("shape B = [%i, %i]\n",(int)(NpB->dimensions[0]),(int)(NpB->dimensions[1]));
-
-  dotSSE0(A, B, C, sxA, syA, sxB, syB);
-
   Py_INCREF(Py_None);
   return Py_None;
 }

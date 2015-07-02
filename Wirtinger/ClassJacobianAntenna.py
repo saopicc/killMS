@@ -126,7 +126,6 @@ class ClassJacobianAntenna():
         self.Rinv_flat=None
         for key in kwargs.keys():
             setattr(self,key,kwargs[key])
-        self.TypeDot="Numpy"
         self.PM=PM
         self.SM=SM
         
@@ -142,7 +141,10 @@ class ClassJacobianAntenna():
         if Precision=="S":
             self.CType=np.complex64
             self.FType=np.float32
+
         self.CType=np.complex128
+        self.TypeDot="SSE"
+
         self.iAnt=iAnt
         self.SharedDataDicoName="%sDicoData.%2.2i"%(self.IdSharedMem,self.iAnt)
         self.HasKernelMatrix=False
