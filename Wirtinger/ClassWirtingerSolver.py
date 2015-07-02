@@ -484,7 +484,7 @@ class ClassWirtingerSolver():
         
         
         T=ClassTimeIt.ClassTimeIt("ClassWirtinger")
-        #T.disable()
+        T.disable()
                     
 
 
