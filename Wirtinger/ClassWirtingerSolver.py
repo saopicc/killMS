@@ -483,13 +483,13 @@ class ClassWirtingerSolver():
         import time
         
         
-        T=ClassTimeIt.ClassTimeIt()
-        T.disable()
+        T=ClassTimeIt.ClassTimeIt("ClassWirtinger")
+        #T.disable()
                     
 
 
-        T=ClassTimeIt.ClassTimeIt()
-        T.disable()
+        #T=ClassTimeIt.ClassTimeIt()
+        #T.disable()
         for ii in range(NCPU):
              
             W=WorkerAntennaLM(work_queue, result_queue,self.SM,self.PolMode,self.SolverType,self.IdSharedMem,
@@ -514,7 +514,9 @@ class ClassWirtingerSolver():
         NDone=0
         iiCount=0
         while True:
+            T.reinit()
             Res=self.setNextData()
+            T.timeit("read data")
             if Res=="EndChunk": break
             #print "saving"
             #print "saving"
@@ -556,6 +558,7 @@ class ClassWirtingerSolver():
             elif (self.SolverType=="KAFCA")&(self.iCurrentSol<=self.EvolvePStepStart):
                 DoCalcEvP=True
 
+            T.timeit("before iterloop")
             for LMIter in range(NIter):
                 #print
                 # for EKF
@@ -574,12 +577,14 @@ class ClassWirtingerSolver():
                 for iAnt in ListAntSolve:
                     work_queue.put((iAnt,DoCalcEvP,tm,self.rms,DoEvP))
  
+                T.timeit("put in queue")
                 rmsFromDataList=[]
                 while iResult < NJobs:
                     iAnt,G,P,rmsFromData,InfoNoise = result_queue.get()
                     if rmsFromData!=None:
                         rmsFromDataList.append(rmsFromData)
                     
+                    T.timeit("result_queue.get()")
                     self.G[iAnt][:]=G[:]
                     if type(P)!=type(None):
                         self.P[iAnt,:]=P[:]
@@ -619,6 +624,7 @@ class ClassWirtingerSolver():
                         #print sig
                         
 
+                T.timeit("Kapa")
                 if len(rmsFromDataList)>0:
                     self.rmsFromData=np.min(rmsFromDataList)
                 iResult=0
@@ -650,6 +656,7 @@ class ClassWirtingerSolver():
                     pylab.pause(0.1)
 
 
+            T.timeit("Plot")
 
             NDone+=1
             intPercent=int(100*  NDone / float(nt))
@@ -677,6 +684,7 @@ class ClassWirtingerSolver():
                 self.Graph.savefig()
             #_T.timeit()
 
+            T.timeit("Ending")
             
             if OnlyOne: break
 
@@ -742,7 +750,7 @@ class WorkerAntennaLM(multiprocessing.Process):
             #self.e.wait()
             
 
-            print "============"
+            #print "============"
             T=ClassTimeIt.ClassTimeIt("Worker")
             T.disable()
             # if DoCalcEvP:

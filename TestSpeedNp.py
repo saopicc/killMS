@@ -10,3 +10,5 @@ print "Dot1: ",timeit.timeit("np.dot(a.T.conj(),a)",number=1,setup="import numpy
 
 ss+="; a.fill(0)"
 print "Dot2: ",timeit.timeit("np.dot(a.T.conj(),a)",number=1,setup="import numpy as np; %s"%ss)
+
+

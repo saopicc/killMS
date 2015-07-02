@@ -473,8 +473,25 @@ class ClassJacobianAntenna():
         
     def doLMStep(self,Gains):
         #print
+        
+        #T=ClassTimeIt.ClassTimeIt("doLMStep")
+        #T.disable()
+
+        A=np.random.randn(10000,100)+1j*np.random.randn(10000,100)
+        B=np.random.randn(10000,100)+1j*np.random.randn(10000,100)
+        AT=A.T#.conj().copy()
+#        AT=A.T
+        # A=np.require(A,requirements='F_CONTIGUOUS')
+        # AT=np.require(AT,requirements='F_CONTIGUOUS')
+        # A=np.require(A,requirements='F')
+        # AT=np.require(AT,requirements='F')
+
         T=ClassTimeIt.ClassTimeIt("doLMStep")
-        T.disable()
+        for i in range(20):
+            np.dot(AT,B)
+
+        T.timeit("%i"%i)
+        
         if not(self.HasKernelMatrix):
             self.CalcKernelMatrix()
             T.timeit("CalcKernelMatrix")
@@ -701,11 +718,13 @@ class ClassJacobianAntenna():
             flags=self.DicoData["flags_flat"][polIndex]
             J=self.LJacob[polIndex][flags==0]
             nrow,_=J.shape
+            JH=J.T.conj()
             if self.Rinv_flat!=None:
                 Rinv=self.Rinv_flat[polIndex][flags==0].reshape((nrow,1))
-                JHJ=np.dot(J.T.conj(),Rinv*J)
+                
+                JHJ=np.dot(JH,Rinv*J)
             else:
-                JHJ=np.dot(J.T.conj(),J)
+                JHJ=np.dot(JH,J)
                 
             self.L_JHJ.append(JHJ)
         # self.JHJinv=np.linalg.inv(self.JHJ)
