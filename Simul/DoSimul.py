@@ -206,7 +206,7 @@ class ClassSimul():
 
     def DoSimul(self):
     
-        Noise=0.01
+        Noise=0.0
         MS=self.MS
         SM=self.SM
         VS=self.VS
@@ -242,12 +242,12 @@ class ClassSimul():
         t=table(self.MSName,readonly=False)
         f=t.getcol("FLAG")
         f.fill(0)
-        r=np.random.rand(*(f.shape[0:2]))
-        ff=(r>0.7)
-        indr,indf=np.where(ff)
-        f[indr,indf,:]=True
-        # MS.flag_all=f
-        # MS.data[f]=1.e10
+        # r=np.random.rand(*(f.shape[0:2]))
+        # ff=(r>0.7)
+        # indr,indf=np.where(ff)
+        # f[indr,indf,:]=True
+        # # MS.flag_all=f
+        # # MS.data[f]=1.e10
         t.putcol("FLAG",f)
         t.putcol("FLAG_BACKUP",f)
         t.close()
