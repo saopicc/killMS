@@ -30,7 +30,7 @@ void dotSSE0_64(const float complex * __restrict__ A, const float complex * __re
   
 
   {
-    //#pragma omp parallel for
+#pragma omp parallel for
   for (ic = 0; ic < sxA; ic++)
     {
       
@@ -72,7 +72,7 @@ void dotSSE0_128(const double complex * __restrict__ A, const double complex * _
   
 
   {
-    //#pragma omp parallel for
+#pragma omp parallel for
   for (ic = 0; ic < sxA; ic++)
     {
       
