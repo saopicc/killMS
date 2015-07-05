@@ -25,8 +25,8 @@ def main(options=None):
     MSName="0000.MS"
     #SMName="MultiFreqs2.restored.corr.pybdsm.point.sky_in.npy"
     #ll=sorted(glob.glob("000?.point.w0.MS"))
-    SMName="ModelRandom00.txt.npy"
-    ll=sorted(glob.glob("0000.MS"))
+    SMName="Model.txt.npy"
+    ll=sorted(glob.glob("Simul.MS"))
     CS=ClassSimul(ll[0],SMName)
     Sols=CS.GiveSols()
     for l in ll:
@@ -51,6 +51,11 @@ class ClassSimul():
         na=MS.na
         nd=SM.NDir
         NSols=MS.F_ntimes
+        
+        print "!!!!!!!!!!!!!!!!!"
+
+
+
         Sols=np.zeros((NSols,),dtype=[("t0",np.float64),("t1",np.float64),("tm",np.float64),("G",np.complex64,(na,nd,2,2))])
         Sols=Sols.view(np.recarray)
         Sols.G[:,:,:,0,0]=1#e-3
@@ -60,7 +65,7 @@ class ClassSimul():
         Sols.t0=MS.F_times-dt/2.
         Sols.t1=MS.F_times+dt/2.
         Sols.tm=MS.F_times
-
+        return Sols
 
         DeltaT_Amp=np.random.randn(na,nd)*60
         period_Amp=120+np.random.randn(na,nd)*10
@@ -239,18 +244,18 @@ class ClassSimul():
         #VS.MS.SaveVis(Col="CORRECTED_DATA")
         VS.MS.SaveVis(Col="CORRECTED_DATA_BACKUP")
 
-        t=table(self.MSName,readonly=False)
-        f=t.getcol("FLAG")
-        f.fill(0)
-        # r=np.random.rand(*(f.shape[0:2]))
-        # ff=(r>0.7)
-        # indr,indf=np.where(ff)
-        # f[indr,indf,:]=True
-        # # MS.flag_all=f
-        # # MS.data[f]=1.e10
-        t.putcol("FLAG",f)
-        t.putcol("FLAG_BACKUP",f)
-        t.close()
+        # t=table(self.MSName,readonly=False)
+        # f=t.getcol("FLAG")
+        # f.fill(0)
+        # # r=np.random.rand(*(f.shape[0:2]))
+        # # ff=(r>0.7)
+        # # indr,indf=np.where(ff)
+        # # f[indr,indf,:]=True
+        # # # MS.flag_all=f
+        # # # MS.data[f]=1.e10
+        # t.putcol("FLAG",f)
+        # t.putcol("FLAG_BACKUP",f)
+        # t.close()
 
         
         Sols=self.Sols
