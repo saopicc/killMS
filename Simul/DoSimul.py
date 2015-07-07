@@ -25,8 +25,8 @@ def main(options=None):
     MSName="0000.MS"
     #SMName="MultiFreqs2.restored.corr.pybdsm.point.sky_in.npy"
     #ll=sorted(glob.glob("000?.point.w0.MS"))
-    SMName="Model.txt.npy"
-    ll=sorted(glob.glob("Simul.MS"))
+    SMName="Model1.txt.npy"
+    ll=sorted(glob.glob("Simul.MS.tsel"))
     CS=ClassSimul(ll[0],SMName)
     Sols=CS.GiveSols()
     for l in ll:
@@ -50,74 +50,83 @@ class ClassSimul():
         ApplyBeam=self.ApplyBeam
         na=MS.na
         nd=SM.NDir
-        NSols=MS.F_ntimes
         
-        print "!!!!!!!!!!!!!!!!!"
-
-
-
+        NSols=80
+        
+        tmin,tmax=MS.F_times.min(),MS.F_times.max()
+        tt=np.linspace(tmin,tmax,NSols+1)
+        
         Sols=np.zeros((NSols,),dtype=[("t0",np.float64),("t1",np.float64),("tm",np.float64),("G",np.complex64,(na,nd,2,2))])
         Sols=Sols.view(np.recarray)
         Sols.G[:,:,:,0,0]=1#e-3
         Sols.G[:,:,:,1,1]=1#e-3
-    
-        dt=MS.dt
-        Sols.t0=MS.F_times-dt/2.
-        Sols.t1=MS.F_times+dt/2.
-        Sols.tm=MS.F_times
-        return Sols
+        Sols.t0=tt[0:-1]
+        Sols.t1=tt[1::]
+        Sols.tm=(tt[0:-1]+tt[1::])/2.
 
-        DeltaT_Amp=np.random.randn(na,nd)*60
-        period_Amp=120+np.random.randn(na,nd)*10
-        Amp_Amp=np.random.randn(na,nd)*.1
+        
+        # NSols=MS.F_ntimes
+        # Sols=np.zeros((NSols,),dtype=[("t0",np.float64),("t1",np.float64),("tm",np.float64),("G",np.complex64,(na,nd,2,2))])
+        # Sols=Sols.view(np.recarray)
+        # Sols.G[:,:,:,0,0]=1#e-3
+        # Sols.G[:,:,:,1,1]=1#e-3
     
-        DeltaT_Phase=np.random.randn(na,nd)*60
-        period_Phase=300+np.random.randn(na,nd)*10
-        #period_Phase=np.random.randn(na,nd)*10
-        PhaseAbs=np.random.randn(na,nd)*np.pi
-        Amp_Phase=np.random.randn(na,nd)*np.pi#*0.1
-    
-        #Amp_Amp=np.zeros((na,nd))
-        PhaseAbs.fill(0)
-        #Amp_Phase=np.zeros((na,nd))
-    
-        for itime in range(0,NSols):
-            for iAnt in range(na):
-                for iDir in range(nd):
-                    t=Sols.tm[itime]
-                    t0=Sols.tm[0]
-                    A=.5+Amp_Amp[iAnt,iDir]*np.sin(DeltaT_Amp[iAnt,iDir]+(t-t0)/period_Amp[iAnt,iDir])
-                    Phase=PhaseAbs[iAnt,iDir]+Amp_Phase[iAnt,iDir]*np.sin(DeltaT_Phase[iAnt,iDir]+(t-t0)/period_Phase[iAnt,iDir])
-                    g0=A*np.exp(1j*Phase)
-                    Sols.G[itime,iAnt,iDir,0,0]=g0
-                    #Sols.G[itime,iAnt,iDir,1,1]=g0
+        # dt=MS.dt
+        # Sols.t0=MS.F_times-dt/2.
+        # Sols.t1=MS.F_times+dt/2.
+        # Sols.tm=MS.F_times
 
-        ###############################
+        # DeltaT_Amp=np.random.randn(na,nd)*60
+        # period_Amp=120+np.random.randn(na,nd)*10
+        # Amp_Amp=np.random.randn(na,nd)*.1
+    
+        # DeltaT_Phase=np.random.randn(na,nd)*60
+        # period_Phase=300+np.random.randn(na,nd)*10
+        # #period_Phase=np.random.randn(na,nd)*10
+        # PhaseAbs=np.random.randn(na,nd)*np.pi
+        # Amp_Phase=np.random.randn(na,nd)*np.pi#*0.1
+    
+        # #Amp_Amp=np.zeros((na,nd))
+        # PhaseAbs.fill(0)
+        # #Amp_Phase=np.zeros((na,nd))
+    
+        # for itime in range(0,NSols):
+        #     for iAnt in range(na):
+        #         for iDir in range(nd):
+        #             t=Sols.tm[itime]
+        #             t0=Sols.tm[0]
+        #             A=.5+Amp_Amp[iAnt,iDir]*np.sin(DeltaT_Amp[iAnt,iDir]+(t-t0)/period_Amp[iAnt,iDir])
+        #             Phase=PhaseAbs[iAnt,iDir]+Amp_Phase[iAnt,iDir]*np.sin(DeltaT_Phase[iAnt,iDir]+(t-t0)/period_Phase[iAnt,iDir])
+        #             g0=A*np.exp(1j*Phase)
+        #             Sols.G[itime,iAnt,iDir,0,0]=g0
+        #             #Sols.G[itime,iAnt,iDir,1,1]=g0
 
-        DeltaT_Amp=np.random.randn(na,nd)*60
-        period_Amp=120+np.random.randn(na,nd)*10
-        Amp_Amp=np.random.randn(na,nd)*.1
+        # ###############################
+
+        # DeltaT_Amp=np.random.randn(na,nd)*60
+        # period_Amp=120+np.random.randn(na,nd)*10
+        # Amp_Amp=np.random.randn(na,nd)*.1
     
-        DeltaT_Phase=np.random.randn(na,nd)*60
-        period_Phase=300+np.random.randn(na,nd)*10
-        #period_Phase=np.random.randn(na,nd)*10
-        PhaseAbs=np.random.randn(na,nd)*np.pi
-        Amp_Phase=np.random.randn(na,nd)*np.pi#*0.1
+        # DeltaT_Phase=np.random.randn(na,nd)*60
+        # period_Phase=300+np.random.randn(na,nd)*10
+        # #period_Phase=np.random.randn(na,nd)*10
+        # PhaseAbs=np.random.randn(na,nd)*np.pi
+        # Amp_Phase=np.random.randn(na,nd)*np.pi#*0.1
     
-        #Amp_Amp=np.zeros((na,nd))
-        #PhaseAbs.fill(0)
-        #Amp_Phase=np.zeros((na,nd))
+        # #Amp_Amp=np.zeros((na,nd))
+        # #PhaseAbs.fill(0)
+        # #Amp_Phase=np.zeros((na,nd))
     
-        for itime in range(0,NSols):
-            for iAnt in range(na):
-                for iDir in range(nd):
-                    t=Sols.tm[itime]
-                    t0=Sols.tm[0]
-                    A=.5+Amp_Amp[iAnt,iDir]*np.sin(DeltaT_Amp[iAnt,iDir]+(t-t0)/period_Amp[iAnt,iDir])
-                    Phase=PhaseAbs[iAnt,iDir]+Amp_Phase[iAnt,iDir]*np.sin(DeltaT_Phase[iAnt,iDir]+(t-t0)/period_Phase[iAnt,iDir])
-                    g0=A*np.exp(1j*Phase)
-                    Sols.G[itime,iAnt,iDir,1,1]=g0
-                    #Sols.G[itime,iAnt,iDir,1,1]=g0
+        # for itime in range(0,NSols):
+        #     for iAnt in range(na):
+        #         for iDir in range(nd):
+        #             t=Sols.tm[itime]
+        #             t0=Sols.tm[0]
+        #             A=.5+Amp_Amp[iAnt,iDir]*np.sin(DeltaT_Amp[iAnt,iDir]+(t-t0)/period_Amp[iAnt,iDir])
+        #             Phase=PhaseAbs[iAnt,iDir]+Amp_Phase[iAnt,iDir]*np.sin(DeltaT_Phase[iAnt,iDir]+(t-t0)/period_Phase[iAnt,iDir])
+        #             g0=A*np.exp(1j*Phase)
+        #             Sols.G[itime,iAnt,iDir,1,1]=g0
+        #             #Sols.G[itime,iAnt,iDir,1,1]=g0
 
 
 
@@ -168,13 +177,21 @@ class ClassSimul():
             DicoBeam["t1"]=np.zeros((Tm.size,),np.float64)
             DicoBeam["tm"]=np.zeros((Tm.size,),np.float64)
     
+            rac,decc=MS.radec
+
             for itime in range(Tm.size):
+                print itime
                 DicoBeam["t0"][itime]=T0s[itime]
                 DicoBeam["t1"][itime]=T1s[itime]
                 DicoBeam["tm"][itime]=Tm[itime]
                 ThisTime=Tm[itime]
-                DicoBeam["Jones"][itime]=MS.GiveBeam(ThisTime,RA,DEC)
-    
+                Beam=MS.GiveBeam(ThisTime,RA,DEC)
+                Beam0=MS.GiveBeam(ThisTime,np.array([rac]),np.array([decc]))
+                Beam0inv=ModLinAlg.BatchInverse(Beam0)
+                Ones=np.ones((2, 1, 1, 1, 1),np.float32)
+                Beam0inv=Beam0inv*Ones
+                DicoBeam["Jones"][itime]=ModLinAlg.BatchDot(Beam0inv,Beam)
+                
             nt,nd,na,nch,_,_= DicoBeam["Jones"].shape
             DicoBeam["Jones"]=np.mean(DicoBeam["Jones"],axis=3).reshape((nt,nd,na,1,2,2))
             G=ModLinAlg.BatchDot(G,DicoBeam["Jones"])
@@ -241,21 +258,21 @@ class ClassSimul():
     
     
         #VS.MS.SaveVis(Col="DATA")
-        #VS.MS.SaveVis(Col="CORRECTED_DATA")
-        VS.MS.SaveVis(Col="CORRECTED_DATA_BACKUP")
+        VS.MS.SaveVis(Col="CORRECTED_DATA")
+        #VS.MS.SaveVis(Col="CORRECTED_DATA_BACKUP")
 
-        # t=table(self.MSName,readonly=False)
-        # f=t.getcol("FLAG")
-        # f.fill(0)
-        # # r=np.random.rand(*(f.shape[0:2]))
-        # # ff=(r>0.7)
-        # # indr,indf=np.where(ff)
-        # # f[indr,indf,:]=True
-        # # # MS.flag_all=f
-        # # # MS.data[f]=1.e10
-        # t.putcol("FLAG",f)
-        # t.putcol("FLAG_BACKUP",f)
-        # t.close()
+        t=table(self.MSName,readonly=False)
+        f=t.getcol("FLAG")
+        f.fill(0)
+        # r=np.random.rand(*(f.shape[0:2]))
+        # ff=(r>0.7)
+        # indr,indf=np.where(ff)
+        # f[indr,indf,:]=True
+        # # MS.flag_all=f
+        # # MS.data[f]=1.e10
+        t.putcol("FLAG",f)
+        t.putcol("FLAG_BACKUP",f)
+        t.close()
 
         
         Sols=self.Sols

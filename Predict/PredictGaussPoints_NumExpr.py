@@ -231,6 +231,8 @@ class ClassPredict():
         Ll=self.FType(SourceCat.l)
         Lm=self.FType(SourceCat.m)
         
+        print Ll, Lm
+
         l=Ll.reshape(NSource,1,1,1)
         m=Lm.reshape(NSource,1,1,1)
         nn=self.FType(np.sqrt(1.-l**2-m**2)-1.)

@@ -555,11 +555,11 @@ class ClassMS():
 
         T.timeit()
 
-        wavelength=299792458./reffreq
+        wavelength=299792456./reffreq
         NSPW=chan_freq.shape[0]
         self.ChanFreq=chan_freq
         self.Freq_Mean=np.mean(chan_freq)
-        wavelength_chan=299792458./chan_freq
+        wavelength_chan=299792456./chan_freq
 
         if NSPW>1:
             print "Don't deal with multiple SPW yet"
