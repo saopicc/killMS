@@ -25,8 +25,9 @@ def main(options=None):
     MSName="0000.MS"
     #SMName="MultiFreqs2.restored.corr.pybdsm.point.sky_in.npy"
     #ll=sorted(glob.glob("000?.point.w0.MS"))
-    SMName="Model1.txt.npy"
-    ll=sorted(glob.glob("Simul.MS.tsel"))
+    SMName="Model2.txt.npy"
+    SMName="Model1_center.txt.npy"
+    ll=sorted(glob.glob("Simul.MS"))
     CS=ClassSimul(ll[0],SMName)
     Sols=CS.GiveSols()
     for l in ll:
@@ -50,83 +51,85 @@ class ClassSimul():
         ApplyBeam=self.ApplyBeam
         na=MS.na
         nd=SM.NDir
-        
-        NSols=80
-        
-        tmin,tmax=MS.F_times.min(),MS.F_times.max()
-        tt=np.linspace(tmin,tmax,NSols+1)
-        
-        Sols=np.zeros((NSols,),dtype=[("t0",np.float64),("t1",np.float64),("tm",np.float64),("G",np.complex64,(na,nd,2,2))])
-        Sols=Sols.view(np.recarray)
-        Sols.G[:,:,:,0,0]=1#e-3
-        Sols.G[:,:,:,1,1]=1#e-3
-        Sols.t0=tt[0:-1]
-        Sols.t1=tt[1::]
-        Sols.tm=(tt[0:-1]+tt[1::])/2.
 
-        
-        # NSols=MS.F_ntimes
+        ###############################
+        # NSols=80
+        # tmin,tmax=MS.F_times.min(),MS.F_times.max()
+        # tt=np.linspace(tmin,tmax,NSols+1)
         # Sols=np.zeros((NSols,),dtype=[("t0",np.float64),("t1",np.float64),("tm",np.float64),("G",np.complex64,(na,nd,2,2))])
         # Sols=Sols.view(np.recarray)
         # Sols.G[:,:,:,0,0]=1#e-3
         # Sols.G[:,:,:,1,1]=1#e-3
-    
-        # dt=MS.dt
-        # Sols.t0=MS.F_times-dt/2.
-        # Sols.t1=MS.F_times+dt/2.
-        # Sols.tm=MS.F_times
+        # Sols.t0=tt[0:-1]
+        # Sols.t1=tt[1::]
+        # Sols.tm=(tt[0:-1]+tt[1::])/2.
+        ###############################
 
-        # DeltaT_Amp=np.random.randn(na,nd)*60
-        # period_Amp=120+np.random.randn(na,nd)*10
-        # Amp_Amp=np.random.randn(na,nd)*.1
+        
+        NSols=MS.F_ntimes
+        Sols=np.zeros((NSols,),dtype=[("t0",np.float64),("t1",np.float64),("tm",np.float64),("G",np.complex64,(na,nd,2,2))])
+        Sols=Sols.view(np.recarray)
+        Sols.G[:,:,:,0,0]=1#e-3
+        Sols.G[:,:,:,1,1]=1#e-3
     
-        # DeltaT_Phase=np.random.randn(na,nd)*60
-        # period_Phase=300+np.random.randn(na,nd)*10
-        # #period_Phase=np.random.randn(na,nd)*10
-        # PhaseAbs=np.random.randn(na,nd)*np.pi
-        # Amp_Phase=np.random.randn(na,nd)*np.pi#*0.1
-    
-        # #Amp_Amp=np.zeros((na,nd))
-        # PhaseAbs.fill(0)
-        # #Amp_Phase=np.zeros((na,nd))
-    
-        # for itime in range(0,NSols):
-        #     for iAnt in range(na):
-        #         for iDir in range(nd):
-        #             t=Sols.tm[itime]
-        #             t0=Sols.tm[0]
-        #             A=.5+Amp_Amp[iAnt,iDir]*np.sin(DeltaT_Amp[iAnt,iDir]+(t-t0)/period_Amp[iAnt,iDir])
-        #             Phase=PhaseAbs[iAnt,iDir]+Amp_Phase[iAnt,iDir]*np.sin(DeltaT_Phase[iAnt,iDir]+(t-t0)/period_Phase[iAnt,iDir])
-        #             g0=A*np.exp(1j*Phase)
-        #             Sols.G[itime,iAnt,iDir,0,0]=g0
-        #             #Sols.G[itime,iAnt,iDir,1,1]=g0
+        dt=MS.dt
+        Sols.t0=MS.F_times-dt/2.
+        Sols.t1=MS.F_times+dt/2.
+        Sols.tm=MS.F_times
 
-        # ###############################
+        DeltaT_Amp=np.random.randn(na,nd)*60
+        period_Amp=120+np.random.randn(na,nd)*10
+        Amp_Mean=np.random.rand(na,nd)*2
+        Amp_Amp=np.random.randn(na,nd)*.1
+    
+        DeltaT_Phase=np.random.randn(na,nd)*60
+        period_Phase=300+np.random.randn(na,nd)*10
+        #period_Phase=np.random.randn(na,nd)*10
+        PhaseAbs=np.random.randn(na,nd)*np.pi
+        Amp_Phase=np.random.randn(na,nd)*np.pi#*0.1
+    
+        #Amp_Amp=np.zeros((na,nd))
+        PhaseAbs.fill(0)
+        #Amp_Phase=np.zeros((na,nd))
+    
+        for itime in range(0,NSols):
+            for iAnt in range(na):
+                for iDir in range(nd):
+                    t=Sols.tm[itime]
+                    t0=Sols.tm[0]
+                    A=Amp_Mean[iAnt,iDir]+Amp_Amp[iAnt,iDir]*np.sin(DeltaT_Amp[iAnt,iDir]+(t-t0)/period_Amp[iAnt,iDir])
+                    Phase=PhaseAbs[iAnt,iDir]+Amp_Phase[iAnt,iDir]*np.sin(DeltaT_Phase[iAnt,iDir]+(t-t0)/period_Phase[iAnt,iDir])
+                    g0=A*np.exp(1j*Phase)
+                    Sols.G[itime,iAnt,iDir,0,0]=g0
+                    #Sols.G[itime,iAnt,iDir,1,1]=g0
 
-        # DeltaT_Amp=np.random.randn(na,nd)*60
-        # period_Amp=120+np.random.randn(na,nd)*10
-        # Amp_Amp=np.random.randn(na,nd)*.1
+        ###############################
+
+        DeltaT_Amp=np.random.randn(na,nd)*60
+        period_Amp=120+np.random.randn(na,nd)*10
+        Amp_Amp=np.random.randn(na,nd)*.1
+        Amp_Mean=np.random.rand(na,nd)*2
+   
+        DeltaT_Phase=np.random.randn(na,nd)*60
+        period_Phase=300+np.random.randn(na,nd)*10
+        #period_Phase=np.random.randn(na,nd)*10
+        PhaseAbs=np.random.randn(na,nd)*np.pi
+        Amp_Phase=np.random.randn(na,nd)*np.pi#*0.1
     
-        # DeltaT_Phase=np.random.randn(na,nd)*60
-        # period_Phase=300+np.random.randn(na,nd)*10
-        # #period_Phase=np.random.randn(na,nd)*10
-        # PhaseAbs=np.random.randn(na,nd)*np.pi
-        # Amp_Phase=np.random.randn(na,nd)*np.pi#*0.1
+        #Amp_Amp=np.zeros((na,nd))
+        #PhaseAbs.fill(0)
+        #Amp_Phase=np.zeros((na,nd))
     
-        # #Amp_Amp=np.zeros((na,nd))
-        # #PhaseAbs.fill(0)
-        # #Amp_Phase=np.zeros((na,nd))
-    
-        # for itime in range(0,NSols):
-        #     for iAnt in range(na):
-        #         for iDir in range(nd):
-        #             t=Sols.tm[itime]
-        #             t0=Sols.tm[0]
-        #             A=.5+Amp_Amp[iAnt,iDir]*np.sin(DeltaT_Amp[iAnt,iDir]+(t-t0)/period_Amp[iAnt,iDir])
-        #             Phase=PhaseAbs[iAnt,iDir]+Amp_Phase[iAnt,iDir]*np.sin(DeltaT_Phase[iAnt,iDir]+(t-t0)/period_Phase[iAnt,iDir])
-        #             g0=A*np.exp(1j*Phase)
-        #             Sols.G[itime,iAnt,iDir,1,1]=g0
-        #             #Sols.G[itime,iAnt,iDir,1,1]=g0
+        for itime in range(0,NSols):
+            for iAnt in range(na):
+                for iDir in range(nd):
+                    t=Sols.tm[itime]
+                    t0=Sols.tm[0]
+                    A=Amp_Mean[iAnt,iDir]+Amp_Amp[iAnt,iDir]*np.sin(DeltaT_Amp[iAnt,iDir]+(t-t0)/period_Amp[iAnt,iDir])
+                    Phase=PhaseAbs[iAnt,iDir]+Amp_Phase[iAnt,iDir]*np.sin(DeltaT_Phase[iAnt,iDir]+(t-t0)/period_Phase[iAnt,iDir])
+                    g0=A*np.exp(1j*Phase)
+                    Sols.G[itime,iAnt,iDir,1,1]=g0
+                    #Sols.G[itime,iAnt,iDir,1,1]=g0
 
 
 
@@ -152,9 +155,11 @@ class ClassSimul():
         nt,na,nd,_,_=Sols.G.shape
         G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
 
-        G.fill(0)
-        G[:,:,:,:,0,0]=1
-        G[:,:,:,:,1,1]=1
+        G[:,:,:,:,1,1]=G[:,:,:,:,0,0]
+
+        # G.fill(0)
+        # G[:,:,:,:,0,0]=1
+        # G[:,:,:,:,1,1]=1
 
         # G[:,:,:,:,0,1]=0.
         # G[:,:,:,:,1,0]=0.
@@ -258,21 +263,21 @@ class ClassSimul():
     
     
         #VS.MS.SaveVis(Col="DATA")
-        VS.MS.SaveVis(Col="CORRECTED_DATA")
-        #VS.MS.SaveVis(Col="CORRECTED_DATA_BACKUP")
+        #VS.MS.SaveVis(Col="CORRECTED_DATA")
+        VS.MS.SaveVis(Col="CORRECTED_DATA_BACKUP")
 
-        t=table(self.MSName,readonly=False)
-        f=t.getcol("FLAG")
-        f.fill(0)
-        # r=np.random.rand(*(f.shape[0:2]))
-        # ff=(r>0.7)
-        # indr,indf=np.where(ff)
-        # f[indr,indf,:]=True
-        # # MS.flag_all=f
-        # # MS.data[f]=1.e10
-        t.putcol("FLAG",f)
-        t.putcol("FLAG_BACKUP",f)
-        t.close()
+        # t=table(self.MSName,readonly=False)
+        # f=t.getcol("FLAG")
+        # f.fill(0)
+        # # r=np.random.rand(*(f.shape[0:2]))
+        # # ff=(r>0.7)
+        # # indr,indf=np.where(ff)
+        # # f[indr,indf,:]=True
+        # # # MS.flag_all=f
+        # # # MS.data[f]=1.e10
+        # t.putcol("FLAG",f)
+        # t.putcol("FLAG_BACKUP",f)
+        # t.close()
 
         
         Sols=self.Sols
