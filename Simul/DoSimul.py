@@ -22,18 +22,19 @@ import glob
 
 
 def main(options=None):
-    MSName="0000.MS"
+    #MSName="0000.MS"
     #SMName="MultiFreqs2.restored.corr.pybdsm.point.sky_in.npy"
     #ll=sorted(glob.glob("000?.point.w0.MS"))
-    SMName="Model2.txt.npy"
-    SMName="Model1_center.txt.npy"
-    SMName="ModelRandom00.txt.npy"
-    ll=sorted(glob.glob("Simul.MS"))
+    #SMName="Model2.txt.npy"
+    #SMName="Model1_center.txt.npy"
+    SMName="ModelRandom00.one.txt.npy"
+    #ll=sorted(glob.glob("Simul.MS"))
+    ll=sorted(glob.glob("0000.MS"))
     CS=ClassSimul(ll[0],SMName)
     Sols=CS.GiveSols()
     for l in ll:
-        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
-        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
+        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
+        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
         CS.DoSimul()
 
 class ClassSimul():
@@ -105,35 +106,37 @@ class ClassSimul():
                     Sols.G[itime,iAnt,iDir,0,0]=g0
                     #Sols.G[itime,iAnt,iDir,1,1]=g0
 
-        # ###############################
+        ###############################
 
-        # DeltaT_Amp=np.random.randn(na,nd)*60
-        # period_Amp=120+np.random.randn(na,nd)*10
-        # Amp_Amp=np.random.randn(na,nd)*.1
-        # Amp_Mean=np.random.rand(na,nd)*2
+        DeltaT_Amp=np.random.randn(na,nd)*60
+        period_Amp=120+np.random.randn(na,nd)*10
+        Amp_Amp=np.random.randn(na,nd)*.1
+        Amp_Mean=np.random.rand(na,nd)*2
    
-        # DeltaT_Phase=np.random.randn(na,nd)*60
-        # period_Phase=300+np.random.randn(na,nd)*10
-        # #period_Phase=np.random.randn(na,nd)*10
-        # PhaseAbs=np.random.randn(na,nd)*np.pi
-        # Amp_Phase=np.random.randn(na,nd)*np.pi#*0.1
+        DeltaT_Phase=np.random.randn(na,nd)*60
+        period_Phase=300+np.random.randn(na,nd)*10
+        #period_Phase=np.random.randn(na,nd)*10
+        PhaseAbs=np.random.randn(na,nd)*np.pi
+        Amp_Phase=np.random.randn(na,nd)*np.pi#*0.1
     
-        # #Amp_Amp=np.zeros((na,nd))
-        # #PhaseAbs.fill(0)
-        # #Amp_Phase=np.zeros((na,nd))
+        #Amp_Amp=np.zeros((na,nd))
+        #PhaseAbs.fill(0)
+        #Amp_Phase=np.zeros((na,nd))
     
-        # for itime in range(0,NSols):
-        #     for iAnt in range(na):
-        #         for iDir in range(nd):
-        #             t=Sols.tm[itime]
-        #             t0=Sols.tm[0]
-        #             A=Amp_Mean[iAnt,iDir]+Amp_Amp[iAnt,iDir]*np.sin(DeltaT_Amp[iAnt,iDir]+(t-t0)/period_Amp[iAnt,iDir])
-        #             Phase=PhaseAbs[iAnt,iDir]+Amp_Phase[iAnt,iDir]*np.sin(DeltaT_Phase[iAnt,iDir]+(t-t0)/period_Phase[iAnt,iDir])
-        #             g0=A*np.exp(1j*Phase)
-        #             Sols.G[itime,iAnt,iDir,1,1]=g0
-        #             #Sols.G[itime,iAnt,iDir,1,1]=g0
+        for itime in range(0,NSols):
+            for iAnt in range(na):
+                for iDir in range(nd):
+                    t=Sols.tm[itime]
+                    t0=Sols.tm[0]
+                    A=Amp_Mean[iAnt,iDir]+Amp_Amp[iAnt,iDir]*np.sin(DeltaT_Amp[iAnt,iDir]+(t-t0)/period_Amp[iAnt,iDir])
+                    Phase=PhaseAbs[iAnt,iDir]+Amp_Phase[iAnt,iDir]*np.sin(DeltaT_Phase[iAnt,iDir]+(t-t0)/period_Phase[iAnt,iDir])
+                    g0=A*np.exp(1j*Phase)
+                    Sols.G[itime,iAnt,iDir,1,1]=g0
+                    #Sols.G[itime,iAnt,iDir,1,1]=g0
 
 
+        Sols.G[:,:,:,0,0]=1
+        Sols.G[:,:,:,1,1]=1
 
         return Sols
 
@@ -157,21 +160,19 @@ class ClassSimul():
         nt,na,nd,_,_=Sols.G.shape
         G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
 
-        G[:,:,:,:,1,1]=G[:,:,:,:,0,0]
+        # G[:,:,:,:,1,1]=G[:,:,:,:,0,0]
 
         # G.fill(0)
         # G[:,:,:,:,0,0]=1
         # G[:,:,:,:,1,1]=1
 
-        # G[:,:,:,:,0,1]=0.
-        # G[:,:,:,:,1,0]=0.
     
     
         useArrayFactor=True
         useElementBeam=False
         if ApplyBeam:
             print ModColor.Str("Apply Beam")
-            MS.LoadSR()
+            MS.LoadSR(useElementBeam=False,useArrayFactor=True)
             RA=SM.ClusterCat.ra
             DEC=SM.ClusterCat.dec
             NDir=RA.size
@@ -193,11 +194,15 @@ class ClassSimul():
                 DicoBeam["tm"][itime]=Tm[itime]
                 ThisTime=Tm[itime]
                 Beam=MS.GiveBeam(ThisTime,RA,DEC)
-                Beam0=MS.GiveBeam(ThisTime,np.array([rac]),np.array([decc]))
-                Beam0inv=ModLinAlg.BatchInverse(Beam0)
-                Ones=np.ones((2, 1, 1, 1, 1),np.float32)
-                Beam0inv=Beam0inv*Ones
-                DicoBeam["Jones"][itime]=ModLinAlg.BatchDot(Beam0inv,Beam)
+
+                # ###### Normalise
+                # Beam0=MS.GiveBeam(ThisTime,np.array([rac]),np.array([decc]))
+                # Beam0inv=ModLinAlg.BatchInverse(Beam0)
+                # Ones=np.ones((2, 1, 1, 1, 1),np.float32)
+                # Beam0inv=Beam0inv*Ones
+                # DicoBeam["Jones"][itime]=ModLinAlg.BatchDot(Beam0inv,Beam)
+
+                DicoBeam["Jones"][itime]=Beam
                 
             nt,nd,na,nch,_,_= DicoBeam["Jones"].shape
             DicoBeam["Jones"]=np.mean(DicoBeam["Jones"],axis=3).reshape((nt,nd,na,1,2,2))
