@@ -9,7 +9,7 @@ from pyrap.tables import table
 
 MSTemplate="/media/6B5E-87D0/MS/SimulTec/L102479_SB144_uv.dppp.MS.dppp.tsel_fixed"
 #MSTemplate="/media/tasse/data/TestMarcelin/vlac-hires-1.0s-1.0MHz.MS_p0"
-
+MSTemplate="/data/tasse/BOOTES/TEST/BOOTES24_SB100-109.2ch8s.ms"
 
 def test():
 
@@ -29,11 +29,11 @@ def test():
     #                       "finfo":(100e6,250e6,10)}
 
     DicoPropPointings[0]={"offset":(0,0),
-                          "Ns":4,
+                          "Ns":20,
                           "Nc":0,
-                          "Diam":1,
+                          "Diam":2,
                           "finfo":(40e6,80e6,3),
-                          "Mode":"Grid"}
+                          "Mode":"Random"}
 
 
     # DicoPropPointings[0]={"offset":(0,0),
@@ -191,6 +191,8 @@ class MakeMultipleObs():
             sExec="MakeModel.py --SkyModel=%s --NCluster=%i --CMethod=4 --DoPlot=0"%(SMName,Nc)
             print sExec
             os.system(sExec)
+
+            stop
 
             ModelName=SMName+".npy"
 
