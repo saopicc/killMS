@@ -172,7 +172,7 @@ class ClassSimul():
         useElementBeam=False
         if ApplyBeam:
             print ModColor.Str("Apply Beam")
-            MS.LoadSR(useElementBeam=False,useArrayFactor=True)
+            MS.LoadSR(useElementBeam=True,useArrayFactor=True)
             RA=SM.ClusterCat.ra
             DEC=SM.ClusterCat.dec
             NDir=RA.size
@@ -195,12 +195,15 @@ class ClassSimul():
                 ThisTime=Tm[itime]
                 Beam=MS.GiveBeam(ThisTime,RA,DEC)
 
-                # ###### Normalise
-                # Beam0=MS.GiveBeam(ThisTime,np.array([rac]),np.array([decc]))
-                # Beam0inv=ModLinAlg.BatchInverse(Beam0)
-                # Ones=np.ones((2, 1, 1, 1, 1),np.float32)
-                # Beam0inv=Beam0inv*Ones
-                # DicoBeam["Jones"][itime]=ModLinAlg.BatchDot(Beam0inv,Beam)
+                ###### Normalise
+                Beam0=MS.GiveBeam(ThisTime,np.array([rac]),np.array([decc]))
+                Beam0inv=ModLinAlg.BatchInverse(Beam0)
+                nd,_,_,_,_=Beam.shape
+                Ones=np.ones((nd, 1, 1, 1, 1),np.float32)
+                Beam0inv=Beam0inv*Ones
+                Beam=ModLinAlg.BatchDot(Beam0inv,Beam)
+                ######
+
 
                 DicoBeam["Jones"][itime]=Beam
                 

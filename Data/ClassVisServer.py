@@ -529,6 +529,21 @@ class ClassVisServer():
                         ThisTime=Tm[itime]
                         Beam[itime]=self.MS.GiveBeam(ThisTime,RA,DEC)
     
+                    ###### Normalise
+                    rac,decc=self.MS.radec
+                    if self.GD["Beam"]["CenterNorm"]==1:
+                        for itime in range(Tm.size):
+                            Beam0=self.MS.GiveBeam(ThisTime,np.array([rac]),np.array([decc]))
+                            Beam0inv=ModLinAlg.BatchInverse(Beam0)
+                            nd,_,_,_,_=Beam[itime].shape
+                            Ones=np.ones((nd, 1, 1, 1, 1),np.float32)
+                            Beam0inv=Beam0inv*Ones
+                            Beam[itime]=ModLinAlg.BatchDot(Beam0inv,Beam[itime])
+
+                    ###### 
+
+
+
                     nt,nd,na,nch,_,_= Beam.shape
                     Beam=np.mean(Beam,axis=3).reshape((nt,nd,na,1,2,2))
                     
