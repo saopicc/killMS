@@ -533,6 +533,7 @@ class ClassVisServer():
                     rac,decc=self.MS.radec
                     if self.GD["Beam"]["CenterNorm"]==1:
                         for itime in range(Tm.size):
+                            ThisTime=Tm[itime]
                             Beam0=self.MS.GiveBeam(ThisTime,np.array([rac]),np.array([decc]))
                             Beam0inv=ModLinAlg.BatchInverse(Beam0)
                             nd,_,_,_,_=Beam[itime].shape
