@@ -29,7 +29,7 @@ def main(options=None):
     #SMName="Model1_center.txt.npy"
     SMName="ModelRandom00.one.txt.npy"
     #ll=sorted(glob.glob("Simul.MS"))
-    ll=sorted(glob.glob("0000.MS"))
+    ll=sorted(glob.glob("000?.MS"))
     CS=ClassSimul(ll[0],SMName)
     Sols=CS.GiveSols()
     for l in ll:

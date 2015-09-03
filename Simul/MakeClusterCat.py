@@ -9,7 +9,7 @@ from pyrap.tables import table
 
 MSTemplate="/media/6B5E-87D0/MS/SimulTec/L102479_SB144_uv.dppp.MS.dppp.tsel_fixed"
 #MSTemplate="/media/tasse/data/TestMarcelin/vlac-hires-1.0s-1.0MHz.MS_p0"
-MSTemplate="/data/tasse/BOOTES/TEST/BOOTES24_SB100-109.2ch8s.ms"
+#MSTemplate="/data/tasse/BOOTES/TEST/BOOTES24_SB100-109.2ch8s.ms"
 
 def test():
 
@@ -192,7 +192,7 @@ class MakeMultipleObs():
             print sExec
             os.system(sExec)
 
-            stop
+
 
             ModelName=SMName+".npy"
 
@@ -252,7 +252,7 @@ class MakeMultipleObs():
         D["StartFreq"]={"id":0,"val":np.min(self.MSTemplate.ChanFreq.flatten())-np.abs(self.MSTemplate.dFreq)/2.}
         D["StartTime"]={"id":0,"val":DateTime}
 
-        D["NTimes"]={"id":0,"val":30}#int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
+        D["NTimes"]={"id":0,"val":300}#int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
         #D["NTimes"]={"id":0,"val":int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
         
         D["NParts"]={"id":0,"val":"1"}
