@@ -147,14 +147,10 @@ def main(options=None):
     ampMax=1.5*np.max(np.median(np.abs(LSols[0].G),axis=1))
     if options.PlotMode==0:
         op0=np.abs
-        op1=np.angle
-        ylim0=0,ampMax
-        ylim1=-np.pi,np.pi
     else:
-        op0=np.real
-        op1=np.imag
-        ylim0=-ampMax,ampMax
-        ylim1=-ampMax,ampMax
+        op0=np.angle
+
+    ylim0=0,len(DirList)
         
     # if options.DoResid!=-1:
     #     LSols[-1].G[:,:,iDir,:,:]=LSols[1].G[:,:,iDir,:,:]-LSols[0].G[:,:,iDir,:,:]
@@ -175,11 +171,12 @@ def main(options=None):
             pylab.title(StationNames[iAnt], fontsize=9)
             for iSol in [0]:
                 Sols=LSols[iSol]
-                ax.imshow(np.abs(Sols.G[:,iAnt,:,0,0]).T,vmin=0,vmax=2,interpolation="nearest")
+
+                ax.imshow(op0(Sols.G[:,iAnt,:,0,0]).T,vmin=0,vmax=2,interpolation="nearest",aspect='auto')
                 nt,na,nd,_,_=Sols.G.shape
                 ax.set_xticks([])
                 ax.set_yticks([])
-                ax.set_ylim(0,nd)
+                ax.set_ylim(ylim0)
                 ax.set_xlim(0,nt)
 
             iAnt+=1
