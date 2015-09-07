@@ -28,8 +28,10 @@ def main(options=None):
     #SMName="Model2.txt.npy"
     #SMName="Model1_center.txt.npy"
     SMName="ModelRandom00.one.txt.npy"
+    SMName="ModelRandom00.gauss.txt.npy"
     #ll=sorted(glob.glob("Simul.MS"))
     ll=sorted(glob.glob("000?.MS"))
+    ll=sorted(glob.glob("0000.MS"))
     CS=ClassSimul(ll[0],SMName)
     Sols=CS.GiveSols()
     for l in ll:
@@ -135,8 +137,8 @@ class ClassSimul():
                     #Sols.G[itime,iAnt,iDir,1,1]=g0
 
 
-        # Sols.G[:,:,:,0,0]=1
-        # Sols.G[:,:,:,1,1]=1
+        Sols.G[:,:,:,0,0]=1
+        Sols.G[:,:,:,1,1]=1
 
         return Sols
 
