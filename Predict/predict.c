@@ -19,6 +19,7 @@ static PyMethodDef predict_Methods[] = {
 	{"predict", predict, METH_VARARGS},
 	{"predictJones", predictJones, METH_VARARGS},
 	{"predictJones2", predictJones2, METH_VARARGS},
+	{"ApplyJones", ApplyJones, METH_VARARGS},
 	{"GiveMaxCorr", GiveMaxCorr, METH_VARARGS},
 	{"CorrVis", CorrVis, METH_VARARGS},
 	{NULL, NULL}     /* Sentinel - marks the end of this structure */
@@ -901,7 +902,7 @@ static PyObject *predictJones2(PyObject *self, PyObject *args)
   int nrow,npol,nsources,i,dim[2];
   int AllowChanEquidistant;
   
-  if (!PyArg_ParseTuple(args, "O!O!O!O!O!O!O!i",
+  if (!PyArg_ParseTuple(args, "O!O!O!O!O!O!i",
 			//&ObjVisIn,
 			&PyArray_Type, &NpVisIn, 
 			&PyArray_Type, &NpUVWin, 
@@ -909,51 +910,51 @@ static PyObject *predictJones2(PyObject *self, PyObject *args)
 			&PyList_Type, &LSM,
 			&PyList_Type, &LUVWSpeed,
 			&PyList_Type, &LSmearMode,
-			&PyList_Type, &LJones,
+			//&PyList_Type, &LJones,
 			&AllowChanEquidistant))  return NULL;
   
 
-  //////////////////////////////////////////////
+  /* ////////////////////////////////////////////// */
 
-  int LengthJonesList=PyList_Size(LJones);
-  int DoApplyJones=0;
-  PyArrayObject *npJonesMatrices, *npTimeMappingJonesMatrices, *npA0, *npA1, *npJonesIDIR, *npCoefsInterp,*npModeInterpolation;
-  float complex* ptrJonesMatrices;
-  int *ptrTimeMappingJonesMatrices,*ptrA0,*ptrA1,*ptrJonesIDIR;
-  float *ptrCoefsInterp;
-  int i_dir;
-  int nd_Jones,na_Jones,nch_Jones,nt_Jones;
+  /* int LengthJonesList=PyList_Size(LJones); */
+  /* int DoApplyJones=0; */
+  /* PyArrayObject *npJonesMatrices, *npTimeMappingJonesMatrices, *npA0, *npA1, *npJonesIDIR, *npCoefsInterp,*npModeInterpolation; */
+  /* float complex* ptrJonesMatrices; */
+  /* int *ptrTimeMappingJonesMatrices,*ptrA0,*ptrA1,*ptrJonesIDIR; */
+  /* float *ptrCoefsInterp; */
+  /* int i_dir; */
+  /* int nd_Jones,na_Jones,nch_Jones,nt_Jones; */
   
-  int JonesDims[4];
-  int ModeInterpolation=1;
-  int *ptrModeInterpolation;
+  /* int JonesDims[4]; */
+  /* int ModeInterpolation=1; */
+  /* int *ptrModeInterpolation; */
 
-  npTimeMappingJonesMatrices  = (PyArrayObject *) (PyList_GetItem(LJones, 0));
-  ptrTimeMappingJonesMatrices = p_int32(npTimeMappingJonesMatrices);
+  /* npTimeMappingJonesMatrices  = (PyArrayObject *) (PyList_GetItem(LJones, 0)); */
+  /* ptrTimeMappingJonesMatrices = p_int32(npTimeMappingJonesMatrices); */
 
-  npA0 = (PyArrayObject *) (PyList_GetItem(LJones, 1));
-  ptrA0 = p_int32(npA0);
+  /* npA0 = (PyArrayObject *) (PyList_GetItem(LJones, 1)); */
+  /* ptrA0 = p_int32(npA0); */
 
-  npA1= (PyArrayObject *) (PyList_GetItem(LJones, 2));
-  ptrA1=p_int32(npA1);
+  /* npA1= (PyArrayObject *) (PyList_GetItem(LJones, 2)); */
+  /* ptrA1=p_int32(npA1); */
  
       
-  // (nt,nd,na,1,2,2)
-  npJonesMatrices = (PyArrayObject *) (PyList_GetItem(LJones, 3));
-  ptrJonesMatrices=p_complex64(npJonesMatrices);
-  nt_Jones=(int)npJonesMatrices->dimensions[0];
-  nd_Jones=(int)npJonesMatrices->dimensions[1];
-  na_Jones=(int)npJonesMatrices->dimensions[2];
-  nch_Jones=(int)npJonesMatrices->dimensions[3];
-  JonesDims[0]=nt_Jones;
-  JonesDims[1]=nd_Jones;
-  JonesDims[2]=na_Jones;
-  JonesDims[3]=nch_Jones;
+  /* // (nt,nd,na,1,2,2) */
+  /* npJonesMatrices = (PyArrayObject *) (PyList_GetItem(LJones, 3)); */
+  /* ptrJonesMatrices=p_complex64(npJonesMatrices); */
+  /* nt_Jones=(int)npJonesMatrices->dimensions[0]; */
+  /* nd_Jones=(int)npJonesMatrices->dimensions[1]; */
+  /* na_Jones=(int)npJonesMatrices->dimensions[2]; */
+  /* nch_Jones=(int)npJonesMatrices->dimensions[3]; */
+  /* JonesDims[0]=nt_Jones; */
+  /* JonesDims[1]=nd_Jones; */
+  /* JonesDims[2]=na_Jones; */
+  /* JonesDims[3]=nch_Jones; */
   
-  PyObject *_IDIR  = PyList_GetItem(LJones, 4);
-  i_dir=(int) PyFloat_AsDouble(_IDIR);
+  /* PyObject *_IDIR  = PyList_GetItem(LJones, 4); */
+  /* i_dir=(int) PyFloat_AsDouble(_IDIR); */
 
-  /* ////////////////////////////////////////////// */
+  /* /\* ////////////////////////////////////////////// *\/ */
 
   //i_dir=0;
 
@@ -1151,36 +1152,36 @@ static PyObject *predictJones2(PyObject *self, PyObject *args)
 
   // ApplyJones
 
-  if(ApplyJones==1){
-    for ( irow=0; irow<nrow; irow++)  {
+  /* if(ApplyJones==1){ */
+  /*   for ( irow=0; irow<nrow; irow++)  { */
       
       
-      int i_t=ptrTimeMappingJonesMatrices[irow];
-      int i_ant0=ptrA0[irow];
-      int i_ant1=ptrA1[irow];
-      //printf("r=%i d=%i t=%i a0=%i a1=%i \n ",irow,i_dir, i_t,i_ant0,i_ant1);
+  /*     int i_t=ptrTimeMappingJonesMatrices[irow]; */
+  /*     int i_ant0=ptrA0[irow]; */
+  /*     int i_ant1=ptrA1[irow]; */
+  /*     //printf("r=%i d=%i t=%i a0=%i a1=%i \n ",irow,i_dir, i_t,i_ant0,i_ant1); */
       
-      GiveJones(ptrJonesMatrices, JonesDims, ptrCoefsInterp, i_t, i_ant0, i_dir, J0);
-      GiveJones(ptrJonesMatrices, JonesDims, ptrCoefsInterp, i_t, i_ant1, i_dir, J1);
+  /*     GiveJones(ptrJonesMatrices, JonesDims, ptrCoefsInterp, i_t, i_ant0, i_dir, J0); */
+  /*     GiveJones(ptrJonesMatrices, JonesDims, ptrCoefsInterp, i_t, i_ant1, i_dir, J1); */
       
-      MatH(J1,J1H);
-      MatDot(J0,J1H,JJ);
+  /*     MatH(J1,J1H); */
+  /*     MatDot(J0,J1H,JJ); */
 
 
 
-      for(ch=0;ch<nchan;ch++){
-	ThisVis=VisIn+irow*nchan*4+ch*4;
-	float complex result=ThisVis[0];
+  /*     for(ch=0;ch<nchan;ch++){ */
+  /* 	ThisVis=VisIn+irow*nchan*4+ch*4; */
+  /* 	float complex result=ThisVis[0]; */
 
-	ThisVis[0]   = result*JJ[0];
-	ThisVis[1]   = result*JJ[1];
-	ThisVis[2]   = result*JJ[2];
-	ThisVis[3]   = result*JJ[3];
+  /* 	ThisVis[0]   = result*JJ[0]; */
+  /* 	ThisVis[1]   = result*JJ[1]; */
+  /* 	ThisVis[2]   = result*JJ[2]; */
+  /* 	ThisVis[3]   = result*JJ[3]; */
 	
-      }
+  /*     } */
       
-    }
-  }
+  /*   } */
+  /* } */
   
 
 
@@ -1192,6 +1193,98 @@ static PyObject *predictJones2(PyObject *self, PyObject *args)
   return Py_None;
   ////return Py_None;  
   //return PyArray_Return(NpVisIn);
+}
+
+
+/////////////////////////////////////////////////////////////////////////
+
+static PyObject *ApplyJones(PyObject *self, PyObject *args)
+{
+  PyObject *LJones;
+  PyArrayObject *NpVisIn;
+  int nrow,npol,nsources,i,dim[2];
+  
+  if (!PyArg_ParseTuple(args, "O!O!",
+			&PyArray_Type, &NpVisIn, 
+			&PyList_Type, &LJones))  return NULL;
+  
+
+  int LengthJonesList=PyList_Size(LJones);
+  int DoApplyJones=0;
+  PyArrayObject *npJonesMatrices, *npTimeMappingJonesMatrices, *npA0, *npA1, *npJonesIDIR, *npCoefsInterp,*npModeInterpolation;
+  float complex* ptrJonesMatrices;
+  int *ptrTimeMappingJonesMatrices,*ptrA0,*ptrA1,*ptrJonesIDIR;
+  float *ptrCoefsInterp;
+  int i_dir;
+  int nd_Jones,na_Jones,nch_Jones,nt_Jones;
+  
+  int JonesDims[4];
+  int ModeInterpolation=1;
+  int *ptrModeInterpolation;
+
+  npTimeMappingJonesMatrices  = (PyArrayObject *) (PyList_GetItem(LJones, 0));
+  ptrTimeMappingJonesMatrices = p_int32(npTimeMappingJonesMatrices);
+
+  npA0 = (PyArrayObject *) (PyList_GetItem(LJones, 1));
+  ptrA0 = p_int32(npA0);
+
+  npA1= (PyArrayObject *) (PyList_GetItem(LJones, 2));
+  ptrA1=p_int32(npA1);
+ 
+      
+  // (nt,nd,na,1,2,2)
+  npJonesMatrices = (PyArrayObject *) (PyList_GetItem(LJones, 3));
+  ptrJonesMatrices=p_complex64(npJonesMatrices);
+  nt_Jones=(int)npJonesMatrices->dimensions[0];
+  nd_Jones=(int)npJonesMatrices->dimensions[1];
+  na_Jones=(int)npJonesMatrices->dimensions[2];
+  nch_Jones=(int)npJonesMatrices->dimensions[3];
+  JonesDims[0]=nt_Jones;
+  JonesDims[1]=nd_Jones;
+  JonesDims[2]=na_Jones;
+  JonesDims[3]=nch_Jones;
+  
+  PyObject *_IDIR  = PyList_GetItem(LJones, 4);
+  i_dir=(int) PyFloat_AsDouble(_IDIR);
+
+  float complex* VisIn=p_complex64(NpVisIn);
+  float complex* ThisVis;
+  float complex VisCorr[4]={0};
+  
+  int ch,dd,nchan,ndir;
+  nrow=NpVisIn->dimensions[0];
+  nchan=NpVisIn->dimensions[1];
+
+  float complex J0[4]={0},J1[4]={0},J0inv[4]={0},J1H[4]={0},J1Hinv[4]={0},JJ[4]={0};
+  
+  int irow;
+
+  for ( irow=0; irow<nrow; irow++)  {
+    int i_t=ptrTimeMappingJonesMatrices[irow];
+    int i_ant0=ptrA0[irow];
+    int i_ant1=ptrA1[irow];
+    
+    GiveJones(ptrJonesMatrices, JonesDims, ptrCoefsInterp, i_t, i_ant0, i_dir, J0);
+    GiveJones(ptrJonesMatrices, JonesDims, ptrCoefsInterp, i_t, i_ant1, i_dir, J1);
+    
+    MatH(J1,J1H);
+    MatDot(J0,J1H,JJ);
+    
+    for(ch=0;ch<nchan;ch++){
+      ThisVis=VisIn+irow*nchan*4+ch*4;
+      float complex result=ThisVis[0];
+      
+      ThisVis[0]   = result*JJ[0];
+      ThisVis[1]   = result*JJ[1];
+      ThisVis[2]   = result*JJ[2];
+      ThisVis[3]   = result*JJ[3];
+      
+    }
+  }    
+  
+
+  Py_INCREF(Py_None);
+  return Py_None;
 }
 
 

@@ -370,9 +370,9 @@ def main(OP=None,MSName=None):
 
         if options.ExtSols=="":
             SaveSols=True
-            Solver.doNextTimeSolve_Parallel()
+            #Solver.doNextTimeSolve_Parallel()
             #Solver.doNextTimeSolve_Parallel(SkipMode=True)
-            #Solver.doNextTimeSolve()
+            Solver.doNextTimeSolve()
             Sols=Solver.GiveSols()
         else:
             Sols=np.load(options.ExtSols)["Sols"]
@@ -556,10 +556,13 @@ def main(OP=None,MSName=None):
 
 
     if SaveSols:
-        FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.MSName),options.SolverType)
+        SolsName=options.SolverType
         if options.OutSolsName!="":
-            FileName="%s%s"%(reformat.reformat(options.MSName),options.OutSolsName)
-            if not(FileName[-4::]==".npz"): FileName+=".npz"
+            #FileName="%s%s"%(reformat.reformat(options.MSName),options.OutSolsName)
+            #if not(FileName[-4::]==".npz"): FileName+=".npz"
+            SolsName=options.OutSolsName
+
+        FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.MSName),SolsName)
 
         print>>log, "Save Solutions in file: %s"%FileName
         Sols=Solver.GiveSols()

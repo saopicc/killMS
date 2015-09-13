@@ -150,23 +150,23 @@ class ClassJacobianAntenna():
         self.SharedDataDicoName="%sDicoData.%2.2i"%(self.IdSharedMem,self.iAnt)
         self.HasKernelMatrix=False
         self.LQxInv=None
-
+        
         if self.PolMode=="IFull":
             self.NJacobBlocks_X=2
             self.NJacobBlocks_Y=2
             self.npolData=4
-
+        
         elif self.PolMode=="Scalar":
             self.NJacobBlocks_X=1
             self.NJacobBlocks_Y=1
             self.npolData=1
-
+        
         elif self.PolMode=="IDiag":
             self.NJacobBlocks_X=2
             self.NJacobBlocks_Y=1
             self.npolData=2
-
-
+        
+        
         T.timeit("rest")
     
     def GiveSubVecGainAnt(self,GainsIn):

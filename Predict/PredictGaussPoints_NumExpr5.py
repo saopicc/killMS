@@ -197,97 +197,6 @@ class ClassPredict():
             return self.predictKernelPolClusterImage(DicoData,SM,**kwargs)
 
 
-    def predictKernelPolClusterImage(self,DicoData,SM,iDirection=None,ApplyJones=None,ApplyTimeJones=None,Noise=None):
-        T=ClassTimeIt("predictKernelPolClusterImage")
-        T.disable()
-        self.DicoData=DicoData
-        self.SM=SM
-        
-        freq=DicoData["freqs"]
-        times=DicoData["times"]
-        nf=freq.size
-        na=DicoData["infos"][0]
-        
-        nrows=DicoData["A0"].size
-        T.timeit("0")
-        DataOut=np.zeros((nrows,nf,4),self.CType)
-        if nrows==0: return DataOut
-        
-        self.freqs=freq
-        self.wave=299792458./self.freqs
-        
-        if iDirection!=None:
-            ListDirection=[iDirection]
-        else:
-            ListDirection=SM.Dirs#range(SM.NDir)
-        
-        A0=DicoData["A0"]
-        A1=DicoData["A1"]
-        # if ApplyJones!=None:
-        #     na,NDir,_=ApplyJones.shape
-        #     Jones=np.swapaxes(ApplyJones,0,1)
-        #     Jones=Jones.reshape((NDir,na,4))
-        #     JonesH=ModLinAlg.BatchH(Jones)
-
-        TSmear=0.
-        FSmear=0.
-
-
-        if self.DoSmearing!=0:
-            if "T" in self.DoSmearing:
-                TSmear=1.
-            if "F" in self.DoSmearing:
-                FSmear=1.
-
-        # self.SourceCat.m[:]=0
-        # self.SourceCat.l[:]=0.1
-        # self.SourceCat.I[:]=10
-        # self.SourceCat.alpha[:]=0
-
-        # DataOut=DataOut[1:2]
-        # self.DicoData["uvw"]=self.DicoData["uvw"][1:2]
-        # self.DicoData["A0"]=self.DicoData["A0"][1:2]
-        # self.DicoData["A1"]=self.DicoData["A1"][1:2]
-        # self.DicoData["IndexTimesThisChunk"]=self.DicoData["IndexTimesThisChunk"][1:2]
-        # self.SourceCat=self.SourceCat[0:1]
-
-        DT=DicoData["infos"][1]
-        UVW_dt=DicoData["UVW_dt"]
-        
-        ColOutDir=np.zeros(DataOut.shape,np.complex64)
-        DATA=DicoData
-
-        T.timeit("1")
-
-
-        for iCluster in ListDirection:
-            iFacet=iCluster
-            if SM.ClusterCat.SumI[iFacet]==0: continue
-            GridMachine=self.DicoGM[iFacet]#self.GiveGM(iFacet,SM)
-            T.timeit("2: GM")
-            uvwThis=DATA["uvw"]
-            flagsThis=DATA["flags_image"]
-            times=DATA["times"]
-            A0=DATA["A0"]
-            A1=DATA["A1"]
-            A0A1=A0,A1
-            freqs=DATA["freqs"]
-
-            # DicoJonesMatrices=None
-            DicoJonesMatrices=ApplyTimeJones
-
-            ModelIm = NpShared.UnPackListArray("%sGrids"%self.IdSharedMem)[iFacet]
-            T.timeit("2: Stuff")
-            vis=GridMachine.get(times,uvwThis,ColOutDir,flagsThis,A0A1,ModelIm,DicoJonesMatrices=DicoJonesMatrices,freqs=freqs,
-                                ImToGrid=False)
-            T.timeit("2: Predict")
-            # get() is substracting
-            DataOut-=ColOutDir
-            ColOutDir.fill(0)
-            T.timeit("2: End")
-
-
-        return DataOut
 
     def predictKernelPolClusterCatalog(self,DicoData,SM,iDirection=None,ApplyJones=None,ApplyTimeJones=None,Noise=None):
         self.DicoData=DicoData
@@ -388,7 +297,12 @@ class ClassPredict():
                 # predict.predictJones(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList,AllowEqualiseChan)
                 # ColOutDir0=ColOutDir.copy()
                 # ColOutDir.fill(0)
-                predict.predictJones2(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList,AllowEqualiseChan)
+
+                #predict.predictJones2(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList,AllowEqualiseChan)
+
+                predict.predictJones2(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
+                predict.ApplyJones(ColOutDir,ParamJonesList)
+
                 # print ColOutDir
 
                 #d1=ColOutDir.copy()
@@ -438,6 +352,104 @@ class ClassPredict():
 
         return DataOut
 
+
+    ######################################################
+    ######################################################
+    ######################################################
+
+
+    def predictKernelPolClusterImage(self,DicoData,SM,iDirection=None,ApplyJones=None,ApplyTimeJones=None,Noise=None):
+        T=ClassTimeIt("predictKernelPolClusterImage")
+        T.disable()
+        self.DicoData=DicoData
+        self.SM=SM
+
+        
+        freq=DicoData["freqs"]
+        times=DicoData["times"]
+        nf=freq.size
+        na=DicoData["infos"][0]
+        
+        nrows=DicoData["A0"].size
+        T.timeit("0")
+        DataOut=np.zeros((nrows,nf,4),self.CType)
+        if nrows==0: return DataOut
+        
+        self.freqs=freq
+        self.wave=299792458./self.freqs
+        
+        if iDirection!=None:
+            ListDirection=[iDirection]
+        else:
+            ListDirection=SM.Dirs#range(SM.NDir)
+        
+        A0=DicoData["A0"]
+        A1=DicoData["A1"]
+        # if ApplyJones!=None:
+        #     na,NDir,_=ApplyJones.shape
+        #     Jones=np.swapaxes(ApplyJones,0,1)
+        #     Jones=Jones.reshape((NDir,na,4))
+        #     JonesH=ModLinAlg.BatchH(Jones)
+
+        TSmear=0.
+        FSmear=0.
+
+
+        if self.DoSmearing!=0:
+            if "T" in self.DoSmearing:
+                TSmear=1.
+            if "F" in self.DoSmearing:
+                FSmear=1.
+
+        # self.SourceCat.m[:]=0
+        # self.SourceCat.l[:]=0.1
+        # self.SourceCat.I[:]=10
+        # self.SourceCat.alpha[:]=0
+
+        # DataOut=DataOut[1:2]
+        # self.DicoData["uvw"]=self.DicoData["uvw"][1:2]
+        # self.DicoData["A0"]=self.DicoData["A0"][1:2]
+        # self.DicoData["A1"]=self.DicoData["A1"][1:2]
+        # self.DicoData["IndexTimesThisChunk"]=self.DicoData["IndexTimesThisChunk"][1:2]
+        # self.SourceCat=self.SourceCat[0:1]
+
+        DT=DicoData["infos"][1]
+        UVW_dt=DicoData["UVW_dt"]
+        
+        ColOutDir=np.zeros(DataOut.shape,np.complex64)
+        DATA=DicoData
+
+        T.timeit("1")
+
+
+        for iCluster in ListDirection:
+            iFacet=iCluster
+            if SM.ClusterCat.SumI[iFacet]==0: continue
+            GridMachine=self.DicoGM[iFacet]#self.GiveGM(iFacet,SM)
+            T.timeit("2: GM")
+            uvwThis=DATA["uvw"]
+            flagsThis=DATA["flags_image"]
+            times=DATA["times"]
+            A0=DATA["A0"]
+            A1=DATA["A1"]
+            A0A1=A0,A1
+            freqs=DATA["freqs"]
+
+            # DicoJonesMatrices=None
+            DicoJonesMatrices=ApplyTimeJones
+
+            ModelIm = NpShared.UnPackListArray("%sGrids"%self.IdSharedMem)[iFacet]
+            T.timeit("2: Stuff")
+            vis=GridMachine.get(times,uvwThis,ColOutDir,flagsThis,A0A1,ModelIm,DicoJonesMatrices=DicoJonesMatrices,freqs=freqs,
+                                ImToGrid=False)
+            T.timeit("2: Predict")
+            # get() is substracting
+            DataOut-=ColOutDir
+            ColOutDir.fill(0)
+            T.timeit("2: End")
+
+
+        return DataOut
 
 
 #####################################################
