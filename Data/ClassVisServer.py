@@ -70,7 +70,7 @@ class ClassVisServer():
         self.SM.Calc_LM(rac,decc)
         if self.GD["PreApply"]["PreApplySols"][0]!="":
             CJ=ClassJones.ClassJones(self.GD)
-            CJ.ReClusterSkyModel(self.SM)
+            CJ.ReClusterSkyModel(self.SM,self.MS.MSName)
             
 
     def SetBeam(self,LofarBeam):
@@ -578,18 +578,27 @@ class ClassVisServer():
                 if ModeList==[""]: ModeList=["AP"]*len(self.GD["PreApply"]["PreApplySols"])
                 for SolFile,Mode in zip(self.GD["PreApply"]["PreApplySols"],ModeList):
                     print>>log, "Loading solution file %s in %s mode"%(SolFile,Mode)
-                    Sols=np.load(SolFile)["Sols"]
+
+                    if (SolFile!="")&(not(".npz" in SolFile)):
+                        Method=SolFile
+                        ThisMSName=reformat.reformat(os.path.abspath(self.MS.MSName),LastSlash=False)
+                        SolFileLoad="%s/killMS.%s.sols.npz"%(ThisMSName,Method)
+                    else:
+                        SolFileLoad=SolFile
+
+                    Sols=np.load(SolFileLoad)["Sols"]
                     nt,na,nd,_,_=Sols["G"].shape
                     DicoSols={}
                     DicoSols["t0"]=Sols["t0"]
                     DicoSols["t1"]=Sols["t1"]
-                    DicoSols["tm"]=Sols["tm"]
+                    DicoSols["tm"]=(Sols["t0"]+Sols["t1"])/2.
                     DicoSols["Jones"]=np.swapaxes(Sols["G"],1,2).reshape((nt,nd,na,1,2,2))
                     if not("A" in Mode):
-                        DicoSols["Jones"]/=np.abs(DicoSols["Jones"])
+                        ind=(DicoSols["Jones"]!=0.)
+                        DicoSols["Jones"][ind]/=np.abs(DicoSols["Jones"][ind])
                     if not("P" in Mode):
                         dtype=DicoSols["Jones"].dtype
-                        DicoSols["Jones"]=dtype(np.abs(DicoSols["Jones"]))
+                        DicoSols["Jones"]=(np.abs(DicoSols["Jones"]).astype(dtype)).copy()
 
                     #DicoSols["Jones"]=Sols["G"].reshape((nt,nd,na,1,2,2))
                     ListDicoPreApply.append(DicoSols)

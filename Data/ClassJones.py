@@ -2,14 +2,23 @@ import numpy as np
 from killMS2.Other import MyLogger
 log=MyLogger.getLogger("ClassJones")
 from killMS2.Other import ModColor
+from killMS2.Other import reformat
+import os
 
 class ClassJones():
     def __init__(self,GD):
         self.GD=GD
 
-    def ReClusterSkyModel(self,SM):
+    def ReClusterSkyModel(self,SM,MSName):
 
         SolRefFile=self.GD["PreApply"]["PreApplySols"][0]
+
+        if (SolRefFile!="")&(not(".npz" in SolRefFile)):
+            Method=SolRefFile
+            ThisMSName=reformat.reformat(os.path.abspath(MSName),LastSlash=False)
+            SolRefFile="%s/killMS.%s.sols.npz"%(ThisMSName,Method)
+
+
         print>>log, ModColor.Str("Re-clustering input SkyModel to match %s clustering"%SolRefFile)
         
         ClusterCat0=np.load(SolRefFile)["ClusterCat"]
@@ -27,10 +36,15 @@ class ClassJones():
         m=m.reshape((m.size,1))
         d=np.sqrt((l-lc)**2+(m-mc)**2)
         Cluster=np.argmin(d,axis=1)
-        print SM.SourceCat.Cluster
+        #print SM.SourceCat.Cluster
         SM.SourceCat.Cluster[:]=Cluster[:]
         SM.ClusterCat=ClusterCat0
-        print SM.SourceCat.Cluster
+        #print SM.SourceCat.Cluster
+        
+        SM.Dirs=sorted(list(set(SM.SourceCat.Cluster.tolist())))
+        SM.NDir=len(SM.Dirs)
+
+        print>>log, "  There are %i clusters in the re-clustered skymodel"%SM.NDir
 
         NDir=lc.size
         for iDir in range(NDir):

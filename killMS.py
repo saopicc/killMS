@@ -747,6 +747,8 @@ if __name__=="__main__":
     
  
     try:
+
+        #print MSName
         for MSName in lMS:
             main(OP=OP,MSName=MSName)
     except:
