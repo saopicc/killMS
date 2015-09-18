@@ -15,6 +15,8 @@ import ClassWeighting
 from killMS2.Other import reformat
 import os
 from killMS2.Other.ModChanEquidistant import IsChanEquidistant
+from killMS2.Data import ClassJones
+import MergeJones
 
 class ClassVisServer():
     def __init__(self,MSName,
@@ -61,6 +63,15 @@ class ClassVisServer():
         # self.LoadNextVisChunk()
 
         #self.TEST_TLIST=[]
+
+    def setSM(self,SM):
+        self.SM=SM
+        rac,decc=self.MS.radec
+        self.SM.Calc_LM(rac,decc)
+        if self.GD["PreApply"]["PreApplySols"][0]!="":
+            CJ=ClassJones.ClassJones(self.GD)
+            CJ.ReClusterSkyModel(self.SM)
+            
 
     def SetBeam(self,LofarBeam):
         self.BeamMode,self.DtBeamMin,self.BeamRAs,self.BeamDECs = LofarBeam
@@ -509,6 +520,8 @@ class ClassVisServer():
         self.ThisDataChunk["MapJones"]=np.zeros((times.size,),np.int32)
 
 
+        ListDicoPreApply=[]
+        DoPreApplyJones=False
         if self.GD!=None:
             if self.GD["Beam"]["BeamModel"]!=None:
                 if self.GD["Beam"]["BeamModel"]=="LOFAR":
@@ -553,33 +566,68 @@ class ClassVisServer():
                     DicoBeam["t0"]=T0s
                     DicoBeam["t1"]=T1s
                     DicoBeam["tm"]=Tm
-    
-                    ind=np.zeros((times.size,),np.int32)
-                    nt,na,nd,_,_,_=Beam.shape
-                    ii=0
-                    for it in range(nt):
-                        t0=DicoBeam["t0"][it]
-                        t1=DicoBeam["t1"][it]
-                        indMStime=np.where((times>=t0)&(times<t1))[0]
-                        indMStime=np.ones((indMStime.size,),np.int32)*it
-                        ind[ii:ii+indMStime.size]=indMStime[:]
-                        ii+=indMStime.size
-                    TimeMapping=ind
                     DicoBeam["Jones"]=Beam
-                    self.ThisDataChunk["MapJones"]=TimeMapping
-                    self.ThisDataChunk["PreApplyJones"]=DicoBeam
-    
-                    DicoClusterDirs={}
-                    DicoClusterDirs["l"]=self.SM.ClusterCat.l
-                    DicoClusterDirs["m"]=self.SM.ClusterCat.m
-                    DicoClusterDirs["ra"]=self.SM.ClusterCat.ra
-                    DicoClusterDirs["dec"]=self.SM.ClusterCat.dec
-                    DicoClusterDirs["I"]=self.SM.ClusterCat.SumI
-                    DicoClusterDirs["Cluster"]=self.SM.ClusterCat.Cluster
-    
-                    NpShared.DicoToShared("%sDicoClusterDirs"%self.IdSharedMem,DicoClusterDirs)
-    
+                    ListDicoPreApply.append(DicoBeam)
+
+                    DoPreApplyJones=True
                     print>>log, "       .... done Update LOFAR beam "
+
+        
+            if self.GD["PreApply"]["PreApplySols"][0]!="":
+                ModeList=self.GD["PreApply"]["PreApplyMode"]
+                if ModeList==[""]: ModeList=["AP"]*len(self.GD["PreApply"]["PreApplySols"])
+                for SolFile,Mode in zip(self.GD["PreApply"]["PreApplySols"],ModeList):
+                    print>>log, "Loading solution file %s in %s mode"%(SolFile,Mode)
+                    Sols=np.load(SolFile)["Sols"]
+                    nt,na,nd,_,_=Sols["G"].shape
+                    DicoSols={}
+                    DicoSols["t0"]=Sols["t0"]
+                    DicoSols["t1"]=Sols["t1"]
+                    DicoSols["tm"]=Sols["tm"]
+                    DicoSols["Jones"]=np.swapaxes(Sols["G"],1,2).reshape((nt,nd,na,1,2,2))
+                    if not("A" in Mode):
+                        DicoSols["Jones"]/=np.abs(DicoSols["Jones"])
+                    if not("P" in Mode):
+                        dtype=DicoSols["Jones"].dtype
+                        DicoSols["Jones"]=dtype(np.abs(DicoSols["Jones"]))
+
+                    #DicoSols["Jones"]=Sols["G"].reshape((nt,nd,na,1,2,2))
+                    ListDicoPreApply.append(DicoSols)
+                    DoPreApplyJones=True
+
+            
+        if DoPreApplyJones:
+            DicoJones=ListDicoPreApply[0]
+
+            for DicoJones1 in ListDicoPreApply[1::]:
+                DicoJones=MergeJones.MergeJones(DicoJones1,DicoJones)
+                
+
+            ind=np.zeros((times.size,),np.int32)
+            #nt,na,nd,_,_,_=Beam.shape
+            ii=0
+            for it in range(nt):
+                t0=DicoJones["t0"][it]
+                t1=DicoJones["t1"][it]
+                indMStime=np.where((times>=t0)&(times<t1))[0]
+                indMStime=np.ones((indMStime.size,),np.int32)*it
+                ind[ii:ii+indMStime.size]=indMStime[:]
+                ii+=indMStime.size
+            TimeMapping=ind
+
+            self.ThisDataChunk["MapJones"]=TimeMapping
+            self.ThisDataChunk["PreApplyJones"]=DicoJones
+            
+            DicoClusterDirs={}
+            DicoClusterDirs["l"]=self.SM.ClusterCat.l
+            DicoClusterDirs["m"]=self.SM.ClusterCat.m
+            DicoClusterDirs["ra"]=self.SM.ClusterCat.ra
+            DicoClusterDirs["dec"]=self.SM.ClusterCat.dec
+            DicoClusterDirs["I"]=self.SM.ClusterCat.SumI
+            DicoClusterDirs["Cluster"]=self.SM.ClusterCat.Cluster
+            
+            NpShared.DicoToShared("%sDicoClusterDirs"%self.IdSharedMem,DicoClusterDirs)
+            
 
         return "LoadOK"
 

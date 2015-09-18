@@ -30,13 +30,13 @@ def main(options=None):
     SMName="ModelRandom00.one.txt.npy"
     SMName="ModelRandom00.gauss.txt.npy"
     #ll=sorted(glob.glob("Simul.MS"))
-    ll=sorted(glob.glob("000?.MS"))
-    #ll=sorted(glob.glob("0000.MS"))
+    #ll=sorted(glob.glob("000?.MS"))
+    ll=sorted(glob.glob("0000.MS"))
     CS=ClassSimul(ll[0],SMName)
     Sols=CS.GiveSols()
     for l in ll:
-        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
-        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
+       # CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
+        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
         CS.DoSimul()
 
 class ClassSimul():
@@ -137,8 +137,13 @@ class ClassSimul():
                     #Sols.G[itime,iAnt,iDir,1,1]=g0
 
 
-        Sols.G[:,:,:,0,0]=1
-        Sols.G[:,:,:,1,1]=1
+        # Sols.G[:,:,:,0,0]=1
+        # Sols.G[:,:,:,1,1]=1
+
+        for itime in range(0,NSols):
+            Sols.G[itime,:,:,0,0]=Sols.G[-1,:,:,0,0]
+            Sols.G[itime,:,:,1,1]=Sols.G[-1,:,:,1,1]
+
 
         return Sols
 

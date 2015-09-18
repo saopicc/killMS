@@ -128,6 +128,10 @@ def read_options():
     # OP.add_option('ApplyCal',type="int",help='Apply direction averaged gains to residual data in the mentioned direction. \
     # If ApplyCal=-1 takes the mean gain over directions. -2 if off. Default is %default')
 
+    # OP.OptionGroup("* PreApply Solution-related options","PreApply")
+    # OP.add_option('PreApplySols')#,help='Solutions to apply to the data before solving.')
+    # #OP.add_option('PreApplyMode',help='Solutions to apply to the data before solving.')
+
     OP.OptionGroup("* Solution-related options","Solutions")
     OP.add_option('ExtSols',type="str",help='External solution file. If set, will not solve.')
     #OP.add_option('ApplyMode',type="str",help='Substact selected sources. ')
@@ -200,7 +204,6 @@ def main(OP=None,MSName=None):
     # if not(".npy" in options.SkyModel):
     #     print "Give a numpy sky model!"
     #     exit()
-
 
     TChunk=float(options.TChunk)
     dt=float(options.dt)
@@ -281,6 +284,7 @@ def main(OP=None,MSName=None):
                            killdirs=kills,
                            invert=invert)
         SM.Type="Catalog"
+
     else:
         from killMS2.Predict import ClassImageSM2 as ClassImageSM
         #from killMS2.Predict import ClassImageSM as ClassImageSM
@@ -289,7 +293,11 @@ def main(OP=None,MSName=None):
         VS.setGridProps(PreparePredict.FacetMachine.Cell,PreparePredict.FacetMachine.NpixPaddedFacet)
         FacetMachine=PreparePredict.FacetMachine
         VS.setFOV(FacetMachine.OutImShape,FacetMachine.PaddedGridShape,FacetMachine.FacetShape,FacetMachine.CellSizeRad)
-    VS.SM=SM
+    VS.setSM(SM)
+    
+        
+
+
     # BeamProps=None
     # if options.LOFARBeam!="":
     #     Mode,sTimeMin=options.LOFARBeam.split(",")
@@ -370,9 +378,9 @@ def main(OP=None,MSName=None):
 
         if options.ExtSols=="":
             SaveSols=True
-            #Solver.doNextTimeSolve_Parallel()
+            Solver.doNextTimeSolve_Parallel()
             #Solver.doNextTimeSolve_Parallel(SkipMode=True)
-            Solver.doNextTimeSolve()
+            #Solver.doNextTimeSolve()
             Sols=Solver.GiveSols()
         else:
             Sols=np.load(options.ExtSols)["Sols"]
