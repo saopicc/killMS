@@ -1117,7 +1117,7 @@ static PyObject *predictJones2(PyObject *self, PyObject *args)
   	    //phi=PI*PI_C*p_DFreqs[ch]*phase;
   	    phi=PI*(p_DFreqs[ch]/C)*phase;
 	    if(phi!=0.){
-	      phi=sin(phi)/(phi);
+	      phi=(float)sin((double)phi)/((double)phi);
 	      result*=phi;
 	    };
   	  };

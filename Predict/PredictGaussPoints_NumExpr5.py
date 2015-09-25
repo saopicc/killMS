@@ -38,7 +38,7 @@ def SolsToDicoJones(Sols,nf):
 
 
 class ClassPredict():
-    def __init__(self,Precision="S",NCPU=6,IdMemShared=None,DoSmearing="TF"):
+    def __init__(self,Precision="S",NCPU=6,IdMemShared=None,DoSmearing=""):
         self.NCPU=NCPU
         ne.set_num_threads(self.NCPU)
         if Precision=="D":
@@ -299,7 +299,7 @@ class ClassPredict():
                 # ColOutDir.fill(0)
 
                 #predict.predictJones2(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList,AllowEqualiseChan)
-
+                print LSmearMode
                 predict.predictJones2(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
                 predict.ApplyJones(ColOutDir,ParamJonesList)
 

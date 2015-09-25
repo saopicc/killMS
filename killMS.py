@@ -533,6 +533,7 @@ def main(OP=None,MSName=None):
                             JonesMerged["Beam"]=JonesMerged["Jones"]
                     # end
                     PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=JonesMerged)
+
                     #PredictData2=PM2.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
                     #diff=(PredictData-PredictData2)
                     #print diff
@@ -541,6 +542,7 @@ def main(OP=None,MSName=None):
                     #print np.max(PredictData-PredictData2)
                     #print np.where(np.isnan(diff))
                     #print PredictData[1997:1999],PredictData[1997:1999]
+
                 Solver.VS.ThisDataChunk["data"]-=PredictData
                 SM.RestoreCat()
 
