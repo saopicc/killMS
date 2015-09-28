@@ -188,7 +188,7 @@ class ClassMS():
         
         
     def GiveBeam(self,time,ra,dec):
-        self.LoadSR()
+        #self.LoadSR()
         Beam=np.zeros((ra.shape[0],self.na,self.NSPWChan,2,2),dtype=np.complex)
         for i in range(ra.shape[0]):
             self.SR.setDirection(ra[i],dec[i])

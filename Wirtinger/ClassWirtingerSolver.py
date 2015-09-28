@@ -106,11 +106,13 @@ class ClassWirtingerSolver():
         self.NCPU=NCPU
         self.DoPBar=DoPBar
         self.GD=GD
-        if BeamProps!=None:
-            rabeam,decbeam=SM.ClusterCat.ra,SM.ClusterCat.dec
-            Mode,TimeMin=BeamProps
-            LofarBeam=(Mode,TimeMin,rabeam,decbeam)
-            VS.SetBeam(LofarBeam)
+        self.Q=None
+        # if BeamProps!=None:
+        #     rabeam,decbeam=SM.ClusterCat.ra,SM.ClusterCat.dec
+        #     Mode,TimeMin=BeamProps
+        #     LofarBeam=(Mode,TimeMin,rabeam,decbeam)
+        #     VS.SetBeam(LofarBeam)
+
         MS=VS.MS
         if SM.Type=="Catalog":
             SM.Calc_LM(MS.rac,MS.decc)
@@ -127,6 +129,7 @@ class ClassWirtingerSolver():
         self.SolverType=SolverType
         self.rms=None
         self.rmsFromData=None
+
         # if SolverType=="KAFCA":
         #     print>>log, ModColor.Str("niter=%i"%self.NIter)
         #     #self.NIter=1
@@ -222,6 +225,7 @@ class ClassWirtingerSolver():
 
     def InitCovariance(self,FromG=False,sigP=0.1,sigQ=0.01):
         if self.SolverType!="KAFCA": return
+        if self.Q!=None: return
         na=self.VS.MS.na
         nd=self.SM.NDir
 
@@ -266,9 +270,18 @@ class ClassWirtingerSolver():
             F/=F.max()
 
             #stop
+            if self.GD["Beam"]["BeamModel"]!=None:
+                from killMS2.Data import ClassBeam
+                BeamMachine=ClassBeam.ClassBeam(self.GD,self.SM)
+                AbsMeanBeam=BeamMachine.GiveMeanBeam()
+                AbsMeanBeamAnt=np.mean(AbsMeanBeam[:,:,0,0,0],axis=1)
+                for idir in range(nd):
+                    Qa[idir,:,:,idir,:,:]*=(AbsMeanBeamAnt[idir]*F[idir])**2
+            else:
+                for idir in range(nd):
+                    Qa[idir,:,:,idir,:,:]*=(F[idir])**2
 
-            for idir in range(nd):
-                Qa[idir,:,:,idir,:,:]*=F[idir]**2
+
     
             Qa=Qa.reshape((nd*npolx*npoly,nd*npolx*npoly))
             

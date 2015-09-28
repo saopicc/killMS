@@ -10,7 +10,7 @@ MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
 from killMS2.Other import ClassTimeIt
 from killMS2.Data import ClassVisServer
 from killMS2.Predict.PredictGaussPoints_NumExpr import ClassPredict
-from killMS2.Predict.PredictGaussPoints_NumExpr5 import ClassPredict as ClassPredict 
+#from killMS2.Predict.PredictGaussPoints_NumExpr5 import ClassPredict as ClassPredict 
 from killMS2.Array import ModLinAlg
 from killMS2.Array import NpShared
 import time
@@ -30,12 +30,12 @@ def main(options=None):
     #SMName="Model1_center.txt.npy"
     SMName="ModelRandom00.one.txt.npy"
     SMName="ModelRandom00.gauss.txt.npy"
-    SMName="model.many.npy"
+    #SMName="model.many.npy"
     #ll=sorted(glob.glob("Simul.MS"))
     #ll=sorted(glob.glob("000?.MS"))
     ll=sorted(glob.glob("0000.MS"))
-    ll=sorted(glob.glob("SimulHighRes.MS_p0"))
-    ll=sorted(glob.glob("SimulLowRes.MS_p0"))
+    #ll=sorted(glob.glob("SimulHighRes.MS_p0"))
+    #ll=sorted(glob.glob("SimulLowRes.MS_p0"))
     
     CS=ClassSimul(ll[0],SMName)
     Sols=CS.GiveSols()
@@ -255,7 +255,7 @@ class ClassSimul():
 
     def DoSimul(self):
     
-        Noise=0.0
+        Noise=1.0
         MS=self.MS
         SM=self.SM
         VS=self.VS
@@ -264,8 +264,8 @@ class ClassSimul():
         nd=SM.NDir
         NCPU=6
 
-        PM=ClassPredict(NCPU=NCPU,DoSmearing="F")
-        #PM=ClassPredict(NCPU=NCPU)
+        #PM=ClassPredict(NCPU=NCPU,DoSmearing="F")
+        PM=ClassPredict(NCPU=NCPU)
         na=MS.na
         nd=SM.NDir
         
@@ -278,8 +278,8 @@ class ClassSimul():
         #SM.SelectSubCat(SM.SourceCat.kill==0)
 
 
-        #PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones,Noise=Noise)
-        PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM)
+        PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones,Noise=Noise)
+        #PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM)
         
         #SM.RestoreCat()
     

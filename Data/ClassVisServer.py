@@ -62,7 +62,7 @@ class ClassVisServer():
 
         # self.LoadNextVisChunk()
 
-        #self.TEST_TLIST=[]
+        # self.TEST_TLIST=[]
 
     def setSM(self,SM):
         self.SM=SM
@@ -73,12 +73,13 @@ class ClassVisServer():
             CJ.ReClusterSkyModel(self.SM,self.MS.MSName)
             
 
-    def SetBeam(self,LofarBeam):
-        self.BeamMode,self.DtBeamMin,self.BeamRAs,self.BeamDECs = LofarBeam
-        useArrayFactor=("A" in self.BeamMode)
-        useElementBeam=("E" in self.BeamMode)
-        self.MS.LoadSR(useElementBeam=useElementBeam,useArrayFactor=useArrayFactor)
-        self.ApplyBeam=True
+    # def SetBeam(self,LofarBeam):
+    #     self.BeamMode,self.DtBeamMin,self.BeamRAs,self.BeamDECs = LofarBeam
+    #     useArrayFactor=("A" in self.BeamMode)
+    #     useElementBeam=("E" in self.BeamMode)
+    #     self.MS.LoadSR(useElementBeam=useElementBeam,useArrayFactor=useArrayFactor)
+    #     self.ApplyBeam=True
+    #     stop
 
     def Init(self,PointingID=0):
         #MSName=self.MDC.giveMS(PointingID).MSName
@@ -526,6 +527,9 @@ class ClassVisServer():
             if self.GD["Beam"]["BeamModel"]!=None:
                 if self.GD["Beam"]["BeamModel"]=="LOFAR":
                     self.DtBeamMin=self.GD["Beam"]["DtBeamMin"]
+                    useArrayFactor=("A" in self.GD["Beam"]["LOFARBeamMode"])
+                    useElementBeam=("E" in self.GD["Beam"]["LOFARBeamMode"])
+                    self.MS.LoadSR(useElementBeam=useElementBeam,useArrayFactor=useArrayFactor)
                     print>>log, "Update LOFAR beam [Dt = %3.1f min] ... "%self.DtBeamMin
                     DtBeamSec=self.DtBeamMin*60
                     tmin,tmax=np.min(times),np.max(times)

@@ -299,7 +299,7 @@ class ClassPredict():
                 # ColOutDir.fill(0)
 
                 #predict.predictJones2(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList,AllowEqualiseChan)
-                print LSmearMode
+                #print LSmearMode
                 predict.predictJones2(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
                 predict.ApplyJones(ColOutDir,ParamJonesList)
 
