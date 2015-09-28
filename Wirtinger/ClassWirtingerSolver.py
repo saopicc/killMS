@@ -272,7 +272,7 @@ class ClassWirtingerSolver():
             #stop
             if self.GD["Beam"]["BeamModel"]!=None:
                 from killMS2.Data import ClassBeam
-                BeamMachine=ClassBeam.ClassBeam(self.GD,self.SM)
+                BeamMachine=ClassBeam.ClassBeam(self.VS.MSName,self.GD,self.SM)
                 AbsMeanBeam=BeamMachine.GiveMeanBeam()
                 AbsMeanBeamAnt=np.mean(AbsMeanBeam[:,:,0,0,0],axis=1)
                 for idir in range(nd):

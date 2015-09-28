@@ -8,10 +8,10 @@ log=MyLogger.getLogger("ClassBeam")
 from killMS2.Array import ModLinAlg
 
 class ClassBeam():
-    def __init__(self,GD,SM):
+    def __init__(self,MSName,GD,SM):
         self.GD=GD
         self.SM=SM
-        self.MSName=self.GD["VisData"]["MSName"]
+        self.MSName=MSName#self.GD["VisData"]["MSName"]
         self.ColName=self.GD["VisData"]["InCol"]
         self.MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False)
         self.DtBeamMin=self.GD["Beam"]["DtBeamMin"]
