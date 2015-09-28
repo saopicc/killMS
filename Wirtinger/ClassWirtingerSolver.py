@@ -265,6 +265,8 @@ class ClassWirtingerSolver():
             F=self.SM.ClusterCat.SumI.copy()
             F/=F.max()
 
+            #stop
+
             for idir in range(nd):
                 Qa[idir,:,:,idir,:,:]*=F[idir]**2
     
@@ -742,6 +744,7 @@ class WorkerAntennaLM(multiprocessing.Process):
     def shutdown(self):
         self.exit.set()
     def run(self):
+
         while not self.kill_received:
             try:
                 iAnt,DoCalcEvP,ThisTime,rms,DoEvP = self.work_queue.get()

@@ -328,6 +328,8 @@ def main(OP=None,MSName=None):
                                 IdSharedMem=IdSharedMem,
                                 ConfigJacobianAntenna=ConfigJacobianAntenna,
                                 GD=GD)
+    
+    
     Solver.InitSol(TestMode=False)
 
     PM=ClassPredict(NCPU=NCPU,IdMemShared=IdSharedMem,DoSmearing=DoSmearing)
