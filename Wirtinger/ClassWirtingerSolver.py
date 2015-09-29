@@ -160,7 +160,7 @@ class ClassWirtingerSolver():
 
         Std=np.array(self.ListStd)
         Max=np.array(self.ListMax)
-        Kapa=np.array(self.ListKapa)
+        Kapa=np.array(self.ListKeepKapa)
         na,nt=Std.shape
         NoiseInfo=np.zeros((na,nt,3))
         NoiseInfo[:,:,0]=Std[:,:]
@@ -217,6 +217,7 @@ class ClassWirtingerSolver():
         self.SolsArray_Full=np.zeros((NSols,),dtype=[("t0",np.float64),("t1",np.float64),("G",np.complex64,(na,nd,2,2))])
         self.SolsArray_Full=self.SolsArray_Full.view(np.recarray)
         self.ListKapa=[[] for iAnt in range(na)]
+        self.ListKeepKapa=[[] for iAnt in range(na)]
         self.ListStd=[[] for iAnt in range(na)]
         self.ListMax=[[] for iAnt in range(na)]
 
@@ -609,6 +610,7 @@ class ClassWirtingerSolver():
                     kapa=InfoNoise["kapa"]
                     self.ListStd[iAnt].append(InfoNoise["std"])
                     self.ListMax[iAnt].append(InfoNoise["max"])
+                    self.ListKeepKapa[iAnt].append(InfoNoise["kapa"])
 
 
                     iResult+=1
