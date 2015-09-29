@@ -169,8 +169,6 @@ class ClassWirtingerSolver():
         StatFile="NoiseInfo.npy"
         print>>log, "Saving statistics in %s"%StatFile
         np.save(StatFile,NoiseInfo)
-        
-
 
         return self.SolsArray_Full[0:ind.size].copy()
 
