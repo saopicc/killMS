@@ -30,6 +30,7 @@ def main(options=None):
     #SMName="Model1_center.txt.npy"
     SMName="ModelRandom00.one.txt.npy"
     SMName="ModelRandom00.gauss.txt.npy"
+    #SMName="ModelRandom00.txt.npy"
     #SMName="model.many.npy"
     #ll=sorted(glob.glob("Simul.MS"))
     #ll=sorted(glob.glob("000?.MS"))
