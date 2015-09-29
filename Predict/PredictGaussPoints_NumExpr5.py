@@ -260,7 +260,7 @@ class ClassPredict():
 
             indSources=np.where(self.SourceCat.Cluster==iCluster)[0]
             T=ClassTimeIt("predict")
-            T.disable()
+            #T.disable()
             ### new
             SourceCat=self.SourceCat[indSources].copy()
             l=np.float32(SourceCat.l)
@@ -301,7 +301,9 @@ class ClassPredict():
                 #predict.predictJones2(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList,AllowEqualiseChan)
                 #print LSmearMode
                 predict.predictJones2(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
+                T.timeit("predict")
                 predict.ApplyJones(ColOutDir,ParamJonesList)
+                T.timeit("apply")
 
                 # print ColOutDir
 
@@ -318,7 +320,7 @@ class ClassPredict():
 
                 
                 predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
-
+                T.timeit("predict")
                 # d0=ColOutDir.copy()
                 # ColOutDir.fill(0)
 
@@ -331,7 +333,7 @@ class ClassPredict():
 
 
             del(l,m,I,SourceCat,alpha,WaveL,flux,dnu,f0,fluxFreq,LSM,LFreqs)
-                
+            T.timeit("del")
 
 
                 # d1=ColOutDir
@@ -340,13 +342,13 @@ class ClassPredict():
                 # stop
                 
 
-            T.timeit("predict0")
+
 
             if Noise!=None:
                 ColOutDir+=Noise*(np.random.randn(*ColOutDir.shape)+1j*np.random.randn(*ColOutDir.shape))
                 stop
             DataOut+=ColOutDir
-
+            T.timeit("add")
         #del(LFreqs,LSM,LUVWSpeed,LSmearMode)
         #del(ColOutDir)
 

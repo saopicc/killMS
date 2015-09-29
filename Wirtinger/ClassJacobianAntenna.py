@@ -789,7 +789,7 @@ class ClassJacobianAntenna():
     def CalcKernelMatrix(self,rms=0.):
         # Out[28]: ['freqs', 'times', 'A1', 'A0', 'flags', 'uvw', 'data']
         T=ClassTimeIt.ClassTimeIt("CalcKernelMatrix Ant=%i"%self.iAnt)
-        #T.disable()
+        T.disable()
         DATA=self.DATA
         iAnt=self.iAnt
         na=DATA['infos'][0]
