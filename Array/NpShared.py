@@ -1,4 +1,5 @@
-import sharedarray.SharedArray as SharedArray
+#import sharedarray.SharedArray as SharedArray
+import SharedArray
 from killMS2.Other import ModColor
 import numpy as np
 from killMS2.Other import MyLogger
