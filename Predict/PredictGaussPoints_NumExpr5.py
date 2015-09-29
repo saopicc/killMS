@@ -260,7 +260,7 @@ class ClassPredict():
 
             indSources=np.where(self.SourceCat.Cluster==iCluster)[0]
             T=ClassTimeIt("predict")
-            #T.disable()
+            T.disable()
             ### new
             SourceCat=self.SourceCat[indSources].copy()
             l=np.float32(SourceCat.l)
