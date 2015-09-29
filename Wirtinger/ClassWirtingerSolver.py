@@ -166,7 +166,9 @@ class ClassWirtingerSolver():
         NoiseInfo[:,:,0]=Std[:,:]
         NoiseInfo[:,:,1]=np.abs(Max[:,:])
         NoiseInfo[:,:,2]=Kapa[:,:]
-        np.save("NoiseInfo",NoiseInfo)
+        StatFile="NoiseInfo.npy"
+        print>>log, "Saving statistics in %s"%StatFile
+        np.save(StatFile,NoiseInfo)
         
 
 
