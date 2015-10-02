@@ -1,7 +1,8 @@
 
 import numpy as np
 import dotSSE
-#import ClassTimeIt
+from killMS2.Other import ClassTimeIt
+import NpDotSSE
 
 def test():
 
@@ -36,13 +37,20 @@ def test():
     D=np.dot(A,B.T)
     print C-D
 
-    # T=ClassTimeIt.ClassTimeIt()
-    # for i in range(10):
-    #     AA=np.dot(A.T,B)
-    #     T.timeit("numpy")
-    # for i in range(10):
-    #     dotSSE.dot(A,B,C)
-    #     T.timeit("sse")
-    # #print C
+    A=np.ones((2000,100),np.complex64)
+    B=A.copy()
+    #C=np.zeros_like(A)
+
+    T=ClassTimeIt.ClassTimeIt()
+    for i in range(10):
+        AA=np.dot(A.T,B)
+        T.timeit("numpy")
+
+    for i in range(10):
+
+        #dotSSE.dot(A,B,C)
+        NpDotSSE.dot_A_BT(A,B)
+        T.timeit("sse")
+    #print C
 
 test()
