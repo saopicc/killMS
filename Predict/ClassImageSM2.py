@@ -59,6 +59,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         #del(data)
         self.DicoImager=self.FacetMachine.DicoImager
         
+        
         NFacets=len(self.FacetMachine.DicoImager)
         self.NDirs=NFacets
         self.Dirs=range(self.NDirs)
@@ -70,8 +71,13 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.DicoImager=self.FacetMachine.DicoImager
         self.ClusterCat=ClusterCat
 
+
+        for iFacet in range(NFacets):
+            self.FacetMachine.SpacialWeigth[iFacet]=NpShared.ToShared("%sSpacialWeight_%3.3i"%(self.IdSharedMem,iFacet),self.FacetMachine.SpacialWeigth[iFacet])
+
         print>>log, "  Splitting model image"
         self.BuildGridsParallel()
+
 
         #ind=np.where(self.ClusterCat.SumI!=0)[0]
         #self.ClusterCat=self.ClusterCat[ind].copy()
@@ -117,8 +123,8 @@ class ClassPreparePredict(ClassImagerDeconv):
             work_queue.put(iFacet)
 
 
-        NormImage=self.FacetMachine.GiveNormImage()
-        _=NpShared.ToShared("%sNormImage"%self.IdSharedMem,NormImage)
+        self.FacetMachine.BuildFacetNormImage()#GiveNormImage()
+        _=NpShared.ToShared("%sNormImage"%self.IdSharedMem,self.FacetMachine.NormImage)
 
         GM=self.FacetMachine.GiveGM(0)
         argsImToGrid=(GM.GridShape,GM.PaddingInnerCoord,GM.OverS,GM.Padding,GM.dtype)
@@ -183,7 +189,8 @@ class ClassPreparePredict(ClassImagerDeconv):
         for ii in range(NCPU):
             W=Worker(work_queue, result_queue,argsImToGrid=argsImToGrid,
                      IdSharedMem=self.IdSharedMem,
-                     DicoImager=self.FacetMachine.DicoImager,FacetMode=FacetMode)#"Fader")
+                     DicoImager=self.FacetMachine.DicoImager,FacetMode=FacetMode,
+                     GD=self.GD)#"Fader")
             workerlist.append(W)
             workerlist[ii].start()
 
@@ -261,12 +268,13 @@ class Worker(multiprocessing.Process):
                  argsImToGrid=None,
                  IdSharedMem=None,
                  DicoImager=None,
-                 FacetMode="Fader"):
+                 FacetMode="Fader",GD=None):
         multiprocessing.Process.__init__(self)
         self.work_queue = work_queue
         self.result_queue = result_queue
         self.kill_received = False
         self.exit = multiprocessing.Event()
+        self.GD=GD
         self.IdSharedMem=IdSharedMem
         self.DicoImager=DicoImager
         self.FacetMode=FacetMode
@@ -292,12 +300,21 @@ class Worker(multiprocessing.Process):
 
             Image=NpShared.GiveArray("%sModelImage"%(self.IdSharedMem))
 
-            if self.FacetMode=="Sharp":
-                Grid,SumFlux=self.ClassImToGrid.GiveGridSharp(Image,self.DicoImager,iFacet)
-            elif self.FacetMode=="Fader":
-                NormImage=NpShared.GiveArray("%sNormImage"%self.IdSharedMem)
-                Grid,SumFlux=self.ClassImToGrid.GiveGridFader(Image,self.DicoImager,iFacet,NormImage)
+            #Grid,SumFlux=self.ClassImToGrid.GiveGridFader(Image,self.DicoImager,iFacet,NormImage)
+            SharedMemName="%sSpheroidal.Facet_%3.3i"%(self.IdSharedMem,iFacet)
+            SPhe=NpShared.GiveArray(SharedMemName)
+            SpacialWeight=NpShared.GiveArray("%sSpacialWeight_%3.3i"%(self.IdSharedMem,iFacet))
+            NormImage=NpShared.GiveArray("%sNormImage"%self.IdSharedMem)
+
+            Im2Grid=ClassImToGrid(OverS=self.GD["ImagerCF"]["OverS"],GD=self.GD)
+            Grid,SumFlux=Im2Grid.GiveModelTessel(Image,self.DicoImager,iFacet,NormImage,SPhe,SpacialWeight,ToGrid=True)
+
+            #ModelSharedMemName="%sModelImage.Facet_%3.3i"%(self.IdSharedMem,iFacet)
+            #NpShared.ToShared(ModelSharedMemName,ModelFacet)
+
+
 
             _=NpShared.ToShared("%sModelGrid.%3.3i"%(self.IdSharedMem,iFacet),Grid)
+
             self.result_queue.put({"Success":True,"iFacet":iFacet,"SumFlux":SumFlux})
             

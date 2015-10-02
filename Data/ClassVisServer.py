@@ -67,10 +67,12 @@ class ClassVisServer():
     def setSM(self,SM):
         self.SM=SM
         rac,decc=self.MS.radec
-        self.SM.Calc_LM(rac,decc)
-        if self.GD["PreApply"]["PreApplySols"][0]!="":
-            CJ=ClassJones.ClassJones(self.GD)
-            CJ.ReClusterSkyModel(self.SM,self.MS.MSName)
+        if self.SM.Type=="Catalog":
+            self.SM.Calc_LM(rac,decc)
+
+            if self.GD["PreApply"]["PreApplySols"][0]!="":
+                CJ=ClassJones.ClassJones(self.GD)
+                CJ.ReClusterSkyModel(self.SM,self.MS.MSName)
             
 
     # def SetBeam(self,LofarBeam):
@@ -363,11 +365,19 @@ class ClassVisServer():
             d=np.sqrt(u**2+v**2)
             CellRad=(Cell/3600.)*np.pi/180
             #_,_,nx,ny=GridShape
-            S=CellRad*nx
+
+            # ###
+            # S=CellRad*nx
+            # C=3e8
+            # freqs=MS.ChanFreq
+            # x=d.reshape((d.size,1))*(freqs.reshape((1,freqs.size))/C)*S
+            # fA_all=(x>(nx/2))
+            ###
+
             C=3e8
             freqs=MS.ChanFreq
-            x=d.reshape((d.size,1))*(freqs.reshape((1,freqs.size))/C)*S
-            fA_all=(x>(nx/2))
+            x=d.reshape((d.size,1))*(freqs.reshape((1,freqs.size))/C)*CellRad
+            fA_all=(x>(1./2))
             
             for A in range(MS.na):
                 ind=np.where((MS.A0==A)|(MS.A1==A))[0]

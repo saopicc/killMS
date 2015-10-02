@@ -1,8 +1,31 @@
+#!/usr/bin/env python
+
+import optparse
+import pickle
+import numpy as np
 import numpy as np
 import pylab
 import os
 from DDFacet.Other import MyLogger
 log=MyLogger.getLogger("ClassInterpol")
+
+SaveName="last_InterPol.obj"
+
+def read_options():
+    desc="""Questions and suggestions: cyril.tasse@obspm.fr"""
+    global options
+    opt = optparse.OptionParser(usage='Usage: %prog --ms=somename.MS <options>',version='%prog version 1.0',description=desc)
+
+    group = optparse.OptionGroup(opt, "* Data-related options", "Won't work if not specified.")
+    group.add_option('--MSName',help='MSName [no default]',default='')
+    group.add_option('--SolsFile',help='Solfile [no default]',default='')
+    opt.add_option_group(group)
+
+
+    options, arguments = opt.parse_args()
+    f = open(SaveName,"wb")
+    pickle.dump(options,f)
+
 
 def NormMatrices(G):
     nt,na,_,_=G.shape
@@ -15,8 +38,10 @@ def NormMatrices(G):
     return G
 
 class ClassInterpol():
-    def __init__(self,FileName,Type="linear",Interval=6.,PolMode="Full",OutName=None):
-        self.FileName=os.path.abspath(FileName)
+    def __init__(self,MSName,SolsName,Type="linear",Interval=6.,PolMode="Full",OutName=None):
+
+        SolsName="killMS.%s.sols.npz"%SolsName
+        self.FileName="/".join([os.path.abspath(MSName),SolsName])
         self.OutName=OutName
         self.DicoFile=dict(np.load(FileName))
         self.Sols=self.DicoFile["Sols"]
@@ -116,3 +141,45 @@ def test():
     CI=ClassInterpol(FileName)
     CI.InterPol()
     CI.Save()
+
+def main(options=None):
+    if options==None:
+        f = open(SaveName,'rb')
+        options = pickle.load(f)
+    #FileName="killMS.KAFCA.sols.npz"
+
+    SolsFile=options.SolsFile
+    MSName=options.MSName
+    CI=ClassInterpol(MSName,SolsFile)
+    CI.InterPol()
+    CI.Save()
+
+
+if __name__=="__main__":
+    read_options()
+    f = open(SaveName,'rb')
+    options = pickle.load(f)
+
+    MSName=options.MSName
+    if ".txt" in MSName:
+        f=open(MSName)
+        Ls=f.readlines()
+        f.close()
+        MSName=[]
+        for l in Ls:
+            ll=l.replace("\n","")
+            MSName.append(ll)
+        lMS=MSName
+        print>>log, "In batch mode, running InterPol on the following MS:"
+        for MS in lMS:
+            print>>log, "  %s"%MS
+    elif "*" in options.MSName:
+        Patern=options.MSName
+        lMS=sorted(glob.glob(Patern))
+        print>>log, "In batch mode, running InterPol on the following MS:"
+        for MS in lMS:
+            print>>log, "  %s"%MS
+    else:
+        lMS=[options.MSName]
+
+    main(options=options)
