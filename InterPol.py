@@ -43,7 +43,8 @@ class ClassInterpol():
         SolsName="killMS.%s.sols.npz"%SolsName
         self.FileName="/".join([os.path.abspath(MSName),SolsName])
         self.OutName=OutName
-        self.DicoFile=dict(np.load(FileName))
+        print>>log,"Interpolation from %s"%self.FileName
+        self.DicoFile=dict(np.load(self.FileName))
         self.Sols=self.DicoFile["Sols"]
         self.Sols=self.Sols.view(np.recarray)
         self.Interval=Interval
@@ -58,12 +59,11 @@ class ClassInterpol():
         #self.ModelName=self.DicoFile["ModelName"]
     
     def NormAllDirs(self):
-        print>>log,"Normalising Jones matrices ...."
+        print>>log,"  Normalising Jones matrices ...."
         nt,na,nd,_,_=self.Sols.G.shape
         for iDir in range(nd):
             G=self.Sols.G[:,:,iDir,:,:]
             self.Sols.G[:,:,iDir,:,:]=NormMatrices(G)
-        print>>log,"  Done"
 
     def InterPol(self):
         Sols0=self.Sols
@@ -85,14 +85,14 @@ class ClassInterpol():
         if self.PolMode=="Full":
             Pols=range(4)
 
-        xp=Sols0.tm
+        xp=(Sols0.t0+Sols0.t1)/2.
         x=(times[0:-1]+times[1::])/2
         Sols1.t0=times[0:-1]
         Sols1.t1=times[1::]
         Sols1.tm=x
         
+        print>>log,"  Interpolating in linear mode"
         for iDir in range(nd):
-            print>>log,"Interpolating direction %3.3i in linear mode"%iDir
             for iAnt in range(na):
                 for ipol in Pols:
                     # Amplitude
@@ -130,9 +130,9 @@ class ClassInterpol():
         if OutName==None:
             FileName=self.FileName.split("/")[-1]
             Path="/".join(self.FileName.split("/")[0:-1])+"/"
-            _,SolveType,_,_=self.FileName.split(".")
-            OutName="%skillMS.%s.Interpol.sols.npz"%(Path,SolveType)
-        print>>log,"Saving interpolated solutions in: %s"%OutName
+            Name=".".join(FileName.split(".")[1:-2])
+            OutName="%skillMS.%s.Interpol.sols.npz"%(Path,Name)
+        print>>log,"  Saving interpolated solutions in: %s"%OutName
         np.savez(OutName,**self.DicoFile)
 
         
@@ -149,16 +149,6 @@ def main(options=None):
     #FileName="killMS.KAFCA.sols.npz"
 
     SolsFile=options.SolsFile
-    MSName=options.MSName
-    CI=ClassInterpol(MSName,SolsFile)
-    CI.InterPol()
-    CI.Save()
-
-
-if __name__=="__main__":
-    read_options()
-    f = open(SaveName,'rb')
-    options = pickle.load(f)
 
     MSName=options.MSName
     if ".txt" in MSName:
@@ -181,5 +171,19 @@ if __name__=="__main__":
             print>>log, "  %s"%MS
     else:
         lMS=[options.MSName]
+
+
+
+    for MSName in lMS:
+        CI=ClassInterpol(MSName,SolsFile)
+        CI.InterPol()
+        CI.Save()
+
+
+if __name__=="__main__":
+    read_options()
+    f = open(SaveName,'rb')
+    options = pickle.load(f)
+
 
     main(options=options)
