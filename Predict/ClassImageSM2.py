@@ -256,9 +256,9 @@ class ClassPreparePredict(ClassImagerDeconv):
         
         iFacetNew=0
         for iFacet in sorted(self.FacetMachine.DicoImager.keys()):
-            print>>log,"Facet %i [%f]"%(iFacet,ClusterCat.SumI[iFacet])
+            #print>>log,"Facet %i [%f]"%(iFacet,ClusterCat.SumI[iFacet])
             if DelFacet[iFacet]==0:
-                print>>log,"  Keep Facet %i"%(iFacet)
+                #print>>log,"  Keep Facet %i"%(iFacet)
                 Grid=NpShared.GiveArray("%sModelGrid.%3.3i"%(self.IdSharedMem,iFacet))
                 ListGrid.append(Grid)
                 D[iFacetNew]=self.FacetMachine.DicoImager[iFacet]

@@ -37,19 +37,27 @@ def test():
     D=np.dot(A,B.T)
     print C-D
 
-    A=np.ones((2000,100),np.complex64)
+    #A=np.complex64(np.random.rand(2000,100)+1j*np.random.rand(2000,100))
+    A=np.complex128( np.ones((10000,100)))
     B=A.copy()
     #C=np.zeros_like(A)
 
+
+    N=1
     T=ClassTimeIt.ClassTimeIt()
-    for i in range(10):
+    for i in range(N):
         AA=np.dot(A.T,B)
+        print AA.shape
         T.timeit("numpy")
 
-    for i in range(10):
+    A=A.T.copy()
+    B=B.T.copy()
+    T=ClassTimeIt.ClassTimeIt()
+    for i in range(N):
 
         #dotSSE.dot(A,B,C)
-        NpDotSSE.dot_A_BT(A,B)
+        C=NpDotSSE.dot_A_BT(A,B)
+        print C.shape
         T.timeit("sse")
     #print C
 
