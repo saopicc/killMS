@@ -49,7 +49,7 @@ class ClassPreparePredict(ClassImagerDeconv):
 
         self.MM.CleanNegComponants(box=15,sig=1)
         self.ModelImage=self.MM.GiveModelImage(np.mean(self.VS.MS.ChanFreq))
-        self.ModelImage[self.ModelImage!=0]=10.
+        #self.ModelImage[self.ModelImage!=0]=10.
 
         #self.FacetMachine.ToCasaImage(ModelImage0,ImageName="Model0",Fits=True)
         #self.FacetMachine.ToCasaImage(self.ModelImage,ImageName="Model1",Fits=True)
