@@ -254,7 +254,8 @@ def main(OP=None,MSName=None):
         GDPredict=ReadCFG.Parset(ParsetName).DicoPars
 
         GDPredict["Compression"]["CompDeGridMode"]=False
-
+        #GDPredict["Compression"]["CompDeGridMode"]=True
+        
         if options.OverS!=None:
             GDPredict["ImagerCF"]["OverS"]=options.OverS
         GD["GDImage"]=GDPredict

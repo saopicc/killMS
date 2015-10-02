@@ -49,7 +49,7 @@ class ClassPreparePredict(ClassImagerDeconv):
 
         self.MM.CleanNegComponants(box=15,sig=1)
         self.ModelImage=self.MM.GiveModelImage(np.mean(self.VS.MS.ChanFreq))
-
+        self.ModelImage[self.ModelImage!=0]=10.
 
         #self.FacetMachine.ToCasaImage(ModelImage0,ImageName="Model0",Fits=True)
         #self.FacetMachine.ToCasaImage(self.ModelImage,ImageName="Model1",Fits=True)
@@ -134,7 +134,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         FacetMode="Fader"
         
 
-
+        # #####################################"
         # #### test
         # self.SharedMemNameSphe="%sSpheroidal"%(self.IdSharedMem)
         # self.ifzfCF=NpShared.GiveArray(self.SharedMemNameSphe)
@@ -148,38 +148,60 @@ class ClassPreparePredict(ClassImagerDeconv):
         # y=y.reshape((1,1,nx,ny))
         
         # #Image[:,:,:,:]=np.random.randn(*(Image.shape))
-        # Image=np.sqrt(x**2+2.*y**2)
+        # #Image=np.sqrt(x**2+2.*y**2)
 
         # for iFacet in range(9):
-        #     Grid0,SumFlux0=self.ClassImToGrid.GiveGridSharp(Image,self.DicoImager,iFacet)
+        #     # Grid0,SumFlux0=self.ClassImToGrid.GiveGridSharp(Image,self.DicoImager,iFacet)
             
-        #     NormImage=NpShared.GiveArray("%sNormImage"%self.IdSharedMem)
-        #     Grid1,SumFlux1=self.ClassImToGrid.GiveGridFader(Image,self.DicoImager,iFacet,NormImage)
+        #     # NormImage=NpShared.GiveArray("%sNormImage"%self.IdSharedMem)
+        #     # Grid1,SumFlux1=self.ClassImToGrid.GiveGridFader(Image,self.DicoImager,iFacet,NormImage)
 
+        #     # Image=NpShared.GiveArray("%sModelImage"%(self.IdSharedMem))
+
+        #     #Grid,SumFlux=self.ClassImToGrid.GiveGridFader(Image,self.DicoImager,iFacet,NormImage)
+        #     SharedMemName="%sSpheroidal.Facet_%3.3i"%(self.IdSharedMem,iFacet)
+        #     SPhe=NpShared.GiveArray(SharedMemName)
+        #     SpacialWeight=NpShared.GiveArray("%sSpacialWeight_%3.3i"%(self.IdSharedMem,iFacet))
+        #     NormImage=NpShared.GiveArray("%sNormImage"%self.IdSharedMem)
+
+        #     Im2Grid=ClassImToGrid(OverS=self.GD["ImagerCF"]["OverS"],GD=self.GD)
+        #     #Grid,SumFlux=Im2Grid.GiveModelTessel(Image,self.DicoImager,iFacet,NormImage,SPhe,SpacialWeight,ToGrid=True)
+
+        #     ok,ModelCutOrig,ModelCutOrig_GNorm,ModelCutOrig_SW,ModelCutOrig_Sphe,ModelCutOrig_GNorm_SW_Sphe_CorrT=Im2Grid.GiveModelTessel(Image,self.DicoImager,iFacet,NormImage,SPhe,SpacialWeight,ToGrid=True)
+        #     if ok==False: continue
 
         #     print "================= %i"%iFacet
         #     #print np.where(Grid0==np.max(Grid0)),np.max(Grid0)
         #     #print np.where(Grid1==np.max(Grid1)),np.max(Grid1)
         #     #print np.max(np.abs(Grid0-Grid1))
 
-        #     vmin,vmax=Grid0.min(),Grid0.max()
-        #     vmin=0
-        #     vmax=2000
+        #     #vmin,vmax=0,13
+        #     #vmin=0
+        #     #vmax=2000
+
+        #     x,y=np.where(ModelCutOrig==np.max(ModelCutOrig))
+
         #     import pylab
         #     pylab.clf()
-        #     pylab.subplot(1,3,1)
-        #     pylab.imshow(Image[0,0].real,interpolation="nearest",vmin=vmin,vmax=vmax)
+        #     ax=pylab.subplot(2,2,1)
+        #     pylab.imshow(ModelCutOrig.real,interpolation="nearest")#,vmin=vmin,vmax=vmax)
+        #     pylab.scatter(y,x)
+        #     pylab.title("max=%f"%np.max(ModelCutOrig_GNorm_SW_Sphe_CorrT))
+        #     #pylab.colorbar()
+        #     pylab.subplot(2,2,2,sharex=ax,sharey=ax)
+        #     pylab.imshow(ModelCutOrig_GNorm,interpolation="nearest")#,vmin=vmin,vmax=vmax)
         #     pylab.colorbar()
-        #     pylab.subplot(1,3,2)
-        #     pylab.imshow(Grid0[0,0].real,interpolation="nearest",vmin=vmin,vmax=vmax)
-        #     #pylab.imshow(Grid1[0,0].real,interpolation="nearest",vmin=vmin,vmax=vmax)
-        #     pylab.subplot(1,3,3)
-        #     #pylab.imshow(Grid1[0,0].real,interpolation="nearest",vmin=vmin,vmax=vmax)
-        #     pylab.imshow(Grid1[0,0].real-Grid0[0,0].real,interpolation="nearest",vmin=vmin,vmax=vmax)
+        #     pylab.subplot(2,2,3,sharex=ax,sharey=ax)
+        #     pylab.imshow(ModelCutOrig_SW,interpolation="nearest")#,vmin=vmin,vmax=vmax)
+        #     pylab.colorbar()
+        #     pylab.subplot(2,2,4,sharex=ax,sharey=ax)
+        #     pylab.imshow(ModelCutOrig_Sphe,interpolation="nearest")#,vmin=vmin,vmax=vmax)
+        #     pylab.colorbar()
 
         #     pylab.draw()
-        #     pylab.show(False)
-        #     print Grid1[0,0,nx/2,ny/2].real-Grid0[0,0,nx/2,ny/2].real
+        #     pylab.show()
+
+        #     #print Grid1[0,0,nx/2,ny/2].real-Grid0[0,0,nx/2,ny/2].real
         # stop
 
         # ####
@@ -234,7 +256,9 @@ class ClassPreparePredict(ClassImagerDeconv):
         
         iFacetNew=0
         for iFacet in sorted(self.FacetMachine.DicoImager.keys()):
+            print>>log,"Facet %i [%f]"%(iFacet,ClusterCat.SumI[iFacet])
             if DelFacet[iFacet]==0:
+                print>>log,"  Keep Facet %i"%(iFacet)
                 Grid=NpShared.GiveArray("%sModelGrid.%3.3i"%(self.IdSharedMem,iFacet))
                 ListGrid.append(Grid)
                 D[iFacetNew]=self.FacetMachine.DicoImager[iFacet]

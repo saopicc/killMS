@@ -892,21 +892,25 @@ class ClassJacobianAntenna():
 
         # ##############################################
         # from SkyModel.Sky import ClassSM
-        # SM=ClassSM.ClassSM("ModelRandom00.txt.npy")
+        # SM=ClassSM.ClassSM("ModelRandom00.4.txt.npy")
         # SM.Type="Catalog"
         # SM.Calc_LM(self.SM.rac,self.SM.decc)
         # self.KernelMat1=np.zeros((1,NDir,n4vis/nchan,nchan),dtype=self.CType)
         # self.K1_XX=self.KernelMat1[0]
         # self.K1_YY=self.K1_XX
         # import pylab
+        # pylab.figure(0)
         # pylab.clf()
+        # pylab.figure(1)
+        # pylab.clf()
+        # pylab.figure(0)
         
 
         for iDir in range(NDir):
             
 
-            #K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones)
             K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones)
+            #K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir)#,ApplyTimeJones=ApplyTimeJones)
             #K*=-1
             T.timeit("Calc K0")
             indRow,indChan=np.where(np.all((K==0),axis=-1))
@@ -930,48 +934,58 @@ class ClassJacobianAntenna():
 
 
         #     ######################
-        #     K1=self.PM.predictKernelPolCluster(self.DicoData,SM,iDirection=iDir)
+        #     K1=self.PM.predictKernelPolCluster(self.DicoData,SM,iDirection=iDir)#,ApplyTimeJones=ApplyTimeJones)
 
         #     A0=self.DicoData["A0"]
         #     A1=self.DicoData["A1"]
         #     ind=np.where((A0==0)&(A1==26))[0]
-        #     d0=K[ind,0,0] 
-        #     d1=K1[ind,0,0]
+        #     d1=K[ind,0,0] 
+        #     d0=K1[ind,0,0]
         #     #op0=np.abs
-        #     op1=np.angle
         #     op0=np.real
         #     #op1=np.imag
-        #     pylab.subplot(2,1,1)
+        #     pylab.figure(0)
+        #     pylab.subplot(1,NDir,iDir+1)
         #     pylab.plot(op0(d0))
         #     pylab.plot(op0(d1))
-        #     pylab.plot(op0(d1)-op0(d0))
-            
-        #     #pylab.ylim(-1,1)
-        #     pylab.subplot(2,1,2)
-        #     #pylab.plot(op1(d0))
-        #     pylab.plot(op1(d1*d0.conj()))#,ls="--")
-        #     #pylab.plot(op1(d0*d1.conj()),ls="--")
-        #     #pylab.ylim(-1,1)
+        #     #pylab.plot(op0(d1)/op0(d0))
+        #     pylab.ylim(-15,15)
+        #     pylab.draw()
+        #     pylab.show(False)
+
+        #     op1=np.angle
+        #     pylab.figure(1)
+        #     pylab.subplot(1,NDir,iDir+1)
+        #     pylab.plot(op1(d0))
+        #     pylab.plot(op1(d1))
+        #     #pylab.plot(op1(d1)-op1(d0))
+        #     pylab.ylim(-np.pi,np.pi)
+
+        #     # pylab.subplot(2,1,2)
+        #     # #pylab.plot(op1(d0))
+        #     # pylab.plot(op1(d1*d0.conj()))#,ls="--")
+        #     # #pylab.plot(op1(d0*d1.conj()),ls="--")
+        #     # #pylab.ylim(-1,1)
         #     pylab.draw()
         #     pylab.show(False)
             
-        #     K1_XX=K1[:,:,0]
-        #     K1_YY=K1[:,:,3]
-        #     if self.PolMode=="Scalar":
-        #         K1_XX=(K1_XX+K1_YY)/2.
-        #         K1_YY=K1_XX
+        # #     K1_XX=K1[:,:,0]
+        # #     K1_YY=K1[:,:,3]
+        # #     if self.PolMode=="Scalar":
+        # #         K1_XX=(K1_XX+K1_YY)/2.
+        # #         K1_YY=K1_XX
 
-        #     self.K1_XX[iDir,:,:]=K1_XX
-        #     self.K1_YY[iDir,:,:]=K1_YY
-        #     #self.K_XX.append(K_XX)
-        #     #self.K_YY.append(K_YY)
+        # #     self.K1_XX[iDir,:,:]=K1_XX
+        # #     self.K1_YY[iDir,:,:]=K1_YY
+        # #     #self.K_XX.append(K_XX)
+        # #     #self.K_YY.append(K_YY)
 
-        #     del(K1,K1_XX,K1_YY)
-        #     del(K,K_XX,K_YY)
+        # #     del(K1,K1_XX,K1_YY)
+        # #     del(K,K_XX,K_YY)
 
 
 
-        # stop
+        #stop
         #gc.collect()
         self.HasKernelMatrix=True
         T.timeit("stuff 4")
