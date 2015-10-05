@@ -282,8 +282,8 @@ class ClassSimul():
 
 
         PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones,Noise=Noise)
-        PredictData5=PM5.predictKernelPolCluster(VS.ThisDataChunk,SM)
-        stop
+        # PredictData5=PM5.predictKernelPolCluster(VS.ThisDataChunk,SM)
+        # stop
         #PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM)
         
         #SM.RestoreCat()

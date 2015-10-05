@@ -239,6 +239,14 @@ def main(OP=None,MSName=None):
 
     DicoSelectOptions["DistMaxToCore"]=options.DistMaxToCore
 
+    SolsName=options.SolverType
+    if options.OutSolsName!="":
+        #FileName="%s%s"%(reformat.reformat(options.MSName),options.OutSolsName)
+        #if not(FileName[-4::]==".npz"): FileName+=".npz"
+        SolsName=options.OutSolsName
+
+    ParsetName="%skillMS.%s.sols.parset"%(reformat.reformat(options.MSName),SolsName)
+    OP.ToParset(ParsetName)
 
     GD=OP.DicoConfig
     if GD["ImageSkyModel"]["BaseImageName"]=="":
@@ -570,18 +578,13 @@ def main(OP=None,MSName=None):
 
 
     if SaveSols:
-        SolsName=options.SolverType
-        if options.OutSolsName!="":
-            #FileName="%s%s"%(reformat.reformat(options.MSName),options.OutSolsName)
-            #if not(FileName[-4::]==".npz"): FileName+=".npz"
-            SolsName=options.OutSolsName
 
         FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.MSName),SolsName)
 
         print>>log, "Save Solutions in file: %s"%FileName
         Sols=Solver.GiveSols()
         StationNames=np.array(Solver.VS.MS.StationNames)
-            
+        
 
         np.savez(FileName,
                  Sols=Sols,
