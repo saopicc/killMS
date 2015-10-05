@@ -45,6 +45,16 @@ double complex *p_complex128(PyArrayObject *arrayin)  {
 
 
 
+float GiveExp(float xneg, float* Exp, float step, int Nmax){
+  int ii=floor(xneg/step);
+  float ans;
+  if(ii>=Nmax){ans=0.;}
+  else{
+    ans=Exp[ii];
+  }
+  //printf("%i %i %f\n",ii,Nmax,ans);
+  return ans;
+}
 
 
 
@@ -52,6 +62,7 @@ double complex *p_complex128(PyArrayObject *arrayin)  {
 static PyObject *predict(PyObject *self, PyObject *args);
 static PyObject *predictJones(PyObject *self, PyObject *args);
 static PyObject *predictJones2(PyObject *self, PyObject *args);
+static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args);
 static PyObject *ApplyJones(PyObject *self, PyObject *args);
 static PyObject *CorrVis(PyObject *self, PyObject *args);
 static PyObject *GiveMaxCorr(PyObject *self, PyObject *args);

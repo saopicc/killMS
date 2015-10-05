@@ -38,7 +38,7 @@ def SolsToDicoJones(Sols,nf):
 
 
 class ClassPredict():
-    def __init__(self,Precision="S",NCPU=6,IdMemShared=None,DoSmearing=""):
+    def __init__(self,Precision="S",NCPU=6,IdMemShared=None,DoSmearing="",LExp=None):
         self.NCPU=NCPU
         ne.set_num_threads(self.NCPU)
         if Precision=="D":
@@ -49,7 +49,13 @@ class ClassPredict():
             self.FType=np.float32
         self.DoSmearing=DoSmearing
         self.IdSharedMem=IdMemShared
-    
+        
+        if LExp==None:
+            x=np.linspace(0.,15,100000)
+            Exp=np.float32(np.exp(-x))
+            LExp=[Exp,x[1]-x[0]]
+        self.LExp=LExp
+
 
 
     def ApplyCal(self,DicoData,ApplyTimeJones,iCluster):
@@ -266,6 +272,9 @@ class ClassPredict():
             l=np.float32(SourceCat.l)
             m=np.float32(SourceCat.m)
             I=np.float32(SourceCat.I)
+            Gmaj=np.float32(SourceCat.Gmaj)
+            Gmin=np.float32(SourceCat.Gmin)
+            GPA=np.float32(SourceCat.Gangle)
             alpha=np.float32(SourceCat.alpha)
             WaveL=np.float32(299792458./self.freqs)
             flux=np.float32(SourceCat.I)
@@ -274,7 +283,7 @@ class ClassPredict():
             f0=(self.freqs/SourceCat.RefFreq[0])
             fluxFreq=np.float32(flux.reshape((flux.size,1))*(f0.reshape((1,f0.size)))**(alpha.reshape((alpha.size,1))))
 
-            LSM=[l,m,fluxFreq]
+            LSM=[l,m,fluxFreq,Gmin,Gmaj,GPA]
             LFreqs=[WaveL,np.float32(self.freqs),dnu]
             LUVWSpeed=[UVW_dt,DT]
 
@@ -300,7 +309,7 @@ class ClassPredict():
 
                 #predict.predictJones2(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList,AllowEqualiseChan)
                 #print LSmearMode
-                predict.predictJones2(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
+                predict.predictJones2_Gauss(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan,self.LExp)
                 T.timeit("predict")
                 predict.ApplyJones(ColOutDir,ParamJonesList)
                 T.timeit("apply")
@@ -319,7 +328,8 @@ class ClassPredict():
                 #ColOutDir.fill(0)
 
                 
-                predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
+                predict.predictJones2_Gauss(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan,self.LExp)
+                #predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
                 T.timeit("predict")
                 # d0=ColOutDir.copy()
                 # ColOutDir.fill(0)

@@ -10,7 +10,7 @@ MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
 from killMS2.Other import ClassTimeIt
 from killMS2.Data import ClassVisServer
 from killMS2.Predict.PredictGaussPoints_NumExpr import ClassPredict
-#from killMS2.Predict.PredictGaussPoints_NumExpr5 import ClassPredict as ClassPredict 
+from killMS2.Predict.PredictGaussPoints_NumExpr5 import ClassPredict as ClassPredict5
 from killMS2.Array import ModLinAlg
 from killMS2.Array import NpShared
 import time
@@ -268,6 +268,7 @@ class ClassSimul():
 
         #PM=ClassPredict(NCPU=NCPU,DoSmearing="F")
         PM=ClassPredict(NCPU=NCPU)
+        PM5=ClassPredict5(NCPU=NCPU)
         na=MS.na
         nd=SM.NDir
         
@@ -281,6 +282,8 @@ class ClassSimul():
 
 
         PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones,Noise=Noise)
+        PredictData5=PM5.predictKernelPolCluster(VS.ThisDataChunk,SM)
+        stop
         #PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM)
         
         #SM.RestoreCat()

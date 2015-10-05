@@ -20,9 +20,7 @@ def dot_A_BT(A,BT):
     if not(A.dtype==B.dtype): raise NameError("A and B must have the same dtype [%s vs %s]"%(str(A.dtype),str(B.dtype)))
 
     C=np.zeros((nxA,nxB),DType)
-    print "ok"
     dotSSE.dot(A,B,C,IntType)
-    print "done"
     
     return C
 
