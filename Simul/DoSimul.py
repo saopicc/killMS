@@ -283,8 +283,26 @@ class ClassSimul():
 
         PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones,Noise=Noise)
         # PredictData5=PM5.predictKernelPolCluster(VS.ThisDataChunk,SM)
+
+
+        # import pylab
+        # ind=np.where((VS.ThisDataChunk["A0"]==7)&(VS.ThisDataChunk["A1"]==17))[0]
+        # op0=np.real
+        # op1=np.abs
+        # pylab.clf()
+        # pylab.subplot(2,1,1)
+        # pylab.plot(op0(PredictData[ind,0,0]))
+        # pylab.plot(op0(PredictData5[ind,0,0]))
+        # pylab.plot(op0(PredictData[ind,0,0])-op0(PredictData5[ind,0,0]))
+        # pylab.subplot(2,1,2)
+        # pylab.plot(op1(PredictData[ind,0,0]))
+        # pylab.plot(op1(PredictData5[ind,0,0]))
+        # pylab.plot(op1(PredictData[ind,0,0])-op1(PredictData5[ind,0,0]))
+        # pylab.draw()
+        # pylab.show(False)
+
         # stop
-        #PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM)
+        # #PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM)
         
         #SM.RestoreCat()
     

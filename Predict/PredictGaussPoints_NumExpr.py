@@ -208,6 +208,9 @@ class ClassPredict():
         Gmin=SourceCat.Gmin.reshape((NSource,1,1,1))
         Gangle=SourceCat.Gangle.reshape((NSource,1,1,1))
 
+        print "%i:"%idir
+        print Gmin,Gmaj,Gangle
+        print
         RefFreq=SourceCat.RefFreq.reshape((NSource,1,1,1))
         alpha=SourceCat.alpha.reshape((NSource,1,1,1))
 

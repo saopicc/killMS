@@ -51,7 +51,7 @@ class ClassPredict():
         self.IdSharedMem=IdMemShared
         
         if LExp==None:
-            x=np.linspace(0.,15,100000)
+            x=np.linspace(0.,10,100000)
             Exp=np.float32(np.exp(-x))
             LExp=[Exp,x[1]-x[0]]
         self.LExp=LExp

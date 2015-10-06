@@ -1353,6 +1353,8 @@ static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args)
     float ang=p_GPA[dd];
     float SigMaj=p_Gmaj[dd];
     float SigMin=p_Gmin[dd];
+    printf("%i:\n",dd);
+    printf("%f %f %f\n",SigMin,SigMaj,ang);
 
     ThisSourceType=(SigMaj!=0.);
 
