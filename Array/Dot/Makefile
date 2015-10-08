@@ -7,8 +7,8 @@ clean:
 
 # ---- Link --------------------------- 
 dotSSE.so:  dotSSE.o 
-	gcc -fopenmp -pthread -shared  dotSSE.o -o dotSSE.so
+	gcc -shared  dotSSE.o -o dotSSE.so
 
 # ---- gcc C compile ------------------
 dotSSE.o:  dotSSE.c dotSSE.h
-	gcc -lgomp -fopenmp -pthread -Ofast --fast-math  -c dotSSE.c -I/usr/include/python2.7 -I/usr/lib/python2.7/dist-packages/numpy/core/include/numpy -I/home/cyril.tasse/bin/lib/python2.7/site-packages/numpy/core/include/numpy -fPIC
+	gcc -O3 --fast-math  -c dotSSE.c -I/usr/include/python2.7 -I/usr/lib/python2.7/dist-packages/numpy/core/include/numpy -I/home/cyril.tasse/bin/lib/python2.7/site-packages/numpy/core/include/numpy -fPIC

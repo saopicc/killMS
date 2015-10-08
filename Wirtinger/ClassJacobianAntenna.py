@@ -144,8 +144,8 @@ class ClassJacobianAntenna():
             self.FType=np.float32
 
         self.CType=np.complex128
-        #self.TypeDot="Numpy"
-        self.TypeDot="SSE"
+        self.TypeDot="Numpy"
+        #self.TypeDot="SSE"
 
         self.iAnt=iAnt
         self.SharedDataDicoName="%sDicoData.%2.2i"%(self.IdSharedMem,self.iAnt)

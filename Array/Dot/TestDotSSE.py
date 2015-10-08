@@ -38,12 +38,12 @@ def test():
     print C-D
 
     #A=np.complex64(np.random.rand(2000,100)+1j*np.random.rand(2000,100))
-    A=np.complex128( np.ones((10000,100)))
+    A=np.complex64( np.ones((50000,100)))
     B=A.copy()
     #C=np.zeros_like(A)
 
 
-    N=1
+    N=10
     T=ClassTimeIt.ClassTimeIt()
     for i in range(N):
         AA=np.dot(A.T,B)
