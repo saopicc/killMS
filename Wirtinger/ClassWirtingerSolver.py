@@ -149,6 +149,7 @@ class ClassWirtingerSolver():
         ind=np.where(self.SolsArray_done==1)[0]
         self.SolsArray_Full.t0[0:ind.size]=self.SolsArray_t0[0:ind.size]
         self.SolsArray_Full.t1[0:ind.size]=self.SolsArray_t1[0:ind.size]
+        self.SolsArray_Full.Stats[0:ind.size]=self.SolsArray_Stats[0:ind.size]
         if self.PolMode=="Scalar":
             self.SolsArray_Full.G[0:ind.size,:,:,0,0]=self.SolsArray_G[0:ind.size,:,:,0,0]
             self.SolsArray_Full.G[0:ind.size,:,:,1,1]=self.SolsArray_G[0:ind.size,:,:,0,0]
@@ -212,14 +213,15 @@ class ClassWirtingerSolver():
         self.SolsArray_tm=np.zeros((NSols,),dtype=np.float64)
         self.SolsArray_done=np.zeros((NSols,),dtype=np.bool8)
         self.SolsArray_G=np.zeros((NSols,na,nd,npolx,npoly),dtype=np.complex64)
+        self.SolsArray_Stats=np.zeros((NSols,na,3),dtype=np.float32)
 
         self.SolsArray_t0=NpShared.ToShared("%sSolsArray_t0"%self.IdSharedMem,self.SolsArray_t0)
         self.SolsArray_t1=NpShared.ToShared("%sSolsArray_t1"%self.IdSharedMem,self.SolsArray_t1)
         self.SolsArray_tm=NpShared.ToShared("%sSolsArray_tm"%self.IdSharedMem,self.SolsArray_tm)
         self.SolsArray_done=NpShared.ToShared("%sSolsArray_done"%self.IdSharedMem,self.SolsArray_done)
         self.SolsArray_G=NpShared.ToShared("%sSolsArray_G"%self.IdSharedMem,self.SolsArray_G)
-
-        self.SolsArray_Full=np.zeros((NSols,),dtype=[("t0",np.float64),("t1",np.float64),("G",np.complex64,(na,nd,2,2))])
+        self.SolsArray_Full=np.zeros((NSols,),dtype=[("t0",np.float64),("t1",np.float64),("G",np.complex64,(na,nd,2,2)),
+                                                     ("Stats",np.float32,(na,3))])
         self.SolsArray_Full=self.SolsArray_Full.view(np.recarray)
         self.ListKapa=[[] for iAnt in range(na)]
         self.ListKeepKapa=[[] for iAnt in range(na)]
@@ -472,7 +474,6 @@ class ClassWirtingerSolver():
 
             self.SolsArray_done[self.iCurrentSol]=1
             self.SolsArray_G[self.iCurrentSol][:]=self.G[:]
-
             
             self.iCurrentSol+=1
         return True
@@ -616,7 +617,10 @@ class ClassWirtingerSolver():
                     self.ListStd[iAnt].append(InfoNoise["std"])
                     self.ListMax[iAnt].append(InfoNoise["max"])
                     self.ListKeepKapa[iAnt].append(InfoNoise["kapa"])
-
+                    self.SolsArray_Stats[self.iCurrentSol][iAnt][0]=InfoNoise["std"]
+                    self.SolsArray_Stats[self.iCurrentSol][iAnt][1]=InfoNoise["max"]
+                    self.SolsArray_Stats[self.iCurrentSol][iAnt][2]=InfoNoise["kapa"]
+            
 
                     iResult+=1
                     if (kapa!=None)&(LMIter==0):
