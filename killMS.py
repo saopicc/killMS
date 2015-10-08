@@ -189,7 +189,10 @@ def main(OP=None,MSName=None):
     IdSharedMem=str(int(os.getpid()))+"."
     DoApplyCal=0#(options.ApplyCal!=-2)
     ApplyCal=0#int(options.ApplyCal)
-    ReWeight=(options.ClipMethod!="")
+    if type(options.ClipMethod)!=list: stop
+
+    ReWeight=(len(options.ClipMethod)>0)
+
 
     if MSName!=None:
         options.MSName=MSName
@@ -405,7 +408,6 @@ def main(OP=None,MSName=None):
             Jones={}
             Jones["t0"]=Sols.t0
             Jones["t1"]=Sols.t1
-            Jones["t1"]=Sols.t1
             nt,na,nd,_,_=Sols.G.shape
             G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
             G=np.require(G, dtype=np.complex64, requirements="C_CONTIGUOUS")
@@ -418,6 +420,7 @@ def main(OP=None,MSName=None):
 
             Jones["Jones"]=G
             Jones["JonesH"]=ModLinAlg.BatchH(G)
+            Jones["Stats"]=Sols.Stats
             Jones["ChanMap"]=np.zeros((VS.MS.NSPWChan,))
             times=Solver.VS.ThisDataChunk["times"]
 
@@ -448,7 +451,7 @@ def main(OP=None,MSName=None):
 
 
 
-            if ReWeight:
+            if ("Resid" in options.ClipMethod)|("DDEResid" in options.ClipMethod):
                 print>>log, ModColor.Str("Clipping bad solution-based data ... ",col="green")
                 
 
@@ -462,9 +465,9 @@ def main(OP=None,MSName=None):
 
                 print>>log,"   Compute residual data"
                 Predict=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
-                
                 Solver.VS.ThisDataChunk["resid"]=Solver.VS.ThisDataChunk["data"]-Predict
                 Weights=Solver.VS.ThisDataChunk["W"]
+
 
                 if "Resid" in options.ClipMethod:
                     Diff=Solver.VS.ThisDataChunk["resid"]
@@ -476,10 +479,11 @@ def main(OP=None,MSName=None):
                     ind=np.any(cond,axis=2)
                     Weights[ind]=0.
 
-
                 if "DDEResid" in options.ClipMethod:
                     print>>log,"   Compute corrected residual data in all direction"
                     PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones,SM)
+
+
 
                 Weights=Solver.VS.ThisDataChunk["W"]
                 NNotFlagged=np.count_nonzero(Weights)
@@ -500,6 +504,21 @@ def main(OP=None,MSName=None):
                 # Weights=Weights.reshape((Weights.size,1))*np.ones((1,4))
                 # Solver.VS.MS.Weights[:]=Weights[:]
 
+                print>>log, "  Writting in IMAGING_WEIGHT column "
+                t=table(Solver.VS.MS.MSName,readonly=False,ack=False)
+                t.putcol("IMAGING_WEIGHT",Weights)
+                t.close()
+
+
+
+            if "ResidAnt" in options.ClipMethod:
+                print>>log,"Compute weighting based on antenna-selected residual"
+                nrows=Solver.VS.ThisDataChunk["times"].size
+                Solver.VS.ThisDataChunk["W"]=np.ones((nrows,Solver.VS.MS.ChanFreq.size),np.float64)
+                PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones,SM,Mode="ResidAntCovariance")
+
+                Weights=Solver.VS.ThisDataChunk["W"]
+                Weights/=np.mean(Weights)
                 print>>log, "  Writting in IMAGING_WEIGHT column "
                 t=table(Solver.VS.MS.MSName,readonly=False,ack=False)
                 t.putcol("IMAGING_WEIGHT",Weights)
