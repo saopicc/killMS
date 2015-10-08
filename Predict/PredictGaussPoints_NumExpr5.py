@@ -154,6 +154,9 @@ class ClassPredict():
         MaxMat=np.zeros(Resid.shape,dtype=np.float32)
         CVis=np.zeros_like(Resid)
 
+        
+
+
         for iCluster in ListDirection:
             CVis.fill(0)
             ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
@@ -177,6 +180,43 @@ class ClassPredict():
         cond=(diff>3.)
         ind=np.any(cond,axis=2)
         W[ind]=0.
+
+
+    def GiveResidAntCovariance(self,DicoData,ApplyTimeJones,SM):
+        D=ApplyTimeJones
+        Jones=D["Jones"]
+        JonesH=D["JonesH"]
+        lt0,lt1=D["t0"],D["t1"]
+        ColOutDir=DicoData["data"]
+        A0=DicoData["A0"]
+        A1=DicoData["A1"]
+        times=DicoData["times"]
+        na=DicoData["infos"][0]
+        Sigma=ApplyTimeJones["Stats"]
+        W=DicoData["W"]#np.ones((nrow,nch),np.float32)
+        nrow,nch=W.shape
+
+        for it in range(lt0.size):
+            
+            t0,t1=lt0[it],lt1[it]
+            ind=np.where((times>=t0)&(times<t1))[0]
+
+            if ind.size==0: continue
+            data=ColOutDir[ind]
+            # flags=DicoData["flags"][ind]
+            A0sel=A0[ind]
+            A1sel=A1[ind]
+
+            ThisStats=Sigma[it][:,0]
+            sig0=ThisStats[A0sel]
+            sig1=ThisStats[A1sel]
+
+            w=1./(1e-2+sig0**2+sig1**2)
+            for ich in range(nch):
+                W[ind,ich]=w[:]
+
+
+
 
 
 
@@ -485,7 +525,7 @@ class ClassPredictParallel():
 
 
 
-    def GiveCovariance(self,DicoDataIn,ApplyTimeJones,SM):
+    def GiveCovariance(self,DicoDataIn,ApplyTimeJones,SM,Mode="DDECovariance"):
 
         DicoData=NpShared.DicoToShared("%sDicoMemChunk"%(self.IdMemShared),DicoDataIn,DelInput=False)
         
@@ -509,7 +549,7 @@ class ClassPredictParallel():
         # CorrectedData=
 
         for ii in range(NCPU):
-            W=WorkerPredict(work_queue, result_queue,self.IdMemShared,Mode="GiveCovariance",DoSmearing=self.DoSmearing,SM=SM)
+            W=WorkerPredict(work_queue, result_queue,self.IdMemShared,Mode=Mode,DoSmearing=self.DoSmearing,SM=SM)
             workerlist.append(W)
             workerlist[ii].start()
 
@@ -687,8 +727,10 @@ class WorkerPredict(multiprocessing.Process):
 
             elif self.Mode=="ApplyCal":
                 PM.ApplyCal(DicoData,ApplyTimeJones,self.iCluster)
-            elif self.Mode=="GiveCovariance":
+            elif self.Mode=="DDECovariance":
                 PM.GiveCovariance(DicoData,ApplyTimeJones,self.SM)
+            elif self.Mode=="ResidAntCovariance":
+                PM.GiveResidAntCovariance(DicoData,ApplyTimeJones,self.SM)
 
 
             self.result_queue.put(True)

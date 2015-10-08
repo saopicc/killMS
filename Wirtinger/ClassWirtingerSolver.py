@@ -620,8 +620,7 @@ class ClassWirtingerSolver():
                     self.SolsArray_Stats[self.iCurrentSol][iAnt][0]=InfoNoise["std"]
                     self.SolsArray_Stats[self.iCurrentSol][iAnt][1]=InfoNoise["max"]
                     self.SolsArray_Stats[self.iCurrentSol][iAnt][2]=InfoNoise["kapa"]
-            
-
+                    
                     iResult+=1
                     if (kapa!=None)&(LMIter==0):
                         if kapa==-1.:
@@ -802,8 +801,8 @@ class WorkerAntennaLM(multiprocessing.Process):
             T.timeit("GiveArray")
 
             if self.SolverType=="CohJones":
-                x,_,_=JM.doLMStep(G)
-                self.result_queue.put([iAnt,x,None,None,{"std":-1.,"max":-1.,"kapa":None}])
+                x,_,InfoNoise=JM.doLMStep(G)
+                self.result_queue.put([iAnt,x,None,None,InfoNoise])
             elif self.SolverType=="KAFCA":
                 #T.disable()
                 if DoCalcEvP:

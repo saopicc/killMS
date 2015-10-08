@@ -514,6 +514,8 @@ class ClassJacobianAntenna():
         Ga=self.GiveSubVecGainAnt(Gains)
         f=(self.DicoData["flags_flat"]==0)
         ind=np.where(f)[0]
+
+
         if ind.size==0:
             return Ga.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),None,{"std":-1.,"max":-1.,"kapa":None}
 
@@ -536,6 +538,9 @@ class ClassJacobianAntenna():
         # x1_0=np.load("LM.npz")["x1"]
         # z_0=np.load("LM.npz")["z"]
         # Jx_0=np.load("LM.npz")["Jx"]
+
+        InfoNoise={"std":np.std(zr[f]),"max":np.max(np.abs(zr[f])),"kapa":None}
+
 
         JH_z=self.JH_z(zr)
         T.timeit("JH_z")
@@ -581,7 +586,8 @@ class ClassJacobianAntenna():
         del(self.LJacob)
         T.timeit("rest")
         # print self.iAnt,np.mean(x1),x1.size,ind.size
-        return x1.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),None,{"std":-1.,"max":-1.,"kapa":None}
+
+        return x1.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),None,InfoNoise
 
                                         
     def JHJinv_x(self,Gains):
