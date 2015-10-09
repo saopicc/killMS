@@ -196,6 +196,8 @@ class ClassPredict():
         W=DicoData["W"]#np.ones((nrow,nch),np.float32)
         nrow,nch=W.shape
 
+        # print Jones.shape
+
         for it in range(lt0.size):
             
             t0,t1=lt0[it],lt1[it]
