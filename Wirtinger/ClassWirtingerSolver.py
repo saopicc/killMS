@@ -287,6 +287,7 @@ class ClassWirtingerSolver():
                 AbsMeanBeamAnt=np.mean(AbsMeanBeam[:,:,0,0,0],axis=1)
                 for idir in range(nd):
                     Qa[idir,:,:,idir,:,:]*=(AbsMeanBeamAnt[idir]*F[idir])**2
+                    #Qa[idir,:,:,idir,:,:]*=(F[idir])**2
             else:
                 for idir in range(nd):
                     Qa[idir,:,:,idir,:,:]*=(F[idir])**2
