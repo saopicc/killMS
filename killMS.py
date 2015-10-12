@@ -323,7 +323,8 @@ def main(OP=None,MSName=None):
                            "Lambda":options.Lambda,
                            "DoReg":False,#True,
                            "gamma":1,
-                           "AmpQx":.5}
+                           "AmpQx":.5,
+                           "PrecisionDot":"S"}
 
     if (options.SolverType=="KAFCA"):
         NIter=options.NIterKF
