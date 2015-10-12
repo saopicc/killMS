@@ -140,6 +140,7 @@ def read_options():
     
     OP.OptionGroup("* Solver options","Solvers")
     OP.add_option('SolverType',help='Name of the solver to use (CohJones/KAFCA)')
+    OP.add_option('PrecisionDot',help='Dot product Precision (S/D). Default is %default.',type="str")
     OP.add_option('PolMode',help='Polarisation mode (Scalar/IFull). Default is %default')
     OP.add_option('dt',type="float",help='Time interval for a solution [minutes]. Default is %default. ')
     
@@ -324,7 +325,7 @@ def main(OP=None,MSName=None):
                            "DoReg":False,#True,
                            "gamma":1,
                            "AmpQx":.5,
-                           "PrecisionDot":"S"}
+                           "PrecisionDot":options.PrecisionDot}
 
     if (options.SolverType=="KAFCA"):
         NIter=options.NIterKF
