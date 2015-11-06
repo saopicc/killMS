@@ -10,7 +10,7 @@ from killMS2.Other import MyPickle
 from killMS2.Other import PrintOptParse
 from killMS2.Parset import MyOptParse
 
-
+# log
 log=MyLogger.getLogger("killMS")
 MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
 

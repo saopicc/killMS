@@ -1,6 +1,6 @@
 
 import numpy as np
-from DDFacet.Array import ModLinAlg
+from killMS2.Array import ModLinAlg
 
 def MergeJones(DicoJ0,DicoJ1):
     T0=DicoJ0["t0"][0]

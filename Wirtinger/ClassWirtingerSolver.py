@@ -213,15 +213,17 @@ class ClassWirtingerSolver():
         self.SolsArray_tm=np.zeros((NSols,),dtype=np.float64)
         self.SolsArray_done=np.zeros((NSols,),dtype=np.bool8)
         self.SolsArray_G=np.zeros((NSols,na,nd,npolx,npoly),dtype=np.complex64)
-        self.SolsArray_Stats=np.zeros((NSols,na,3),dtype=np.float32)
+        self.SolsArray_Stats=np.zeros((NSols,na,4),dtype=np.float32)
 
         self.SolsArray_t0=NpShared.ToShared("%sSolsArray_t0"%self.IdSharedMem,self.SolsArray_t0)
         self.SolsArray_t1=NpShared.ToShared("%sSolsArray_t1"%self.IdSharedMem,self.SolsArray_t1)
         self.SolsArray_tm=NpShared.ToShared("%sSolsArray_tm"%self.IdSharedMem,self.SolsArray_tm)
         self.SolsArray_done=NpShared.ToShared("%sSolsArray_done"%self.IdSharedMem,self.SolsArray_done)
         self.SolsArray_G=NpShared.ToShared("%sSolsArray_G"%self.IdSharedMem,self.SolsArray_G)
-        self.SolsArray_Full=np.zeros((NSols,),dtype=[("t0",np.float64),("t1",np.float64),("G",np.complex64,(na,nd,2,2)),
-                                                     ("Stats",np.float32,(na,3))])
+        self.SolsArray_Full=np.zeros((NSols,),dtype=[("t0",np.float64),
+                                                     ("t1",np.float64),
+                                                     ("G",np.complex64,(na,nd,2,2)),
+                                                     ("Stats",np.float32,(na,4))])
         self.SolsArray_Full=self.SolsArray_Full.view(np.recarray)
         self.ListKapa=[[] for iAnt in range(na)]
         self.ListKeepKapa=[[] for iAnt in range(na)]
@@ -295,9 +297,8 @@ class ClassWirtingerSolver():
 
     
             Qa=Qa.reshape((nd*npolx*npoly,nd*npolx*npoly))
-            
+            print np.diag(Qa)
             Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*Qa for iAnt in range(na)])
-
 
         self.P=P
         self.evP=np.zeros_like(P)
@@ -306,7 +307,6 @@ class ClassWirtingerSolver():
         self.Q_Init=self.Q.copy()
         self.evP=NpShared.ToShared("%sSharedEvolveCovariance"%self.IdSharedMem,self.evP)
         nbuff=10
-
 
     def setNextData(self):
         DATA=self.VS.GiveNextVis()
@@ -621,6 +621,7 @@ class ClassWirtingerSolver():
                     self.SolsArray_Stats[self.iCurrentSol][iAnt][0]=InfoNoise["std"]
                     self.SolsArray_Stats[self.iCurrentSol][iAnt][1]=InfoNoise["max"]
                     self.SolsArray_Stats[self.iCurrentSol][iAnt][2]=InfoNoise["kapa"]
+                    self.SolsArray_Stats[self.iCurrentSol][iAnt][3]=self.rms
                     
                     iResult+=1
                     if (kapa!=None)&(LMIter==0):
