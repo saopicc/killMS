@@ -14,8 +14,13 @@ import time
 from killMS2.Predict import predict 
 from killMS2.Predict import predict_np19 
 from killMS2.Other import findrms
+from killMS2.Other import ModColor
 from killMS2.Other.ModChanEquidistant import IsChanEquidistant
-from DDFacet.Imager import ClassDDEGridMachine
+
+try:
+    from DDFacet.Imager import ClassDDEGridMachine
+except:
+    pass
 
 def SolsToDicoJones(Sols,nf):
     Jones={}
