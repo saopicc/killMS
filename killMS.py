@@ -85,6 +85,7 @@ def read_options():
     OP.add_option('TChunk',help='Time Chunk in hours. Default is %default')
     OP.add_option('InCol',help='Column to work on. Default is %default')
     OP.add_option('OutCol',help='Column to write to. Default is %default')
+    OP.add_option('PredictColName',type="str",help=' . Default is %default')
 
     OP.OptionGroup("* Sky catalog related options","SkyModel")
     OP.add_option('SkyModel',help='List of targets [no default]')
@@ -92,6 +93,8 @@ def read_options():
     OP.add_option('kills',help='Name or number index of sources to kill')
     OP.add_option('invert',help='Invert the selected sources to kill')
     OP.add_option('Decorrelation',type="str",help=' . Default is %default')
+    
+
 
     OP.OptionGroup("* Sky image related options","ImageSkyModel")
     OP.add_option('BaseImageName')
@@ -566,7 +569,15 @@ def main(OP=None,MSName=None):
                             JonesMerged["Beam"]=JonesMerged["Jones"]
                     # end
                     PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=JonesMerged)
-
+                    
+                    PredictColName=options.PredictColName
+                    if PredictColName!="":
+                        print>>log, "Writing predicted data in column %s of %s"%(PredictColName,MSName)
+                        VS.MS.AddCol(PredictColName)
+                        t=table(VS.MS.MSName,readonly=False,ack=False)
+                        t.putcol(PredictColName,PredictData)
+                        t.close()
+                    
                     #PredictData2=PM2.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
                     #diff=(PredictData-PredictData2)
                     #print diff

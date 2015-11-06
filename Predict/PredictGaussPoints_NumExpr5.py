@@ -197,6 +197,12 @@ class ClassPredict():
         nrow,nch=W.shape
 
         # print Jones.shape
+        rmsAllAnts=Sigma[:,:,0]
+        rmsAllAnts=rmsAllAnts[rmsAllAnts>0.]
+        rms=np.min(rmsAllAnts)
+        #print rmsAllAnts,rms
+        S=Sigma[:,:,0]
+        S[S==0]=1e6
 
         for it in range(lt0.size):
             
@@ -208,12 +214,24 @@ class ClassPredict():
             # flags=DicoData["flags"][ind]
             A0sel=A0[ind]
             A1sel=A1[ind]
+            
+            ThisStats=np.sqrt((Sigma[it][:,0]**2-rms**2))
+            # print "0",(Sigma[it][:,0]**2-rms**2)
+            # print "1",(Sigma[it][:,0]**2)
+            # print "2",(rms**2)
+            # stop
 
-            ThisStats=Sigma[it][:,0]
+            # nt,nd,na,1,2,2
+            Jabs=np.abs(Jones[it,:,:,0,0,0])
+            J=np.mean(Jabs,axis=0)
+            J0=J[A0sel]
+            J1=J[A1sel]
+
             sig0=ThisStats[A0sel]
             sig1=ThisStats[A1sel]
 
-            w=1./(1e-2+sig0**2+sig1**2)
+            fact=1.5
+            w=1./(1e-2+sig0**(2*fact)+sig1**(2*fact))
             for ich in range(nch):
                 W[ind,ich]=w[:]
 
