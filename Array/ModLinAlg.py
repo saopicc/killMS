@@ -190,30 +190,9 @@ def testInvertSVD():
     pylab.pause(0.1)        
     
 
-# def testSVD():
-#     a=np.
-
 
 def invSVD(A):
-    #print "rand"
-    Ar=A+np.random.randn(*A.shape)*(1e-6*A.max())
-    #print "stard"
-    u,s,v=np.linalg.svd(Ar)
-    #print "ok"
-    s[s<0.]=1.e-6
-
-    s[s<1.e-6*s.max()]=1.e-6*s.max()
-
-    ssq=(1./s)
-    #Asq=np.conj(np.dot(np.dot(v.T,ssq),u.T))
-    v0=v.T*ssq.reshape(1,ssq.size)
-    Asq=np.conj(np.dot(v0,u.T))
-    return Asq
-
-
-import scipy.sparse.linalg
-def invSVD_Lanczos(A):
-    u,s,v=scipy.sparse.linalg.svds(A+np.random.randn(*A.shape)*(1e-6*A.max()))
+    u,s,v=np.linalg.svd(A)#+np.random.randn(*A.shape)*(1e-6*A.max()))
     #s[s<0.]=1.e-6
     s[s<1.e-6*s.max()]=1.e-6*s.max()
     ssq=(1./s)
@@ -221,8 +200,6 @@ def invSVD_Lanczos(A):
     v0=v.T*ssq.reshape(1,ssq.size)
     Asq=np.conj(np.dot(v0,u.T))
     return Asq
-
-
 
 def SVDw(A):
     #A=(A+A.T)/2.
@@ -324,4 +301,3 @@ def test_Dot_ListBlockMat_Mat_Big():
     R0=Dot_ListBlockMat_Mat(ListBlocks,B)
     T.timeit("ListProd")
 
-    

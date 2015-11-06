@@ -209,12 +209,11 @@ class ClassPredict():
         S=Sigma[:,:,0]
         S[S==0]=1e6
 
-        Vmin=1e-4
         for it in range(lt0.size):
             
             t0,t1=lt0[it],lt1[it]
             ind=np.where((times>=t0)&(times<t1))[0]
-            
+
             if ind.size==0: continue
             data=ColOutDir[ind]
             # flags=DicoData["flags"][ind]
@@ -233,31 +232,13 @@ class ClassPredict():
             J0=J[A0sel]
             J1=J[A1sel]
 
-<<<<<<< HEAD
             sig0=ThisStats[A0sel]
             sig1=ThisStats[A1sel]
 
-            fact=1.5
+            fact=1.
             w=1./(1e-2+sig0**(2*fact)+sig1**(2*fact))
-=======
-            ThisStats=Sigma[it][:,0]
-            ThisRMS=Sigma[it][:,3]
-            V0=ThisStats[A0sel]**2-ThisRMS[A0sel]**2
-            V0[V0<Vmin]=Vmin
-
-            V1=ThisStats[A1sel]**2-ThisRMS[A0sel]**2
-            V1[V1<Vmin]=Vmin
-            
-            V0=np.sqrt(V0)
-            V1=np.sqrt(V1)
-
-
-            w=1./(1e-2+V0+V1)
->>>>>>> 2e2198ff6945046f55efb883c1d6722117b9f3da
             for ich in range(nch):
                 W[ind,ich]=w[:]
-
-
 
 
 

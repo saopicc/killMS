@@ -297,7 +297,7 @@ class ClassWirtingerSolver():
 
     
             Qa=Qa.reshape((nd*npolx*npoly,nd*npolx*npoly))
-            print np.diag(Qa)
+            #print np.diag(Qa)
             Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*Qa for iAnt in range(na)])
 
         self.P=P
