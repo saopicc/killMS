@@ -203,11 +203,12 @@ class ClassPredict():
 
         # print Jones.shape
 
+        Vmin=1e-4
         for it in range(lt0.size):
             
             t0,t1=lt0[it],lt1[it]
             ind=np.where((times>=t0)&(times<t1))[0]
-
+            
             if ind.size==0: continue
             data=ColOutDir[ind]
             # flags=DicoData["flags"][ind]
@@ -215,10 +216,18 @@ class ClassPredict():
             A1sel=A1[ind]
 
             ThisStats=Sigma[it][:,0]
-            sig0=ThisStats[A0sel]
-            sig1=ThisStats[A1sel]
+            ThisRMS=Sigma[it][:,3]
+            V0=ThisStats[A0sel]**2-ThisRMS[A0sel]**2
+            V0[V0<Vmin]=Vmin
 
-            w=1./(1e-2+sig0**2+sig1**2)
+            V1=ThisStats[A1sel]**2-ThisRMS[A0sel]**2
+            V1[V1<Vmin]=Vmin
+            
+            V0=np.sqrt(V0)
+            V1=np.sqrt(V1)
+
+
+            w=1./(1e-2+V0+V1)
             for ich in range(nch):
                 W[ind,ich]=w[:]
 

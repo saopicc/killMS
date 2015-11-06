@@ -29,7 +29,7 @@ def main(options=None):
     #SMName="Model2.txt.npy"
     #SMName="Model1_center.txt.npy"
     SMName="ModelRandom00.one.txt.npy"
-    SMName="ModelRandom00.gauss.txt.npy"
+    #SMName="ModelRandom00.gauss.txt.npy"
     #SMName="ModelRandom00.4.txt.npy"
     #SMName="ModelRandom00.txt.npy"
     #SMName="model.many.npy"
@@ -257,7 +257,7 @@ class ClassSimul():
 
     def DoSimul(self):
     
-        Noise=0.0
+        Noise=.1
         MS=self.MS
         SM=self.SM
         VS=self.VS
