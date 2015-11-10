@@ -310,6 +310,11 @@ class ClassWirtingerSolver():
 
     def setNextData(self):
         DATA=self.VS.GiveNextVis()
+
+        NDone,nt=self.pBarProgress
+        intPercent=int(100*  NDone / float(nt))
+        self.pBAR.render(intPercent, '%4i/%i' % (NDone,nt))
+
         if DATA=="EndOfObservation":
             print>>log, ModColor.Str("Reached end of data")
             return "EndOfObservation"
@@ -317,6 +322,7 @@ class ClassWirtingerSolver():
             print>>log, ModColor.Str("Reached end of data chunk")
             return "EndChunk"
         if DATA=="AllFlaggedThisTime":
+            print "AllFlaggedThisTime"
             return "AllFlaggedThisTime"
 
         ## simul
@@ -533,15 +539,17 @@ class ClassWirtingerSolver():
         nt=int(DT/float(dt))+1
         
 
-        pBAR= ProgressBar('white', width=50, block='=', empty=' ',Title="Solving ", HeaderSize=10,TitleSize=13)
-        if not(self.DoPBar): pBAR.disable()
+        self.pBAR= ProgressBar('white', width=50, block='=', empty=' ',Title="Solving ", HeaderSize=10,TitleSize=13)
+        if not(self.DoPBar): self.pBAR.disable()
         #pBAR.disable()
-        pBAR.render(0, '%4i/%i' % (0,nt))
+        self.pBAR.render(0, '%4i/%i' % (0,nt))
         NDone=0
         iiCount=0
         while True:
             T.reinit()
+            self.pBarProgress=NDone,float(nt)
             Res=self.setNextData()
+            NDone+=1
             T.timeit("read data")
             if Res=="EndChunk": break
             if Res=="AllFlaggedThisTime": continue
@@ -553,7 +561,7 @@ class ClassWirtingerSolver():
             if SkipMode:
                 print iiCount
                 iiCount+=1
-                if iiCount<170: continue
+                if iiCount<3: continue
 
             t0,t1=self.VS.CurrentVisTimes_MS_Sec
             self.SolsArray_t0[self.iCurrentSol]=t0
@@ -689,10 +697,8 @@ class ClassWirtingerSolver():
 
             T.timeit("Plot")
 
-            NDone+=1
-            intPercent=int(100*  NDone / float(nt))
 
-            pBAR.render(intPercent, '%4i/%i' % (NDone,nt))
+
 
                 
             

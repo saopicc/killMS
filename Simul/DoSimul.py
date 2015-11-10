@@ -313,7 +313,7 @@ class ClassSimul():
     
         #VS.MS.SaveVis(Col="DATA")
         VS.MS.SaveVis(Col="CORRECTED_DATA")
-        #VS.MS.SaveVis(Col="CORRECTED_DATA_BACKUP")
+        VS.MS.SaveVis(Col="CORRECTED_DATA_BACKUP")
 
         # t=table(self.MSName,readonly=False)
         # f=t.getcol("FLAG")
