@@ -316,7 +316,8 @@ class ClassWirtingerSolver():
         if DATA=="EndChunk":
             print>>log, ModColor.Str("Reached end of data chunk")
             return "EndChunk"
-
+        if DATA=="AllFlaggedThisTime":
+            return "AllFlaggedThisTime"
 
         ## simul
         #d=self.DATA["data"]
@@ -543,6 +544,7 @@ class ClassWirtingerSolver():
             Res=self.setNextData()
             T.timeit("read data")
             if Res=="EndChunk": break
+            if Res=="AllFlaggedThisTime": continue
             #print "saving"
             #print "saving"
             #sols=self.GiveSols()

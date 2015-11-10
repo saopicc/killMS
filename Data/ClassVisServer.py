@@ -252,7 +252,9 @@ class ClassVisServer():
 
         DATA["UVW_dt"]=self.MS.Give_dUVW_dt(times,A0,A1)
         
-
+        fFlagged=np.count_nonzero(DATA["flags"])/float(DATA["flags"].size)
+        if fFlagged>0.9:
+            return "AllFlaggedThisTime"
 
         # it0=np.min(DATA["IndexTimesThisChunk"])
         # it1=np.max(DATA["IndexTimesThisChunk"])+1
