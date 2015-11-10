@@ -145,7 +145,7 @@ class ClassWirtingerSolver():
     #     Sol=np.zeros((1,),dtype=[("t0",np.float64),("t1",np.float64),("G",np.complex64,(na,nd,2,2))])
     #     self.SolsList.append(Sol.view(np.recarray))
 
-    def GiveSols(self):
+    def GiveSols(self,SaveStats=False):
         ind=np.where(self.SolsArray_done==1)[0]
         self.SolsArray_Full.t0[0:ind.size]=self.SolsArray_t0[0:ind.size]
         self.SolsArray_Full.t1[0:ind.size]=self.SolsArray_t1[0:ind.size]
@@ -160,21 +160,25 @@ class ClassWirtingerSolver():
             self.SolsArray_Full.G[0:ind.size]=self.SolsArray_G[0:ind.size]
 
 
-        ListStd=[l for l in self.ListStd if len(l)>0]
-        Std=np.array(ListStd)
-        ListMax=[l for l in self.ListMax if len(l)>0]
-        Max=np.array(ListMax)
 
-        ListKapa=[l for l in self.ListKeepKapa if len(l)>0]
-        Kapa=np.array(ListKapa)
-        na,nt=Std.shape
-        NoiseInfo=np.zeros((na,nt,3))
-        NoiseInfo[:,:,0]=Std[:,:]
-        NoiseInfo[:,:,1]=np.abs(Max[:,:])
-        NoiseInfo[:,:,2]=Kapa[:,:]
-        StatFile="NoiseInfo.npy"
-        print>>log, "Saving statistics in %s"%StatFile
-        np.save(StatFile,NoiseInfo)
+        if SaveStats:
+            ListStd=[l for l in self.ListStd if len(l)>0]
+            Std=np.array(ListStd)
+            ListMax=[l for l in self.ListMax if len(l)>0]
+            Max=np.array(ListMax)
+            
+            ListKapa=[l for l in self.ListKeepKapa if len(l)>0]
+            Kapa=np.array(ListKapa)
+            na,nt=Std.shape
+            NoiseInfo=np.zeros((na,nt,3))
+            NoiseInfo[:,:,0]=Std[:,:]
+            NoiseInfo[:,:,1]=np.abs(Max[:,:])
+            NoiseInfo[:,:,2]=Kapa[:,:]
+            
+            StatFile="NoiseInfo.npy"
+            print>>log, "Saving statistics in %s"%StatFile
+            np.save(StatFile,NoiseInfo)
+
 
         return self.SolsArray_Full[0:ind.size].copy()
 
@@ -322,7 +326,9 @@ class ClassWirtingerSolver():
             print>>log, ModColor.Str("Reached end of data chunk")
             return "EndChunk"
         if DATA=="AllFlaggedThisTime":
-            print "AllFlaggedThisTime"
+            #print "AllFlaggedThisTime"
+            self.AppendGToSolArray()
+            self.iCurrentSol+=1
             return "AllFlaggedThisTime"
 
         ## simul
@@ -563,14 +569,10 @@ class ClassWirtingerSolver():
                 iiCount+=1
                 if iiCount<530: continue
 
+
             t0,t1=self.VS.CurrentVisTimes_MS_Sec
-            self.SolsArray_t0[self.iCurrentSol]=t0
-            self.SolsArray_t1[self.iCurrentSol]=t1
             tm=(t0+t1)/2.
-            self.SolsArray_tm[self.iCurrentSol]=tm
-            
-
-
+  
             NJobs=len(ListAntSolve)
             NTotJobs=NJobs*self.NIter
 
@@ -608,6 +610,7 @@ class ClassWirtingerSolver():
 
                 if LMIter==(NIter-1):
                     DoEvP=True
+
 
                 for iAnt in ListAntSolve:
                     work_queue.put((iAnt,DoCalcEvP,tm,self.rms,DoEvP))
@@ -702,8 +705,10 @@ class ClassWirtingerSolver():
 
                 
             
-            self.SolsArray_done[self.iCurrentSol]=1
-            self.SolsArray_G[self.iCurrentSol][:]=self.G[:]
+
+            self.AppendGToSolArray()
+            
+
             self.iCurrentSol+=1
 
 
@@ -736,6 +741,14 @@ class ClassWirtingerSolver():
         return True
 
 
+    def AppendGToSolArray(self):
+        t0,t1=self.VS.CurrentVisTimes_MS_Sec
+        self.SolsArray_t0[self.iCurrentSol]=t0
+        self.SolsArray_t1[self.iCurrentSol]=t1
+        tm=(t0+t1)/2.
+        self.SolsArray_tm[self.iCurrentSol]=tm
+        self.SolsArray_done[self.iCurrentSol]=1
+        self.SolsArray_G[self.iCurrentSol][:]=self.G[:]
 
  
 

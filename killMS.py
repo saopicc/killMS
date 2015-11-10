@@ -398,27 +398,25 @@ def main(OP=None,MSName=None):
 
         if options.ExtSols=="":
             SaveSols=True
-            #Solver.doNextTimeSolve_Parallel()
-            Solver.doNextTimeSolve_Parallel(SkipMode=True)
+            Solver.doNextTimeSolve_Parallel()
+            #Solver.doNextTimeSolve_Parallel(SkipMode=True)
             #Solver.doNextTimeSolve()
-            Sols=Solver.GiveSols()
+            Sols=Solver.GiveSols(SaveStats=True)
 
 
-            ##########
-            FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.MSName),SolsName)
+            # ##########
+            # FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.MSName),SolsName)
 
-            print>>log, "Save Solutions in file: %s"%FileName
-            Sols=Solver.GiveSols()
-            StationNames=np.array(Solver.VS.MS.StationNames)
-        
-
-            np.savez(FileName,
-                     Sols=Sols,
-                     StationNames=StationNames,
-                     SkyModel=SM.ClusterCat,
-                     ClusterCat=SM.ClusterCat,
-                     SourceCatSub=SourceCatSub,
-                     ModelName=options.SkyModel)
+            # print>>log, "Save Solutions in file: %s"%FileName
+            # Sols=Solver.GiveSols()
+            # StationNames=np.array(Solver.VS.MS.StationNames)
+            # np.savez(FileName,
+            #          Sols=Sols,
+            #          StationNames=StationNames,
+            #          SkyModel=SM.ClusterCat,
+            #          ClusterCat=SM.ClusterCat,
+            #          SourceCatSub=SourceCatSub,
+            #          ModelName=options.SkyModel)
 
 
         else:
