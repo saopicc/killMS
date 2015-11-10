@@ -561,7 +561,7 @@ class ClassWirtingerSolver():
             if SkipMode:
                 print iiCount
                 iiCount+=1
-                if iiCount<3: continue
+                if iiCount<530: continue
 
             t0,t1=self.VS.CurrentVisTimes_MS_Sec
             self.SolsArray_t0[self.iCurrentSol]=t0
