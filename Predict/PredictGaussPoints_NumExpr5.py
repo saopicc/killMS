@@ -208,6 +208,7 @@ class ClassPredict():
         #print rmsAllAnts,rms
         S=Sigma[:,:,0]
         S[S==0]=1e6
+        S[S==-1]=1e6
 
         for it in range(lt0.size):
             
@@ -221,10 +222,11 @@ class ClassPredict():
             A1sel=A1[ind]
             
             ThisStats=np.sqrt((Sigma[it][:,0]**2-rms**2))
-            # print "0",(Sigma[it][:,0]**2-rms**2)
-            # print "1",(Sigma[it][:,0]**2)
+            
+            # print "t:",it
+            # print "0",np.min(Sigma[it][:,0]**2-rms**2)
+            # print "1",np.min(Sigma[it][:,0]**2)
             # print "2",(rms**2)
-            # stop
 
             # nt,nd,na,1,2,2
             Jabs=np.abs(Jones[it,:,:,0,0,0])
