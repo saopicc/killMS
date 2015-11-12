@@ -180,7 +180,10 @@ class ClassWirtingerSolver():
             np.save(StatFile,NoiseInfo)
 
 
-        return self.SolsArray_Full[0:ind.size].copy()
+        Sols=self.SolsArray_Full[0:ind.size].copy()
+        Sols.t1[-1]+=1e3
+
+        return Sols
 
     def InitSol(self,G=None,TestMode=True):
         na=self.VS.MS.na

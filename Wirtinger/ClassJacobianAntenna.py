@@ -767,7 +767,7 @@ class ClassJacobianAntenna():
             J=self.LJacob[polIndex][flags==0]
             nrow,_=J.shape
             JH=J.T.conj()
-            if self.Rinv_flat!=None:
+            if type(self.Rinv_flat)!=type(None):
                 Rinv=self.Rinv_flat[polIndex][flags==0].reshape((nrow,1))
 
                 if self.TypeDot=="Numpy":

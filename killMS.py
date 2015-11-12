@@ -426,7 +426,6 @@ def main(OP=None,MSName=None):
         # substract
         #ind=np.where(SM.SourceCat.kill==1)[0]
         if ((DoSubstract)|(DoApplyCal)|(ReWeight)):
-            Sols.t1[-1]+=1e3
             Jones={}
             Jones["t0"]=Sols.t0
             Jones["t1"]=Sols.t1
