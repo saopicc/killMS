@@ -31,11 +31,11 @@ def main(options=None):
     SMName="ModelRandom00.one.txt.npy"
     #SMName="ModelRandom00.gauss.txt.npy"
     #SMName="ModelRandom00.4.txt.npy"
-    #SMName="ModelRandom00.txt.npy"
+    SMName="ModelRandom00.txt.npy"
     #SMName="model.many.npy"
     #ll=sorted(glob.glob("Simul.MS"))
-    #ll=sorted(glob.glob("000?.MS"))
-    ll=sorted(glob.glob("0000.MS"))
+    ll=sorted(glob.glob("000?.MS"))
+    #ll=sorted(glob.glob("0000.MS"))
     #ll=sorted(glob.glob("SimulHighRes.MS_p0"))
     #ll=sorted(glob.glob("SimulLowRes.MS_p0"))
     
@@ -176,9 +176,9 @@ class ClassSimul():
 
         # G[:,:,:,:,1,1]=G[:,:,:,:,0,0]
 
-        # G.fill(0)
-        # G[:,:,:,:,0,0]=1
-        # G[:,:,:,:,1,1]=1
+        G.fill(0)
+        G[:,:,:,:,0,0]=1
+        G[:,:,:,:,1,1]=1
 
     
     
