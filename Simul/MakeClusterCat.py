@@ -29,11 +29,11 @@ def test():
     #                       "finfo":(100e6,250e6,10)}
 
     DicoPropPointings[0]={"offset":(0,0),
-                          "Ns":100,
+                          "Ns":4,
                           "Nc":0,
-                          "Diam":2,
+                          "Diam":1,
                           "finfo":(40e6,80e6,3),
-                          "Mode":"Random"}
+                          "Mode":"Grid"}
 
 
     # DicoPropPointings[0]={"offset":(0,0),

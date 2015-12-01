@@ -182,6 +182,7 @@ class ClassWirtingerSolver():
 
         Sols=self.SolsArray_Full[0:ind.size].copy()
         Sols.t1[-1]+=1e3
+        Sols.t0[0]-=1e3
 
         return Sols
 

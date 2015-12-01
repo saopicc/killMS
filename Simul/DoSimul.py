@@ -149,8 +149,8 @@ class ClassSimul():
             Sols.G[itime,:,:,0,0]=Sols.G[-1,:,:,0,0]
             Sols.G[itime,:,:,1,1]=Sols.G[-1,:,:,1,1]
 
-        Sols.G[:,:,:,0,0]=1
-        Sols.G[:,:,:,1,1]=1
+        # Sols.G[:,:,:,0,0]=1
+        # Sols.G[:,:,:,1,1]=1
 
         return Sols
 
@@ -174,11 +174,13 @@ class ClassSimul():
         nt,na,nd,_,_=Sols.G.shape
         G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
 
-        # G[:,:,:,:,1,1]=G[:,:,:,:,0,0]
 
-        G.fill(0)
-        G[:,:,:,:,0,0]=1
-        G[:,:,:,:,1,1]=1
+        G[:,:,:,:,0,0]/=np.abs(G[:,:,:,:,0,0])
+        G[:,:,:,:,1,1]=G[:,:,:,:,0,0]
+
+        # G.fill(0)
+        # G[:,:,:,:,0,0]=1
+        # G[:,:,:,:,1,1]=1
 
     
     
@@ -257,7 +259,7 @@ class ClassSimul():
 
     def DoSimul(self):
     
-        Noise=.1
+        Noise=.01
         MS=self.MS
         SM=self.SM
         VS=self.VS

@@ -701,7 +701,7 @@ class ClassJacobianAntenna():
 
         self.CalcJacobianAntenna(Gains)
         self.PrepareJHJ_LM()
-        zp=self.DicoData["data_flat"]#self.J_x(Ga)
+        zp=self.J_x(Ga)#self.DicoData["data_flat"]#
         DicoData=self.DicoData
 
         nr,nch,_,_=DicoData["flags"].shape
