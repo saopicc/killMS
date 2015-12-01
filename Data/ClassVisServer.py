@@ -88,7 +88,7 @@ class ClassVisServer():
         MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False)
 
         TimesInt=np.arange(0,MS.DTh,self.TMemChunkSize).tolist()
-        if not(MS.DTh in TimesInt): TimesInt.append(MS.DTh)
+        if not(MS.DTh+1./3600 in TimesInt): TimesInt.append(MS.DTh+1./3600)
         self.TimesInt=TimesInt
         self.NTChunk=len(self.TimesInt)-1
         self.MS=MS
@@ -153,17 +153,18 @@ class ClassVisServer():
 
 
         # time selection
-        ind=np.where((self.ThisDataChunk["times"]>=t0_sec)&(self.ThisDataChunk["times"]<t1_sec))[0]
-        if ind.shape[0]==0:
+        indRowsThisChunk=np.where((self.ThisDataChunk["times"]>=t0_sec)&(self.ThisDataChunk["times"]<t1_sec))[0]
+        if indRowsThisChunk.shape[0]==0:
             return "EndChunk"
         DATA={}
+        DATA["indRowsThisChunk"]=indRowsThisChunk
         for key in D.keys():
             if type(D[key])!=np.ndarray: continue
             if not(key in ['times', 'A1', 'A0', 'flags', 'uvw', 'data', 'MapJones', #"IndexTimesThisChunk", 
                            "W"]):             
                 DATA[key]=D[key]
             else:
-                DATA[key]=D[key][ind]
+                DATA[key]=D[key][indRowsThisChunk]
 
         #############################
         ### data selection
@@ -176,6 +177,7 @@ class ClassVisServer():
         times=DATA["times"]
         W=DATA["W"]
         MapJones=DATA["MapJones"]
+        indRowsThisChunk=DATA["indRowsThisChunk"]
         # IndexTimesThisChunk=DATA["IndexTimesThisChunk"]
 
 
@@ -200,7 +202,7 @@ class ClassVisServer():
                 #IndexTimesThisChunk=IndexTimesThisChunk[ind]
                 W=W[ind]
                 MapJones=MapJones[ind]
-
+                indRowsThisChunk=indRowsThisChunk[ind]
 
         for A in self.FlagAntNumber:
             ind=np.where((A0!=A)&(A1!=A))[0]
@@ -213,6 +215,7 @@ class ClassVisServer():
             # IndexTimesThisChunk=IndexTimesThisChunk[ind]
             W=W[ind]
             MapJones=MapJones[ind]
+            indRowsThisChunk=indRowsThisChunk[ind]
         
         if self.GD["DataSelection"]["FillFactor"]!=1.:
             Mask=np.random.rand(flags.shape[0])<self.GD["DataSelection"]["FillFactor"]
@@ -226,6 +229,7 @@ class ClassVisServer():
             # IndexTimesThisChunk=IndexTimesThisChunk[ind]
             W=W[ind]
             MapJones=MapJones[ind]
+            indRowsThisChunk=indRowsThisChunk[ind]
             
             
 
@@ -239,6 +243,7 @@ class ClassVisServer():
         #IndexTimesThisChunk=IndexTimesThisChunk[ind]
         W=W[ind]
         MapJones=MapJones[ind]
+        indRowsThisChunk=indRowsThisChunk[ind]
 
         DATA["flags"]=flags
         DATA["uvw"]=uvw
@@ -249,7 +254,8 @@ class ClassVisServer():
         #DATA["IndexTimesThisChunk"]=IndexTimesThisChunk
         DATA["W"]=W
         DATA["MapJones"]=MapJones
-
+        DATA["indRowsThisChunk"]=indRowsThisChunk
+                
         DATA["UVW_dt"]=self.MS.Give_dUVW_dt(times,A0,A1)
         
         fFlagged=np.count_nonzero(DATA["flags"])/float(DATA["flags"].size)
@@ -500,8 +506,13 @@ class ClassVisServer():
             
 
         UVW_dt=All_UVW_dt
-        
 
+
+
+        PredictedData=np.zeros_like(data)
+        Indices=np.arange(PredictedData.size).reshape(PredictedData.shape)
+        NpShared.ToShared("%sPredictedData"%self.IdSharedMem,PredictedData)
+        NpShared.ToShared("%sIndicesData"%self.IdSharedMem,Indices)
 
         #NpShared.PackListArray("%sUVW_Ants"%self.IdSharedMem,Luvw)
         #self.UVW_RefAnt=NpShared.ToShared("%sUVW_RefAnt"%self.IdSharedMem,Luvw)

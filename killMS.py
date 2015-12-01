@@ -86,6 +86,7 @@ def read_options():
     OP.add_option('InCol',help='Column to work on. Default is %default')
     OP.add_option('OutCol',help='Column to write to. Default is %default')
     OP.add_option('PredictColName',type="str",help=' . Default is %default')
+    OP.add_option('FullPredictColName',type="str",help=' . Default is %default')
 
     OP.OptionGroup("* Sky catalog related options","SkyModel")
     OP.add_option('SkyModel',help='List of targets [no default]')
@@ -401,8 +402,18 @@ def main(OP=None,MSName=None):
             Solver.doNextTimeSolve_Parallel()
             #Solver.doNextTimeSolve_Parallel(SkipMode=True)
             #Solver.doNextTimeSolve()
-            Sols=Solver.GiveSols(SaveStats=True)
 
+
+            FullPredictColName=options.FullPredictColName
+            if FullPredictColName!="":
+                print>>log, "Writing full predicted data in column %s of %s"%(FullPredictColName,options.MSName)
+                VS.MS.AddCol(FullPredictColName)
+                PredictData=NpShared.GiveArray("%sPredictedData"%IdSharedMem)
+                t=table(VS.MS.MSName,readonly=False,ack=False)
+                t.putcol(FullPredictColName,PredictData)
+                t.close()
+
+            Sols=Solver.GiveSols(SaveStats=True)
 
             # ##########
             # FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.MSName),SolsName)

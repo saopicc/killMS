@@ -393,11 +393,26 @@ class ClassWirtingerSolver():
         ListAntSolve=[i for i in range(self.VS.MS.na) if not(i in self.VS.FlagAntNumber)]
         self.DicoJM={}
 
+        self.pBAR= ProgressBar('white', width=50, block='=', empty=' ',Title="Solving ", HeaderSize=10,TitleSize=13)
+        if not(self.DoPBar): self.pBAR.disable()
+        NDone=0
+        T0,T1=self.VS.TimeMemChunkRange_sec[0],self.VS.TimeMemChunkRange_sec[1]
+        DT=(T1-T0)
+        dt=self.VS.TVisSizeMin*60.
+        nt=int(DT/float(dt))+1
+        #pBAR.disable()
+        self.pBAR.render(0, '%4i/%i' % (0,nt))
 
         T=ClassTimeIt.ClassTimeIt("WirtingerSolver")
         T.disable()
         while True:
+            self.pBarProgress=NDone,float(nt)
+            NDone+=1
             T.reinit()
+
+            print
+            print "zeros=",np.count_nonzero(NpShared.GiveArray("%sPredictedData"%self.IdSharedMem))
+            print
             Res=self.setNextData()
             if Res=="EndChunk": break
             T.timeit("read data")
@@ -444,7 +459,6 @@ class ClassWirtingerSolver():
                     if self.SolverType=="CohJones":
 
                         x,_,_=JM.doLMStep(self.G)
-
                     if self.SolverType=="KAFCA":
                         EM=ClassModelEvolution(iAnt,
                                                StepStart=3,
@@ -454,6 +468,7 @@ class ClassWirtingerSolver():
                                                sigQ=0.01,IdSharedMem=self.IdSharedMem)
 
                         x,P,_=JM.doEKFStep(self.G,self.P,self.evP,self.rms)
+                        JM.PredictOrigFormat(self.G)
                         
                         xe=None
 
@@ -613,10 +628,14 @@ class ClassWirtingerSolver():
 
                 if LMIter==(NIter-1):
                     DoEvP=True
-
+                
+                DoFullPredict=False
+                if LMIter==(NIter-1):
+                    DoFullPredict=True
+                    
 
                 for iAnt in ListAntSolve:
-                    work_queue.put((iAnt,DoCalcEvP,tm,self.rms,DoEvP))
+                    work_queue.put((iAnt,DoCalcEvP,tm,self.rms,DoEvP,DoFullPredict))
  
                 T.timeit("put in queue")
                 rmsFromDataList=[]
@@ -803,7 +822,7 @@ class WorkerAntennaLM(multiprocessing.Process):
 
         while not self.kill_received:
             try:
-                iAnt,DoCalcEvP,ThisTime,rms,DoEvP = self.work_queue.get()
+                iAnt,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict = self.work_queue.get()
             except:
                 break
             #self.e.wait()
@@ -828,6 +847,7 @@ class WorkerAntennaLM(multiprocessing.Process):
 
             if self.SolverType=="CohJones":
                 x,_,InfoNoise=JM.doLMStep(G)
+                if DoFullPredict: JM.PredictOrigFormat(G)
                 self.result_queue.put([iAnt,x,None,None,InfoNoise])
             elif self.SolverType=="KAFCA":
                 #T.disable()
@@ -858,6 +878,7 @@ class WorkerAntennaLM(multiprocessing.Process):
                 #     P[iAnt]=Pa
 
                 x,Pout,InfoNoise=JM.doEKFStep(G,P,evP,rms,Gains0Iter=G0Iter)
+                if DoFullPredict: JM.PredictOrigFormat(G)
                 T.timeit("EKFStep")
                 rmsFromData=JM.rmsFromData
 
