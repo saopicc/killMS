@@ -69,7 +69,7 @@ class ClassWeighting():
 
 
         
-
+        print VisWeights
         x,y=np.int32(np.round(u/cell))+xc,np.int32(np.round(v/cell))+yc
 
         condx=((x>0)&(x<npix))
@@ -83,15 +83,16 @@ class ClassWeighting():
         VisWeights=np.float64(VisWeights)
         VisWeights.fill(1.)
         w=_pyGridder.pyGridderPoints(grid,x,y,VisWeights,2*float(Robust),Mode)
-        
-        # import pylab
-        # pylab.clf()
-        # pylab.scatter(u[::11],v[::11],c=w[::11],lw=0,alpha=0.5)
-        # #pylab.imshow(w,interpolation="nearest")
-        # pylab.draw()
-        # pylab.show(False)
-        # pylab.pause(0.1)
-        # stop
+        print w
+
+        import pylab
+        pylab.clf()
+        pylab.scatter(u[::11],v[::11],c=w[::11],lw=0,alpha=0.5)
+        #pylab.imshow(w,interpolation="nearest")
+        pylab.draw()
+        pylab.show(False)
+        pylab.pause(0.1)
+        stop
 
         # stop
         
