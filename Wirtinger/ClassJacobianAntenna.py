@@ -1159,8 +1159,9 @@ class ClassJacobianAntenna():
                     
                 if "W" in DicoData.keys():
                     W=DicoData["W"]
+                    W_nrows,W_nch=W.shape
                     W[W==0]=1.e-6
-                    V=V/W.reshape(W.size,1,1)
+                    V=V/W.reshape((W_nrows,W_nch,1))
 
                 R=rms**2*V
                 

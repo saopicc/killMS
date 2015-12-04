@@ -25,7 +25,8 @@ class ClassWeighting():
         self.ImShape=ImShape
         self.CellSizeRad=CellSizeRad
         
-    def CalcWeights(self,uvw,VisWeights,Robust=0,Weighting="Briggs"):
+    def CalcWeights(self,uvw,VisWeights,flags,freqs,Robust=0,Weighting="Briggs"):
+
 
         #u,v,_=uvw.T
 
@@ -34,15 +35,19 @@ class ClassWeighting():
         FOV=self.CellSizeRad*npixIm#/2
 
         #cell=1.5*4./(FOV)
-        cell=2./(FOV)
-        cell=4./(FOV)
+        cell=1./(FOV)
+        #cell=4./(FOV)
 
         #wave=6.
-        u,v,_=uvw.T#/wave
-        
+
+        u=uvw[:,0].copy()
+        v=uvw[:,1].copy()
+
         d=np.sqrt(u**2+v**2)
         VisWeights[d==0]=0
-        uvmax=np.max(d)
+        Lmean=3e8/np.mean(freqs)
+
+        uvmax=np.max(d)/Lmean#(1./self.CellSizeRad)#/2#np.max(d)
         npix=2*(int(uvmax/cell)+1)
         if (npix%2)==0:
             npix+=1
@@ -51,14 +56,18 @@ class ClassWeighting():
         xc,yc=npix/2,npix/2
 
 
-        grid=np.zeros((npix,npix),dtype=np.float64)
+        VisWeights=np.float64(VisWeights)
+        #VisWeights.fill(1.)
 
+
+        
         if Weighting=="Briggs":
             print>>log, "Weighting in Briggs mode"
             print>>log, "Calculating imaging weights with Robust=%3.1f on an [%i,%i] grid"%(Robust,npix,npix)
             Mode=0
         elif Weighting=="Uniform":
             print>>log, "Weighting in Uniform mode"
+            print>>log, "Calculating imaging weights on an [%i,%i] grid"%(npix,npix)
             Mode=1
         elif Weighting=="Natural":
             print>>log, "Weighting in Natural mode"
@@ -66,53 +75,48 @@ class ClassWeighting():
         else:
             stop
 
+        grid=np.zeros((npix,npix),dtype=np.float64)
 
 
+        flags=np.float32(flags)
+        WW=np.mean(1.-flags,axis=2)
+        VisWeights*=WW
         
-        print VisWeights
-        x,y=np.int32(np.round(u/cell))+xc,np.int32(np.round(v/cell))+yc
+        F=np.zeros(VisWeights.shape,np.int32)
+        #print "u=",u
+        #print "v=",v
+        w=_pyGridder.pyGridderPoints(grid,
+                                     F,
+                                     u,
+                                     v,
+                                     VisWeights,
+                                     float(Robust),
+                                     Mode,
+                                     np.float32(freqs.flatten()),
+                                     np.array([cell,cell],np.float64))
 
-        condx=((x>0)&(x<npix))
-        condy=((y>0)&(y<npix))
-        ind=np.where(np.logical_not(condx & condy))[0]
-        x[ind]=0
-        y[ind]=0
-        VisWeights[ind]=0
-        x,y=np.int32(np.round(u/cell)),np.int32(np.round(v/cell))
 
-        VisWeights=np.float64(VisWeights)
-        VisWeights.fill(1.)
-        w=_pyGridder.pyGridderPoints(grid,x,y,VisWeights,2*float(Robust),Mode)
-        print w
+        # C=299792458.
+        # uf=u.reshape((u.size,1))*freqs.reshape((1,freqs.size))/C
+        # vf=v.reshape((v.size,1))*freqs.reshape((1,freqs.size))/C
 
-        import pylab
-        pylab.clf()
-        pylab.scatter(u[::11],v[::11],c=w[::11],lw=0,alpha=0.5)
-        #pylab.imshow(w,interpolation="nearest")
-        pylab.draw()
-        pylab.show(False)
-        pylab.pause(0.1)
-        stop
-
-        # stop
+        # x,y=np.int32(np.round(uf/cell))+xc,np.int32(np.round(vf/cell))+yc
+        # x,y=(uf/cell)+xc,(vf/cell)+yc
+        # condx=((x>0)&(x<npix))
+        # condy=((y>0)&(y<npix))
+        # ind=np.where((condx & condy))[0]
+        # X=x#[ind]
+        # Y=y#[ind]
         
-        #IW=ImagingWeights.ImagingWeight(weighttype="robust",rmode="normal",robustness=-2)
-        #IW=ImagingWeights.ImagingWeight(weighttype="uniform",rmode="normal",robustness=-2)
-        #w=IW.density(self.CellSizeRad, self.ImShape,MS.ChanFreq.flatten(), MS.uvw,VisWeights)
-
-
-
-
-
-
-        #IW.set_density(w,self.CellSizeRad)
-        #w=IW.weightDensityDependent(MS.uvw, MS.ChanFreq.flatten(), MS.flag_all, VisWeights)
-        # freqs=np.array([3e8/6.00])
-
+        # w[w==0]=1e-10
+        
         # import pylab
         # pylab.clf()
-        # pylab.scatter(d,w)
-        # #pylab.imshow(w,interpolation="nearest")
+        # #pylab.scatter(uf.flatten(),vf.flatten(),c=w.flatten(),lw=0,alpha=0.3,vmin=0,vmax=1)#,w[ind,0])
+        # grid[grid==0]=1e-10
+        # pylab.imshow(np.log10(grid),interpolation="nearest")
+        # incr=1
+        # pylab.scatter(X.ravel()[::incr],Y.ravel()[::incr],c=np.log10(w.ravel())[::incr],lw=0)#,alpha=0.3)
         # pylab.draw()
         # pylab.show(False)
         # pylab.pause(0.1)
