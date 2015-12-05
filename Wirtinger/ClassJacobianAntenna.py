@@ -1158,7 +1158,7 @@ class ClassJacobianAntenna():
                     V=np.ones((u.size,freqs.size,self.npolData),np.float32)
                     
                 if "W" in DicoData.keys():
-                    W=DicoData["W"]
+                    W=DicoData["W"]**2
                     W_nrows,W_nch=W.shape
                     W[W==0]=1.e-6
                     V=V/W.reshape((W_nrows,W_nch,1))
