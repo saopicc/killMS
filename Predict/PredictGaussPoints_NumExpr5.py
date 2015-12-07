@@ -334,14 +334,19 @@ class ClassPredict():
             T.disable()
             ### new
             SourceCat=self.SourceCat[indSources].copy()
-            l=np.float32(SourceCat.l)
-            m=np.float32(SourceCat.m)
+            #l=np.ones((1,),dtype=np.float64)#,float64(SourceCat.l).copy()
+            l=np.require(SourceCat.l, dtype=np.float64, requirements=["A","C"])
+            m=np.require(SourceCat.m, dtype=np.float64, requirements=["A","C"])
+            
+            #m=SourceCat.m#np.float64(SourceCat.m).copy()
             I=np.float32(SourceCat.I)
             Gmaj=np.float32(SourceCat.Gmaj)
             Gmin=np.float32(SourceCat.Gmin)
             GPA=np.float32(SourceCat.Gangle)
             alpha=np.float32(SourceCat.alpha)
-            WaveL=np.float32(299792458./self.freqs)
+            WaveL=np.float64(299792458./self.freqs)
+            WaveL=np.require(WaveL, dtype=np.float64, requirements=["A","C"])
+
             flux=np.float32(SourceCat.I)
             alpha=SourceCat.alpha
             dnu=np.float32(self.DicoData["dfreqs"])

@@ -1204,9 +1204,9 @@ static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args)
   PyObject *ObjVisIn;
   PyObject *LSM, *LUVWSpeed, *LFreqs,*LSmearMode, *LJones, *LExp;
   PyArrayObject *NpVisIn, *NpUVWin, *matout;
-  float *p_l,*p_m,*p_alpha,*p_Flux, *WaveL;
-
-  double *UVWin;
+  float *p_alpha,*p_Flux;
+  
+  double *p_l,*p_m,*UVWin, *WaveL;
   int nrow,npol,nsources,i,dim[2];
   int AllowChanEquidistant;
   
@@ -1288,12 +1288,13 @@ static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args)
 
 
   UVWin=p_float64(NpUVWin);
-  p_l=p_float32(Np_l);
-  p_m=p_float32(Np_m);
+  p_l=p_float64(Np_l);
+  p_m=p_float64(Np_m);
+  //printf("l=%f",((float)p_l[0]));
 
   p_Flux=p_float32(Np_I);
 
-  WaveL=p_float32(NpWaveL);
+  WaveL=p_float64(NpWaveL);
   
   int ch,dd,nchan,ndir;
   nrow=NpVisIn->dimensions[0];
@@ -1304,12 +1305,14 @@ static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args)
   ChanEquidistant=AllowChanEquidistant;
 
   ndir=Np_l->dimensions[0];
-
+  //printf("ndir=%i ",ndir);
+  
   /* Get the dimensions of the input */
   
   
   /* Do the calculation. */
-  float phase,l,m,n,u,v,w;
+  double phase,l,m,n,u,v,w;
+  
   float complex c0,result;
   float C=299792456.;
   float PI=3.141592;
@@ -1318,7 +1321,7 @@ static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args)
   double *p1;
   p0=VisIn;
   p1=UVWin;
-  float complex c1[nchan];
+  double complex c1[nchan];
   float complex c2[nchan];
   for(ch=0;ch<nchan;ch++){
     c1[ch]=c0/WaveL[ch];
@@ -1335,18 +1338,21 @@ static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args)
   int ApplyJones=1;
   int irow;
 
-  float complex Kernel;
-  double complex dKernel;
+  complex Kernel;
+  complex dKernel;
   int ThisSourceType;
 
   float SminCos,SminSin,SmajCos,SmajSin;
 
   for(dd=0;dd<ndir;dd++){
     l=p_l[dd];
+    //printf("l=%f",((float)l));
+
     m=p_m[dd];
     n=sqrt(1.-l*l-m*m)-1.;
     //    printf("dd: %i/%i nchan=%i nrow=%i (l,m)=(%f,%f)\n",dd,ndir,nchan,nrow,l,m);
     //printf("l,m: %f %f %f\n",l,m,n);
+
     //printf("\n");
     VisIn=p0;
     UVWin=p1;
@@ -1373,81 +1379,82 @@ static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args)
       float U=*UVWin;
       phase=(*UVWin++)*l;
       float V=*UVWin;
-      //printf("cc %f \n",phase);
+      //printf("cc0 %f \n",phase);
       phase+=(*UVWin++)*m;
-      //printf("cc %f \n",phase);
+      //printf("cc1 %f \n",phase);
       phase+=(*UVWin++)*n;
       //printf("phase %f \n",phase);
 
       if(ThisSourceType==1){
-	G0=(U*SminCos-V*SminSin);
-	G1=(U*SmajSin+V*SmajCos);
-	UVsq=(G0*G0+G1*G1);
+    	G0=(U*SminCos-V*SminSin);
+    	G1=(U*SmajSin+V*SmajCos);
+    	UVsq=(G0*G0+G1*G1);
       }
 
       for(ch=0;ch<nchan;ch++){
-	  ThisVis=VisIn+irow*nchan*4+ch*4;
+    	  ThisVis=VisIn+irow*nchan*4+ch*4;
 
 
-	  if(ChanEquidistant==0){
-	    Kernel=cexp(phase*c1[ch]);
-	  }else{
-	    if(ch==0){
-	      Kernel=cexp(phase*c1[ch]);
-	      dKernel=cexp(phase*(c1[ch+1]-c1[ch]));
-	    }
-	    else{
-	      Kernel*=dKernel;
-	    }
-	  }
+    	  if(ChanEquidistant==0){
+    	    Kernel=cexp((phase*c1[ch]));
+    	  }else{
+    	    if(ch==0){
+    	      Kernel=cexp((float complex)(phase*c1[ch]));
+    	      dKernel=cexp((float complex)(phase*(c1[ch+1]-c1[ch])));
+    	    }
+    	    else{
+    	      Kernel*=dKernel;
+    	    }
+    	  }
 
-	  if(ThisSourceType==1){
-	    UVsq_ch=c2[ch]*UVsq;
-	    FGauss=p_Flux[dd*nchan+ch]*GiveExp(UVsq_ch,p_Exp,StepExp, Nmax);
-	  }
-	  else{
-	    FGauss=p_Flux[dd*nchan+ch];
-	  }
+    	  if(ThisSourceType==1){
+    	    UVsq_ch=c2[ch]*UVsq;
+    	    FGauss=p_Flux[dd*nchan+ch]*GiveExp(UVsq_ch,p_Exp,StepExp, Nmax);
+    	  }
+    	  else{
+    	    FGauss=p_Flux[dd*nchan+ch];
+    	  }
 
-  	  result=FGauss*Kernel;
-	  //printf("result (%f,%f) \n",creal(result),cimag(result));
+    	  result=FGauss*((float complex)Kernel);
+    	  //printf("result (%f,%f) \n",creal(result),cimag(result));
 
-  	  if(FSmear==1){
-  	    //phi=PI*PI_C*p_DFreqs[ch]*phase;
-  	    phi=PI*(p_DFreqs[ch]/C)*phase;
-	    if(phi!=0.){
-	      phi=(float)sin((double)phi)/((double)phi);
-	      result*=phi;
-	    };
-  	  };
-  	  if(TSmear==1){
+    	  if(FSmear==1){
+    	    //phi=PI*PI_C*p_DFreqs[ch]*phase;
+    	    phi=PI*(p_DFreqs[ch]/C)*phase;
+    	    if(phi!=0.){
+    	      phi=(float)sin((double)phi)/((double)phi);
+    	      result*=phi;
+    	    };
+    	  };
+    	  if(TSmear==1){
 	    
-  	    du=UVW_dt[3*irow]*l;
-  	    dv=UVW_dt[3*irow+1]*m;
-  	    dw=UVW_dt[3*irow+2]*n;
-  	    dphase=(du+dv+dw)*DT;
-  	    //phi=PI*PI_C*p_Freqs[ch]*dphase;
-  	    phi=PI*(p_Freqs[ch]/C)*dphase;
-  	    //printf("phi = %f\n",phi);
-  	    //printf("dphase = %f\n",dphase);
-	    if(phi!=0.){
-	      phi=sin(phi)/(phi);
-	      result*=phi;
-	    };
-  	  };
+    	    du=UVW_dt[3*irow]*l;
+    	    dv=UVW_dt[3*irow+1]*m;
+    	    dw=UVW_dt[3*irow+2]*n;
+    	    dphase=(du+dv+dw)*DT;
+    	    //phi=PI*PI_C*p_Freqs[ch]*dphase;
+    	    phi=PI*(p_Freqs[ch]/C)*dphase;
+    	    //printf("phi = %f\n",phi);
+    	    //printf("dphase = %f\n",dphase);
+    	    if(phi!=0.){
+    	      phi=sin(phi)/(phi);
+    	      result*=phi;
+    	    };
+    	  };
 
 
-  	  //printf("\n");
+    	  //printf("\n");
 	  
-	  ThisVis[0]   += result;
-	  ThisVis[3]   += result;
-	  //printf("(%f,%f)\n",creal(ThisVis[0]),cimag(ThisVis[0]));
+    	  ThisVis[0]   += result;
+    	  ThisVis[3]   += result;
+    	  //printf("(%f,%f)\n",creal(ThisVis[0]),cimag(ThisVis[0]));
 
 
-  	}
+    	}
 	
     }
   }
+
 
 
 
