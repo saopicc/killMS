@@ -339,6 +339,25 @@ class ClassSimul():
         Sols=self.Sols
         FileName="Simul.npz"
         np.savez(FileName,Sols=Sols,StationNames=MS.StationNames,SkyModel=SM.ClusterCat,ClusterCat=SM.ClusterCat)
-        
+        self.Plot()
         
     
+    def Plot(self):
+
+        from pyrap.tables import table
+        t=table("BOOTES24_SB100-109.2ch8s.ms/",readonly=False)
+        D0=t.getcol("MODEL_DATA")
+        D1=t.getcol("CORRECTED_DATA_BACKUP")
+        f=t.getcol("FLAG")
+        DD=D0-D1
+        DD[f==1]=0
+        #inp=np.where(np.abs(DD)==np.max(np.abs(DD)))
+        A0=t.getcol("ANTENNA1")
+        A1=t.getcol("ANTENNA2")
+        indA=np.where((A0==48)&(A1==55))[0]
+        d0=D0[indA]
+        d1=D1[indA]
+
+        pylab.clf()
+        pylab.plot(np.angle(d1[:,0,0])-np.angle(d0[:,0,0]))
+        pylab.show()

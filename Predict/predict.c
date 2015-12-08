@@ -1313,14 +1313,16 @@ static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args)
   /* Do the calculation. */
   double phase,l,m,n,u,v,w;
   
-  float complex c0,result;
-  float C=299792456.;
+  double complex c0;
+  float complex result;
+  float C=299792458.;
   float PI=3.141592;
   c0=2.*PI*I;
   float complex *p0;
   double *p1;
   p0=VisIn;
   p1=UVWin;
+
   double complex c1[nchan];
   float complex c2[nchan];
   for(ch=0;ch<nchan;ch++){
