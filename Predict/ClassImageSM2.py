@@ -265,6 +265,7 @@ class ClassPreparePredict(ClassImagerDeconv):
                 if self.FacetMachine.DicoImager[iFacet]["SumFlux"]!=0.:
                     DicoJonesDirToFacet[iDirJones]["FacetsIDs"].append(iFacet)
                     DicoJonesDirToFacet[iDirJones]["SumFlux"]+=np.real(DicoResult["SumFlux"])
+                    
                 #ra,dec=self.FacetMachine.DicoImager[iFacet]["RaDec"]
                 #l0,m0=self.FacetMachine.DicoImager[iFacet]["l0m0"]
                 #l,m=self.FacetMachine.DicoImager[iFacet]["lmShift"]
