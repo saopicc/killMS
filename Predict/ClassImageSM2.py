@@ -49,8 +49,8 @@ class ClassPreparePredict(ClassImagerDeconv):
 
         #self.MM.CleanNegComponants(box=15,sig=1)
 
-        if self.GD["ImageSkyModel"]["MaskImage"]!=None:
-            self.MM.CleanMaskedComponants(self.GD["ImageSkyModel"]["MaskImage"])
+        if self.GD["GDkMS"]["ImageSkyModel"]["MaskImage"]!=None:
+            self.MM.CleanMaskedComponants(self.GD["GDkMS"]["ImageSkyModel"]["MaskImage"])
 
         self.ModelImage=self.MM.GiveModelImage(np.mean(self.VS.MS.ChanFreq))
         

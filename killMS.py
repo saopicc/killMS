@@ -101,6 +101,7 @@ def read_options():
     OP.add_option('BaseImageName')
     OP.add_option('ImagePredictParset')
     OP.add_option('OverS')
+    OP.add_option('MaskImage')
 
     OP.OptionGroup("* Data Selection","DataSelection")
     OP.add_option('UVMinMax',help='Baseline length selection in km. For example UVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default')
@@ -275,7 +276,7 @@ def main(OP=None,MSName=None):
         if options.OverS!=None:
             GDPredict["ImagerCF"]["OverS"]=options.OverS
         GD["GDImage"]=GDPredict
-
+        GDPredict["GDkMS"]=GD
 
 
     #SM.SourceCat.I*=1000**2
