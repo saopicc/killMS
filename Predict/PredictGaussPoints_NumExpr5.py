@@ -445,7 +445,7 @@ class ClassPredict():
         T.disable()
         self.DicoData=DicoData
         self.SM=SM
-
+        
         
         freq=DicoData["freqs"]
         times=DicoData["times"]
@@ -502,11 +502,10 @@ class ClassPredict():
         DATA=DicoData
 
         T.timeit("1")
+        ListFacets=SM.DicoJonesDirToFacet[iDirection]["FacetsIDs"]
 
-
-        for iCluster in ListDirection:
-            iFacet=iCluster
-            if SM.ClusterCat.SumI[iFacet]==0: continue
+        for iFacet in ListFacets:
+            if SM.DicoImager[iFacet]["SumFlux"]==0: continue
             GridMachine=self.DicoGM[iFacet]#self.GiveGM(iFacet,SM)
             T.timeit("2: GM")
             uvwThis=DATA["uvw"]

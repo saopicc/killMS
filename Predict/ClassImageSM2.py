@@ -54,23 +54,54 @@ class ClassPreparePredict(ClassImagerDeconv):
         #self.FacetMachine.ToCasaImage(ModelImage0,ImageName="Model0",Fits=True)
         #self.FacetMachine.ToCasaImage(self.ModelImage,ImageName="Model1",Fits=True)
         
-        
         self.ModelImage=NpShared.ToShared("%sModelImage"%(self.IdSharedMem),self.ModelImage)
         #del(data)
         self.DicoImager=self.FacetMachine.DicoImager
         
         
         NFacets=len(self.FacetMachine.DicoImager)
-        self.NDirs=NFacets
-        self.Dirs=range(self.NDirs)
-        ClusterCat=np.zeros((len(self.Dirs),),dtype=[('Name','|S200'),
-                                                     ('ra',np.float),('dec',np.float),
-                                                     ('l',np.float),('m',np.float),
-                                                     ('SumI',np.float),("Cluster",int)])
+        self.NFacets=NFacets
+        #self.NDirs=NFacets
+        #self.Dirs=range(self.NDirs)
+
+        DicoSolsFile=np.load(self.GD["DDESolutions"]["DDSols"])
+        
+        ClusterCat=DicoSolsFile["ClusterCat"]
         ClusterCat=ClusterCat.view(np.recarray)
+
+        # ClusterCat=np.zeros((len(self.Dirs),),dtype=[('Name','|S200'),
+        #                                              ('ra',np.float),('dec',np.float),
+        #                                              ('l',np.float),('m',np.float),
+        #                                              ('SumI',np.float),("Cluster",int)])
+        # ClusterCat=ClusterCat.view(np.recarray)
+
         self.DicoImager=self.FacetMachine.DicoImager
         self.ClusterCat=ClusterCat
+        self.ClusterCat.SumI=0.
 
+
+        #ind=np.where(self.ClusterCat.SumI!=0)[0]
+        #self.ClusterCat=self.ClusterCat[ind].copy()
+        #NFacets=self.ClusterCat.shape[0]
+        #print>>log, "  There are %i non-zero facets"%NFacets
+
+        NFacets=len(self.FacetMachine.DicoImager)
+        lFacet=np.zeros((NFacets,),np.float32)
+        mFacet=np.zeros_like(lFacet)
+        for iFacet in range(NFacets):
+            l,m=self.FacetMachine.DicoImager[iFacet]["lmShift"]
+            lFacet[iFacet]=l
+            mFacet[iFacet]=m
+
+        NDir=ClusterCat.l.size
+        d=np.sqrt((ClusterCat.l.reshape((NDir,1))-lFacet.reshape((1,NFacets)))**2+
+                  (ClusterCat.m.reshape((NDir,1))-mFacet.reshape((1,NFacets)))**2)
+        idDir=np.argmin(d,axis=0)
+        for iFacet in range(NFacets):
+            self.FacetMachine.DicoImager[iFacet]["iDirJones"]=idDir[iFacet]
+
+
+        
 
         for iFacet in range(NFacets):
             self.FacetMachine.SpacialWeigth[iFacet]=NpShared.ToShared("%sSpacialWeight_%3.3i"%(self.IdSharedMem,iFacet),self.FacetMachine.SpacialWeigth[iFacet])
@@ -79,21 +110,15 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.BuildGridsParallel()
 
 
-        #ind=np.where(self.ClusterCat.SumI!=0)[0]
-        #self.ClusterCat=self.ClusterCat[ind].copy()
-        #NFacets=self.ClusterCat.shape[0]
-        #print>>log, "  There are %i non-zero facets"%NFacets
-
-
-
         #self.BuildGridsSerial()
         #self.BuildGridsParallel()
 
         NFacets=self.ClusterCat.shape[0]
-        self.SM.NDir=NFacets
+        self.SM.NDir=self.NDirs
         self.SM.Dirs=self.Dirs
-        print>>log, "  There are %i non-zero facets"%self.SM.NDir
+        print>>log, "  There are %i non-zero directions"%self.SM.NDir
         self.SM.ClusterCat=self.ClusterCat
+        self.SM.DicoJonesDirToFacet=self.DicoJonesDirToFacet
         self.SM.GD=self.FacetMachine.GD
         self.SM.DicoImager=self.FacetMachine.DicoImager
         self.SM.GD["Compression"]["CompDeGridMode"]=0
@@ -223,21 +248,31 @@ class ClassPreparePredict(ClassImagerDeconv):
         iResult=0
 
         ClusterCat=self.ClusterCat
+        DicoJonesDirToFacet={}
+        for iDir in range(self.ClusterCat.shape[0]):
+            DicoJonesDirToFacet[iDir]={}
+            DicoJonesDirToFacet[iDir]["FacetsIDs"]=[]
+            DicoJonesDirToFacet[iDir]["SumFlux"]=0.
+
         while iResult < NJobs:
             DicoResult=result_queue.get()
             if DicoResult["Success"]:
                 iResult+=1
                 iFacet=DicoResult["iFacet"]
-                    
-                ClusterCat.SumI[iFacet]=np.real(DicoResult["SumFlux"])
-                ra,dec=self.FacetMachine.DicoImager[iFacet]["RaDec"]
+                iDirJones=self.FacetMachine.DicoImager[iFacet]["iDirJones"]
+                ClusterCat.SumI[iDirJones]+=np.real(DicoResult["SumFlux"])
+                self.FacetMachine.DicoImager[iFacet]["SumFlux"]=np.real(DicoResult["SumFlux"])
+                if self.FacetMachine.DicoImager[iFacet]["SumFlux"]!=0.:
+                    DicoJonesDirToFacet[iDirJones]["FacetsIDs"].append(iFacet)
+                    DicoJonesDirToFacet[iDirJones]["SumFlux"]+=np.real(DicoResult["SumFlux"])
+                #ra,dec=self.FacetMachine.DicoImager[iFacet]["RaDec"]
                 #l0,m0=self.FacetMachine.DicoImager[iFacet]["l0m0"]
-                l,m=self.FacetMachine.DicoImager[iFacet]["lmShift"]
-                ClusterCat.l[iFacet]=l
-                ClusterCat.m[iFacet]=m
+                #l,m=self.FacetMachine.DicoImager[iFacet]["lmShift"]
+                #ClusterCat.l[iFacet]=l
+                #ClusterCat.m[iFacet]=m
 
-                ClusterCat.ra[iFacet]=ra
-                ClusterCat.dec[iFacet]=dec
+                #ClusterCat.ra[iFacet]=ra
+                #ClusterCat.dec[iFacet]=dec
 
             NDone=iResult
             intPercent=int(100*  NDone / float(NFacets))
@@ -250,28 +285,40 @@ class ClassPreparePredict(ClassImagerDeconv):
             workerlist[ii].join()
 
 
-        DelFacet=(ClusterCat.SumI==0)
 
-        D={}
-        
-        iFacetNew=0
+
         for iFacet in sorted(self.FacetMachine.DicoImager.keys()):
-            #print>>log,"Facet %i [%f]"%(iFacet,ClusterCat.SumI[iFacet])
-            if DelFacet[iFacet]==0:
-                #print>>log,"  Keep Facet %i"%(iFacet)
-                Grid=NpShared.GiveArray("%sModelGrid.%3.3i"%(self.IdSharedMem,iFacet))
-                ListGrid.append(Grid)
-                D[iFacetNew]=self.FacetMachine.DicoImager[iFacet]
-                iFacetNew+=1
+            Grid=NpShared.GiveArray("%sModelGrid.%3.3i"%(self.IdSharedMem,iFacet))
+            ListGrid.append(Grid)
 
-        self.FacetMachine.DicoImager=D
-        self.DicoImager=D
-        self.ClusterCat=ClusterCat[DelFacet==0].copy()
-        NFacets=self.ClusterCat.shape[0]
-        self.ClusterCat.Cluster=np.arange(NFacets)
-        self.Dirs=self.ClusterCat.Cluster.tolist()
+        self.DicoImager=self.FacetMachine.DicoImager
+        #self.ClusterCat=ClusterCat[DelFacet==0].copy()
+        #NFacets=self.ClusterCat.shape[0]
+        #self.ClusterCat.Cluster=np.arange(NFacets)
+        self.DicoJonesDirToFacet=DicoJonesDirToFacet
         
-            
+        
+        D={}
+        iDirNew=0
+        self.NDirs=self.ClusterCat.shape[0]
+        Keep=np.zeros((self.NDirs,),bool)
+        for iDirJones in sorted(DicoJonesDirToFacet.keys()):
+            if self.DicoJonesDirToFacet[iDirJones]["SumFlux"]==0:
+                print>>log,"  Remove Jones direction %i"%(iDirJones)
+            else:
+                D[iDirNew]=self.DicoJonesDirToFacet[iDirJones]
+                iDirNew+=1
+                Keep[iDirJones]=1
+
+        self.DicoJonesDirToFacet=D
+        self.ClusterCat=self.ClusterCat[Keep].copy()
+        #self.Dirs=self.ClusterCat.Cluster.tolist()
+        #self.Dirs=[iDir for iDir in DicoJonesDirToFacet.keys() if DicoJonesDirToFacet[iDir]["SumFlux"]!=0.]
+        #self.Dirs=[iDir for iDir in DicoJonesDirToFacet.keys() if DicoJonesDirToFacet[iDir]["SumFlux"]!=0.]
+
+        self.Dirs=self.DicoJonesDirToFacet.keys()
+        self.NDirs=len(self.Dirs)
+
         NpShared.PackListArray("%sGrids"%(self.IdSharedMem),ListGrid)
         NpShared.DelAll("%sModelFacet"%self.IdSharedMem)
         NpShared.DelAll("%sModelGrid"%self.IdSharedMem)
@@ -323,13 +370,14 @@ class Worker(multiprocessing.Process):
             # self.result_queue.put({"Success":True})
 
             Image=NpShared.GiveArray("%sModelImage"%(self.IdSharedMem))
-
+            
+            
             #Grid,SumFlux=self.ClassImToGrid.GiveGridFader(Image,self.DicoImager,iFacet,NormImage)
             SharedMemName="%sSpheroidal.Facet_%3.3i"%(self.IdSharedMem,iFacet)
             SPhe=NpShared.GiveArray(SharedMemName)
             SpacialWeight=NpShared.GiveArray("%sSpacialWeight_%3.3i"%(self.IdSharedMem,iFacet))
             NormImage=NpShared.GiveArray("%sNormImage"%self.IdSharedMem)
-
+            
             Im2Grid=ClassImToGrid(OverS=self.GD["ImagerCF"]["OverS"],GD=self.GD)
             Grid,SumFlux=Im2Grid.GiveModelTessel(Image,self.DicoImager,iFacet,NormImage,SPhe,SpacialWeight,ToGrid=True)
 

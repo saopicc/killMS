@@ -32,10 +32,11 @@ def main(options=None):
     #SMName="ModelRandom00.gauss.txt.npy"
     #SMName="ModelRandom00.4.txt.npy"
     SMName="ModelRandom00.txt.npy"
-    SMName="ModelSimulOne.txt.npy"
+    #SMName="ModelSimulOne.txt.npy"
+    SMName="Deconv.Corr.npy"
     #ll=sorted(glob.glob("Simul.MS"))
-    #ll=sorted(glob.glob("000?.MS"))
-    ll=sorted(glob.glob("BOOTES24_SB100-109.2ch8s.ms"))
+    ll=sorted(glob.glob("000?.MS"))
+    #ll=sorted(glob.glob("BOOTES24_SB100-109.2ch8s.ms"))
 
     #ll=sorted(glob.glob("0000.MS"))
     #ll=sorted(glob.glob("SimulHighRes.MS_p0"))
@@ -93,69 +94,69 @@ class ClassSimul():
 
 
 
-        # DeltaT_Amp=np.random.randn(na,nd)*60
-        # period_Amp=120+np.random.randn(na,nd)*10
-        # Amp_Mean=np.random.rand(na,nd)*2
-        # Amp_Amp=np.random.randn(na,nd)*.1
+        DeltaT_Amp=np.random.randn(na,nd)*60
+        period_Amp=120+np.random.randn(na,nd)*10
+        Amp_Mean=np.random.rand(na,nd)*2
+        Amp_Amp=np.random.randn(na,nd)*.1
     
-        # DeltaT_Phase=np.random.randn(na,nd)*60
-        # period_Phase=300+np.random.randn(na,nd)*10
-        # #period_Phase=np.random.randn(na,nd)*10
-        # PhaseAbs=np.random.randn(na,nd)*np.pi
-        # Amp_Phase=np.random.randn(na,nd)*np.pi#*0.1
+        DeltaT_Phase=np.random.randn(na,nd)*60
+        period_Phase=300+np.random.randn(na,nd)*10
+        #period_Phase=np.random.randn(na,nd)*10
+        PhaseAbs=np.random.randn(na,nd)*np.pi
+        Amp_Phase=np.random.randn(na,nd)*np.pi#*0.1
     
-        # #Amp_Amp=np.zeros((na,nd))
-        # PhaseAbs.fill(0)
-        # #Amp_Phase=np.zeros((na,nd))
+        #Amp_Amp=np.zeros((na,nd))
+        PhaseAbs.fill(0)
+        #Amp_Phase=np.zeros((na,nd))
     
-        # for itime in range(0,NSols):
-        #     print itime,"/",NSols
-        #     for iAnt in range(na):
-        #         for iDir in range(nd):
-        #             t=Sols.tm[itime]
-        #             t0=Sols.tm[0]
-        #             A=Amp_Mean[iAnt,iDir]+Amp_Amp[iAnt,iDir]*np.sin(DeltaT_Amp[iAnt,iDir]+(t-t0)/period_Amp[iAnt,iDir])
-        #             Phase=PhaseAbs[iAnt,iDir]+Amp_Phase[iAnt,iDir]*np.sin(DeltaT_Phase[iAnt,iDir]+(t-t0)/period_Phase[iAnt,iDir])
-        #             g0=A*np.exp(1j*Phase)
-        #             Sols.G[itime,iAnt,iDir,0,0]=g0
-        #             #Sols.G[itime,iAnt,iDir,1,1]=g0
+        for itime in range(0,NSols):
+            print itime,"/",NSols
+            for iAnt in range(na):
+                for iDir in range(nd):
+                    t=Sols.tm[itime]
+                    t0=Sols.tm[0]
+                    A=Amp_Mean[iAnt,iDir]+Amp_Amp[iAnt,iDir]*np.sin(DeltaT_Amp[iAnt,iDir]+(t-t0)/period_Amp[iAnt,iDir])
+                    Phase=PhaseAbs[iAnt,iDir]+Amp_Phase[iAnt,iDir]*np.sin(DeltaT_Phase[iAnt,iDir]+(t-t0)/period_Phase[iAnt,iDir])
+                    g0=A*np.exp(1j*Phase)
+                    Sols.G[itime,iAnt,iDir,0,0]=g0
+                    #Sols.G[itime,iAnt,iDir,1,1]=g0
 
-        # ###############################
+        ###############################
 
-        # DeltaT_Amp=np.random.randn(na,nd)*60
-        # period_Amp=120+np.random.randn(na,nd)*10
-        # Amp_Amp=np.random.randn(na,nd)*.1
-        # Amp_Mean=np.random.rand(na,nd)*2
+        DeltaT_Amp=np.random.randn(na,nd)*60
+        period_Amp=120+np.random.randn(na,nd)*10
+        Amp_Amp=np.random.randn(na,nd)*.1
+        Amp_Mean=np.random.rand(na,nd)*2
    
-        # DeltaT_Phase=np.random.randn(na,nd)*60
-        # period_Phase=300+np.random.randn(na,nd)*10
-        # #period_Phase=np.random.randn(na,nd)*10
-        # PhaseAbs=np.random.randn(na,nd)*np.pi
-        # Amp_Phase=np.random.randn(na,nd)*np.pi#*0.1
+        DeltaT_Phase=np.random.randn(na,nd)*60
+        period_Phase=300+np.random.randn(na,nd)*10
+        #period_Phase=np.random.randn(na,nd)*10
+        PhaseAbs=np.random.randn(na,nd)*np.pi
+        Amp_Phase=np.random.randn(na,nd)*np.pi#*0.1
     
-        # #Amp_Amp=np.zeros((na,nd))
-        # #PhaseAbs.fill(0)
-        # #Amp_Phase=np.zeros((na,nd))
+        #Amp_Amp=np.zeros((na,nd))
+        #PhaseAbs.fill(0)
+        #Amp_Phase=np.zeros((na,nd))
     
-        # for itime in range(0,NSols):
-        #     for iAnt in range(na):
-        #         for iDir in range(nd):
-        #             t=Sols.tm[itime]
-        #             t0=Sols.tm[0]
-        #             A=Amp_Mean[iAnt,iDir]+Amp_Amp[iAnt,iDir]*np.sin(DeltaT_Amp[iAnt,iDir]+(t-t0)/period_Amp[iAnt,iDir])
-        #             Phase=PhaseAbs[iAnt,iDir]+Amp_Phase[iAnt,iDir]*np.sin(DeltaT_Phase[iAnt,iDir]+(t-t0)/period_Phase[iAnt,iDir])
-        #             g0=A*np.exp(1j*Phase)
-        #             Sols.G[itime,iAnt,iDir,1,1]=g0
-        #             #Sols.G[itime,iAnt,iDir,1,1]=g0
+        for itime in range(0,NSols):
+            for iAnt in range(na):
+                for iDir in range(nd):
+                    t=Sols.tm[itime]
+                    t0=Sols.tm[0]
+                    A=Amp_Mean[iAnt,iDir]+Amp_Amp[iAnt,iDir]*np.sin(DeltaT_Amp[iAnt,iDir]+(t-t0)/period_Amp[iAnt,iDir])
+                    Phase=PhaseAbs[iAnt,iDir]+Amp_Phase[iAnt,iDir]*np.sin(DeltaT_Phase[iAnt,iDir]+(t-t0)/period_Phase[iAnt,iDir])
+                    g0=A*np.exp(1j*Phase)
+                    Sols.G[itime,iAnt,iDir,1,1]=g0
+                    #Sols.G[itime,iAnt,iDir,1,1]=g0
 
 
 
-        # for itime in range(0,NSols):
-        #     Sols.G[itime,:,:,0,0]=Sols.G[-1,:,:,0,0]
-        #     Sols.G[itime,:,:,1,1]=Sols.G[-1,:,:,1,1]
+        for itime in range(0,NSols):
+            Sols.G[itime,:,:,0,0]=Sols.G[-1,:,:,0,0]
+            Sols.G[itime,:,:,1,1]=Sols.G[-1,:,:,1,1]
 
-        # # Sols.G[:,:,:,0,0]=1
-        # # Sols.G[:,:,:,1,1]=1
+        # Sols.G[:,:,:,0,0]=1
+        # Sols.G[:,:,:,1,1]=1
 
         return Sols
 
@@ -180,8 +181,8 @@ class ClassSimul():
         G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
 
 
-        #G[:,:,:,:,0,0]/=np.abs(G[:,:,:,:,0,0])
-        #G[:,:,:,:,1,1]=G[:,:,:,:,0,0]
+        G[:,:,:,:,0,0]/=np.abs(G[:,:,:,:,0,0])
+        G[:,:,:,:,1,1]=G[:,:,:,:,0,0]
 
         G.fill(0)
         G[:,:,:,:,0,0]=1
@@ -288,8 +289,8 @@ class ClassSimul():
         #SM.SelectSubCat(SM.SourceCat.kill==0)
 
 
-        #PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones,Noise=Noise)
-        PredictData=PM5.predictKernelPolCluster(VS.ThisDataChunk,SM)
+        PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones,Noise=Noise)
+        #PredictData=PM5.predictKernelPolCluster(VS.ThisDataChunk,SM)
 
 
         # import pylab
@@ -339,7 +340,7 @@ class ClassSimul():
         Sols=self.Sols
         FileName="Simul.npz"
         np.savez(FileName,Sols=Sols,StationNames=MS.StationNames,SkyModel=SM.ClusterCat,ClusterCat=SM.ClusterCat)
-        self.Plot()
+        #self.Plot()
         
     
     def Plot(self):
