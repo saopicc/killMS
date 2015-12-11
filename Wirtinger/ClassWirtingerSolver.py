@@ -542,7 +542,7 @@ class ClassWirtingerSolver():
         
         
         T=ClassTimeIt.ClassTimeIt("ClassWirtinger")
-        #T.disable()
+        T.disable()
                     
 
 
@@ -638,8 +638,19 @@ class ClassWirtingerSolver():
                 if LMIter==(NIter-1):
                     DoFullPredict=True
                     
+                u,v,w=self.DATA["uvw"].T
+                A0=self.DATA["A0"]
+                A1=self.DATA["A1"]
+                meanW=np.zeros((self.VS.MS.na,),np.float32)
+                for iAntMS in ListAntSolve:
+                    ind=np.where((A0==iAntMS)|(A1==iAntMS))[0]
+                    meanW[iAntMS]=np.mean(np.abs(w[ind]))
+                meanW=meanW[ListAntSolve]
+                indOrderW=np.argsort(meanW)[::-1]
+                SortedWListAntSolve=(np.array(ListAntSolve)[indOrderW]).tolist()
+                #print indOrderW
 
-                for iAnt in ListAntSolve:
+                for iAnt in SortedWListAntSolve:
                     work_queue.put((iAnt,DoCalcEvP,tm,self.rms,DoEvP,DoFullPredict))
  
                 T.timeit("put in queue")
@@ -699,23 +710,15 @@ class ClassWirtingerSolver():
                 if len(rmsFromDataList)>0:
                     self.rmsFromData=np.min(rmsFromDataList)
                 iResult=0
-                pylab.clf()
-                pylab.subplot(2,1,1)
-                pylab.plot(DTs)
 
-                u,v,w=self.DATA["uvw"].T
-                A0=self.DATA["A0"]
-                A1=self.DATA["A1"]
-                meanW=np.zeros((self.VS.MS.na,),np.float32)
-                for iAntMS in range(self.VS.MS.na):
-                    ind=np.where((A0==iAntMS)|(A1==iAntMS))[0]
-                    meanW[iAntMS]=np.mean(w[ind])
-                    
-                pylab.subplot(2,1,2)
-                pylab.plot(meanW)
-                pylab.draw()
-                pylab.show(False)
-                pylab.pause(0.1)
+                # pylab.clf()
+                # pylab.subplot(2,1,1)
+                # pylab.plot(DTs)
+                # pylab.subplot(2,1,2)
+                # pylab.plot(meanW)
+                # pylab.draw()
+                # pylab.show(False)
+                # pylab.pause(0.1)
 
                 if self.DoPlot==1:
                     AntPlot=np.arange(self.VS.MS.na)#np.array(ListAntSolve)
