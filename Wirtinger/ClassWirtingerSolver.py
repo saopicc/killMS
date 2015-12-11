@@ -18,7 +18,7 @@ from killMS2.Other.progressbar import ProgressBar
 from killMS2.Other import ClassTimeIt
 from killMS2.Other import Counter
 from ClassEvolve import ClassModelEvolution
-
+import time
 
 def test():
 
@@ -338,6 +338,7 @@ class ClassWirtingerSolver():
         ## simul
         #d=self.DATA["data"]
         #self.DATA["data"]+=(self.rms/np.sqrt(2.))*(np.random.randn(*d.shape)+1j*np.random.randn(*d.shape))
+        self.DATA=DATA
 
         self.rms=-1
         if (self.TypeRMS=="Resid")&(self.rmsFromData!=None):
@@ -541,7 +542,7 @@ class ClassWirtingerSolver():
         
         
         T=ClassTimeIt.ClassTimeIt("ClassWirtinger")
-        T.disable()
+        #T.disable()
                     
 
 
@@ -643,16 +644,18 @@ class ClassWirtingerSolver():
  
                 T.timeit("put in queue")
                 rmsFromDataList=[]
+                DTs=np.zeros((self.VS.MS.na,),np.float32)
                 while iResult < NJobs:
-                    iAnt,G,P,rmsFromData,InfoNoise = result_queue.get()
+                    iAnt,G,P,rmsFromData,InfoNoise,DT = result_queue.get()
                     if rmsFromData!=None:
                         rmsFromDataList.append(rmsFromData)
                     
-                    T.timeit("result_queue.get()")
+                    #T.timeit("result_queue.get()")
                     self.G[iAnt][:]=G[:]
                     if type(P)!=type(None):
                         self.P[iAnt,:]=P[:]
-
+                    
+                    DTs[iAnt]=DT
                     kapa=InfoNoise["kapa"]
                     self.ListStd[iAnt].append(InfoNoise["std"])
                     self.ListMax[iAnt].append(InfoNoise["max"])
@@ -692,11 +695,27 @@ class ClassWirtingerSolver():
                         #print sig
                         
 
-                T.timeit("Kapa")
+                T.timeit("getResult")
                 if len(rmsFromDataList)>0:
                     self.rmsFromData=np.min(rmsFromDataList)
                 iResult=0
+                pylab.clf()
+                pylab.subplot(2,1,1)
+                pylab.plot(DTs)
 
+                u,v,w=self.DATA["uvw"].T
+                A0=self.DATA["A0"]
+                A1=self.DATA["A1"]
+                meanW=np.zeros((self.VS.MS.na,),np.float32)
+                for iAntMS in range(self.VS.MS.na):
+                    ind=np.where((A0==iAntMS)|(A1==iAntMS))[0]
+                    meanW[iAntMS]=np.mean(w[ind])
+                    
+                pylab.subplot(2,1,2)
+                pylab.plot(meanW)
+                pylab.draw()
+                pylab.show(False)
+                pylab.pause(0.1)
 
                 if self.DoPlot==1:
                     AntPlot=np.arange(self.VS.MS.na)#np.array(ListAntSolve)
@@ -724,7 +743,7 @@ class ClassWirtingerSolver():
                     pylab.pause(0.1)
 
 
-            T.timeit("Plot")
+                T.timeit("Plot")
 
 
 
@@ -733,6 +752,7 @@ class ClassWirtingerSolver():
             
 
             self.AppendGToSolArray()
+            T.timeit("AppendGToSolArray")
             
 
             self.iCurrentSol+=1
@@ -831,7 +851,7 @@ class WorkerAntennaLM(multiprocessing.Process):
                 break
             #self.e.wait()
             
-
+            T0=time.time()
             T=ClassTimeIt.ClassTimeIt("Worker Ant=%2.2i"%iAnt)
             T.disable()
             # if DoCalcEvP:
@@ -897,4 +917,5 @@ class WorkerAntennaLM(multiprocessing.Process):
                 if type(Pa)!=type(None):
                     Pout=Pa
 
-                self.result_queue.put([iAnt,x,Pout,rmsFromData,InfoNoise])
+                DT=time.time()-T0
+                self.result_queue.put([iAnt,x,Pout,rmsFromData,InfoNoise,DT])
