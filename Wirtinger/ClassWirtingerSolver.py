@@ -619,6 +619,9 @@ class ClassWirtingerSolver():
                 #print
                 # for EKF
 
+                #print "===================================================="
+                #print "===================================================="
+                #print "===================================================="
                 #########
                 if LMIter>0:
                     DoCalcEvP=False
@@ -829,7 +832,7 @@ class WorkerAntennaLM(multiprocessing.Process):
             #self.e.wait()
             
 
-            T=ClassTimeIt.ClassTimeIt("Worker")
+            T=ClassTimeIt.ClassTimeIt("Worker Ant=%2.2i"%iAnt)
             T.disable()
             # if DoCalcEvP:
             #     T.disable()
@@ -879,8 +882,9 @@ class WorkerAntennaLM(multiprocessing.Process):
                 #     P[iAnt]=Pa
 
                 x,Pout,InfoNoise=JM.doEKFStep(G,P,evP,rms,Gains0Iter=G0Iter)
-                if DoFullPredict: JM.PredictOrigFormat(G)
                 T.timeit("EKFStep")
+                if DoFullPredict: JM.PredictOrigFormat(G)
+                T.timeit("PredictOrigFormat")
                 rmsFromData=JM.rmsFromData
 
                 if DoEvP:
