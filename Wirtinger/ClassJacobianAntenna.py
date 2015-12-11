@@ -724,7 +724,7 @@ class ClassJacobianAntenna():
             PredictedData.ravel()[IndicesSel3]=D[indThis,:,0,0].ravel()
         elif self.PolMode=="IDiag":
             PredictedData.ravel()[IndicesSel0]=D[indThis,:,0,0].ravel()
-            PredictedData.ravel()[IndicesSel3]=D[indThis,:,0,1].ravel()
+            PredictedData.ravel()[IndicesSel3]=D[indThis,:,1,0].ravel()
         elif self.PolMode=="IFull":
             PredictedData.ravel()[IndicesSel0]=D[indThis,:,0,0].ravel()
             PredictedData.ravel()[IndicesSel1]=D[indThis,:,0,1].ravel()

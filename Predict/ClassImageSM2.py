@@ -76,6 +76,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         if not(".npz" in SolsFile):
             ThisMSName=reformat.reformat(os.path.abspath(self.VS.MSName),LastSlash=False)
             SolsFile="%s/killMS.%s.sols.npz"%(self.VS.MSName,SolsFile)
+            SolsFile="BOOTES24_SB100-109.2ch8s.ms/killMS.KAFCA.Scalar.50Dir.0.1P.BriggsSq.PreCuster4.sols.npz"
 
         DicoSolsFile=np.load(SolsFile)
         
