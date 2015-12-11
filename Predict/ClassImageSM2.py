@@ -3,6 +3,7 @@ import numpy as np
 from DDFacet.Imager.ClassDeconvMachine import ClassImagerDeconv
 from pyrap.images import image
 from killMS2.Array import NpShared
+from killMS2.Other import reformat
 
 from killMS2.Other import MyLogger
 log=MyLogger.getLogger("ClassImageSM")
@@ -10,6 +11,7 @@ from killMS2.Other.progressbar import ProgressBar
 from DDFacet.ToolsDir.GiveEdges import GiveEdges
 from DDFacet.Imager.ClassModelMachine import ClassModelMachine
 from DDFacet.Imager.ClassImToGrid import ClassImToGrid
+import os
 
 class ClassImageSM():
     def __init__(self):
@@ -70,7 +72,12 @@ class ClassPreparePredict(ClassImagerDeconv):
         #self.NDirs=NFacets
         #self.Dirs=range(self.NDirs)
 
-        DicoSolsFile=np.load(self.GD["DDESolutions"]["DDSols"])
+        SolsFile=self.GD["DDESolutions"]["DDSols"]
+        if not(".npz" in SolsFile):
+            ThisMSName=reformat.reformat(os.path.abspath(self.VS.MSName),LastSlash=False)
+            SolsFile="%s/killMS.%s.sols.npz"%(self.VS.MSName,SolsFile)
+
+        DicoSolsFile=np.load(SolsFile)
         
         ClusterCat=DicoSolsFile["ClusterCat"]
         ClusterCat=ClusterCat.view(np.recarray)

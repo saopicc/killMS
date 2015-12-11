@@ -270,6 +270,11 @@ def main(OP=None,MSName=None):
         print>>log,"Predict Mode: Image, with Parset: %s"%ParsetName
         GDPredict=ReadCFG.Parset(ParsetName).DicoPars
 
+        if not("PSFFacets" in GDPredict["ImagerGlobal"].keys()):
+               GDPredict["ImagerGlobal"]["PSFFacets"]=0
+               GDPredict["ImagerGlobal"]["PSFOversize"]=1
+
+
         GDPredict["Compression"]["CompDeGridMode"]=False
         #GDPredict["Compression"]["CompDeGridMode"]=True
         
