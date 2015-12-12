@@ -461,6 +461,7 @@ class ClassWirtingerSolver():
                     if self.SolverType=="CohJones":
 
                         x,_,_=JM.doLMStep(self.G)
+                        if i==self.NIter-1: JM.PredictOrigFormat(self.G)
                     if self.SolverType=="KAFCA":
                         EM=ClassModelEvolution(iAnt,
                                                StepStart=3,
@@ -875,7 +876,8 @@ class WorkerAntennaLM(multiprocessing.Process):
             if self.SolverType=="CohJones":
                 x,_,InfoNoise=JM.doLMStep(G)
                 if DoFullPredict: JM.PredictOrigFormat(G)
-                self.result_queue.put([iAnt,x,None,None,InfoNoise])
+                self.result_queue.put([iAnt,x,None,None,InfoNoise,0.])
+
             elif self.SolverType=="KAFCA":
                 #T.disable()
                 if DoCalcEvP:

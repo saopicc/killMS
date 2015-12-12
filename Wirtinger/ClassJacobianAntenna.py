@@ -561,7 +561,7 @@ class ClassJacobianAntenna():
         #     pylab.draw()
         #     pylab.show(False)
         #     pylab.pause(0.1)
-        #     stop
+        #     #stop
 
         # # pylab.figure(2)
         # # pylab.clf()
@@ -706,8 +706,6 @@ class ClassJacobianAntenna():
 
         nr,nch,_,_=DicoData["flags"].shape
             
-        D=np.rollaxis(zp,0,1).reshape(nr,nch,self.NJacobBlocks_X,self.NJacobBlocks_Y)
-
         PredictedData=NpShared.GiveArray("%sPredictedData"%self.IdSharedMem)
         indRowsThisChunk=self.DATA["indRowsThisChunk"]
         indOrig=DicoData["indOrig"]
@@ -719,6 +717,8 @@ class ClassJacobianAntenna():
         IndicesSel2=Indices[indRowsThisChunk,:,:][indOrig,:,2].ravel()
         IndicesSel3=Indices[indRowsThisChunk,:,:][indOrig,:,3].ravel()
         
+        D=np.rollaxis(zp.reshape(self.NJacobBlocks_X,nr,nch,self.NJacobBlocks_Y),0,3).reshape(nr,nch,self.NJacobBlocks_X,self.NJacobBlocks_Y)
+
         if self.PolMode=="Scalar":
             PredictedData.ravel()[IndicesSel0]=D[indThis,:,0,0].ravel()
             PredictedData.ravel()[IndicesSel3]=D[indThis,:,0,0].ravel()
@@ -966,6 +966,8 @@ class ClassJacobianAntenna():
         # pylab.clf()
         # pylab.figure(0)
         
+        
+
 
         for iDir in range(NDir):
             
@@ -1132,8 +1134,8 @@ class ClassJacobianAntenna():
             # FlagsShape=F0.shape
             # FlagsSize=F0.size
             # F0=np.arange(FlagsSize).reshape(FlagsShape)
-            # #DicoData["flags_flat"]=np.rollaxis(DicoData["flags"],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
-            # F1=np.rollaxis(F0,0,1).reshape(FlagsShape)
+            # F0Flat=np.rollaxis(F0,2).reshape(NJacobBlocks_X,nr*nch*NJacobBlocks_Y)
+            # F1=np.rollaxis(F0Flat.reshape(NJacobBlocks_X,nr,nch,NJacobBlocks_Y),0,3).reshape(FlagsShape)
             # print np.count_nonzero((F0-F1).ravel())
             # stop
             # ###################
