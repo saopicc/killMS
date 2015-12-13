@@ -31,7 +31,9 @@ class ClassVisServer():
                  AddNoiseJy=None,IdSharedMem="",
                  SM=None,NCPU=None,
                  Robust=2,Weighting="Natural",
-                 GD=None,GDImag=None):
+                 GD=None,GDImag=None,
+                 wmax=100000.):
+        self.wmax=wmax
         self.GD=GD
         self.GDImag=GDImag
         self.CalcGridBasedFlags=False
@@ -252,6 +254,18 @@ class ClassVisServer():
             MapJones=MapJones[ind]
             indRowsThisChunk=indRowsThisChunk[ind]
             
+        if self.SM.Type=="Image":
+            u,v,w=uvw.T
+            ind=np.where(np.abs(w)<self.wmax)[0]
+            flags=flags[ind]
+            data=data[ind]
+            A0=A0[ind]
+            A1=A1[ind]
+            uvw=uvw[ind]
+            times=times[ind]
+            W=W[ind]
+            MapJones=MapJones[ind]
+            indRowsThisChunk=indRowsThisChunk[ind]
             
 
         ind=np.where(A0!=A1)[0]
