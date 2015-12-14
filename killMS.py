@@ -318,6 +318,7 @@ def main(OP=None,MSName=None):
         FacetMachine=PreparePredict.FacetMachine
         VS.setFOV(FacetMachine.OutImShape,FacetMachine.PaddedGridShape,FacetMachine.FacetShape,FacetMachine.CellSizeRad)
     VS.setSM(SM)
+    VS.CalcWeigths()
     
         
 

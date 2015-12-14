@@ -97,21 +97,27 @@ class ClassVisServer():
         self.TimesInt=TimesInt
         self.NTChunk=len(self.TimesInt)-1
         self.MS=MS
-        self.CalcWeigths()
+
+        # self.CalcWeigths()
 
         #TimesVisMin=np.arange(0,MS.DTh*60.,self.TVisSizeMin).tolist()
         #if not(MS.DTh*60. in TimesVisMin): TimesVisMin.append(MS.DTh*60.)
         #self.TimesVisMin=np.array(TimesVisMin)
+
+
+
 
     def CalcWeigths(self,FOV=5.):
         if self.VisWeights!=None: return
         
         uvw,WEIGHT,flags=self.GiveAllUVW()
         u,v,w=uvw.T
+
         freq=np.mean(self.MS.ChanFreq)
         uvmax=np.max(np.sqrt(u**2+v**2))
         res=uvmax*freq/3.e8
         npix=(FOV*np.pi/180)/res
+        
         ImShape=(1,1,npix,npix)
         #VisWeights=WEIGHT[:,0]#np.ones((uvw.shape[0],),dtype=np.float32)
         VisWeights=np.ones((uvw.shape[0],),dtype=np.float32)
