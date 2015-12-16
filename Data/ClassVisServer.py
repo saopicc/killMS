@@ -115,7 +115,7 @@ class ClassVisServer():
 
         freq=np.mean(self.MS.ChanFreq)
         uvmax=np.max(np.sqrt(u**2+v**2))
-        res=uvmax*freq/3.e8
+        CellSizeRad=res=uvmax*freq/3.e8
         npix=(FOV*np.pi/180)/res
         
         ImShape=(1,1,npix,npix)
@@ -134,7 +134,11 @@ class ClassVisServer():
             print>>log,"All imaging weights are 0, setting them to ones"
             VisWeights.fill(1)
 
-        WeightMachine=ClassWeighting.ClassWeighting(ImShape,res)
+        if self.SM.Type=="Image":
+            ImShape=self.PaddedFacetShape
+            CellSizeRad=self.CellSizeRad
+
+        WeightMachine=ClassWeighting.ClassWeighting(ImShape,CellSizeRad)#res)
         VisWeights=WeightMachine.CalcWeights(uvw,VisWeights,flags,self.MS.ChanFreq,
                                              Robust=Robust,
                                              Weighting=self.Weighting)
