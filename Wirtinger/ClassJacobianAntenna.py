@@ -2,7 +2,7 @@ import numpy as np
 from killMS2.Array import NpShared
 
 from killMS2.Predict.PredictGaussPoints_NumExpr5 import ClassPredict
-
+import os
 from killMS2.Data import ClassVisServer
 #from Sky import ClassSM
 from killMS2.Array import ModLinAlg
@@ -413,18 +413,28 @@ class ClassJacobianAntenna():
         #     print self.rmsFromData
         #     stop
 
-        # if self.iAnt==0:
+        # if self.iAnt==51:
         #     #self.DicoData["flags_flat"].fill(0)
         #     f=(self.DicoData["flags_flat"]==0)
-        #     pylab.figure(2)
+        #     fig=pylab.figure(2)
         #     pylab.clf()
         #     pylab.plot((z[f]))#[::11])#[::11])
         #     pylab.plot((Jx[f]))#[::11])#[::11])
+
         #     #pylab.plot(zr[f])#[::11])#[::11])
-        #     pylab.draw()
-        #     pylab.show(False)
-        #     pylab.pause(0.1)
-        #     stop
+        #     #pylab.draw()
+        #     ifile=0
+        #     while True:
+        #         fname="png/png.%5.5i.png"%ifile
+        #         if os.path.isfile(fname) :
+        #             fig.savefig(fname)
+        #             break
+        #         ifile+=1
+                
+                
+        #     #pylab.show(False)
+        #     #pylab.pause(0.1)
+        #     #stop
 
 
         x3=self.ApplyK_vec(zr,rms,Pa)
@@ -983,6 +993,16 @@ class ClassJacobianAntenna():
                 #gc.collect()
                 #print gc.garbage
 
+
+            if (iDir==31)&(self.iAnt==51):
+                ifile=0
+                while True:
+                    fname="png/Kernel.%5.5i.npy"%ifile
+                    if not(os.path.isfile(fname)) :
+                        np.save(fname,K)
+                        break
+                    ifile+=1
+
             K_XX=K[:,:,0]
             K_YY=K[:,:,3]
             if self.PolMode=="Scalar":
@@ -1047,6 +1067,10 @@ class ClassJacobianAntenna():
         # #     del(K,K_XX,K_YY)
 
 
+        DicoData=self.DicoData
+        nr,nch,_=K.shape
+        flags_flat=np.rollaxis(DicoData["flags"],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
+        DicoData["flags_flat"][flags_flat]=1
 
         #stop
         #gc.collect()

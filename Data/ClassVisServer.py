@@ -31,9 +31,8 @@ class ClassVisServer():
                  AddNoiseJy=None,IdSharedMem="",
                  SM=None,NCPU=None,
                  Robust=2,Weighting="Natural",
-                 GD=None,GDImag=None,
-                 wmax=100000.):
-        self.wmax=wmax
+                 GD=None,GDImag=None):
+
         self.GD=GD
         self.GDImag=GDImag
         self.CalcGridBasedFlags=False
@@ -264,18 +263,6 @@ class ClassVisServer():
             MapJones=MapJones[ind]
             indRowsThisChunk=indRowsThisChunk[ind]
             
-        if self.SM.Type=="Image":
-            u,v,w=uvw.T
-            ind=np.where(np.abs(w)<self.wmax)[0]
-            flags=flags[ind]
-            data=data[ind]
-            A0=A0[ind]
-            A1=A1[ind]
-            uvw=uvw[ind]
-            times=times[ind]
-            W=W[ind]
-            MapJones=MapJones[ind]
-            indRowsThisChunk=indRowsThisChunk[ind]
             
 
         ind=np.where(A0!=A1)[0]
@@ -398,6 +385,28 @@ class ClassVisServer():
             print>>log, ModColor.Str("Channels are not equidistant, cannot go fast")
 
         MS=self.MS
+
+
+        if self.SM.Type=="Image":
+            u,v,w=uvw.T
+            wmax=self.GD["GDImage"]["ImagerCF"]["wmax"]
+            wmaxkm=wmax/1000.
+            print>>log, "Flagging baselines with w > %f km"%(wmaxkm)
+            C=299792458.
+            fmax=self.MS.ChanFreq.ravel()[-1]
+
+            ind=np.where(np.abs(w)>wmax)[0]
+            flags[ind,:,:]=1
+            # data=data[ind]
+            # A0=A0[ind]
+            # A1=A1[ind]
+            # uvw=uvw[ind]
+            # times=times[ind]
+            # W=W[ind]
+            # MapJones=MapJones[ind]
+            # indRowsThisChunk=indRowsThisChunk[ind]
+
+
         self.ThresholdFlag=0.9
         self.FlagAntNumber=[]
         for A in range(MS.na):
@@ -441,6 +450,7 @@ class ClassVisServer():
                     print>>log, "Taking antenna #%2.2i[%s] out of the solve (~%4.1f%% of out-grid data, more than %4.1f%%)"%\
                         (A,MS.StationNames[A],Frac*100,self.ThresholdFlag*100)
                     self.FlagAntNumber.append(A)
+
 
 
 
