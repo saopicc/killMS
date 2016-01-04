@@ -33,7 +33,7 @@ def main(options=None):
     #SMName="ModelRandom00.4.txt.npy"
     SMName="ModelRandom00.txt.npy"
     #SMName="ModelSimulOne.txt.npy"
-    SMName="Deconv.Corr.npy"
+    #SMName="Deconv.Corr.npy"
     #ll=sorted(glob.glob("Simul.MS"))
     ll=sorted(glob.glob("000?.MS"))
     #ll=sorted(glob.glob("BOOTES24_SB100-109.2ch8s.ms"))
@@ -45,8 +45,8 @@ def main(options=None):
     CS=ClassSimul(ll[0],SMName)
     Sols=CS.GiveSols()
     for l in ll:
-       # CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
-        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
+        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
+        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
         CS.DoSimul()
 
 class ClassSimul():
@@ -184,9 +184,9 @@ class ClassSimul():
         # G[:,:,:,:,0,0]/=np.abs(G[:,:,:,:,0,0])
         # G[:,:,:,:,1,1]=G[:,:,:,:,0,0]
 
-        # G.fill(0)
-        # G[:,:,:,:,0,0]=1
-        # G[:,:,:,:,1,1]=1
+        G.fill(0)
+        G[:,:,:,:,0,0]=1
+        G[:,:,:,:,1,1]=1
 
     
     
@@ -248,10 +248,13 @@ class ClassSimul():
         ReadColName="DATA"
         WriteColName="DATA"
         SM=ClassSM.ClassSM(self.SMName)
+        #SM.Type="Catalog"
+
         VS=ClassVisServer.ClassVisServer(self.MSName,ColName=ReadColName,
                                          TVisSizeMin=1,
                                          TChunkSize=14)
         self.VS=VS
+        #VS.setSM(SM)
         MS=VS.MS
         SM.Calc_LM(MS.rac,MS.decc)
         print MS
@@ -276,7 +279,7 @@ class ClassSimul():
 
         #PM=ClassPredict(NCPU=NCPU,DoSmearing="F")
         PM=ClassPredict(NCPU=NCPU)
-        PM5=ClassPredict5(NCPU=NCPU)
+        #PM5=ClassPredict5(NCPU=NCPU)
         na=MS.na
         nd=SM.NDir
         

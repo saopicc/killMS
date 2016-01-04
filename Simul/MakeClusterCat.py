@@ -7,9 +7,9 @@ import ephem
 from killMS2.Other import ModParsetType
 from pyrap.tables import table
 
-MSTemplate="/media/6B5E-87D0/MS/SimulTec/L102479_SB144_uv.dppp.MS.dppp.tsel_fixed"
+#MSTemplate="/media/6B5E-87D0/MS/SimulTec/L102479_SB144_uv.dppp.MS.dppp.tsel_fixed"
 #MSTemplate="/media/tasse/data/TestMarcelin/vlac-hires-1.0s-1.0MHz.MS_p0"
-#MSTemplate="/data/tasse/BOOTES/TEST/BOOTES24_SB100-109.2ch8s.ms"
+MSTemplate="/data/tasse/Simul/BOOTES24_SB100-109.2ch8s.ms.tsel"
 
 def test():
 
@@ -32,7 +32,7 @@ def test():
                           "Ns":16,
                           "Nc":0,
                           "Diam":1,
-                          "finfo":(40e6,80e6,3),
+                          "finfo":(100e6,200e6,10),
                           "Mode":"Grid"}
 
 
@@ -144,7 +144,9 @@ class MakeMultipleObs():
 
     def __init__(self,DicoPropPointings,
                  MSTemplateName=MSTemplate,
-                 BaseDir="/media/6B5E-87D0/MS/SimulTec/"):
+                 #BaseDir="/media/6B5E-87D0/MS/SimulTec/",
+                 BaseDir="/data/tasse/Simul/",
+    ):
         self.DicoMS={}
         self.MSTemplateName=MSTemplateName
         self.MSTemplate=ClassMS.ClassMS(MSTemplateName,DoReadData=False)
@@ -249,7 +251,7 @@ class MakeMultipleObs():
         D["NFrequencies"]={"id":0,"val":5}#MS.Nchan}
         D["StepFreq"]={"id":0,"val":0.2e6}#np.abs(self.MSTemplate.dFreq)}
 
-        D["StartFreq"]={"id":0,"val":np.min(self.MSTemplate.ChanFreq.flatten())-np.abs(self.MSTemplate.dFreq)/2.}
+        D["StartFreq"]={"id":0,"val":np.min(self.MSTemplate.ChanFreq.flatten())-np.abs(self.MSTemplate.dFreq[0])/2.}
         D["StartTime"]={"id":0,"val":DateTime}
 
         D["NTimes"]={"id":0,"val":30}#int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
@@ -262,7 +264,7 @@ class MakeMultipleObs():
     
         ModParsetType.DictToParset(D,"makems.tmp.cfg")
         os.system("cat makems.tmp.cfg")
-        os.system("/usr/bin/makems makems.tmp.cfg")
+        os.system("makems makems.tmp.cfg")
 
     def DuplicateMSInFreq(self):
         for key in sorted(self.DicoPropPointings.keys()):
