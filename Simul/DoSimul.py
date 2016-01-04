@@ -254,7 +254,8 @@ class ClassSimul():
                                          TVisSizeMin=1,
                                          TChunkSize=14)
         self.VS=VS
-        #VS.setSM(SM)
+        VS.setSM(SM)
+        VS.CalcWeigths()
         MS=VS.MS
         SM.Calc_LM(MS.rac,MS.decc)
         print MS

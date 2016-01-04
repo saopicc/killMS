@@ -7,9 +7,12 @@ import ephem
 from killMS2.Other import ModParsetType
 from pyrap.tables import table
 
-#MSTemplate="/media/6B5E-87D0/MS/SimulTec/L102479_SB144_uv.dppp.MS.dppp.tsel_fixed"
-#MSTemplate="/media/tasse/data/TestMarcelin/vlac-hires-1.0s-1.0MHz.MS_p0"
-MSTemplate="/data/tasse/Simul/BOOTES24_SB100-109.2ch8s.ms.tsel"
+MSTemplate="/media/6B5E-87D0/MS/SimulTec/L102479_SB144_uv.dppp.MS.dppp.tsel_fixed"
+WorkingDir="/media/6B5E-87D0/MS/SimulTec/"
+
+#MSTemplate="/data/tasse/Simul/BOOTES24_SB100-109.2ch8s.ms.tsel"
+#WorkingDir="/data/tasse/Simul/"
+
 
 def test():
 
@@ -144,8 +147,7 @@ class MakeMultipleObs():
 
     def __init__(self,DicoPropPointings,
                  MSTemplateName=MSTemplate,
-                 #BaseDir="/media/6B5E-87D0/MS/SimulTec/",
-                 BaseDir="/data/tasse/Simul/",
+                 BaseDir=WorkingDir
     ):
         self.DicoMS={}
         self.MSTemplateName=MSTemplateName

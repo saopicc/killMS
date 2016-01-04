@@ -74,9 +74,10 @@ class ClassVisServer():
         if self.SM.Type=="Catalog":
             self.SM.Calc_LM(rac,decc)
 
-            if self.GD["PreApply"]["PreApplySols"][0]!="":
-                CJ=ClassJones.ClassJones(self.GD)
-                CJ.ReClusterSkyModel(self.SM,self.MS.MSName)
+            if self.GD!=None:
+                if self.GD["PreApply"]["PreApplySols"][0]!="":
+                    CJ=ClassJones.ClassJones(self.GD)
+                    CJ.ReClusterSkyModel(self.SM,self.MS.MSName)
             
 
     # def SetBeam(self,LofarBeam):
