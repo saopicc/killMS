@@ -9,10 +9,15 @@ from pyrap.tables import table
 
 MSTemplate="/media/6B5E-87D0/MS/SimulTec/L102479_SB144_uv.dppp.MS.dppp.tsel_fixed"
 WorkingDir="/media/6B5E-87D0/MS/SimulTec/"
+ProgTables="/home/tasse/sources/LOFAR/build/gnu_opt/LCS/MSLofar/src/makebeamtables"
 
-#MSTemplate="/data/tasse/Simul/BOOTES24_SB100-109.2ch8s.ms.tsel"
-#WorkingDir="/data/tasse/Simul/"
+MSTemplate="/data/tasse/Simul/BOOTES24_SB100-109.2ch8s.ms.tsel"
+WorkingDir="/data/tasse/Simul/"
+ProgTables="makebeamtables"
 
+antennaset="LBA_INNER"
+antennaset="HBA_INNER"
+StaticMetaDataDir="/home/cyril.tasse/source/LOFARBeamData"
 
 def test():
 
@@ -32,9 +37,9 @@ def test():
     #                       "finfo":(100e6,250e6,10)}
 
     DicoPropPointings[0]={"offset":(0,0),
-                          "Ns":16,
+                          "Ns":25,
                           "Nc":0,
-                          "Diam":1,
+                          "Diam":4,
                           "finfo":(100e6,200e6,10),
                           "Mode":"Grid"}
 
@@ -217,10 +222,12 @@ class MakeMultipleObs():
             
 
             #os.system("cp -r %s/LOFAR_* %s"%(self.MSTemplateName,self.DicoMS["MS0Name"]))
-            Prog="/home/tasse/sources/LOFAR/build/gnu_opt/LCS/MSLofar/src/makebeamtables"
-            ss="%s antennafielddir=/home/tasse/sources/StaticMetaData antennaset=LBA_INNER antennasetfile=/home/tasse/sources/AntennaSets.conf ihbadeltadir=/home/tasse/sources/StaticMetaData ms=%s overwrite=1"%(Prog,D["dirMS0Name"])
+            ss="%s "%ProgTables + "antennafielddir=%s/AntennaFields "%StaticMetaDataDir + "antennaset=%s antennasetfile=%s/AntennaSets.conf "%(antennaset,StaticMetaDataDir) + "ihbadeltadir=%s/iHBADeltas "%StaticMetaDataDir + "ms=%s overwrite=1"%(D["dirMS0Name"])
             print ss
             os.system(ss)
+
+# makebeamtables antennafielddir=/home/cyril.tasse/source/LOFARBeamData/AntennaFields antennaset=LBA_INNER antennasetfile=/home/cyril.tasse/source/LOFARBeamData/AntennaSets.conf ihbadeltadir=/home/cyril.tasse/source/LOFARBeamData/iHBADeltas ms=/data/tasse/Simul/Pointing00/Template_0000.MS_p0 overwrite=1
+# makebeamtables antennafielddir=/home/cyril.tasse/source/StaticMetaData/AntennaFields antennaset=LBA_INNER antennasetfile=/home/cyril.tasse/source/StaticMetaData/AntennaSets.conf ihbadeltadir=/home/cyril.tasse/source/StaticMetaData/iHBADeltas ms=/data/tasse/Simul/Pointing00/Template_0000.MS_p0 overwrite=1
 
     def setAntNames(self,MSName):
         t0=table(self.MSTemplate.MSName+"/ANTENNA",readonly=False)
