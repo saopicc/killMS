@@ -16,7 +16,7 @@ WorkingDir="/data/tasse/Simul/"
 ProgTables="makebeamtables"
 
 antennaset="LBA_INNER"
-antennaset="HBA_INNER"
+#antennaset="HBA_INNER"
 StaticMetaDataDir="/home/cyril.tasse/source/LOFARBeamData"
 
 def test():
