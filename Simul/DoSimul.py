@@ -56,7 +56,9 @@ class ClassSimul():
         self.SMName=SMName
         self.Sols=Sols
         self.ApplyBeam=ApplyBeam
+        self.ChanMap=None
         self.Init()
+        
 
     def GiveSols(self):
         MS=self.MS
@@ -230,15 +232,37 @@ class ClassSimul():
                 DicoBeam["Jones"][itime]=Beam
                 
             nt,nd,na,nch,_,_= DicoBeam["Jones"].shape
-            DicoBeam["Jones"]=np.mean(DicoBeam["Jones"],axis=3).reshape((nt,nd,na,1,2,2))
+
+            # Single Channel
+            # DicoBeam["Jones"]=np.mean(DicoBeam["Jones"],axis=3).reshape((nt,nd,na,1,2,2))
+            # # DicoBeam["Jones"]=DicoBeam["Jones"][:,:,:,0,:,:].reshape((nt,nd,na,1,2,2))
+            # G=ModLinAlg.BatchDot(G,DicoBeam["Jones"])
+
+            # Multiple Channel
+            Ones=np.ones((1, 1, nch, 1, 1),np.float32)
+            G=G*Ones
             G=ModLinAlg.BatchDot(G,DicoBeam["Jones"])
+
+            # G[:,:,:,:,0,0]=1
+            # G[:,:,:,:,0,1]=0.5
+            # G[:,:,:,:,1,0]=2.
+            # G[:,:,:,:,1,1]=1
+
+            self.ChanMap=range(nch)
+
+
+
+
             print "Done"
     
     
     
         Jones["Beam"]=G
         Jones["BeamH"]=ModLinAlg.BatchH(G)
-        Jones["ChanMap"]=np.zeros((VS.MS.NSPWChan,)).tolist()
+        if self.ChanMap==None:
+            self.ChanMap=np.zeros((VS.MS.NSPWChan,),np.int32).tolist()
+        
+        Jones["ChanMap"]=self.ChanMap
 
 
         return Jones

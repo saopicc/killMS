@@ -46,7 +46,7 @@ class ClassPredict():
             # flags=DicoData["flags"][ind]
             A0sel=A0[ind]
             A1sel=A1[ind]
-            
+            print "CACA",ChanMap
             if "ChanMap" in ApplyTimeJones.keys():
                 ChanMap=ApplyTimeJones["ChanMap"]
             else:
@@ -108,11 +108,11 @@ class ClassPredict():
         T.timeit("1")
 
 
-
         for iCluster in ListDirection:
             ColOutDir=self.PredictDirSPW(iCluster)
             T.timeit("2")
             if ColOutDir==None: continue
+
 
             if Noise!=None:
                 ColOutDir+=(Noise/np.sqrt(len(ListDirection)))*(np.random.randn(*ColOutDir.shape)+1j*np.random.randn(*ColOutDir.shape))
@@ -157,12 +157,16 @@ class ClassPredict():
                     else:
                         ChanMap=range(nf)
 
+                    print "ChanMap:",ChanMap
+
                     for ichan in range(len(ChanMap)):
                         JChan=ChanMap[ichan]
                         J=Beam[it,iCluster,:,JChan,:,:].reshape((na,4))
                         JH=BeamH[it,iCluster,:,JChan,:,:].reshape((na,4))
                         data[:,ichan,:]=ModLinAlg.BatchDot(J[A0sel,:],data[:,ichan,:])
                         data[:,ichan,:]=ModLinAlg.BatchDot(data[:,ichan,:],JH[A1sel,:])
+
+
                     ColOutDir[ind]=data[:]
             T.timeit("4")
             

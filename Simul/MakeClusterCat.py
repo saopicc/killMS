@@ -11,9 +11,9 @@ MSTemplate="/media/6B5E-87D0/MS/SimulTec/L102479_SB144_uv.dppp.MS.dppp.tsel_fixe
 WorkingDir="/media/6B5E-87D0/MS/SimulTec/"
 ProgTables="/home/tasse/sources/LOFAR/build/gnu_opt/LCS/MSLofar/src/makebeamtables"
 
-MSTemplate="/data/tasse/Simul/BOOTES24_SB100-109.2ch8s.ms.tsel"
-WorkingDir="/data/tasse/Simul/"
-ProgTables="makebeamtables"
+# MSTemplate="/data/tasse/Simul/BOOTES24_SB100-109.2ch8s.ms.tsel"
+# WorkingDir="/data/tasse/Simul/"
+# ProgTables="makebeamtables"
 
 antennaset="LBA_INNER"
 #antennaset="HBA_INNER"
@@ -40,7 +40,7 @@ def test():
                           "Ns":25,
                           "Nc":0,
                           "Diam":4,
-                          "finfo":(100e6,200e6,10),
+                          "finfo":(50e6,50e6,1),
                           "Mode":"Grid"}
 
 
@@ -221,8 +221,13 @@ class MakeMultipleObs():
             self.setAntNames(D["dirMS0Name"])
             
 
-            #os.system("cp -r %s/LOFAR_* %s"%(self.MSTemplateName,self.DicoMS["MS0Name"]))
-            ss="%s "%ProgTables + "antennafielddir=%s/AntennaFields "%StaticMetaDataDir + "antennaset=%s antennasetfile=%s/AntennaSets.conf "%(antennaset,StaticMetaDataDir) + "ihbadeltadir=%s/iHBADeltas "%StaticMetaDataDir + "ms=%s overwrite=1"%(D["dirMS0Name"])
+            # #os.system("cp -r %s/LOFAR_* %s"%(self.MSTemplateName,self.DicoMS["MS0Name"]))
+            # ss="%s "%ProgTables + "antennafielddir=%s/AntennaFields "%StaticMetaDataDir + "antennaset=%s antennasetfile=%s/AntennaSets.conf "%(antennaset,StaticMetaDataDir) + "ihbadeltadir=%s/iHBADeltas "%StaticMetaDataDir + "ms=%s overwrite=1"%(D["dirMS0Name"])
+            # print ss
+            # os.system(ss)
+
+            Prog="/home/tasse/sources/LOFAR/build/gnu_opt/LCS/MSLofar/src/makebeamtables"
+            ss="%s antennafielddir=/home/tasse/sources/StaticMetaData antennaset=LBA_INNER antennasetfile=/home/tasse/sources/AntennaSets.conf ihbadeltadir=/home/tasse/sources/StaticMetaData ms=%s overwrite=1"%(Prog,D["dirMS0Name"])
             print ss
             os.system(ss)
 
@@ -257,8 +262,8 @@ class MakeMultipleObs():
         D["NBands"]={"id":0,"val":1}
         D["WriteAutoCorr"]={"id":0,"val":"T"}
 
-        D["NFrequencies"]={"id":0,"val":5}#MS.Nchan}
-        D["StepFreq"]={"id":0,"val":0.2e6}#np.abs(self.MSTemplate.dFreq)}
+        D["NFrequencies"]={"id":0,"val":5} # MS.Nchan}
+        D["StepFreq"]={"id":0,"val":10e6} # np.abs(self.MSTemplate.dFreq)}
 
         D["StartFreq"]={"id":0,"val":np.min(self.MSTemplate.ChanFreq.flatten())-np.abs(self.MSTemplate.dFreq[0])/2.}
         D["StartTime"]={"id":0,"val":DateTime}
@@ -292,9 +297,12 @@ class MakeMultipleObs():
                 #outn="%s%4.4i.MS"%(dirMS,iSB)
                 outn="%4.4i.MS"%(iSB)
                 D["ListMS"].append(outn)
+
+                ss="cp -r %s %s "%(dirMS0Name,outn)
                 print "make ",outn,", at f=",freq
+                print "       %s"%ss
                 #os.system("cp -r /media/6B5E-87D0/MS/SimulTec/Simul_one.beam_off.gauss.MS.tsel "+outn)
-                os.system("cp -r %s %s "%(dirMS0Name,outn))
+                os.system(ss)
                 ta_spectral=table(outn+'/SPECTRAL_WINDOW/',ack=False,readonly=False)
 
                 dummy=ta_spectral.getcol('REF_FREQUENCY')

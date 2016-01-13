@@ -11,6 +11,7 @@ from killMS2.Other.progressbar import ProgressBar
 from DDFacet.ToolsDir.GiveEdges import GiveEdges
 from DDFacet.Imager.ClassModelMachine import ClassModelMachine
 from DDFacet.Imager.ClassImToGrid import ClassImToGrid
+import DDFacet.Other.MyPickle
 import os
 
 class ClassImageSM():
@@ -72,22 +73,33 @@ class ClassPreparePredict(ClassImagerDeconv):
         #self.NDirs=NFacets
         #self.Dirs=range(self.NDirs)
 
-        SolsFile=self.GD["DDESolutions"]["DDSols"]
-        if not(".npz" in SolsFile):
-            ThisMSName=reformat.reformat(os.path.abspath(self.VS.MSName),LastSlash=False)
-            SolsFile="%s/killMS.%s.sols.npz"%(self.VS.MSName,SolsFile)
-            SolsFile="BOOTES24_SB100-109.2ch8s.ms/killMS.KAFCA.Scalar.50Dir.0.1P.BriggsSq.PreCuster4.sols.npz"
+        # SolsFile=self.GD["DDESolutions"]["DDSols"]
+        # if not(".npz" in SolsFile):
+        #     ThisMSName=reformat.reformat(os.path.abspath(self.VS.MSName),LastSlash=False)
+        #     SolsFile="%s/killMS.%s.sols.npz"%(self.VS.MSName,SolsFile)
+        #     #SolsFile="BOOTES24_SB100-109.2ch8s.ms/killMS.KAFCA.Scalar.50Dir.0.1P.BriggsSq.PreCuster4.sols.npz"
 
-        DicoSolsFile=np.load(SolsFile)
-        
-        ClusterCat=DicoSolsFile["ClusterCat"]
-        ClusterCat=ClusterCat.view(np.recarray)
-
-        # ClusterCat=np.zeros((len(self.Dirs),),dtype=[('Name','|S200'),
-        #                                              ('ra',np.float),('dec',np.float),
-        #                                              ('l',np.float),('m',np.float),
-        #                                              ('SumI',np.float),("Cluster",int)])
+        # DicoSolsFile=np.load(SolsFile)
+        # ClusterCat=DicoSolsFile["ClusterCat"]
         # ClusterCat=ClusterCat.view(np.recarray)
+        
+
+        DicoFacetName="%s.DicoFacet"%self.BaseImageName
+        DicoFacet=DDFacet.Other.MyPickle.Load(DicoFacetName)
+        
+
+        ClusterCat=np.zeros((len(DicoFacet),),dtype=[('Name','|S200'),
+                                                     ('ra',np.float),('dec',np.float),
+                                                     ('l',np.float),('m',np.float),
+                                                     ('SumI',np.float),("Cluster",int)])
+        ClusterCat=ClusterCat.view(np.recarray)
+        for iFacet in sorted(DicoFacet.keys()):
+            l,m=DicoFacet[iFacet]["lmShift"]
+            ra,dec=DicoFacet[iFacet]["RaDec"]
+            ClusterCat.l[iFacet]=l
+            ClusterCat.m[iFacet]=m
+            ClusterCat.ra[iFacet]=ra
+            ClusterCat.dec[iFacet]=dec
 
         self.DicoImager=self.FacetMachine.DicoImager
         self.ClusterCat=ClusterCat

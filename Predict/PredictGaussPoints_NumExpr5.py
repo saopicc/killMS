@@ -364,8 +364,6 @@ class ClassPredict():
 
             if ApplyTimeJones!=None:
 
-                ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
-                ParamJonesList=ParamJonesList+[iCluster]
                 #predict.predictJones(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList)
 
                 #ColOutDir.fill(0)
@@ -381,6 +379,9 @@ class ClassPredict():
                 #print LSmearMode
                 predict.predictJones2_Gauss(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan,self.LExp)
                 T.timeit("predict")
+
+                ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
+                ParamJonesList=ParamJonesList+[iCluster]
                 predict.ApplyJones(ColOutDir,ParamJonesList)
                 T.timeit("apply")
 
@@ -516,8 +517,8 @@ class ClassPredict():
             A0A1=A0,A1
             freqs=DATA["freqs"]
 
-            # DicoJonesMatrices=None
-            DicoJonesMatrices=ApplyTimeJones
+            DicoJonesMatrices=None
+            #DicoJonesMatrices=ApplyTimeJones
 
             ModelIm = NpShared.UnPackListArray("%sGrids"%self.IdSharedMem)[iFacet]
             T.timeit("2: Stuff")
@@ -525,6 +526,14 @@ class ClassPredict():
                                 ImToGrid=False)
             T.timeit("2: Predict")
             # get() is substracting
+            
+            if ApplyTimeJones!=None:
+                ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
+                ParamJonesList=ParamJonesList+[iDirection]
+                predict.ApplyJones(ColOutDir,ParamJonesList)
+                T.timeit("apply")
+
+
             DataOut-=ColOutDir
             ColOutDir.fill(0)
             T.timeit("2: End")

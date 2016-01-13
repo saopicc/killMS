@@ -731,10 +731,11 @@ class ClassWirtingerSolver():
 
                         sig=[]
                         for iiAnt in AntPlot:
+                            xx=np.array([np.diag(self.P[iiAnt]) ])
                             if iiAnt in ListAntSolve:
-                                sig.append(np.sqrt(np.abs(np.array([np.diag(self.P[iiAnt]) ]))).flatten())
+                                sig.append(np.sqrt(np.abs(xx)).flatten().tolist())
                             else:
-                                sig.append(np.zeros((self.SM.NDir,),self.P.dtype))
+                                sig.append(np.zeros((xx.size,),self.P.dtype).tolist())
                         
                         sig=np.array(sig).flatten()
 
