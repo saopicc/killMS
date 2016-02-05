@@ -221,8 +221,15 @@ class ClassPredict():
             A0sel=A0[ind]
             A1sel=A1[ind]
             
-            ThisStats=np.sqrt((Sigma[it][:,0]**2-rms**2))
-            
+            ThisStats=np.sqrt(np.abs(Sigma[it][:,0]**2-rms**2))
+            # try:
+            #     ThisStats=np.sqrt(np.abs(Sigma[it][:,0]**2-rms**2))
+            # except:
+            #     print "S",Sigma[it][:,0]
+            #     print "rms",rms
+            #     print "Resid",(Sigma[it][:,0]**2-rms**2)
+            #     #ApplyTimeJones["Stats"]
+
             # print "t:",it
             # print "0",np.min(Sigma[it][:,0]**2-rms**2)
             # print "1",np.min(Sigma[it][:,0]**2)
@@ -233,7 +240,7 @@ class ClassPredict():
             J=np.mean(Jabs,axis=0)
             J0=J[A0sel]
             J1=J[A1sel]
-
+            
             sig0=ThisStats[A0sel]
             sig1=ThisStats[A1sel]
 

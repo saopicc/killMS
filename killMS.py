@@ -9,6 +9,15 @@ from killMS2.Other import MyLogger
 from killMS2.Other import MyPickle
 from killMS2.Other import PrintOptParse
 from killMS2.Parset import MyOptParse
+import numpy as np
+
+# ##############################
+# Catch numpy warning
+np.seterr(all='raise')
+import warnings
+with warnings.catch_warnings():
+    warnings.filterwarnings('error')
+# ##############################
 
 # log
 log=MyLogger.getLogger("killMS")
@@ -389,7 +398,7 @@ def main(OP=None,MSName=None):
         DoSubstract=(ind.size>0)
     else:
         DoSubstract=0
-
+    
 
 
     # print "!!!!!!!!!!!!!!"
@@ -412,12 +421,12 @@ def main(OP=None,MSName=None):
 
 
             FullPredictColName=options.FullPredictColName
-            if FullPredictColName!="":
+            if (FullPredictColName!="")&(FullPredictColName!=None):
                 print>>log, "Writing full predicted data in column %s of %s"%(FullPredictColName,options.MSName)
                 VS.MS.AddCol(FullPredictColName)
                 PredictData=NpShared.GiveArray("%sPredictedData"%IdSharedMem)
                 t=table(VS.MS.MSName,readonly=False,ack=False)
-                t.putcol(FullPredictColName,PredictData)
+                t.putcol(FullPredictColName,PredictData,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
             Sols=Solver.GiveSols(SaveStats=True)
@@ -545,7 +554,7 @@ def main(OP=None,MSName=None):
 
                 print>>log, "  Writting in IMAGING_WEIGHT column "
                 t=table(Solver.VS.MS.MSName,readonly=False,ack=False)
-                t.putcol("IMAGING_WEIGHT",Weights)
+                t.putcol("IMAGING_WEIGHT",Weights,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
 
@@ -560,7 +569,7 @@ def main(OP=None,MSName=None):
                 Weights/=np.mean(Weights)
                 print>>log, "  Writting in IMAGING_WEIGHT column "
                 t=table(Solver.VS.MS.MSName,readonly=False,ack=False)
-                t.putcol("IMAGING_WEIGHT",Weights)
+                t.putcol("IMAGING_WEIGHT",Weights,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
             if DoSubstract:
@@ -609,7 +618,7 @@ def main(OP=None,MSName=None):
                         print>>log, "Writing predicted data in column %s of %s"%(PredictColName,MSName)
                         VS.MS.AddCol(PredictColName)
                         t=table(VS.MS.MSName,readonly=False,ack=False)
-                        t.putcol(PredictColName,PredictData)
+                        t.putcol(PredictColName,PredictData,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                         t.close()
                     
                     #PredictData2=PM2.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)

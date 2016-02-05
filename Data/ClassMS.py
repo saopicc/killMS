@@ -414,8 +414,8 @@ class ClassMS():
                     self.data.append(vis_all)
             else:
                 vis_all=table_all.getcol(self.ColName,row0,nRowRead)
-                if self.zero_flag: vis_all[flag_all==1]=0.
-                vis_all[np.isnan(vis_all)]=0.
+                #if self.zero_flag: vis_all[flag_all==1]=0.
+                #vis_all[np.isnan(vis_all)]=0.
                 self.data=vis_all
 
 
