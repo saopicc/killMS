@@ -258,7 +258,6 @@ class MakeMultipleObs():
         D["Declination"]={"id":0,"val":StrDEC}
         D["RightAscension"]={"id":0,"val":StrRA}
         D["MSName"]={"id":0,"val":MSName}
-        D["StepTime"]={"id":0,"val":self.MSTemplate.dt}#MS.dt}
         D["NBands"]={"id":0,"val":1}
         D["WriteAutoCorr"]={"id":0,"val":"T"}
 
@@ -268,7 +267,8 @@ class MakeMultipleObs():
         D["StartFreq"]={"id":0,"val":np.min(self.MSTemplate.ChanFreq.flatten())-np.abs(self.MSTemplate.dFreq[0])/2.}
         D["StartTime"]={"id":0,"val":DateTime}
 
-        D["NTimes"]={"id":0,"val":30}#int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
+        D["StepTime"]={"id":0,"val":self.MSTemplate.dt*5}#MS.dt}
+        D["NTimes"]={"id":0,"val":300}#int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
         #D["NTimes"]={"id":0,"val":int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
         
         D["NParts"]={"id":0,"val":"1"}
