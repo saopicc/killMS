@@ -31,7 +31,7 @@ def main(options=None):
     SMName="ModelRandom00.one.txt.npy"
     #SMName="ModelRandom00.gauss.txt.npy"
     #SMName="ModelRandom00.4.txt.npy"
-    SMName="ModelRandom00.gauss.txt.npy"
+    SMName="ModelRandom00.one.txt.npy"
     #SMName="ModelSimulOne.txt.npy"
     #SMName="Deconv.Corr.npy"
     #ll=sorted(glob.glob("Simul.MS"))
@@ -45,8 +45,8 @@ def main(options=None):
     CS=ClassSimul(ll[0],SMName)
     Sols=CS.GiveSols()
     for l in ll:
-        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
-        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
+        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
+        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
         CS.DoSimul()
 
 class ClassSimul():
@@ -232,7 +232,11 @@ class ClassSimul():
                 DicoBeam["Jones"][itime]=Beam
                 
             nt,nd,na,nch,_,_= DicoBeam["Jones"].shape
-
+            #m=np.mean(np.abs(DicoBeam["Jones"][:,1,:,:,:,:]))
+            # m=np.mean(np.abs(DicoBeam["Jones"][:,1,:,:,:,:]))
+            # DicoBeam["Jones"][:,1,0:6,:,:,:]*=2
+            # DicoBeam["Jones"][:,1,:,:,:,:]/=np.mean(np.abs(DicoBeam["Jones"][:,1,:,:,:,:]))
+            # DicoBeam["Jones"][:,1,:,:,:,:]*=m
             # Single Channel
             # DicoBeam["Jones"]=np.mean(DicoBeam["Jones"],axis=3).reshape((nt,nd,na,1,2,2))
             # # DicoBeam["Jones"]=DicoBeam["Jones"][:,:,:,0,:,:].reshape((nt,nd,na,1,2,2))
