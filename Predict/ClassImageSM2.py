@@ -9,7 +9,10 @@ from killMS2.Other import MyLogger
 log=MyLogger.getLogger("ClassImageSM")
 from killMS2.Other.progressbar import ProgressBar
 from DDFacet.ToolsDir.GiveEdges import GiveEdges
-from DDFacet.Imager.ClassModelMachine import ClassModelMachine
+#from DDFacet.Imager.ClassModelMachine import ClassModelMachine
+print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+from DDFacet.Imager.ClassModelMachineGA import ClassModelMachine
+
 from DDFacet.Imager.ClassImToGrid import ClassImToGrid
 import DDFacet.Other.MyPickle
 import os
@@ -28,6 +31,9 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.DicoModel="%s.DicoModel"%self.BaseImageName
         self.ModelImageName="%s.model.fits"%self.BaseImageName
         self.VS=VS
+        print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        self.GD["GAClean"]["GASolvePars"]=["S","Alpha"]
+        
         self.IdSharedMem=kwargs["IdSharedMem"]
         self.SM=ClassImageSM()
         self.InitFacetMachine()
