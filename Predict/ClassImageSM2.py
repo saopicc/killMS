@@ -11,7 +11,8 @@ from killMS2.Other.progressbar import ProgressBar
 from DDFacet.ToolsDir.GiveEdges import GiveEdges
 #from DDFacet.Imager.ClassModelMachine import ClassModelMachine
 print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-from DDFacet.Imager.ClassModelMachineGA import ClassModelMachine
+#from DDFacet.Imager.ClassModelMachineGA import ClassModelMachine
+from DDFacet.Imager.ModModelMachine import GiveModelMachine
 
 from DDFacet.Imager.ClassImToGrid import ClassImToGrid
 import DDFacet.Other.MyPickle
@@ -28,7 +29,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         ClassImagerDeconv.__init__(self,**kwargs)
 
         self.BaseImageName=BaseImageName
-        self.DicoModel="%s.DicoModel"%self.BaseImageName
+        self.FileDicoModel="%s.DicoModel"%self.BaseImageName
         self.ModelImageName="%s.model.fits"%self.BaseImageName
         self.VS=VS
         print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
@@ -50,9 +51,9 @@ class ClassPreparePredict(ClassImagerDeconv):
         #         data[ch,pol]=data[ch,pol].T[::-1]
         # self.ModelImage=data
 
-        
+        ClassModelMachine,DicoModel=GiveModelMachine(self.FileDicoModel)
         self.MM=ClassModelMachine(self.GD)
-        self.MM.FromFile(self.DicoModel)
+        self.MM.FromDico(DicoModel)
 
         #ModelImage0=self.MM.GiveModelImage(np.mean(self.VS.MS.ChanFreq))
 
