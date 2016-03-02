@@ -32,8 +32,8 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.FileDicoModel="%s.DicoModel"%self.BaseImageName
         self.ModelImageName="%s.model.fits"%self.BaseImageName
         self.VS=VS
-        print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-        self.GD["GAClean"]["GASolvePars"]=["S","Alpha"]
+
+        #self.GD["GAClean"]["GASolvePars"]=["S","Alpha"]
         
         self.IdSharedMem=kwargs["IdSharedMem"]
         self.SM=ClassImageSM()
@@ -52,6 +52,8 @@ class ClassPreparePredict(ClassImagerDeconv):
         # self.ModelImage=data
 
         ClassModelMachine,DicoModel=GiveModelMachine(self.FileDicoModel)
+        self.GD["GAClean"]["GASolvePars"]=DicoModel["SolveParam"]
+
         self.MM=ClassModelMachine(self.GD)
         self.MM.FromDico(DicoModel)
 
@@ -94,19 +96,22 @@ class ClassPreparePredict(ClassImagerDeconv):
         DicoFacetName="%s.DicoFacet"%self.BaseImageName
         DicoFacet=DDFacet.Other.MyPickle.Load(DicoFacetName)
         
+        NodeFile="%s.NodesCat.npy"%self.BaseImageName
+        NodesCat=np.load(NodeFile)
+        NodesCat=NodesCat.view(np.recarray)
 
-        ClusterCat=np.zeros((len(DicoFacet),),dtype=[('Name','|S200'),
-                                                     ('ra',np.float),('dec',np.float),
-                                                     ('l',np.float),('m',np.float),
-                                                     ('SumI',np.float),("Cluster",int)])
+        self.NDir=NodesCat.shape[0]
+
+        ClusterCat=np.zeros((self.NDir,),dtype=[('Name','|S200'),
+                                                        ('ra',np.float),('dec',np.float),
+                                                        ('l',np.float),('m',np.float),
+                                                        ('SumI',np.float),("Cluster",int)])
         ClusterCat=ClusterCat.view(np.recarray)
-        for iFacet in sorted(DicoFacet.keys()):
-            l,m=DicoFacet[iFacet]["lmShift"]
-            ra,dec=DicoFacet[iFacet]["RaDec"]
-            ClusterCat.l[iFacet]=l
-            ClusterCat.m[iFacet]=m
-            ClusterCat.ra[iFacet]=ra
-            ClusterCat.dec[iFacet]=dec
+        
+        ClusterCat.l=NodesCat.l
+        ClusterCat.m=NodesCat.m
+        ClusterCat.ra=NodesCat.ra
+        ClusterCat.dec=NodesCat.dec
 
         self.DicoImager=self.FacetMachine.DicoImager
         self.ClusterCat=ClusterCat

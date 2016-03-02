@@ -19,6 +19,9 @@ def FormatValue(ValueIn,StrMode=False):
         ValueIn=ValueIn.split("#")[0]
 
     
+    if ('"' in ValueIn)|("'" in ValueIn):
+        Value=ValueIn.replace(" ","").replace('"',"")
+        Value=ValueIn.replace(" ","").replace("'","")
 
     if StrMode:
         return ValueIn
@@ -31,8 +34,6 @@ def FormatValue(ValueIn,StrMode=False):
         Value=False
     elif "None" in ValueIn:
         Value=None
-    elif '"' in ValueIn:
-        Value=ValueIn.replace(" ","").replace('"',"")
     elif ("[" in ValueIn):
 
         Value0=ValueIn[1:-1].split(",")
@@ -95,6 +96,8 @@ class Parset():
 
             Val=Config.get(section, option)
             Val=Val.replace(" ","")
+            Val=Val.replace("'","")
+            Val=Val.replace('"',"")
             FVal=FormatValue(Val)#,StrMode=True)
 
             dict1[option] = FVal
