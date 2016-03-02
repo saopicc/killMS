@@ -10,7 +10,7 @@ log=MyLogger.getLogger("ClassImageSM")
 from killMS2.Other.progressbar import ProgressBar
 from DDFacet.ToolsDir.GiveEdges import GiveEdges
 #from DDFacet.Imager.ClassModelMachine import ClassModelMachine
-print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+#print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
 #from DDFacet.Imager.ClassModelMachineGA import ClassModelMachine
 from DDFacet.Imager.ModModelMachine import GiveModelMachine
 

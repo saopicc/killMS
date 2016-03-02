@@ -329,7 +329,7 @@ class ClassMS():
         row0=0
         row1=self.F_nrows
 
-
+        DATA_CHUNK={}
         if t1>t0:
 
             t0=t0*3600.
@@ -354,6 +354,12 @@ class ClassMS():
         self.ROW0=row0
         self.ROW1=row1
         self.nRowRead=row1-row0
+
+        DATA_CHUNK["ROW0"]=row0
+        DATA_CHUNK["ROW1"]=row1
+        DATA_CHUNK["nRowRead"]=self.nRowRead
+
+
         nRowRead=self.nRowRead
 
         table_all=table(self.MSName,ack=False)
@@ -457,6 +463,13 @@ class ClassMS():
 
             
 
+        # DATA_CHUNK["uvw"]=self.uvw
+        # DATA_CHUNK["data"]=self.data
+        # DATA_CHUNK["flags"]=self.flag_all
+        # DATA_CHUNK["A0"]=self.A0
+        # DATA_CHUNK["A1"]=self.A1
+        # DATA_CHUNK["TimeInterVal"]=self.TimeInterVal
+        # return DATA_CHUNK
 
         
 
