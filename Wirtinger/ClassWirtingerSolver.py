@@ -568,7 +568,7 @@ class ClassWirtingerSolver():
 
         self.pBAR= ProgressBar('white', width=50, block='=', empty=' ',Title="Solving ", HeaderSize=10,TitleSize=13)
         if not(self.DoPBar): self.pBAR.disable()
-        self.pBAR.disable()
+        #self.pBAR.disable()
         self.pBAR.render(0, '%4i/%i' % (0,nt))
         NDone=0
         iiCount=0
