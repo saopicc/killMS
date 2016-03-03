@@ -295,7 +295,6 @@ class ClassVisServer():
         #print fFlagged
         if fFlagged>0.9:
             print>>log, "AllFlaggedThisTime [%f%%]"%(fFlagged*100)
-            stop
             return "AllFlaggedThisTime"
         #if fFlagged==0.:
         #    stop
