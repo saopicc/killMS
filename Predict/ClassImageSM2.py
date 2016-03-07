@@ -52,7 +52,12 @@ class ClassPreparePredict(ClassImagerDeconv):
         # self.ModelImage=data
 
         ClassModelMachine,DicoModel=GiveModelMachine(self.FileDicoModel)
-        self.GD["GAClean"]["GASolvePars"]=DicoModel["SolveParam"]
+
+        try:
+            self.GD["GAClean"]["GASolvePars"]=DicoModel["SolveParam"]
+        except:
+            self.GD["GAClean"]["GASolvePars"]=["S","Alpha"]
+            DicoModel["SolveParam"]=self.GD["GAClean"]["GASolvePars"]
 
         self.MM=ClassModelMachine(self.GD)
         self.MM.FromDico(DicoModel)

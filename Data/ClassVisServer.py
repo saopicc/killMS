@@ -294,7 +294,7 @@ class ClassVisServer():
         fFlagged=np.count_nonzero(DATA["flags"])/float(DATA["flags"].size)
         #print fFlagged
         if fFlagged>0.9:
-            print>>log, "AllFlaggedThisTime [%f%%]"%(fFlagged*100)
+            # print>>log, "AllFlaggedThisTime [%f%%]"%(fFlagged*100)
             return "AllFlaggedThisTime"
         #if fFlagged==0.:
         #    stop
