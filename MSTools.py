@@ -70,6 +70,7 @@ def SplitSCAN_MS(MSName):
     ID=0
     for ScanID in ListScanID:
         MSOut="%s.SCAN_%4.4i.MS"%(MSName,ID)
+        ID+=1
         ss="taql 'SELECT FROM %s WHERE SCAN_NUMBER==%i GIVING %s'"%(MSName,ScanID,MSOut)
         print ss
         os.system(ss)
