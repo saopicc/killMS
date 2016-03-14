@@ -70,7 +70,9 @@ class MSTools():
         options=self.options
         MSList=options.ms
         self.ListFiles=[]
-        
+        #self.ScansDir="SCANS"
+        #os.system("mkdir -p %s"%self.ScansDir)
+
         ll=glob.glob(MSList)
         
         for MSn in ll:
@@ -82,8 +84,8 @@ class MSTools():
         for MSn in self.ListFiles:
             f.write('%s\n'%MSn)
         f.close()
-
-    
+        
+        
     def SplitSCAN_MS(self,MSName):
         MSName=options.ms
         t=table(MSName,ack=False)
@@ -92,6 +94,7 @@ class MSTools():
         
         ID=0
         for ScanID in ListScanID:
+            #MSOut="%s.SCAN_%4.4i.MS"%(self.ScansDir,MSName,ID)
             MSOut="%s.SCAN_%4.4i.MS"%(MSName,ID)
             ID+=1
             ss="taql 'SELECT FROM %s WHERE SCAN_NUMBER==%i GIVING %s'"%(MSName,ScanID,MSOut)
