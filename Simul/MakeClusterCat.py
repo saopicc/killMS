@@ -268,7 +268,7 @@ class MakeMultipleObs():
         D["StartTime"]={"id":0,"val":DateTime}
 
         D["StepTime"]={"id":0,"val":self.MSTemplate.dt*5}#MS.dt}
-        D["NTimes"]={"id":0,"val":300}#int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
+        D["NTimes"]={"id":0,"val":30}#int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
         #D["NTimes"]={"id":0,"val":int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
         
         D["NParts"]={"id":0,"val":"1"}

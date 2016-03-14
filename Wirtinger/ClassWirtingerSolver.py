@@ -163,23 +163,23 @@ class ClassWirtingerSolver():
 
 
 
-        if SaveStats:
-            ListStd=[l for l in self.ListStd if len(l)>0]
-            Std=np.array(ListStd)
-            ListMax=[l for l in self.ListMax if len(l)>0]
-            Max=np.array(ListMax)
+        # if SaveStats:
+        #     ListStd=[l for l in self.ListStd if len(l)>0]
+        #     Std=np.array(ListStd)
+        #     ListMax=[l for l in self.ListMax if len(l)>0]
+        #     Max=np.array(ListMax)
             
-            ListKapa=[l for l in self.ListKeepKapa if len(l)>0]
-            Kapa=np.array(ListKapa)
-            nf,na,nt=Std.shape
-            NoiseInfo=np.zeros((nf,na,nt,3))
-            NoiseInfo[:,:,:,0]=Std[:,:,:]
-            NoiseInfo[:,:,:,1]=np.abs(Max[:,:,:])
-            NoiseInfo[:,:,:,2]=Kapa[:,:,:]
+        #     ListKapa=[l for l in self.ListKeepKapa if len(l)>0]
+        #     Kapa=np.array(ListKapa)
+        #     nf,na,nt=Std.shape
+        #     NoiseInfo=np.zeros((nf,na,nt,3))
+        #     NoiseInfo[:,:,:,0]=Std[:,:,:]
+        #     NoiseInfo[:,:,:,1]=np.abs(Max[:,:,:])
+        #     NoiseInfo[:,:,:,2]=Kapa[:,:,:]
             
-            StatFile="NoiseInfo.npy"
-            print>>log, "Saving statistics in %s"%StatFile
-            np.save(StatFile,NoiseInfo)
+        #     StatFile="NoiseInfo.npy"
+        #     print>>log, "Saving statistics in %s"%StatFile
+        #     np.save(StatFile,NoiseInfo)
 
 
         Sols=self.SolsArray_Full[0:ind.size].copy()
@@ -211,8 +211,8 @@ class ClassWirtingerSolver():
         _,_,_,npolx,npoly=self.G.shape
 
 
-        # print "!!!!!!!!!!"
-        # self.G+=np.random.randn(*self.G.shape)*1#sigP
+        print "!!!!!!!!!!"
+        self.G+=np.random.randn(*self.G.shape)*.1#sigP
         
         NSols=np.max([1,1.5*int(self.VS.MS.DTh/(self.VS.TVisSizeMin/60.))])
         
@@ -235,10 +235,16 @@ class ClassWirtingerSolver():
                                                      ("G",np.complex64,(nChan,na,nd,2,2)),
                                                      ("Stats",np.float32,(nChan,na,4))])
         self.SolsArray_Full=self.SolsArray_Full.view(np.recarray)
-        self.ListKapa=[[] for iAnt in range(na)]
-        self.ListKeepKapa=[[] for iAnt in range(na)]
-        self.ListStd=[[] for iAnt in range(na)]
-        self.ListMax=[[] for iAnt in range(na)]
+
+        self.DicoKapa={}
+        self.DicoKeepKapa={}
+        self.DicoStd={}
+        self.DicoMax={}
+        for (iAnt,iChanSol) in ItP(range(na),range(nChan)):
+            self.DicoKapa[(iAnt,iChanSol)]=[]
+            self.DicoKeepKapa[(iAnt,iChanSol)]=[]
+            self.DicoStd[(iAnt,iChanSol)]=[]
+            self.DicoMax[(iAnt,iChanSol)]=[]
 
 
         self.G=NpShared.ToShared("%sSharedGains"%self.IdSharedMem,self.G)
@@ -563,10 +569,12 @@ class ClassWirtingerSolver():
 
         #T=ClassTimeIt.ClassTimeIt()
         #T.disable()
+
+        JonesToVisChanMapping=self.VS.JonesToVisChanMapping
         for ii in range(NCPU):
              
             W=WorkerAntennaLM(work_queue, result_queue,self.SM,self.PolMode,self.SolverType,self.IdSharedMem,
-                              ConfigJacobianAntenna=self.ConfigJacobianAntenna,GD=self.GD)#,args=(e,))
+                              ConfigJacobianAntenna=self.ConfigJacobianAntenna,GD=self.GD,JonesToVisChanMapping=JonesToVisChanMapping)#,args=(e,))
             workerlist.append(W)
             workerlist[ii].start()
 
@@ -631,138 +639,139 @@ class ClassWirtingerSolver():
                 DoCalcEvP=True
 
             T.timeit("before iterloop")
-            for LMIter in range(NIter):
-                #print
-                # for EKF
-
-                #print "===================================================="
-                #print "===================================================="
-                #print "===================================================="
-                #########
-                if LMIter>0:
-                    DoCalcEvP=False
-                    DoEvP=False
-                elif LMIter==0:
-                    self.G0Iter[:]=self.G[:]
-                    DoEvP=False
-
-                if LMIter==(NIter-1):
-                    DoEvP=True
-                
-                DoFullPredict=False
-                if LMIter==(NIter-1):
-                    DoFullPredict=True
+            for iChanSol in range(self.VS.NChanJones):
+                for LMIter in range(NIter):
+                    #print
+                    # for EKF
+    
+                    #print "===================================================="
+                    #print "===================================================="
+                    #print "===================================================="
+                    #########
+                    if LMIter>0:
+                        DoCalcEvP=False
+                        DoEvP=False
+                    elif LMIter==0:
+                        self.G0Iter[:]=self.G[:]
+                        DoEvP=False
+    
+                    if LMIter==(NIter-1):
+                        DoEvP=True
                     
-                u,v,w=self.DATA["uvw"].T
-                A0=self.DATA["A0"]
-                A1=self.DATA["A1"]
-                meanW=np.zeros((self.VS.MS.na,),np.float32)
-                for iAntMS in ListAntSolve:
-                    ind=np.where((A0==iAntMS)|(A1==iAntMS))[0]
-                    meanW[iAntMS]=np.mean(np.abs(w[ind]))
-                meanW=meanW[ListAntSolve]
-                indOrderW=np.argsort(meanW)[::-1]
-                SortedWListAntSolve=(np.array(ListAntSolve)[indOrderW]).tolist()
-                #print indOrderW
-
-                for iAnt in SortedWListAntSolve:
-                    work_queue.put((iAnt,DoCalcEvP,tm,self.rms,DoEvP,DoFullPredict))
- 
-                T.timeit("put in queue")
-                rmsFromDataList=[]
-                DTs=np.zeros((self.VS.MS.na,),np.float32)
-                while iResult < NJobs:
-                    iAnt,G,P,rmsFromData,InfoNoise,DT = result_queue.get()
-                    if rmsFromData!=None:
-                        rmsFromDataList.append(rmsFromData)
-                    
-                    #T.timeit("result_queue.get()")
-                    self.G[iAnt][:]=G[:]
-                    if type(P)!=type(None):
-                        self.P[iAnt,:]=P[:]
-                    
-                    DTs[iAnt]=DT
-                    kapa=InfoNoise["kapa"]
-                    self.ListStd[iAnt].append(InfoNoise["std"])
-                    self.ListMax[iAnt].append(InfoNoise["max"])
-                    self.ListKeepKapa[iAnt].append(InfoNoise["kapa"])
-                    self.SolsArray_Stats[self.iCurrentSol][iAnt][0]=InfoNoise["std"]
-                    self.SolsArray_Stats[self.iCurrentSol][iAnt][1]=InfoNoise["max"]
-                    self.SolsArray_Stats[self.iCurrentSol][iAnt][2]=InfoNoise["kapa"]
-                    self.SolsArray_Stats[self.iCurrentSol][iAnt][3]=self.rms
-                    
-                    iResult+=1
-                    if (kapa!=None)&(LMIter==0):
-                        if kapa==-1.:
-                            if len(self.ListKapa[iAnt])>0:
-                                kapa=self.ListKapa[iAnt][-1]
-                            else:
-                                kapa=1.
-
-                        self.ListKapa[iAnt].append(kapa)
-                        dt=.5
-                        TraceResidList=self.ListKapa[iAnt]
-                        x=np.arange(len(TraceResidList))
-                        expW=np.exp(-x/dt)[::-1]
-                        expW/=np.sum(expW)
-                        kapaW=np.sum(expW*np.array(TraceResidList))
-                        #self.Q[iAnt]=(kapaW**2)*self.Q_Init[iAnt]
-
-                        self.Q[iAnt][:]=(kapaW)*self.Q_Init[iAnt][:]
-
-                        # self.Q[iAnt][:]=(kapaW)**2*self.Q_Init[iAnt][:]*1e6
-                        # QQ=NpShared.FromShared("%sSharedCovariance_Q"%self.IdSharedMem)[iAnt]
-                        # print self.Q[iAnt]-QQ[iAnt]
+                    DoFullPredict=False
+                    if LMIter==(NIter-1):
+                        DoFullPredict=True
                         
-                        #self.Q[iAnt]=self.Q_Init[iAnt]
-
-                        #print iAnt,kapa,kapaW
-                        #sig=np.sqrt(np.abs(np.array([np.diag(self.P[i]) for i in [iAnt]]))).flatten()
-                        #print sig
+                    u,v,w=self.DATA["uvw"].T
+                    A0=self.DATA["A0"]
+                    A1=self.DATA["A1"]
+                    meanW=np.zeros((self.VS.MS.na,),np.float32)
+                    for iAntMS in ListAntSolve:
+                        ind=np.where((A0==iAntMS)|(A1==iAntMS))[0]
+                        meanW[iAntMS]=np.mean(np.abs(w[ind]))
+                    meanW=meanW[ListAntSolve]
+                    indOrderW=np.argsort(meanW)[::-1]
+                    SortedWListAntSolve=(np.array(ListAntSolve)[indOrderW]).tolist()
+                    #print indOrderW
+    
+                    for iAnt in SortedWListAntSolve:
+                        work_queue.put((iAnt,iChanSol,DoCalcEvP,tm,self.rms,DoEvP,DoFullPredict))
+     
+                    T.timeit("put in queue")
+                    rmsFromDataList=[]
+                    DTs=np.zeros((self.VS.MS.na,),np.float32)
+                    while iResult < NJobs:
+                        iAnt,iChanSol,G,P,rmsFromData,InfoNoise,DT = result_queue.get()
+                        if rmsFromData!=None:
+                            rmsFromDataList.append(rmsFromData)
+                        
+                        #T.timeit("result_queue.get()")
+                        self.G[iChanSol,iAnt][:]=G[:]
+                        if type(P)!=type(None):
+                            self.P[iChanSol,iAnt,:]=P[:]
+                        
+                        DTs[iAnt]=DT
+                        kapa=InfoNoise["kapa"]
+                        self.DicoStd[iAnt,iChanSol].append(InfoNoise["std"])
+                        self.DicoMax[iAnt,iChanSol].append(InfoNoise["max"])
+                        self.DicoKeepKapa[iAnt,iChanSol].append(InfoNoise["kapa"])
+                        self.SolsArray_Stats[self.iCurrentSol][iChanSol,iAnt][0]=InfoNoise["std"]
+                        self.SolsArray_Stats[self.iCurrentSol][iChanSol,iAnt][1]=InfoNoise["max"]
+                        self.SolsArray_Stats[self.iCurrentSol][iChanSol,iAnt][2]=InfoNoise["kapa"]
+                        self.SolsArray_Stats[self.iCurrentSol][iChanSol,iAnt][3]=self.rms
+                        
+                        iResult+=1
+                        if (kapa!=None)&(LMIter==0):
+                            if kapa==-1.:
+                                if len(self.DicoKapa[iAnt,iChanSol])>0:
+                                    kapa=self.DicoKapa[iAnt,iChanSol][-1]
+                                else:
+                                    kapa=1.
+    
+                            self.DicoKapa[iAnt,iChanSol].append(kapa)
+                            dt=.5
+                            TraceResidList=self.DicoKapa[iAnt,iChanSol]
+                            x=np.arange(len(TraceResidList))
+                            expW=np.exp(-x/dt)[::-1]
+                            expW/=np.sum(expW)
+                            kapaW=np.sum(expW*np.array(TraceResidList))
+                            #self.Q[iAnt]=(kapaW**2)*self.Q_Init[iAnt]
+    
+                            self.Q[iChanSol,iAnt][:]=(kapaW)*self.Q_Init[iChanSol,iAnt][:]
+    
+                            # self.Q[iAnt][:]=(kapaW)**2*self.Q_Init[iAnt][:]*1e6
+                            # QQ=NpShared.FromShared("%sSharedCovariance_Q"%self.IdSharedMem)[iAnt]
+                            # print self.Q[iAnt]-QQ[iAnt]
+                            
+                            #self.Q[iAnt]=self.Q_Init[iAnt]
+    
+                            #print iAnt,kapa,kapaW
+                            #sig=np.sqrt(np.abs(np.array([np.diag(self.P[i]) for i in [iAnt]]))).flatten()
+                            #print sig
                         
 
-                T.timeit("getResult")
-                if len(rmsFromDataList)>0:
-                    self.rmsFromData=np.min(rmsFromDataList)
-                iResult=0
-
-                # pylab.clf()
-                # pylab.subplot(2,1,1)
-                # pylab.plot(DTs)
-                # pylab.subplot(2,1,2)
-                # pylab.plot(meanW)
-                # pylab.draw()
-                # pylab.show(False)
-                # pylab.pause(0.1)
-
-                if self.DoPlot==1:
-                    AntPlot=np.arange(self.VS.MS.na)#np.array(ListAntSolve)
-                    pylab.clf()
-                    pylab.plot(np.abs(self.G[AntPlot].flatten()))
-                    pylab.plot(np.abs(Gold[AntPlot].flatten()))
-                    
-                    if self.SolverType=="KAFCA":
-
-                        sig=[]
-                        for iiAnt in AntPlot:
-                            xx=np.array([np.diag(self.P[iiAnt]) ])
-                            if iiAnt in ListAntSolve:
-                                sig.append(np.sqrt(np.abs(xx)).flatten().tolist())
-                            else:
-                                sig.append(np.zeros((xx.size,),self.P.dtype).tolist())
+                    T.timeit("getResult")
+                    if len(rmsFromDataList)>0:
+                        self.rmsFromData=np.min(rmsFromDataList)
+                    iResult=0
+    
+                    # pylab.clf()
+                    # pylab.subplot(2,1,1)
+                    # pylab.plot(DTs)
+                    # pylab.subplot(2,1,2)
+                    # pylab.plot(meanW)
+                    # pylab.draw()
+                    # pylab.show(False)
+                    # pylab.pause(0.1)
+    
+                    if self.DoPlot==1:
+                        AntPlot=np.arange(self.VS.MS.na)#np.array(ListAntSolve)
+                        pylab.clf()
+                        pylab.plot(np.abs(self.G[iChanSol,AntPlot].flatten()))
+                        pylab.plot(np.abs(Gold[iChanSol,AntPlot].flatten()))
                         
-                        sig=np.array(sig).flatten()
-
-                        pylab.plot(np.abs(self.G[AntPlot].flatten())+sig,color="black",ls="--")
-                        pylab.plot(np.abs(self.G[AntPlot].flatten())-sig,color="black",ls="--")
-
-                    pylab.ylim(0,2)
-                    pylab.draw()
-                    pylab.show(False)
-                    pylab.pause(0.1)
-
-
-                T.timeit("Plot")
+                        if self.SolverType=="KAFCA":
+    
+                            sig=[]
+                            for iiAnt in AntPlot:
+                                xx=np.array([np.diag(self.P[iChanSol,iiAnt]) ])
+                                if iiAnt in ListAntSolve:
+                                    sig.append(np.sqrt(np.abs(xx)).flatten().tolist())
+                                else:
+                                    sig.append(np.zeros((xx.size,),self.P.dtype).tolist())
+                            
+                            sig=np.array(sig).flatten()
+    
+                            pylab.plot(np.abs(self.G[iChanSol,AntPlot].flatten())+sig,color="black",ls="--")
+                            pylab.plot(np.abs(self.G[iChanSol,AntPlot].flatten())-sig,color="black",ls="--")
+    
+                        pylab.ylim(0,2)
+                        pylab.draw()
+                        pylab.show(False)
+                        pylab.pause(0.1)
+    
+    
+                    T.timeit("Plot")
 
 
 
@@ -828,7 +837,7 @@ from killMS2.Predict.PredictGaussPoints_NumExpr5 import ClassPredict
 class WorkerAntennaLM(multiprocessing.Process):
     def __init__(self,
                  work_queue,
-                 result_queue,SM,PolMode,SolverType,IdSharedMem,ConfigJacobianAntenna=None,GD=None):
+                 result_queue,SM,PolMode,SolverType,IdSharedMem,ConfigJacobianAntenna=None,GD=None,JonesToVisChanMapping=None):
         multiprocessing.Process.__init__(self)
         self.work_queue = work_queue
         self.result_queue = result_queue
@@ -840,6 +849,7 @@ class WorkerAntennaLM(multiprocessing.Process):
         self.IdSharedMem=IdSharedMem
         self.ConfigJacobianAntenna=ConfigJacobianAntenna
         self.GD=GD
+        self.JonesToVisChanMapping=JonesToVisChanMapping
 
         self.InitPM()
 
@@ -865,17 +875,20 @@ class WorkerAntennaLM(multiprocessing.Process):
 
         while not self.kill_received:
             try:
-                iAnt,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict = self.work_queue.get()
+                iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict = self.work_queue.get()
             except:
                 break
             #self.e.wait()
-            
+
+            ch0,ch1=self.JonesToVisChanMapping[iChanSol]
+
             T0=time.time()
             T=ClassTimeIt.ClassTimeIt("Worker Ant=%2.2i"%iAnt)
             T.disable()
             # if DoCalcEvP:
             #     T.disable()
             JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,PM=self.PM,IdSharedMem=self.IdSharedMem,GD=self.GD,
+                                    ChanSel=(ch0,ch1),
                                     **dict(self.ConfigJacobianAntenna))
             T.timeit("ClassJacobianAntenna")
             JM.setDATA_Shared()
@@ -889,14 +902,14 @@ class WorkerAntennaLM(multiprocessing.Process):
             T.timeit("GiveArray")
 
             if self.SolverType=="CohJones":
-                x,_,InfoNoise=JM.doLMStep(G)
-                if DoFullPredict: JM.PredictOrigFormat(G)
-                self.result_queue.put([iAnt,x,None,None,InfoNoise,0.])
+                x,_,InfoNoise=JM.doLMStep(G[iChanSol])
+                if DoFullPredict: JM.PredictOrigFormat(G[iChanSol])
+                self.result_queue.put([iAnt,iChanSol,x,None,None,InfoNoise,0.])
 
             elif self.SolverType=="KAFCA":
                 #T.disable()
                 if DoCalcEvP:
-                    evP[iAnt]=JM.CalcMatrixEvolveCov(G,P,rms)
+                    evP[iChanSol,iAnt]=JM.CalcMatrixEvolveCov(G[iChanSol],P[iChanSol],rms)
                     T.timeit("Estimate Evolve")
 
                 # EM=ClassModelEvolution(iAnt,
@@ -906,7 +919,7 @@ class WorkerAntennaLM(multiprocessing.Process):
                 #                        order=1,
                 #                        sigQ=0.01)
 
-                EM=ClassModelEvolution(iAnt,
+                EM=ClassModelEvolution(iAnt,iChanSol,
                                        StepStart=0,
                                        WeigthScale=0.5,
                                        DoEvolve=True,
@@ -921,9 +934,9 @@ class WorkerAntennaLM(multiprocessing.Process):
                 #     G[iAnt]=Ga
                 #     P[iAnt]=Pa
 
-                x,Pout,InfoNoise=JM.doEKFStep(G,P,evP,rms,Gains0Iter=G0Iter)
+                x,Pout,InfoNoise=JM.doEKFStep(G[iChanSol],P[iChanSol],evP[iChanSol],rms,Gains0Iter=G0Iter)
                 T.timeit("EKFStep")
-                if DoFullPredict: JM.PredictOrigFormat(G)
+                if DoFullPredict: JM.PredictOrigFormat(G[iChanSol])
                 T.timeit("PredictOrigFormat")
                 rmsFromData=JM.rmsFromData
 
@@ -938,4 +951,4 @@ class WorkerAntennaLM(multiprocessing.Process):
                     Pout=Pa
 
                 DT=time.time()-T0
-                self.result_queue.put([iAnt,x,Pout,rmsFromData,InfoNoise,DT])
+                self.result_queue.put([iAnt,iChanSol,x,Pout,rmsFromData,InfoNoise,DT])

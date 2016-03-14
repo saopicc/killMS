@@ -126,16 +126,17 @@ void MatDot(float complex *A, float complex* B, float complex* Out){
 
 
 
-void GiveJones(float complex *ptrJonesMatrices, int *JonesDims, float *ptrCoefs, int i_t, int i_ant0, int i_dir, float complex *Jout){
+void GiveJones(float complex *ptrJonesMatrices, int *JonesDims, float *ptrCoefs, int i_t, int i_ant0, int i_dir, int i_ch, float complex *Jout){
   int nd_Jones,na_Jones,nch_Jones;
   nd_Jones=JonesDims[1];
   na_Jones=JonesDims[2];
   nch_Jones=JonesDims[3];
   
   int ipol,idir;
-  int offJ0=i_t*nd_Jones*na_Jones*nch_Jones*4
+  size_t offJ0=i_t*nd_Jones*na_Jones*nch_Jones*4
     +i_dir*na_Jones*nch_Jones*4
-    +i_ant0*nch_Jones*4;
+    +i_ant0*nch_Jones*4
+    +i_ch*nch_Jones*4;
   for(ipol=0; ipol<4; ipol++){
     Jout[ipol]=*(ptrJonesMatrices+offJ0+ipol);
   }

@@ -123,12 +123,17 @@ class ClassPredict():
             DicoJonesMatrices=DicoJonesMatricesIn
         JonesMatrices=np.complex64(DicoJonesMatrices["Jones"])
         MapJones=np.int32(DicoJonesMatrices["MapJones"])
+
+        print DicoJonesMatrices.keys()
+        print DicoJonesMatricesIn.keys()
+
+        ChanMap=np.int32(DicoJonesMatrices["ChanMap"])
         #MapJones=np.int32(np.arange(A0.shape[0]))
         #print DicoJonesMatrices["MapJones"].shape
         #stop
         A0=np.int32(A0)
         A1=np.int32(A1)
-        ParamJonesList=[MapJones,A0,A1,JonesMatrices]
+        ParamJonesList=[MapJones,A0,A1,JonesMatrices,ChanMap]
         return ParamJonesList
 
     def GiveCovariance(self,DicoData,ApplyTimeJones,SM):
@@ -218,10 +223,13 @@ class ClassPredict():
             if ind.size==0: continue
             data=ColOutDir[ind]
             # flags=DicoData["flags"][ind]
+
+            # print ind,t0,t1
+
             A0sel=A0[ind]
             A1sel=A1[ind]
             
-            ThisStats=np.sqrt(np.abs(Sigma[it][:,0]**2-rms**2))
+            ThisStats=np.sqrt(np.abs(Sigma[it][0,:,0]**2-rms**2))
             # try:
             #     ThisStats=np.sqrt(np.abs(Sigma[it][:,0]**2-rms**2))
             # except:
@@ -238,6 +246,9 @@ class ClassPredict():
             # nt,nd,na,1,2,2
             Jabs=np.abs(Jones[it,:,:,0,0,0])
             J=np.mean(Jabs,axis=0)
+            # print "================="
+            # print A0sel
+            # print Jones.shape,Jabs.shape,J.shape
             J0=J[A0sel]
             J1=J[A1sel]
             
@@ -301,6 +312,9 @@ class ClassPredict():
         A0=DicoData["A0"]
         A1=DicoData["A1"]
         if ApplyJones!=None:
+            print "!!!!!",ApplyJones.shape
+            print "!!!!!",ApplyJones.shape
+            print "!!!!!",ApplyJones.shape
             na,NDir,_=ApplyJones.shape
             Jones=np.swapaxes(ApplyJones,0,1)
             Jones=Jones.reshape((NDir,na,4))

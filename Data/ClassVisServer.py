@@ -754,6 +754,7 @@ class ClassVisServer():
                 ii+=indMStime.size
             TimeMapping=ind
 
+            DicoJones["ChanMap"]=self.VisToJonesChanMapping
             self.ThisDataChunk["MapJones"]=TimeMapping
             self.ThisDataChunk["PreApplyJones"]=DicoJones
             

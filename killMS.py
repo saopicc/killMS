@@ -456,8 +456,8 @@ def main(OP=None,MSName=None):
             Jones={}
             Jones["t0"]=Sols.t0
             Jones["t1"]=Sols.t1
-            nt,na,nd,_,_=Sols.G.shape
-            G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
+            nt,nch,na,nd,_,_=Sols.G.shape
+            G=np.swapaxes(Sols.G,1,3).reshape((nt,nd,na,nch,2,2))
             G=np.require(G, dtype=np.complex64, requirements="C_CONTIGUOUS")
 
             # if not("A" in options.ApplyMode):
@@ -469,7 +469,7 @@ def main(OP=None,MSName=None):
             Jones["Jones"]=G
             Jones["JonesH"]=ModLinAlg.BatchH(G)
             Jones["Stats"]=Sols.Stats
-            Jones["ChanMap"]=np.zeros((VS.MS.NSPWChan,))
+            Jones["ChanMap"]=VS.VisToJonesChanMapping
             times=Solver.VS.ThisDataChunk["times"]
 
             # ind=np.array([],np.int32)
