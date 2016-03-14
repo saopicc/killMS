@@ -116,7 +116,7 @@ def testLM():
 
 class ClassJacobianAntenna():
     def __init__(self,SM,iAnt,PolMode="IFull",Precision="S",PrecisionDot="D",IdSharedMem="",
-                 PM=None,GD=None,**kwargs):
+                 PM=None,GD=None,NChanSols=1,**kwargs):
         T=ClassTimeIt.ClassTimeIt("ClassJacobianAntenna")
         T.disable()
         self.GD=GD
@@ -151,6 +151,7 @@ class ClassJacobianAntenna():
         self.SharedDataDicoName="%sDicoData.%2.2i"%(self.IdSharedMem,self.iAnt)
         self.HasKernelMatrix=False
         self.LQxInv=None
+        self.NChanSols=NChanSols
         
         if self.PolMode=="IFull":
             self.NJacobBlocks_X=2
@@ -493,8 +494,12 @@ class ClassJacobianAntenna():
         return evPa
            
             
-        
     def doLMStep(self,Gains):
+        for iChanSol in range(self.NChanSols):
+            self.iChanSol=iChanSol
+            self.doLMStepChannel(Gains,iChanSol)
+        
+    def doLMStepChannel(self,Gains,iChanSol):
         #print
         
         T=ClassTimeIt.ClassTimeIt("doLMStep")

@@ -107,6 +107,7 @@ class ClassWirtingerSolver():
         self.DoPBar=DoPBar
         self.GD=GD
         self.Q=None
+        self.NChanSols=NChanSols
         # if BeamProps!=None:
         #     rabeam,decbeam=SM.ClusterCat.ra,SM.ClusterCat.dec
         #     Mode,TimeMin=BeamProps
@@ -151,11 +152,11 @@ class ClassWirtingerSolver():
         self.SolsArray_Full.t1[0:ind.size]=self.SolsArray_t1[0:ind.size]
         self.SolsArray_Full.Stats[0:ind.size]=self.SolsArray_Stats[0:ind.size]
         if self.PolMode=="Scalar":
-            self.SolsArray_Full.G[0:ind.size,:,:,0,0]=self.SolsArray_G[0:ind.size,:,:,0,0]
-            self.SolsArray_Full.G[0:ind.size,:,:,1,1]=self.SolsArray_G[0:ind.size,:,:,0,0]
+            self.SolsArray_Full.G[0:ind.size,:,:,:,0,0]=self.SolsArray_G[0:ind.size,:,:,:,0,0]
+            self.SolsArray_Full.G[0:ind.size,:,:,:,1,1]=self.SolsArray_G[0:ind.size,:,:,:,0,0]
         elif self.PolMode=="IDiag":
-            self.SolsArray_Full.G[0:ind.size,:,:,0,0]=self.SolsArray_G[0:ind.size,:,:,0,0]
-            self.SolsArray_Full.G[0:ind.size,:,:,1,1]=self.SolsArray_G[0:ind.size,:,:,1,0]
+            self.SolsArray_Full.G[0:ind.size,:,:,:,0,0]=self.SolsArray_G[0:ind.size,:,:,:,0,0]
+            self.SolsArray_Full.G[0:ind.size,:,:,:,1,1]=self.SolsArray_G[0:ind.size,:,:,:,1,0]
         else:                
             self.SolsArray_Full.G[0:ind.size]=self.SolsArray_G[0:ind.size]
 
@@ -169,11 +170,11 @@ class ClassWirtingerSolver():
             
             ListKapa=[l for l in self.ListKeepKapa if len(l)>0]
             Kapa=np.array(ListKapa)
-            na,nt=Std.shape
-            NoiseInfo=np.zeros((na,nt,3))
-            NoiseInfo[:,:,0]=Std[:,:]
-            NoiseInfo[:,:,1]=np.abs(Max[:,:])
-            NoiseInfo[:,:,2]=Kapa[:,:]
+            nf,na,nt=Std.shape
+            NoiseInfo=np.zeros((na,nf,nt,3))
+            NoiseInfo[:,:,:,0]=Std[:,:,:]
+            NoiseInfo[:,:,:,1]=np.abs(Max[:,:,:])
+            NoiseInfo[:,:,:,2]=Kapa[:,:,:]
             
             StatFile="NoiseInfo.npy"
             print>>log, "Saving statistics in %s"%StatFile
@@ -189,17 +190,17 @@ class ClassWirtingerSolver():
     def InitSol(self,G=None,TestMode=True):
         na=self.VS.MS.na
         nd=self.SM.NDir
-        
+        nChan=self.VS.NChanJones
 
         if type(G)==type(None):
             if self.PolMode=="Scalar":
-                G=np.ones((na,nd,1,1),self.DType)
+                G=np.ones((na,nChan,nd,1,1),self.DType)
             elif self.PolMode=="IDiag":
-                G=np.ones((na,nd,2,1),self.DType)
+                G=np.ones((na,nChan,nd,2,1),self.DType)
             else:
-                G=np.zeros((na,nd,2,2),self.DType)
-                G[:,:,0,0]=1
-                G[:,:,1,1]=1
+                G=np.zeros((na,nChan,nd,2,2),self.DType)
+                G[:,:,:,0,0]=1
+                G[:,:,:,1,1]=1
             self.HasFirstGuessed=False
 
         else:
@@ -220,8 +221,8 @@ class ClassWirtingerSolver():
         self.SolsArray_t1=np.zeros((NSols,),dtype=np.float64)
         self.SolsArray_tm=np.zeros((NSols,),dtype=np.float64)
         self.SolsArray_done=np.zeros((NSols,),dtype=np.bool8)
-        self.SolsArray_G=np.zeros((NSols,na,nd,npolx,npoly),dtype=np.complex64)
-        self.SolsArray_Stats=np.zeros((NSols,na,4),dtype=np.float32)
+        self.SolsArray_G=np.zeros((NSols,nChan,na,nd,npolx,npoly),dtype=np.complex64)
+        self.SolsArray_Stats=np.zeros((NSols,nChan,na,4),dtype=np.float32)
 
         self.SolsArray_t0=NpShared.ToShared("%sSolsArray_t0"%self.IdSharedMem,self.SolsArray_t0)
         self.SolsArray_t1=NpShared.ToShared("%sSolsArray_t1"%self.IdSharedMem,self.SolsArray_t1)
@@ -230,8 +231,8 @@ class ClassWirtingerSolver():
         self.SolsArray_G=NpShared.ToShared("%sSolsArray_G"%self.IdSharedMem,self.SolsArray_G)
         self.SolsArray_Full=np.zeros((NSols,),dtype=[("t0",np.float64),
                                                      ("t1",np.float64),
-                                                     ("G",np.complex64,(na,nd,2,2)),
-                                                     ("Stats",np.float32,(na,4))])
+                                                     ("G",np.complex64,(na,nChan,nd,2,2)),
+                                                     ("Stats",np.float32,(na,nChan,4))])
         self.SolsArray_Full=self.SolsArray_Full.view(np.recarray)
         self.ListKapa=[[] for iAnt in range(na)]
         self.ListKeepKapa=[[] for iAnt in range(na)]
@@ -248,6 +249,7 @@ class ClassWirtingerSolver():
         if self.Q!=None: return
         na=self.VS.MS.na
         nd=self.SM.NDir
+        nChan=self.VS.NChanJones
 
         
         _,_,npol,_=self.G.shape
@@ -264,12 +266,12 @@ class ClassWirtingerSolver():
             npoly=2
 
         if FromG==False:
-            P=(sigP**2)*np.array([np.diag(np.ones((nd*npolx*npoly,),self.DType)) for iAnt in range(na)])
-            Q=(sigQ**2)*np.array([np.diag(np.ones((nd*npolx*npoly,),self.DType)) for iAnt in range(na)])
+            P=(sigP**2)*np.array([np.diag(np.ones((nChan*nd*npolx*npoly,),self.DType)) for iAnt in range(na)])
+            Q=(sigQ**2)*np.array([np.diag(np.ones((nChan*nd*npolx*npoly,),self.DType)) for iAnt in range(na)])
         else:
 
-            P=(sigP**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*np.diag(np.ones((nd*npolx*npoly),self.DType)) for iAnt in range(na)])
-            Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*np.diag(np.ones((nd*npolx*npoly),self.DType)) for iAnt in range(na)])
+            P=(sigP**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*np.diag(np.ones((nChan*nd*npolx*npoly),self.DType)) for iAnt in range(na)])
+            Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*np.diag(np.ones((nChan*nd*npolx*npoly),self.DType)) for iAnt in range(na)])
 
 
         if True:
@@ -278,12 +280,13 @@ class ClassWirtingerSolver():
             ns=ra.size
             
             d=np.sqrt((ra.reshape((ns,1))-ra.reshape((1,ns)))**2+(dec.reshape((ns,1))-dec.reshape((1,ns)))**2)
-            d0=1e-5*np.pi/180
+            d0=1e-7*np.pi/180
             QQ=(1./(1.+d/d0))**2
-            Qa=np.zeros((nd,npolx,npoly,nd,npolx,npoly),self.DType)
-            for ipol in range(npolx):
-                for jpol in range(npoly):
-                    Qa[:,ipol,jpol,:,ipol,jpol]=QQ[:,:]
+            Qa=np.zeros((nChan,nd,npolx,npoly,nChan,nd,npolx,npoly),self.DType)
+            for iChan in range(nChan):
+                for ipol in range(npolx):
+                    for jpol in range(npoly):
+                        Qa[iChan,:,ipol,jpol,iChan,:,ipol,jpol]=QQ[:,:]
 
             #Qa=np.zeros((nd,npolx,npoly,nd,npolx,npoly),self.DType)
             F=self.SM.ClusterCat.SumI.copy()
@@ -295,16 +298,18 @@ class ClassWirtingerSolver():
                 BeamMachine=ClassBeam.ClassBeam(self.VS.MSName,self.GD,self.SM)
                 AbsMeanBeam=BeamMachine.GiveMeanBeam()
                 AbsMeanBeamAnt=np.mean(AbsMeanBeam[:,:,0,0,0],axis=1)
-                for idir in range(nd):
-                    Qa[idir,:,:,idir,:,:]*=(AbsMeanBeamAnt[idir]*F[idir])**2
-                    #Qa[idir,:,:,idir,:,:]*=(F[idir])**2
+                for iChan in range(nChan):
+                    for idir in range(nd):
+                        Qa[iChan,idir,:,:,iChan,idir,:,:]*=(AbsMeanBeamAnt[idir]*F[idir])**2
+                        #Qa[idir,:,:,idir,:,:]*=(F[idir])**2
             else:
-                for idir in range(nd):
-                    Qa[idir,:,:,idir,:,:]*=(F[idir])**2
+                for iChan in range(nChan):
+                    for idir in range(nd):
+                        Qa[iChan,idir,:,:,iChan,idir,:,:]*=(F[idir])**2
 
 
     
-            Qa=Qa.reshape((nd*npolx*npoly,nd*npolx*npoly))
+            Qa=Qa.reshape((nChan*nd*npolx*npoly,nChan*nd*npolx*npoly))
             #print np.diag(Qa)
             Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*Qa for iAnt in range(na)])
 
@@ -459,7 +464,7 @@ class ClassWirtingerSolver():
                 for iAnt in self.DicoJM.keys():
                     JM=self.DicoJM[iAnt]
                     if self.SolverType=="CohJones":
-
+                        
                         x,_,_=JM.doLMStep(self.G)
                         if i==self.NIter-1: JM.PredictOrigFormat(self.G)
                     if self.SolverType=="KAFCA":

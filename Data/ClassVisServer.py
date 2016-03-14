@@ -97,7 +97,30 @@ class ClassVisServer():
         self.TimesInt=TimesInt
         self.NTChunk=len(self.TimesInt)-1
         self.MS=MS
+        
 
+
+        ######################################################
+        ## Taken from ClassLOFARBeam in DDFacet
+        ChanWidth=self.MS.ChanWidth.ravel()[0]
+        ChanFreqs=self.MS.ChanFreq.flatten()
+
+        NChanJones=self.GD["Solvers"]["NChanSols"]
+        if NChanJones==0:
+            NChanJones=self.MS.NSPWChan
+        ChanEdges=np.linspace(ChanFreqs.min()-ChanWidth/2.,ChanFreqs.max()+ChanWidth/2.,NChanJones+1)
+
+        FreqDomains=[[ChanEdges[iF],ChanEdges[iF+1]] for iF in range(NChanJones)]
+        FreqDomains=np.array(FreqDomains)
+        self.SolsFreqDomains=FreqDomains
+        self.NChanJones=NChanJones
+
+        MeanFreqJonesChan=(FreqDomains[:,0]+FreqDomains[:,1])/2.
+        DFreq=np.abs(self.MS.ChanFreq.reshape((self.MS.NSPWChan,1))-MeanFreqJonesChan.reshape((1,NChanJones)))
+        self.VisToJonesChanMapping=np.argmin(DFreq,axis=1)
+        ######################################################
+        
+        
         # self.CalcWeigths()
 
         #TimesVisMin=np.arange(0,MS.DTh*60.,self.TVisSizeMin).tolist()
