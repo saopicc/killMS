@@ -19,6 +19,7 @@ from killMS2.Other import ClassTimeIt
 from killMS2.Other import Counter
 from ClassEvolve import ClassModelEvolution
 import time
+from itertools import product as ItP
 
 def test():
 
@@ -107,7 +108,7 @@ class ClassWirtingerSolver():
         self.DoPBar=DoPBar
         self.GD=GD
         self.Q=None
-        self.NChanSols=NChanSols
+
         # if BeamProps!=None:
         #     rabeam,decbeam=SM.ClusterCat.ra,SM.ClusterCat.dec
         #     Mode,TimeMin=BeamProps
@@ -171,7 +172,7 @@ class ClassWirtingerSolver():
             ListKapa=[l for l in self.ListKeepKapa if len(l)>0]
             Kapa=np.array(ListKapa)
             nf,na,nt=Std.shape
-            NoiseInfo=np.zeros((na,nf,nt,3))
+            NoiseInfo=np.zeros((nf,na,nt,3))
             NoiseInfo[:,:,:,0]=Std[:,:,:]
             NoiseInfo[:,:,:,1]=np.abs(Max[:,:,:])
             NoiseInfo[:,:,:,2]=Kapa[:,:,:]
@@ -194,11 +195,11 @@ class ClassWirtingerSolver():
 
         if type(G)==type(None):
             if self.PolMode=="Scalar":
-                G=np.ones((na,nChan,nd,1,1),self.DType)
+                G=np.ones((nChan,na,nd,1,1),self.DType)
             elif self.PolMode=="IDiag":
-                G=np.ones((na,nChan,nd,2,1),self.DType)
+                G=np.ones((nChan,na,nd,2,1),self.DType)
             else:
-                G=np.zeros((na,nChan,nd,2,2),self.DType)
+                G=np.zeros((nChan,na,nd,2,2),self.DType)
                 G[:,:,:,0,0]=1
                 G[:,:,:,1,1]=1
             self.HasFirstGuessed=False
@@ -207,11 +208,11 @@ class ClassWirtingerSolver():
             self.HasFirstGuessed=True
         self.G=G
         #self.G*=0.001
-        _,_,npolx,npoly=self.G.shape
+        _,_,_,npolx,npoly=self.G.shape
 
 
-        #print "!!!!!!!!!!"
-        #self.G+=np.random.randn(*self.G.shape)*1#sigP
+        # print "!!!!!!!!!!"
+        # self.G+=np.random.randn(*self.G.shape)*1#sigP
         
         NSols=np.max([1,1.5*int(self.VS.MS.DTh/(self.VS.TVisSizeMin/60.))])
         
@@ -231,8 +232,8 @@ class ClassWirtingerSolver():
         self.SolsArray_G=NpShared.ToShared("%sSolsArray_G"%self.IdSharedMem,self.SolsArray_G)
         self.SolsArray_Full=np.zeros((NSols,),dtype=[("t0",np.float64),
                                                      ("t1",np.float64),
-                                                     ("G",np.complex64,(na,nChan,nd,2,2)),
-                                                     ("Stats",np.float32,(na,nChan,4))])
+                                                     ("G",np.complex64,(nChan,na,nd,2,2)),
+                                                     ("Stats",np.float32,(nChan,na,4))])
         self.SolsArray_Full=self.SolsArray_Full.view(np.recarray)
         self.ListKapa=[[] for iAnt in range(na)]
         self.ListKeepKapa=[[] for iAnt in range(na)]
@@ -252,7 +253,7 @@ class ClassWirtingerSolver():
         nChan=self.VS.NChanJones
 
         
-        _,_,npol,_=self.G.shape
+        _,_,_,npol,_=self.G.shape
         
 
         if self.PolMode=="IDiag":
@@ -266,15 +267,17 @@ class ClassWirtingerSolver():
             npoly=2
 
         if FromG==False:
-            P=(sigP**2)*np.array([np.diag(np.ones((nChan*nd*npolx*npoly,),self.DType)) for iAnt in range(na)])
-            Q=(sigQ**2)*np.array([np.diag(np.ones((nChan*nd*npolx*npoly,),self.DType)) for iAnt in range(na)])
+            P=(sigP**2)*np.array([np.diag(np.ones((nd*npolx*npoly,),self.DType)) for iAnt in range(na)])
+            Q=(sigQ**2)*np.array([np.diag(np.ones((nd*npolx*npoly,),self.DType)) for iAnt in range(na)])
         else:
 
-            P=(sigP**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*np.diag(np.ones((nChan*nd*npolx*npoly),self.DType)) for iAnt in range(na)])
-            Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*np.diag(np.ones((nChan*nd*npolx*npoly),self.DType)) for iAnt in range(na)])
+            P=(sigP**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*np.diag(np.ones((nd*npolx*npoly),self.DType)) for iAnt in range(na)])
+            Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*np.diag(np.ones((nd*npolx*npoly),self.DType)) for iAnt in range(na)])
 
-
-        if True:
+        
+        QList=[]
+        PList=[]
+        for iChanSol in range(self.VS.NChanJones):
             ra=self.SM.ClusterCat.ra
             dec=self.SM.ClusterCat.dec
             ns=ra.size
@@ -282,11 +285,10 @@ class ClassWirtingerSolver():
             d=np.sqrt((ra.reshape((ns,1))-ra.reshape((1,ns)))**2+(dec.reshape((ns,1))-dec.reshape((1,ns)))**2)
             d0=1e-7*np.pi/180
             QQ=(1./(1.+d/d0))**2
-            Qa=np.zeros((nChan,nd,npolx,npoly,nChan,nd,npolx,npoly),self.DType)
-            for iChan in range(nChan):
-                for ipol in range(npolx):
-                    for jpol in range(npoly):
-                        Qa[iChan,:,ipol,jpol,iChan,:,ipol,jpol]=QQ[:,:]
+            Qa=np.zeros((nd,npolx,npoly,nd,npolx,npoly),self.DType)
+            for ipol in range(npolx):
+                for jpol in range(npoly):
+                    Qa[:,ipol,jpol,:,ipol,jpol]=QQ[:,:]
 
             #Qa=np.zeros((nd,npolx,npoly,nd,npolx,npoly),self.DType)
             F=self.SM.ClusterCat.SumI.copy()
@@ -298,21 +300,22 @@ class ClassWirtingerSolver():
                 BeamMachine=ClassBeam.ClassBeam(self.VS.MSName,self.GD,self.SM)
                 AbsMeanBeam=BeamMachine.GiveMeanBeam()
                 AbsMeanBeamAnt=np.mean(AbsMeanBeam[:,:,0,0,0],axis=1)
-                for iChan in range(nChan):
-                    for idir in range(nd):
-                        Qa[iChan,idir,:,:,iChan,idir,:,:]*=(AbsMeanBeamAnt[idir]*F[idir])**2
-                        #Qa[idir,:,:,idir,:,:]*=(F[idir])**2
+                for idir in range(nd):
+                    Qa[idir,:,:,idir,:,:]*=(AbsMeanBeamAnt[idir]*F[idir])**2
             else:
-                for iChan in range(nChan):
-                    for idir in range(nd):
-                        Qa[iChan,idir,:,:,iChan,idir,:,:]*=(F[idir])**2
+                for idir in range(nd):
+                    Qa[idir,:,:,idir,:,:]*=(F[idir])**2
 
 
     
-            Qa=Qa.reshape((nChan*nd*npolx*npoly,nChan*nd*npolx*npoly))
+            Qa=Qa.reshape((nd*npolx*npoly,nd*npolx*npoly))
             #print np.diag(Qa)
-            Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*Qa for iAnt in range(na)])
-
+            Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iChanSol,iAnt]))**2*Qa for iAnt in range(na)])
+            QList.append(Q)
+            PList.append(P)
+        Q=np.array(QList)
+        P=np.array(PList)
+        
         self.P=P
         self.evP=np.zeros_like(P)
         self.P=NpShared.ToShared("%sSharedCovariance"%self.IdSharedMem,self.P)
@@ -432,78 +435,84 @@ class ClassWirtingerSolver():
             self.SolsArray_tm[self.iCurrentSol]=tm
             ThisTime=tm
             T.timeit("stuff")
-            for iAnt in ListAntSolve:
+            for (iAnt,iChanSol) in ItP(ListAntSolve,range(self.VS.NChanJones)):
+                print iAnt,iChanSol
+                ch0,ch1=self.VS.JonesToVisChanMapping[iChanSol]
                 JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Precision="S",IdSharedMem=self.IdSharedMem,GD=self.GD,
+                                        ChanSel=(ch0,ch1),
                                         **self.ConfigJacobianAntenna)
                 T.timeit("JM")
                 JM.setDATA_Shared()
                 T.timeit("Setdata_Shared")
-                self.DicoJM[iAnt]=JM
+                self.DicoJM[(iAnt,iChanSol)]=JM
 
             T.timeit("Class")
 
             if (self.CounterEvolveP())&(self.SolverType=="KAFCA")&(self.iCurrentSol>self.EvolvePStepStart):
                 print "Evolve0"
-                for iAnt in self.DicoJM.keys():
-                    JM=self.DicoJM[iAnt]
-                    self.evP[iAnt]=JM.CalcMatrixEvolveCov(self.G,self.P,self.rms)
+                for (iAnt,iChanSol) in ItP(ListAntSolve,range(self.VS.NChanJones)):
+                    JM=self.DicoJM[(iAnt,iChanSol)]
+                    self.evP[iChanSol,iAnt]=JM.CalcMatrixEvolveCov(self.G[iChanSol],self.P[iChanSol],self.rms)
 
             elif (self.SolverType=="KAFCA")&(self.iCurrentSol<=self.EvolvePStepStart):
                 print "Evolve1"
-                for iAnt in self.DicoJM.keys():
-                    JM=self.DicoJM[iAnt]
-                    self.evP[iAnt]=JM.CalcMatrixEvolveCov(self.G,self.P,self.rms)
+                for (iAnt,iChanSol) in ItP(ListAntSolve,range(self.VS.NChanJones)):
+                    JM=self.DicoJM[(iAnt,iChanSol)]
+                    self.evP[iChanSol,iAnt]=JM.CalcMatrixEvolveCov(self.G[iChanSol],self.P[iChanSol],self.rms)
 
             T.timeit("Evolve")
             
+            for iChanSol in range(self.VS.NChanJones):
 
-            for i in range(self.NIter):
-                Gnew=self.G.copy()
-                if self.SolverType=="KAFCA":
-                    Pnew=self.P.copy()
-                for iAnt in self.DicoJM.keys():
-                    JM=self.DicoJM[iAnt]
-                    if self.SolverType=="CohJones":
-                        
-                        x,_,_=JM.doLMStep(self.G)
-                        if i==self.NIter-1: JM.PredictOrigFormat(self.G)
+                for i in range(self.NIter):
+                    Gnew=self.G.copy()
                     if self.SolverType=="KAFCA":
-                        EM=ClassModelEvolution(iAnt,
-                                               StepStart=3,
-                                               WeigthScale=0.3,
-                                               DoEvolve=True,
-                                               BufferNPoints=10,
-                                               sigQ=0.01,IdSharedMem=self.IdSharedMem)
+                        Pnew=self.P.copy()
+                    for iAnt in ListAntSolve:
+                        JM=self.DicoJM[(iAnt,iChanSol)]
+                        if self.SolverType=="CohJones":
+                            
+                            x,_,_=JM.doLMStep(self.G[iChanSol])
+                            if i==self.NIter-1: JM.PredictOrigFormat(self.G[iChanSol])
+                        if self.SolverType=="KAFCA":
 
-                        x,P,_=JM.doEKFStep(self.G,self.P,self.evP,self.rms)
-                        JM.PredictOrigFormat(self.G)
-                        
-                        xe=None
+                            EM=ClassModelEvolution(iAnt,iChanSol,
+                                                   StepStart=3,
+                                                   WeigthScale=0.3,
+                                                   DoEvolve=True,
+                                                   BufferNPoints=10,
+                                                   sigQ=0.01,IdSharedMem=self.IdSharedMem)
+    
+                            x,P,_=JM.doEKFStep(self.G[iChanSol],self.P[iChanSol],self.evP[iChanSol],self.rms)
 
-                        Pa=EM.Evolve0(x,P)
-
-                        #xe,Pa=EM.Evolve(x,P,ThisTime)
-                        if Pa!=None:
-                            P=Pa
-                        if xe!=None:
-                            x=xe
-
-
-                        Pnew[iAnt]=P
-
-                    Gnew[iAnt]=x
-                    T.timeit("SolveAnt %i"%iAnt)
+                            if i==self.NIter-1: JM.PredictOrigFormat(self.G[iChanSol])
+                            
+                            xe=None
+    
+                            Pa=EM.Evolve0(x,P)
+    
+                            #xe,Pa=EM.Evolve(x,P,ThisTime)
+                            if Pa!=None:
+                                P=Pa
+                            if xe!=None:
+                                x=xe
+    
+    
+                            Pnew[iChanSol,iAnt]=P
+    
+                        Gnew[iChanSol,iAnt]=x
+                        T.timeit("SolveAnt %i"%iAnt)
                 
 
                 pylab.figure(1)
                 pylab.clf()
                 pylab.plot(np.abs(Gnew.flatten()))
                 if self.SolverType=="KAFCA":
-                    sig=np.sqrt(np.array([np.diag(Pnew[iAnt]) for iAnt in range(self.VS.MS.na)]).flatten())
-                    pylab.plot(np.abs(Gnew.flatten())+sig,color="black",ls="--")
-                    pylab.plot(np.abs(Gnew.flatten())-sig,color="black",ls="--")
+                    sig=np.sqrt(np.array([np.diag(Pnew[iChanSol,iAnt]) for iAnt in range(self.VS.MS.na)]).flatten())
+                    pylab.plot(np.abs(Gnew[iChanSol].flatten())+sig,color="black",ls="--")
+                    pylab.plot(np.abs(Gnew[iChanSol].flatten())-sig,color="black",ls="--")
                     self.P[:]=Pnew[:]
-                pylab.plot(np.abs(self.G.flatten()))
+                pylab.plot(np.abs(self.G[iChanSol].flatten()))
                 pylab.ylim(0,2)
                 pylab.draw()
                 pylab.show(False)

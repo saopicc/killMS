@@ -88,7 +88,7 @@ class ClassVisServer():
     #     self.ApplyBeam=True
     #     stop
 
-    def Init(self,PointingID=0):
+    def Init(self,PointingID=0,NChanJones=1):
         #MSName=self.MDC.giveMS(PointingID).MSName
         MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False)
 
@@ -102,10 +102,11 @@ class ClassVisServer():
 
         ######################################################
         ## Taken from ClassLOFARBeam in DDFacet
+        
         ChanWidth=self.MS.ChanWidth.ravel()[0]
         ChanFreqs=self.MS.ChanFreq.flatten()
-
-        NChanJones=self.GD["Solvers"]["NChanSols"]
+        if self.GD!=None:
+            NChanJones=self.GD["Solvers"]["NChanSols"]
         if NChanJones==0:
             NChanJones=self.MS.NSPWChan
         ChanEdges=np.linspace(ChanFreqs.min()-ChanWidth/2.,ChanFreqs.max()+ChanWidth/2.,NChanJones+1)
@@ -118,6 +119,15 @@ class ClassVisServer():
         MeanFreqJonesChan=(FreqDomains[:,0]+FreqDomains[:,1])/2.
         DFreq=np.abs(self.MS.ChanFreq.reshape((self.MS.NSPWChan,1))-MeanFreqJonesChan.reshape((1,NChanJones)))
         self.VisToJonesChanMapping=np.argmin(DFreq,axis=1)
+        print>>log,("VisToJonesChanMapping %s"%str(self.VisToJonesChanMapping))
+
+        
+        self.JonesToVisChanMapping=[]
+        for iChanSol in range(NChanJones):
+            ind=np.where(self.VisToJonesChanMapping==iChanSol)[0] 
+            self.JonesToVisChanMapping.append((ind[0],ind[-1]+1))
+        print>>log,("JonesToVisChanMapping %s"%str(self.JonesToVisChanMapping))
+
         ######################################################
         
         

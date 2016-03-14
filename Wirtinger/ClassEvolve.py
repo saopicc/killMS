@@ -5,12 +5,13 @@ import pylab
 from killMS2.Array import NpShared
 
 class ClassModelEvolution():
-    def __init__(self,iAnt,WeightType="exp",WeigthScale=1,order=1,StepStart=5,BufferNPoints=10,sigQ=0.01,DoEvolve=True,IdSharedMem=""):
+    def __init__(self,iAnt,iChanSol,WeightType="exp",WeigthScale=1,order=1,StepStart=5,BufferNPoints=10,sigQ=0.01,DoEvolve=True,IdSharedMem=""):
         self.WeightType=WeightType 
         self.WeigthScale=WeigthScale*60. #in min
         self.order=order
         self.StepStart=StepStart
         self.iAnt=iAnt
+        self.iChanSol=iChanSol
         self.BufferNPoints=BufferNPoints
         self.sigQ=sigQ
         self.DoEvolve=DoEvolve
@@ -21,7 +22,7 @@ class ClassModelEvolution():
         indDone=np.where(done==1)[0]
         #print kapa
         #print type(NpShared.GiveArray("%sSharedCovariance_Q"%self.IdSharedMem))
-        Q=kapa*NpShared.GiveArray("%sSharedCovariance_Q"%self.IdSharedMem)[self.iAnt]
+        Q=kapa*NpShared.GiveArray("%sSharedCovariance_Q"%self.IdSharedMem)[self.iChanSol,self.iAnt]
         #print indDone.size
         #print "mean",np.mean(Q)
 
@@ -51,7 +52,7 @@ class ClassModelEvolution():
         tm=NpShared.GiveArray("%sSolsArray_tm"%self.IdSharedMem)[indDone]
 
 
-        G=NpShared.GiveArray("%sSolsArray_G"%self.IdSharedMem)[indDone][:,self.iAnt,:,:,:]
+        G=NpShared.GiveArray("%sSolsArray_G"%self.IdSharedMem)[indDone][:,self.iChanSol,self.iAnt,:,:,:]
 
         
         nt,nd,npolx,npoly=G.shape

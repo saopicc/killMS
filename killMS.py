@@ -415,10 +415,10 @@ def main(OP=None,MSName=None):
 
         if options.ExtSols=="":
             SaveSols=True
-            Solver.doNextTimeSolve_Parallel()
+            #Solver.doNextTimeSolve_Parallel()
             #Solver.doNextTimeSolve_Parallel(SkipMode=True)
-            #Solver.doNextTimeSolve()
-
+            Solver.doNextTimeSolve()
+            
 
             FullPredictColName=options.FullPredictColName
             if (FullPredictColName!="")&(FullPredictColName!=None):
@@ -681,6 +681,8 @@ def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2,ConfigJacobianAnte
                                          TChunkSize=dtInit/60,IdSharedMem=IdSharedMem,
                                          SM=SM,NCPU=options.NCPU,GD=GD)
     
+    VSInit.setSM(SM)
+    VSInit.CalcWeigths()
     VSInit.LoadNextVisChunk()
     # # test
     # PredictData=PM.predictKernelPolCluster(VSInit.ThisDataChunk,SM)

@@ -116,9 +116,12 @@ def testLM():
 
 class ClassJacobianAntenna():
     def __init__(self,SM,iAnt,PolMode="IFull",Precision="S",PrecisionDot="D",IdSharedMem="",
-                 PM=None,GD=None,NChanSols=1,**kwargs):
+                 PM=None,GD=None,NChanSols=1,ChanSel=None,**kwargs):
         T=ClassTimeIt.ClassTimeIt("ClassJacobianAntenna")
         T.disable()
+
+        self.ChanSel=ChanSel
+
         self.GD=GD
         self.IdSharedMem=IdSharedMem
         self.PolMode=PolMode
@@ -190,6 +193,14 @@ class ClassJacobianAntenna():
         T.disable()
         
         self.DATA=NpShared.SharedToDico("%sSharedVis"%self.IdSharedMem)
+        _,self.NChanMS,_=self.DATA["data"].shape
+        if self.ChanSel==None:
+            self.ch0=0
+            self.ch1=self.NChanMS
+        else:
+            self.ch0,self.ch1=self.ChanSel
+        self.NChanData=self.ch1-self.ch0
+
         T.timeit("SharedToDico0")
         DicoBeam=NpShared.SharedToDico("%sPreApplyJones"%self.IdSharedMem)
         T.timeit("SharedToDico1")
@@ -495,12 +506,7 @@ class ClassJacobianAntenna():
            
             
     def doLMStep(self,Gains):
-        for iChanSol in range(self.NChanSols):
-            self.iChanSol=iChanSol
-            self.doLMStepChannel(Gains,iChanSol)
-        
-    def doLMStepChannel(self,Gains,iChanSol):
-        #print
+            
         
         T=ClassTimeIt.ClassTimeIt("doLMStep")
         T.disable()
@@ -727,24 +733,25 @@ class ClassJacobianAntenna():
         indThis=np.arange(DicoData["indOrig"].size)
 
         Indices=NpShared.GiveArray("%sIndicesData"%self.IdSharedMem)
-        IndicesSel0=Indices[indRowsThisChunk,:,:][indOrig,:,0].ravel()
-        IndicesSel1=Indices[indRowsThisChunk,:,:][indOrig,:,1].ravel()
-        IndicesSel2=Indices[indRowsThisChunk,:,:][indOrig,:,2].ravel()
-        IndicesSel3=Indices[indRowsThisChunk,:,:][indOrig,:,3].ravel()
+        IndicesSel0=Indices[indRowsThisChunk,:,:][indOrig,self.ch0:self.ch1,0].ravel()
+        IndicesSel1=Indices[indRowsThisChunk,:,:][indOrig,self.ch0:self.ch1,1].ravel()
+        IndicesSel2=Indices[indRowsThisChunk,:,:][indOrig,self.ch0:self.ch1,2].ravel()
+        IndicesSel3=Indices[indRowsThisChunk,:,:][indOrig,self.ch0:self.ch1,3].ravel()
         
         D=np.rollaxis(zp.reshape(self.NJacobBlocks_X,nr,nch,self.NJacobBlocks_Y),0,3).reshape(nr,nch,self.NJacobBlocks_X,self.NJacobBlocks_Y)
 
         if self.PolMode=="Scalar":
-            PredictedData.ravel()[IndicesSel0]=D[indThis,:,0,0].ravel()
-            PredictedData.ravel()[IndicesSel3]=D[indThis,:,0,0].ravel()
+            # PredictedData.ravel()[IndicesSel0]=D[indThis,:,0,0].ravel()
+            PredictedData.flat[IndicesSel0]=D[indThis,:,0,0].ravel()
+            PredictedData.flat[IndicesSel3]=D[indThis,:,0,0].ravel()
         elif self.PolMode=="IDiag":
-            PredictedData.ravel()[IndicesSel0]=D[indThis,:,0,0].ravel()
-            PredictedData.ravel()[IndicesSel3]=D[indThis,:,1,0].ravel()
+            PredictedData.flat[IndicesSel0]=D[indThis,:,0,0].ravel()
+            PredictedData.flat[IndicesSel3]=D[indThis,:,1,0].ravel()
         elif self.PolMode=="IFull":
-            PredictedData.ravel()[IndicesSel0]=D[indThis,:,0,0].ravel()
-            PredictedData.ravel()[IndicesSel1]=D[indThis,:,0,1].ravel()
-            PredictedData.ravel()[IndicesSel2]=D[indThis,:,1,0].ravel()
-            PredictedData.ravel()[IndicesSel3]=D[indThis,:,1,1].ravel()
+            PredictedData.flat[IndicesSel0]=D[indThis,:,0,0].ravel()
+            PredictedData.flat[IndicesSel1]=D[indThis,:,0,1].ravel()
+            PredictedData.flat[IndicesSel2]=D[indThis,:,1,0].ravel()
+            PredictedData.flat[IndicesSel3]=D[indThis,:,1,1].ravel()
 
 
         # d0=self.DATA["data"]#[indOrig,:,0]
@@ -1094,8 +1101,8 @@ class ClassJacobianAntenna():
             ind1=np.where(DATA['A1']==iAnt)[0]
             DicoData["A0"] = np.concatenate([DATA['A0'][ind0], DATA['A1'][ind1]])
             DicoData["A1"] = np.concatenate([DATA['A1'][ind0], DATA['A0'][ind1]])
-            D0=DATA['data'][ind0]
-            D1=DATA['data'][ind1].conj()
+            D0=DATA['data'][ind0,self.ch0:self.ch1]
+            D1=DATA['data'][ind1,self.ch0:self.ch1].conj()
             c1=D1[:,:,1].copy()
             c2=D1[:,:,2].copy()
             D1[:,:,1]=c2
@@ -1106,7 +1113,7 @@ class ClassJacobianAntenna():
             DicoData["UVW_dt"]  = np.concatenate([DATA["UVW_dt"][ind0], -DATA["UVW_dt"][ind1]])
 
             if "W" in DATA.keys():
-                DicoData["W"] = np.concatenate([DATA['W'][ind0], DATA['W'][ind1]])
+                DicoData["W"] = np.concatenate([DATA['W'][ind0,self.ch0:self.ch1], DATA['W'][ind1,self.ch0:self.ch1]])
 
             # DicoData["IndexTimesThisChunk"]=np.concatenate([DATA["IndexTimesThisChunk"][ind0], DATA["IndexTimesThisChunk"][ind1]]) 
             # DicoData["UVW_RefAnt"]=DATA["UVW_RefAnt"][it0:it1]
@@ -1114,8 +1121,8 @@ class ClassJacobianAntenna():
             if "Kp" in DATA.keys():
                  DicoData["Kp"]=DATA["Kp"]
 
-            D0=DATA['flags'][ind0]
-            D1=DATA['flags'][ind1].conj()
+            D0=DATA['flags'][ind0,self.ch0:self.ch1]
+            D1=DATA['flags'][ind1,self.ch0:self.ch1].conj()
             c1=D1[:,:,1].copy()
             c2=D1[:,:,2].copy()
             D1[:,:,1]=c2
@@ -1127,6 +1134,7 @@ class ClassJacobianAntenna():
                 DicoData["flags_image"].fill(0)
 
             nr,nch,_=DicoData["data"].shape
+            
             if self.PolMode=="Scalar":
                 d=(DicoData["data"][:,:,0]+DicoData["data"][:,:,-1])/2
                 DicoData["data"] = d.reshape((nr,nch,1))
@@ -1140,12 +1148,12 @@ class ClassJacobianAntenna():
 
 
 
-            DicoData["freqs"]   = DATA['freqs']
-            DicoData["dfreqs"]   = DATA['dfreqs']
+            DicoData["freqs"]   = DATA['freqs'][self.ch0:self.ch1]
+            DicoData["dfreqs"]   = DATA['dfreqs'][self.ch0:self.ch1]
             DicoData["times"] = np.concatenate([DATA['times'][ind0], DATA['times'][ind1]])
             DicoData["infos"] = DATA['infos']
 
-            nr,nch,_=DicoData["data"].shape
+            # nr,nch,_=DicoData["data"].shape
 
             FlagsShape=DicoData["flags"].shape
             FlagsSize=DicoData["flags"].size
