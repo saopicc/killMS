@@ -95,7 +95,7 @@ class MSTools():
         ID=0
         for ScanID in ListScanID:
             #MSOut="%s.SCAN_%4.4i.MS"%(self.ScansDir,MSName,ID)
-            MSOut="%s.SCAN_%4.4i.MS"%(MSName,ID)
+            MSOut="SCAN_%4.4i.%s"%(ID,MSName)
             ID+=1
             ss="taql 'SELECT FROM %s WHERE SCAN_NUMBER==%i GIVING %s'"%(MSName,ScanID,MSOut)
             print ss
