@@ -127,6 +127,9 @@ class ClassVisServer():
             ind=np.where(self.VisToJonesChanMapping==iChanSol)[0] 
             self.JonesToVisChanMapping.append((ind[0],ind[-1]+1))
         print>>log,("JonesToVisChanMapping %s"%str(self.JonesToVisChanMapping))
+        
+        
+
 
         ######################################################
         

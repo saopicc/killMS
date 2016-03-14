@@ -124,8 +124,8 @@ class ClassPredict():
         JonesMatrices=np.complex64(DicoJonesMatrices["Jones"])
         MapJones=np.int32(DicoJonesMatrices["MapJones"])
 
-        print DicoJonesMatrices.keys()
-        print DicoJonesMatricesIn.keys()
+        # print DicoJonesMatrices.keys()
+        # print DicoJonesMatricesIn.keys()
 
         ChanMap=np.int32(DicoJonesMatrices["ChanMap"])
         #MapJones=np.int32(np.arange(A0.shape[0]))

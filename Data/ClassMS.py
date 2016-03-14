@@ -102,6 +102,8 @@ class ClassMS():
     def PutLOFARKeys(self):
         keys=["LOFAR_ELEMENT_FAILURE", "LOFAR_STATION", "LOFAR_ANTENNA_FIELD"]
         t=table(self.MSName,ack=False)
+        
+
         for key in keys:
             t.putkeyword(key,'Table: %s/%s'%(self.MSName,key))
         t.close()
@@ -518,7 +520,8 @@ class ClassMS():
         T.enableIncr()
         T.disable()
         #print MSname+'/ANTENNA'
-        ta=table(MSname+'/ANTENNA',ack=False)
+
+        ta=table(MSname+'::ANTENNA',ack=False)
 
         StationNames=ta.getcol('NAME')
 
@@ -555,7 +558,7 @@ class ClassMS():
 
         T.timeit()
 
-        ta_spectral=table(MSname+'/SPECTRAL_WINDOW/',ack=False)
+        ta_spectral=table(MSname+'::SPECTRAL_WINDOW',ack=False)
         reffreq=ta_spectral.getcol('REF_FREQUENCY')
         chan_freq=ta_spectral.getcol('CHAN_FREQ')
         self.dFreq=ta_spectral.getcol("CHAN_WIDTH").flatten()
@@ -580,7 +583,7 @@ class ClassMS():
 
         Nchan=wavelength_chan.shape[1]
         NSPWChan=NSPW*Nchan
-        ta=table(MSname+'/FIELD/',ack=False)
+        ta=table(MSname+'::FIELD',ack=False)
         rarad,decrad=ta.getcol('PHASE_DIR')[0][0]
         if rarad<0.: rarad+=2.*np.pi
 
@@ -899,7 +902,7 @@ class ClassMS():
     def RotateMS(self,radec):
         import ModRotate
         ModRotate.Rotate(self,radec)
-        ta=table(self.MSName+'/FIELD/',ack=False,readonly=False)
+        ta=table(self.MSName+'::FIELD',ack=False,readonly=False)
         ra,dec=radec
         radec=np.array([[[ra,dec]]])
         ta.putcol("DELAY_DIR",radec)

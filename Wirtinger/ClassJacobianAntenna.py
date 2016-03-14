@@ -453,7 +453,7 @@ class ClassJacobianAntenna():
 
         T.timeit("ApplyK_vec")
         x0=Ga.flatten()
-        x4=x0+self.Lambda*x3.flatten()
+        x4=x0+self.LambdaKF*x3.flatten()
 
         # estimate P
 
@@ -567,7 +567,7 @@ class ClassJacobianAntenna():
         T.timeit("JH_z")
         #self.JHJinv=ModLinAlg.invSVD(self.JHJ)
         #self.JHJinv=np.linalg.inv(self.JHJ)
-        x1 = (1./(1.+self.Lambda)) * self.JHJinv_x(JH_z)
+        x1 = (1./(1.+self.LambdaLM)) * self.JHJinv_x(JH_z)
         T.timeit("self.JHJinv_x")
         
         

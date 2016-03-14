@@ -160,10 +160,11 @@ def read_options():
     
     OP.OptionGroup("* CohJones additional options","CohJones")
     OP.add_option('NIterLM',type="int",help=' Number of iterations for the solve. Default is %default ')
-    OP.add_option('Lambda',type="float",help=' Lambda parameter. Default is %default ',default=1)
+    OP.add_option('LambdaLM',type="float",help=' Lambda parameter for CohJones. Default is %default ',default=1)
 
     OP.OptionGroup("* KAFCA additional options","KAFCA")
     OP.add_option('NIterKF',type="int",help=' Number of iterations for the solve. Default is %default ')
+    OP.add_option('LambdaKF',type="float",help=' Lambda parameter for KAFCA. Default is %default ',default=1)
     OP.add_option('InitLM',type="int",help='Initialise Kalman filter with Levenberg Maquardt. Default is %default')
     OP.add_option('InitLMdt',type="float",help='Time interval in minutes. Default is %default')
     OP.add_option('CovP',type="float",help='Initial prior Covariance in fraction of the initial gain amplitude. Default is %default') 
@@ -341,7 +342,8 @@ def main(OP=None,MSName=None):
     ResolutionRad=(options.Resolution/3600)*(np.pi/180)
     ConfigJacobianAntenna={"DoSmearing":DoSmearing,
                            "ResolutionRad":ResolutionRad,
-                           "Lambda":options.Lambda,
+                           "LambdaKF":options.LambdaKF,
+                           "LambdaLM":options.LambdaLM,
                            "DoReg":False,#True,
                            "gamma":1,
                            "AmpQx":.5,
@@ -415,9 +417,9 @@ def main(OP=None,MSName=None):
 
         if options.ExtSols=="":
             SaveSols=True
-            #Solver.doNextTimeSolve_Parallel()
+            Solver.doNextTimeSolve_Parallel()
             #Solver.doNextTimeSolve_Parallel(SkipMode=True)
-            Solver.doNextTimeSolve()
+            #Solver.doNextTimeSolve()
             
 
             FullPredictColName=options.FullPredictColName
@@ -667,7 +669,8 @@ def main(OP=None,MSName=None):
                  SkyModel=SM.ClusterCat,
                  ClusterCat=SM.ClusterCat,
                  SourceCatSub=SourceCatSub,
-                 ModelName=options.SkyModel)
+                 ModelName=options.SkyModel,
+                 FreqDomains=VS.SolsFreqDomains)
 
     NpShared.DelAll(IdSharedMem)
 

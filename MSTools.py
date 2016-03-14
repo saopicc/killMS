@@ -4,6 +4,8 @@ import optparse
 import sys
 from killMS2.Other import MyPickle
 from killMS2.Other import ModColor
+from pyrap.tables import table
+import glob
 
 sys.path=[name for name in sys.path if not(("pyrap" in name)&("/usr/local/lib/" in name))]
 
@@ -12,6 +14,7 @@ import numpy as np
 from killMS2.Data import ClassMS
 from killMS2.Other import MyLogger
 log=MyLogger.getLogger("MSTools")
+import os
 
 def read_options():
     desc="""CohJones Questions and suggestions: cyril.tasse@obspm.fr"""
@@ -52,6 +55,25 @@ def Copy(options=None):
     MS.CopyCol(In,Out)
 
 
+def SplitSCAN_MS_List(options):
+    MSList=options.ms
+    ll=glob.glob(MSList)
+    for MSn in ll:
+        SplitSCAN_MS(MSn)
+
+def SplitSCAN_MS(MSName):
+    MSName=options.ms
+    t=table(MSName,ack=False)
+    ListScanID=sorted(list(set(list(t.getcol("SCAN_NUMBER")))))
+    t.close()
+    
+    ID=0
+    for ScanID in ListScanID:
+        MSOut="%s.SCAN_%4.4i.MS"%(MSName,ID)
+        ss="taql 'SELECT FROM %s WHERE SCAN_NUMBER==%i GIVING %s'"%(MSName,ScanID,MSOut)
+        print ss
+        os.system(ss)
+
 
 if __name__=="__main__":
     options = read_options()
@@ -62,4 +84,6 @@ if __name__=="__main__":
         PutCasaCols(options)
     elif options.Operation=="COPY":
         Copy(options)
+    elif options.Operation=="SPLIT_SCAN":
+        SplitSCAN_MS_List(options)
 
