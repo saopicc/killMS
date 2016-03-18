@@ -944,7 +944,7 @@ class WorkerAntennaLM(multiprocessing.Process):
                     Pa=EM.Evolve0(x,Pout)#,kapa=kapa)
                     T.timeit("Evolve")
                 else:
-                    Pa=P[iAnt].copy()
+                    Pa=P[iChanSol,iAnt].copy()
                 #_,Pa=EM.Evolve(x,Pout,ThisTime)
 
                 if type(Pa)!=type(None):
