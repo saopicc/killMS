@@ -74,6 +74,7 @@ class MSTools():
         #os.system("mkdir -p %s"%self.ScansDir)
 
         ll=glob.glob(MSList)
+        print ll
         
         for MSn in ll:
             self.SplitSCAN_MS(MSn)
@@ -87,7 +88,7 @@ class MSTools():
         
         
     def SplitSCAN_MS(self,MSName):
-        MSName=options.ms
+
         t=table(MSName,ack=False)
         ListScanID=sorted(list(set(list(t.getcol("SCAN_NUMBER")))))
         t.close()

@@ -463,7 +463,13 @@ class ClassVisServer():
         for A in range(MS.na):
             ind=np.where((MS.A0==A)|(MS.A1==A))[0]
             fA=MS.flag_all[ind].ravel()
+            if ind.size==0:
+                print>>log, "Antenna #%2.2i[%s] is not in the MS"%(A,MS.StationNames[A])
+                self.FlagAntNumber.append(A)
+                continue
+                
             nf=np.count_nonzero(fA)
+            
             Frac=nf/float(fA.size)
             if Frac>self.ThresholdFlag:
                 print>>log, "Taking antenna #%2.2i[%s] out of the solve (~%4.1f%% of flagged data, more than %4.1f%%)"%\

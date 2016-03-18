@@ -207,11 +207,15 @@ class ClassPredict():
         nrow,nch=W.shape
 
         # print Jones.shape
-        rmsAllAnts=Sigma[:,:,0]
+        rmsAllAnts=Sigma[:,:,:,0]
+
+
         rmsAllAnts=rmsAllAnts[rmsAllAnts>0.]
+        
+
         rms=np.min(rmsAllAnts)
         #print rmsAllAnts,rms
-        S=Sigma[:,:,0]
+        S=Sigma[:,:,:,0]
         S[S==0]=1e6
         S[S==-1]=1e6
 

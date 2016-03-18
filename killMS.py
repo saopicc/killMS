@@ -157,14 +157,17 @@ def read_options():
     OP.add_option('PrecisionDot',help='Dot product Precision (S/D). Default is %default.',type="str")
     OP.add_option('PolMode',help='Polarisation mode (Scalar/IFull). Default is %default')
     OP.add_option('dt',type="float",help='Time interval for a solution [minutes]. Default is %default. ')
+    OP.add_option('NChanSols',type="int",help='Number of solutions along frequency axis. Default is %default. ')
     
+
+
     OP.OptionGroup("* CohJones additional options","CohJones")
     OP.add_option('NIterLM',type="int",help=' Number of iterations for the solve. Default is %default ')
-    OP.add_option('LambdaLM',type="float",help=' Lambda parameter for CohJones. Default is %default ',default=1)
+    OP.add_option('LambdaLM',type="float",help=' Lambda parameter for CohJones. Default is %default ')
 
     OP.OptionGroup("* KAFCA additional options","KAFCA")
     OP.add_option('NIterKF',type="int",help=' Number of iterations for the solve. Default is %default ')
-    OP.add_option('LambdaKF',type="float",help=' Lambda parameter for KAFCA. Default is %default ',default=1)
+    OP.add_option('LambdaKF',type="float",help=' Lambda parameter for KAFCA. Default is %default ')
     OP.add_option('InitLM',type="int",help='Initialise Kalman filter with Levenberg Maquardt. Default is %default')
     OP.add_option('InitLMdt',type="float",help='Time interval in minutes. Default is %default')
     OP.add_option('CovP',type="float",help='Initial prior Covariance in fraction of the initial gain amplitude. Default is %default') 
