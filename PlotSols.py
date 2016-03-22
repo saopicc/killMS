@@ -32,6 +32,7 @@ import time
 import os
 import numpy as np
 import pickle
+from itertools import product as ItP
 
 NameSave="last_plotSols.obj"
 def read_options():
@@ -63,10 +64,10 @@ def GiveNXNYPanels(Ns,ratio=800/500):
 from killMS2.Array import ModLinAlg
 
 def NormMatrices(G):
-    nt,na,_,_=G.shape
+    nt,nch,na,_,_=G.shape
 
-    for it in range(nt):
-        Gt=G[it,:,:,:]
+    for iChan,it in ItP(range(nch),range(nt)):
+        Gt=G[it,iChan,:,:]
         u,s,v=np.linalg.svd(Gt[0])
         # #J0/=np.linalg.det(J0)
         # J0=Gt[0]
@@ -108,11 +109,11 @@ def main(options=None):
             Sols=SolsDico["Sols"]
             StationNames=SolsDico["StationNames"]
             Sols=Sols.view(np.recarray)
-            nt,na,nd,_,_=Sols.G.shape
+            nt,nch,na,nd,_,_=Sols.G.shape
         elif "h5" in FileName:
             import tables
             H5=tables.openFile(FileName)
-            npol, nd, na, nchan, nt=H5.root.sol000.amplitude000.val.shape
+            npol, nch, nd, na, nchan, nt=H5.root.sol000.amplitude000.val.shape
             GH5=H5.root.sol000.amplitude000.val[:]*np.exp(1j*H5.root.sol000.phase000.val[:])
             Times=H5.root.sol000.amplitude000.time[:]
             StationNames=H5.root.sol000.antenna[:]["name"]
@@ -121,7 +122,7 @@ def main(options=None):
 
             Sols=np.zeros((nt,),dtype=[("t0",np.float64),
                                        ("t1",np.float64),
-                                       ("G",np.complex64,(na,nd,2,2))])
+                                       ("G",np.complex64,(nch,na,nd,2,2))])
             Sols=Sols.view(np.recarray)
             dt=np.median(Times[1::]-Times[0:-1])
             Sols.t0=Times-dt/2.
@@ -180,8 +181,8 @@ def main(options=None):
         iAnt=0
         for iSol in range(nSol):
             Sols=LSols[iSol]
-            G=Sols.G[:,:,iDir,:,:]
-            Sols.G[:,:,iDir,:,:]=NormMatrices(G)
+            G=Sols.G[:,:,:,iDir,:,:]
+            Sols.G[:,:,:,iDir,:,:]=NormMatrices(G)
             
         ampMax=1.5*np.max(np.median(np.abs(LSols[0].G),axis=1))
         if options.PlotMode=="AP":
@@ -225,9 +226,9 @@ def main(options=None):
                 if op1!=None: ax2 = ax.twinx()
 
                 pylab.title(StationNames[iAnt], fontsize=9)
-                for iSol in range(nSol):
+                for iChan,iSol in ItP(range(nch),range(nSol)):
                     Sols=LSols[iSol]
-                    G=Sols.G[:,:,iDir,:,:]
+                    G=Sols.G[:,iChan,:,iDir,:,:]
                     J=G[:,iAnt,:,:]
                     ax.plot(Sols.t0,op0(J[:,0,0]),color=Lcol0[iSol],alpha=Lalpha0[iSol],ls=Lls[iSol])
                     ax.plot(Sols.t0,op0(J[:,1,1]),color=Lcol0_off[iSol],alpha=Lalpha0[iSol],ls=Lls_off[iSol])
