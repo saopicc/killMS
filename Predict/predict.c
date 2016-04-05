@@ -260,7 +260,8 @@ static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args)
 			&PyList_Type, &LSmearMode,
 			//&PyList_Type, &LJones,
 			&AllowChanEquidistant,		       
-			&PyList_Type, &LExp
+			&PyList_Type, &LExp,
+			&PyList_Type, &LSinc
 			))  return NULL;
   
 
@@ -299,7 +300,17 @@ static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args)
   PyObject *_FStepExp= PyList_GetItem(LExp, 1);
   float StepExp=(float) (PyFloat_AsDouble(_FStepExp));
   
-  //===================
+  /* //=================== */
+  /* // Sinc table: sin(x)/x */
+  /* PyArrayObject *Np_Sinc; */
+  /* Np_Sinc = (PyArrayObject *) (PyList_GetItem(LSinc, 0)); */
+  /* float *p_Sinc; */
+  /* p_Sinc=p_float32(Np_Sinc); */
+  /* int Nmax=Np_Sinc->dimensions[0]; */
+  /* PyObject *_FStepSinc= PyList_GetItem(LSinc, 1); */
+  /* float StepSinc=(float) (PyFloat_AsDouble(_FStepSinc)); */
+  
+  /* //=================== */
 
   
   PyArrayObject *NpWaveL;
@@ -451,7 +462,7 @@ static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args)
 
     	  if(ThisSourceType==1){
     	    UVsq_ch=c2[ch]*UVsq;
-    	    FGauss=p_Flux[dd*nchan+ch]*GiveExp(UVsq_ch,p_Exp,StepExp, Nmax);
+    	    FGauss=p_Flux[dd*nchan+ch]*GiveFunc(UVsq_ch,p_Exp,StepExp, Nmax);
     	  }
     	  else{
     	    FGauss=p_Flux[dd*nchan+ch];

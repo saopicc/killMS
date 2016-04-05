@@ -399,7 +399,7 @@ class ClassWirtingerSolver():
     ##          Serial             ## 
     #################################
 
-    def doNextTimeSolve(self):
+    def doNextTimeSolve(self,SkipMode=False):
 
 
 
@@ -421,6 +421,8 @@ class ClassWirtingerSolver():
 
         T=ClassTimeIt.ClassTimeIt("WirtingerSolver")
         T.disable()
+
+        iiCount=0
         while True:
             self.pBarProgress=NDone,float(nt)
             NDone+=1
@@ -433,6 +435,10 @@ class ClassWirtingerSolver():
             if Res=="EndChunk": break
             T.timeit("read data")
 
+            if SkipMode:
+                print iiCount
+                iiCount+=1
+                if iiCount<240: continue
             
             t0,t1=self.VS.CurrentVisTimes_MS_Sec
             self.SolsArray_t0[self.iCurrentSol]=t0
@@ -610,7 +616,7 @@ class ClassWirtingerSolver():
             if SkipMode:
                 print iiCount
                 iiCount+=1
-                if iiCount<200: continue
+                if iiCount<240: continue
 
 
             t0,t1=self.VS.CurrentVisTimes_MS_Sec

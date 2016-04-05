@@ -262,7 +262,10 @@ class ClassJacobianAntenna():
         return kapaout
 
     def PrepareJHJ_LM(self):
+
         self.L_JHJinv=[]
+        if self.DataAllFlagged:
+            return
         for ipol in range(self.NJacobBlocks_X):
             JHJinv=ModLinAlg.invSVD(self.L_JHJ[ipol])
             #JHJinv=ModLinAlg.invSVD(self.JHJ)
@@ -884,7 +887,14 @@ class ClassJacobianAntenna():
 
 
         T.timeit("stuff")
+        
         self.DicoData=self.GiveData(DATA,iAnt,rms=rms)
+        f=(self.DicoData["flags_flat"]==0)
+        ind=np.where(f)[0]
+        self.DataAllFlagged=False
+        if ind.size==0:
+            self.DataAllFlagged=True
+
         T.timeit("data")
         # self.Data=self.DicoData["data"]
         self.A1=self.DicoData["A1"]
@@ -1163,7 +1173,8 @@ class ClassJacobianAntenna():
             DicoData["flags_flat"]=np.rollaxis(DicoData["flags"],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
             DicoData["data_flat"]=np.rollaxis(DicoData["data"],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
 
-            
+
+
             # ###################
             # NJacobBlocks_X=2
             # NJacobBlocks_Y=2

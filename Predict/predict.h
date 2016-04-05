@@ -45,16 +45,18 @@ double complex *p_complex128(PyArrayObject *arrayin)  {
 
 
 
-float GiveExp(float xneg, float* Exp, float step, int Nmax){
+float GiveFunc(float xneg, float* Func, float step, int Nmax){
   int ii=floor(xneg/step);
   float ans;
   if(ii>=Nmax){ans=0.;}
   else{
-    ans=Exp[ii];
+    ans=Func[ii];
   }
   //printf("%i %i %f\n",ii,Nmax,ans);
   return ans;
 }
+
+
 
 
 
