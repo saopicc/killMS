@@ -45,8 +45,8 @@ def main(options=None):
     CS=ClassSimul(ll[0],SMName)
     Sols=CS.GiveSols()
     for l in ll:
-        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
-        # CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
+        # CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
+        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
         CS.DoSimul()
 
 class ClassSimul():
@@ -83,10 +83,14 @@ class ClassSimul():
 
         
         NSols=MS.F_ntimes
-        Sols=np.zeros((NSols,),dtype=[("t0",np.float64),("t1",np.float64),("tm",np.float64),("G",np.complex64,(na,nd,2,2))])
+
+        nch=MS.NSPWChan
+
+
+        Sols=np.zeros((NSols,),dtype=[("t0",np.float64),("t1",np.float64),("tm",np.float64),("G",np.complex64,(nch,na,nd,2,2))])
         Sols=Sols.view(np.recarray)
-        Sols.G[:,:,:,0,0]=1#e-3
-        Sols.G[:,:,:,1,1]=1#e-3
+        Sols.G[:,:,:,:,0,0]=1 #e-3
+        Sols.G[:,:,:,:,1,1]=1 #e-3
     
         dt=MS.dt
         Sols.t0=MS.F_times-dt/2.
@@ -113,15 +117,16 @@ class ClassSimul():
     
         for itime in range(0,NSols):
             print itime,"/",NSols
-            for iAnt in range(na):
-                for iDir in range(nd):
-                    t=Sols.tm[itime]
-                    t0=Sols.tm[0]
-                    A=Amp_Mean[iAnt,iDir]+Amp_Amp[iAnt,iDir]*np.sin(DeltaT_Amp[iAnt,iDir]+(t-t0)/period_Amp[iAnt,iDir])
-                    Phase=PhaseAbs[iAnt,iDir]+Amp_Phase[iAnt,iDir]*np.sin(DeltaT_Phase[iAnt,iDir]+(t-t0)/period_Phase[iAnt,iDir])
-                    g0=A*np.exp(1j*Phase)
-                    Sols.G[itime,iAnt,iDir,0,0]=g0
-                    #Sols.G[itime,iAnt,iDir,1,1]=g0
+            for ich in range(nch):
+                for iAnt in range(na):
+                    for iDir in range(nd):
+                        t=Sols.tm[itime]
+                        t0=Sols.tm[0]
+                        A=1.#Amp_Mean[iAnt,iDir]+Amp_Amp[iAnt,iDir]*np.sin(DeltaT_Amp[iAnt,iDir]+(t-t0)/period_Amp[iAnt,iDir])
+                        Phase=PhaseAbs[iAnt,iDir]+Amp_Phase[iAnt,iDir]*np.sin(DeltaT_Phase[iAnt,iDir]+(t-t0)/period_Phase[iAnt,iDir])
+                        g0=A*np.exp(1j*Phase)
+                        Sols.G[itime,ich,iAnt,iDir,0,0]=g0
+                        #Sols.G[itime,iAnt,iDir,1,1]=g0
 
         ###############################
 
@@ -140,22 +145,28 @@ class ClassSimul():
         #PhaseAbs.fill(0)
         #Amp_Phase=np.zeros((na,nd))
     
-        for itime in range(0,NSols):
-            for iAnt in range(na):
-                for iDir in range(nd):
-                    t=Sols.tm[itime]
-                    t0=Sols.tm[0]
-                    A=Amp_Mean[iAnt,iDir]+Amp_Amp[iAnt,iDir]*np.sin(DeltaT_Amp[iAnt,iDir]+(t-t0)/period_Amp[iAnt,iDir])
-                    Phase=PhaseAbs[iAnt,iDir]+Amp_Phase[iAnt,iDir]*np.sin(DeltaT_Phase[iAnt,iDir]+(t-t0)/period_Phase[iAnt,iDir])
-                    g0=A*np.exp(1j*Phase)
-                    Sols.G[itime,iAnt,iDir,1,1]=g0
-                    #Sols.G[itime,iAnt,iDir,1,1]=g0
-
+        print "!!!!!!!!!!!!!!!!!!!!! A=1"
+        print "!!!!!!!!!!!!!!!!!!!!! A=1"
+        print "!!!!!!!!!!!!!!!!!!!!! A=1"
 
 
         for itime in range(0,NSols):
-            Sols.G[itime,:,:,0,0]=Sols.G[-1,:,:,0,0]
-            Sols.G[itime,:,:,1,1]=Sols.G[-1,:,:,1,1]
+            for ich in range(nch):
+                for iAnt in range(na):
+                    for iDir in range(nd):
+                        t=Sols.tm[itime]
+                        t0=Sols.tm[0]
+                        A=1.#Amp_Mean[iAnt,iDir]+Amp_Amp[iAnt,iDir]*np.sin(DeltaT_Amp[iAnt,iDir]+(t-t0)/period_Amp[iAnt,iDir])
+                        Phase=PhaseAbs[iAnt,iDir]+Amp_Phase[iAnt,iDir]*np.sin(DeltaT_Phase[iAnt,iDir]+(t-t0)/period_Phase[iAnt,iDir])
+                        g0=A*np.exp(1j*Phase)
+                        Sols.G[itime,ich,iAnt,iDir,1,1]=g0
+                        #Sols.G[itime,iAnt,iDir,1,1]=g0
+
+
+
+        for itime in range(0,NSols):
+            Sols.G[itime,:,:,:,0,0]=Sols.G[-1,:,:,:,0,0]
+            Sols.G[itime,:,:,:,1,1]=Sols.G[-1,:,:,:,1,1]
 
         # Sols.G[:,:,:,0,0]=1
         # Sols.G[:,:,:,1,1]=1
@@ -179,17 +190,19 @@ class ClassSimul():
         Jones["t0"]=Sols.t0
         Jones["t1"]=Sols.t1
     
-        nt,na,nd,_,_=Sols.G.shape
-        G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
+        nt,nch,na,nd,_,_=Sols.G.shape
+        G=np.swapaxes(Sols.G,1,3).reshape((nt,nd,na,nch,2,2))
 
 
         # G[:,:,:,:,0,0]/=np.abs(G[:,:,:,:,0,0])
         # G[:,:,:,:,1,1]=G[:,:,:,:,0,0]
 
-        G.fill(0)
-        G[:,:,:,:,0,0]=1
-        G[:,:,:,:,1,1]=1
+        # G.fill(0)
+        # G[:,:,:,:,0,0]=1
+        # G[:,:,:,:,1,1]=1
 
+        nt,nd,na,nch,_,_=G.shape
+#        G=np.random.randn(*G.shape)+1j*np.random.randn(*G.shape)
     
     
         useArrayFactor=True
@@ -248,7 +261,7 @@ class ClassSimul():
 
             # #################"
             # Multiple Channel
-            Ones=np.ones((1, 1, nch, 1, 1),np.float32)
+            Ones=np.ones((1, 1, 1, nch, 1, 1),np.float32)
             G=G*Ones
             G=ModLinAlg.BatchDot(G,DicoBeam["Jones"])
             self.ChanMap=range(nch)

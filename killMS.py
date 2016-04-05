@@ -139,8 +139,6 @@ def read_options():
     OP.add_option('SubOnly',type="int",help='Substact selected sources. Default is %default')
     OP.add_option('DoBar',help=' Draw progressbar. Default is %default',default="1")
     OP.add_option('NCPU',type="int",help='Number of cores to use. Default is %default ')
-    # OP.add_option('ApplyCal',type="int",help='Apply direction averaged gains to residual data in the mentioned direction. \
-    # If ApplyCal=-1 takes the mean gain over directions. -2 if off. Default is %default')
 
     # OP.OptionGroup("* PreApply Solution-related options","PreApply")
     # OP.add_option('PreApplySols')#,help='Solutions to apply to the data before solving.')
@@ -151,6 +149,8 @@ def read_options():
     #OP.add_option('ApplyMode',type="str",help='Substact selected sources. ')
     OP.add_option('ClipMethod',type="str",help='Clip data in the IMAGING_WEIGHT column. Can be set to Resid or DDEResid . Default is %default')
     OP.add_option('OutSolsName',type="str",help='If specified will save the estimated solutions in this file. Default is %default')
+    OP.add_option('ApplyCal',type="int",help='Apply direction averaged gains to residual data in the mentioned direction. \
+    If ApplyCal=-1 takes the mean gain over directions. -2 if off. Default is %default')
     
     OP.OptionGroup("* Solver options","Solvers")
     OP.add_option('SolverType',help='Name of the solver to use (CohJones/KAFCA)')
@@ -206,8 +206,7 @@ def main(OP=None,MSName=None):
     #IdSharedMem=str(int(np.random.rand(1)[0]*100000))+"."
     global IdSharedMem
     IdSharedMem=str(int(os.getpid()))+"."
-    DoApplyCal=0#(options.ApplyCal!=-2)
-    ApplyCal=0#int(options.ApplyCal)
+    DoApplyCal=(options.ApplyCal!=-2)
     if type(options.ClipMethod)!=list: stop
 
     ReWeight=(len(options.ClipMethod)>0)
@@ -473,7 +472,12 @@ def main(OP=None,MSName=None):
 
             Jones["Jones"]=G
             Jones["JonesH"]=ModLinAlg.BatchH(G)
-            Jones["Stats"]=Sols.Stats
+            try:
+                Jones["Stats"]=Sols.Stats
+            except:
+                Jones["Stats"]=None
+
+
             Jones["ChanMap"]=VS.VisToJonesChanMapping
             times=Solver.VS.ThisDataChunk["times"]
 
@@ -638,10 +642,9 @@ def main(OP=None,MSName=None):
                 Solver.VS.ThisDataChunk["data"]-=PredictData
                 SM.RestoreCat()
 
-
-            # if DoApplyCal:
-            #     print>>log, ModColor.Str("Apply calibration in direction: %i"%ApplyCal,col="green")
-            #     PM.ApplyCal(Solver.VS.ThisDataChunk,Jones,ApplyCal)
+            if DoApplyCal:
+                print>>log, ModColor.Str("Apply calibration in direction: %i"%options.ApplyCal,col="green")
+                PM.ApplyCal(Solver.VS.ThisDataChunk,Jones,options.ApplyCal)
 
             Solver.VS.MS.data=Solver.VS.ThisDataChunk["data"]
             Solver.VS.MS.flags_all=Solver.VS.ThisDataChunk["flags"]
