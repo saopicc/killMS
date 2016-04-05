@@ -535,10 +535,10 @@ class ClassJacobianAntenna():
             self.CalcKernelMatrix()
             T.timeit("CalcKernelMatrix")
 
+        Ga=self.GiveSubVecGainAnt(Gains)
         if self.DataAllFlagged:
             return Ga.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),None,{"std":-1.,"max":-1.,"kapa":None}
 
-        Ga=self.GiveSubVecGainAnt(Gains)
 
         f=(self.DicoData["flags_flat"]==0)
         # ind=np.where(f)[0]
