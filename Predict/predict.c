@@ -242,7 +242,7 @@ static PyObject *predict(PyObject *self, PyObject *args)
 static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args)
 {
   PyObject *ObjVisIn;
-  PyObject *LSM, *LUVWSpeed, *LFreqs,*LSmearMode, *LJones, *LExp;
+  PyObject *LSM, *LUVWSpeed, *LFreqs,*LSmearMode, *LJones, *LExp,*LSinc;
   PyArrayObject *NpVisIn, *NpUVWin, *matout;
   float *p_alpha,*p_Flux;
   
@@ -250,7 +250,7 @@ static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args)
   int nrow,npol,nsources,i,dim[2];
   int AllowChanEquidistant;
   
-  if (!PyArg_ParseTuple(args, "O!O!O!O!O!O!iO!",
+  if (!PyArg_ParseTuple(args, "O!O!O!O!O!O!iO!O!",
 			//&ObjVisIn,
 			&PyArray_Type, &NpVisIn, 
 			&PyArray_Type, &NpUVWin, 
@@ -296,21 +296,21 @@ static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args)
   Np_Exp = (PyArrayObject *) (PyList_GetItem(LExp, 0));
   float *p_Exp;
   p_Exp=p_float32(Np_Exp);
-  int Nmax=Np_Exp->dimensions[0];
+  int NmaxExp=Np_Exp->dimensions[0];
   PyObject *_FStepExp= PyList_GetItem(LExp, 1);
   float StepExp=(float) (PyFloat_AsDouble(_FStepExp));
   
-  /* //=================== */
-  /* // Sinc table: sin(x)/x */
-  /* PyArrayObject *Np_Sinc; */
-  /* Np_Sinc = (PyArrayObject *) (PyList_GetItem(LSinc, 0)); */
-  /* float *p_Sinc; */
-  /* p_Sinc=p_float32(Np_Sinc); */
-  /* int Nmax=Np_Sinc->dimensions[0]; */
-  /* PyObject *_FStepSinc= PyList_GetItem(LSinc, 1); */
-  /* float StepSinc=(float) (PyFloat_AsDouble(_FStepSinc)); */
+  //===================
+  // Sinc table: sin(x)/x
+  PyArrayObject *Np_Sinc;
+  Np_Sinc = (PyArrayObject *) (PyList_GetItem(LSinc, 0));
+  float *p_Sinc;
+  p_Sinc=p_float32(Np_Sinc);
+  int NmaxSinc=Np_Sinc->dimensions[0];
+  PyObject *_FStepSinc= PyList_GetItem(LSinc, 1);
+  float StepSinc=(float) (PyFloat_AsDouble(_FStepSinc));
   
-  /* //=================== */
+  //===================
 
   
   PyArrayObject *NpWaveL;
@@ -384,7 +384,7 @@ static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args)
 
   //float dnu=C/WaveL[0]-C/WaveL[nchan-1];
   float PI_C=PI/C;
-  float phi,du,dv,dw,dphase;
+  float phi,decorr,du,dv,dw,dphase;
 
   float complex J0[4]={0},J1[4]={0},J0inv[4]={0},J1H[4]={0},J1Hinv[4]={0},JJ[4]={0};
   
@@ -462,7 +462,7 @@ static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args)
 
     	  if(ThisSourceType==1){
     	    UVsq_ch=c2[ch]*UVsq;
-    	    FGauss=p_Flux[dd*nchan+ch]*GiveFunc(UVsq_ch,p_Exp,StepExp, Nmax);
+    	    FGauss=p_Flux[dd*nchan+ch]*GiveFunc(UVsq_ch,p_Exp,StepExp, NmaxExp);
     	  }
     	  else{
     	    FGauss=p_Flux[dd*nchan+ch];
@@ -475,8 +475,9 @@ static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args)
     	    //phi=PI*PI_C*p_DFreqs[ch]*phase;
     	    phi=PI*(p_DFreqs[ch]/C)*phase;
     	    if(phi!=0.){
-    	      phi=(float)sin((double)phi)/((double)phi);
-    	      result*=phi;
+    	      //phi=(float)sin((double)phi)/((double)phi);
+	      decorr=GiveFunc(phi,p_Sinc,StepSinc, NmaxSinc);
+    	      result*=decorr;
     	    };
     	  };
     	  if(TSmear==1){
@@ -490,8 +491,9 @@ static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args)
     	    //printf("phi = %f\n",phi);
     	    //printf("dphase = %f\n",dphase);
     	    if(phi!=0.){
-    	      phi=sin(phi)/(phi);
-    	      result*=phi;
+	      //decorr=sin(phi)/(phi);
+    	      decorr=GiveFunc(phi,p_Sinc,StepSinc, NmaxSinc);
+    	      result*=decorr;
     	    };
     	  };
 

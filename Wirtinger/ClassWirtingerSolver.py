@@ -438,7 +438,7 @@ class ClassWirtingerSolver():
             if SkipMode:
                 print iiCount
                 iiCount+=1
-                if iiCount<240: continue
+                if iiCount<585: continue
             
             t0,t1=self.VS.CurrentVisTimes_MS_Sec
             self.SolsArray_t0[self.iCurrentSol]=t0
@@ -869,8 +869,15 @@ class WorkerAntennaLM(multiprocessing.Process):
         x=np.linspace(0.,15,100000)
         Exp=np.float32(np.exp(-x))
         LExp=[Exp,x[1]-x[0]]
+
+        Sinc=np.zeros(x.shape,np.float32)
+        Sinc[0]=1.
+        Sinc[1::]=np.sin(x[1::])/(x[1::])
+        LSinc=[Sinc,x[1]-x[0]]
+
         
-        self.PM=ClassPredict(Precision="S",DoSmearing=self.GD["SkyModel"]["Decorrelation"],IdMemShared=self.IdSharedMem,LExp=LExp)
+        self.PM=ClassPredict(Precision="S",DoSmearing=self.GD["SkyModel"]["Decorrelation"],IdMemShared=self.IdSharedMem,
+                             LExp=LExp,LSinc=LSinc)
 
         if self.GD["ImageSkyModel"]["BaseImageName"]!="":
             self.PM.InitGM(self.SM)

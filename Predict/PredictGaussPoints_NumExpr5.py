@@ -43,7 +43,7 @@ def SolsToDicoJones(Sols,nf):
 
 
 class ClassPredict():
-    def __init__(self,Precision="S",NCPU=6,IdMemShared=None,DoSmearing="",LExp=None):
+    def __init__(self,Precision="S",NCPU=6,IdMemShared=None,DoSmearing="",LExp=None,LSinc=None):
         self.NCPU=NCPU
         ne.set_num_threads(self.NCPU)
         if Precision=="D":
@@ -60,6 +60,14 @@ class ClassPredict():
             Exp=np.float32(np.exp(-x))
             LExp=[Exp,x[1]-x[0]]
         self.LExp=LExp
+
+        if LSinc==None:
+            x=np.linspace(0.,10,100000)
+            Sinc=np.zeros(x.shape,np.float32)
+            Sinc[0]=1.
+            Sinc[1::]=np.sin(x[1::])/(x[1::])
+            LSinc=[Sinc,x[1]-x[0]]
+        self.LSinc=LSinc
 
 
 
@@ -402,7 +410,9 @@ class ClassPredict():
 
                 #predict.predictJones2(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,ParamJonesList,AllowEqualiseChan)
                 #print LSmearMode
-                predict.predictJones2_Gauss(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan,self.LExp)
+                predict.predictJones2_Gauss(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan,
+                                            self.LExp,
+                                            self.LSinc)
                 T.timeit("predict")
 
                 ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
@@ -424,7 +434,9 @@ class ClassPredict():
                 #ColOutDir.fill(0)
 
                 
-                predict.predictJones2_Gauss(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan,self.LExp)
+                predict.predictJones2_Gauss(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan,
+                                            self.LExp,
+                                            self.LSinc)
                 #predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
                 T.timeit("predict")
                 # d0=ColOutDir.copy()

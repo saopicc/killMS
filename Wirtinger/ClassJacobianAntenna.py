@@ -535,13 +535,15 @@ class ClassJacobianAntenna():
             self.CalcKernelMatrix()
             T.timeit("CalcKernelMatrix")
 
-        Ga=self.GiveSubVecGainAnt(Gains)
-        f=(self.DicoData["flags_flat"]==0)
-        ind=np.where(f)[0]
-
-
-        if ind.size==0:
+        if self.DataAllFlagged:
             return Ga.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),None,{"std":-1.,"max":-1.,"kapa":None}
+
+        Ga=self.GiveSubVecGainAnt(Gains)
+
+        f=(self.DicoData["flags_flat"]==0)
+        # ind=np.where(f)[0]
+        # if ind.size==0:
+        #     return Ga.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),None,{"std":-1.,"max":-1.,"kapa":None}
 
 
         z=self.DicoData["data_flat"]#self.GiveDataVec()
@@ -889,11 +891,13 @@ class ClassJacobianAntenna():
         T.timeit("stuff")
         
         self.DicoData=self.GiveData(DATA,iAnt,rms=rms)
-        f=(self.DicoData["flags_flat"]==0)
-        ind=np.where(f)[0]
         self.DataAllFlagged=False
-        if ind.size==0:
-            self.DataAllFlagged=True
+        NP,_=self.DicoData["flags_flat"].shape
+        for ipol in range(NP):
+            f=(self.DicoData["flags_flat"][ipol]==0)
+            ind=np.where(f)[0]
+            if ind.size==0:
+                self.DataAllFlagged=True
 
         T.timeit("data")
         # self.Data=self.DicoData["data"]
