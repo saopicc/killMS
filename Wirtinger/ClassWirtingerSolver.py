@@ -476,6 +476,9 @@ class ClassWirtingerSolver():
             
             for iChanSol in range(self.VS.NChanJones):
 
+                # Reset Data
+                NpShared.DelAll("%sDicoData"%self.IdSharedMem)
+
                 for i in range(self.NIter):
                     Gnew=self.G.copy()
                     if self.SolverType=="KAFCA":
@@ -646,6 +649,8 @@ class ClassWirtingerSolver():
 
             T.timeit("before iterloop")
             for iChanSol in range(self.VS.NChanJones):
+                # Reset Data
+                NpShared.DelAll("%sDicoData"%self.IdSharedMem)
                 for LMIter in range(NIter):
                     #print
                     # for EKF
@@ -784,6 +789,7 @@ class ClassWirtingerSolver():
 
                 
             
+
 
             self.AppendGToSolArray()
             T.timeit("AppendGToSolArray")

@@ -304,7 +304,7 @@ class ClassPredict():
         self.SourceCat=SM.SourceCat
         self.SM=SM
 
-        freq=DicoData["freqs"]
+        freq=DicoData["freqs_full"]
         times=DicoData["times"]
         nf=freq.size
         na=DicoData["infos"][0]
@@ -382,7 +382,7 @@ class ClassPredict():
 
             flux=np.float32(SourceCat.I)
             alpha=SourceCat.alpha
-            dnu=np.float32(self.DicoData["dfreqs"])
+            dnu=np.float32(self.DicoData["dfreqs_full"])
             f0=(self.freqs/SourceCat.RefFreq[0])
             fluxFreq=np.float32(flux.reshape((flux.size,1))*(f0.reshape((1,f0.size)))**(alpha.reshape((alpha.size,1))))
 

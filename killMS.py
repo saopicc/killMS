@@ -419,9 +419,9 @@ def main(OP=None,MSName=None):
 
         if options.ExtSols=="":
             SaveSols=True
-            Solver.doNextTimeSolve_Parallel()
+            #Solver.doNextTimeSolve_Parallel()
             #Solver.doNextTimeSolve_Parallel(SkipMode=True)
-            #Solver.doNextTimeSolve(SkipMode=True)
+            Solver.doNextTimeSolve()#SkipMode=True)
             
 
             FullPredictColName=options.FullPredictColName

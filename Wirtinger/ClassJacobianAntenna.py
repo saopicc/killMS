@@ -376,6 +376,7 @@ class ClassJacobianAntenna():
         T.disable()
         if not(self.HasKernelMatrix):
             self.CalcKernelMatrix(rms)
+            self.SelectChannelKernelMat()
             T.timeit("CalcKernelMatrix")
         z=self.DicoData["data_flat"]#self.GiveDataVec()
 
@@ -533,6 +534,7 @@ class ClassJacobianAntenna():
         
         if not(self.HasKernelMatrix):
             self.CalcKernelMatrix()
+            self.SelectChannelKernelMat()
             T.timeit("CalcKernelMatrix")
 
         Ga=self.GiveSubVecGainAnt(Gains)
@@ -891,13 +893,6 @@ class ClassJacobianAntenna():
         T.timeit("stuff")
         
         self.DicoData=self.GiveData(DATA,iAnt,rms=rms)
-        self.DataAllFlagged=False
-        NP,_=self.DicoData["flags_flat"].shape
-        for ipol in range(NP):
-            f=(self.DicoData["flags_flat"][ipol]==0)
-            ind=np.where(f)[0]
-            if ind.size==0:
-                self.DataAllFlagged=True
 
         T.timeit("data")
         # self.Data=self.DicoData["data"]
@@ -911,25 +906,26 @@ class ClassJacobianAntenna():
         self.n4vis=n4vis
         
         KernelSharedName="%sKernelMat.%2.2i"%(self.IdSharedMem,self.iAnt)
-        self.KernelMat=NpShared.GiveArray(KernelSharedName)
-        if type(self.KernelMat)!=type(None):
+        self.KernelMat_AllChan=NpShared.GiveArray(KernelSharedName)
+
+        if type(self.KernelMat_AllChan)!=type(None):
             self.HasKernelMatrix=True
             if self.PolMode=="IFull":
-                self.K_XX=self.KernelMat[0]
-                self.K_YY=self.KernelMat[1]
+                self.K_XX_AllChan=self.KernelMat_AllChan[0]
+                self.K_YY_AllChan=self.KernelMat_AllChan[1]
                 self.NJacobBlocks_X=2
                 self.NJacobBlocks_Y=2
             elif self.PolMode=="Scalar":
                 #n4vis=self.DicoData["data_flat"].size
-                self.K_XX=self.KernelMat[0]
-                self.K_YY=self.K_XX
+                self.K_XX_AllChan=self.KernelMat_AllChan[0]
+                self.K_YY_AllChan=self.K_XX_AllChan
                 #self.n4vis=n4vis
                 self.NJacobBlocks_X=1
                 self.NJacobBlocks_Y=1
             elif self.PolMode=="IDiag":
                 #n4vis=self.DicoData["data_flat"].size
-                self.K_XX=self.KernelMat[0]
-                self.K_YY=self.KernelMat[1]
+                self.K_XX_AllChan=self.KernelMat_AllChan[0]
+                self.K_YY_AllChan=self.KernelMat_AllChan[1]
                 #self.n4vis=n4vis
                 self.NJacobBlocks_X=2
                 self.NJacobBlocks_Y=1
@@ -943,15 +939,16 @@ class ClassJacobianAntenna():
 
         T.timeit("stuff 2")
         # GiveArray(Name)
-        n4vis=self.DicoData["data_flat"].size/self.npolData
-        self.n4vis=n4vis
+        nchan_AllChan=self.DicoData["freqs_full"].size
+        n4vis_AllChan=nrows*nchan_AllChan
+        self.n4vis_AllChan=n4vis_AllChan
             
         if self.PolMode=="IFull":
             #self.K_XX=np.zeros((NDir,n4vis/nchan,nchan),np.complex64)
             #self.K_YY=np.zeros((NDir,n4vis/nchan,nchan),np.complex64)
-            self.KernelMat=NpShared.zeros(KernelSharedName,(2,NDir,n4vis/nchan,nchan),dtype=self.CType)
-            self.K_XX=self.KernelMat[0]
-            self.K_YY=self.KernelMat[1]
+            self.KernelMat_AllChan=NpShared.zeros(KernelSharedName,(2,NDir,n4vis_AllChan/nchan_AllChan,nchan_AllChan),dtype=self.CType)
+            self.K_XX_AllChan=self.KernelMat_AllChan[0]
+            self.K_YY_AllChan=self.KernelMat_AllChan[1]
             # KernelMatrix=NpShared.zeros(KernelSharedName,(n4vis,NDir,2),dtype=np.complex64)
             self.NJacobBlocks_X=2
             self.NJacobBlocks_Y=2
@@ -959,19 +956,19 @@ class ClassJacobianAntenna():
             #n4vis=self.Data.size
             # KernelMatrix_XX=np.zeros((NDir,n4vis,nchan),np.complex64)
             # KernelMatrix=NpShared.zeros(KernelSharedName,(n4vis,NDir,1),dtype=np.complex64)
-            self.KernelMat=NpShared.zeros(KernelSharedName,(1,NDir,n4vis/nchan,nchan),dtype=self.CType)
-            self.K_XX=self.KernelMat[0]
-            self.K_YY=self.K_XX
+            self.KernelMat_AllChan=NpShared.zeros(KernelSharedName,(1,NDir,n4vis_AllChan/nchan_AllChan,nchan_AllChan),dtype=self.CType)
+            self.K_XX_AllChan=self.KernelMat_AllChan[0]
+            self.K_YY_AllChan=self.K_XX_AllChan
             self.NJacobBlocks_X=1
             self.NJacobBlocks_Y=1
         elif self.PolMode=="IDiag":
-            self.KernelMat=NpShared.zeros(KernelSharedName,(2,NDir,n4vis/nchan,nchan),dtype=self.CType)
-            self.K_XX=self.KernelMat[0]
-            self.K_YY=self.KernelMat[1]
+            self.KernelMat_AllChan=NpShared.zeros(KernelSharedName,(2,NDir,n4vis_AllChan/nchan_AllChan,nchan_AllChan),dtype=self.CType)
+            self.K_XX_AllChan=self.KernelMat_AllChan[0]
+            self.K_YY_AllChan=self.KernelMat_AllChan[1]
             self.NJacobBlocks_X=2
             self.NJacobBlocks_Y=1
         T.timeit("stuff 3")
-
+            
         #self.Data=self.Data.reshape((nrows,nchan,self.NJacobBlocks,self.NJacobBlocks))
 
         #self.K_XX=[]
@@ -1012,9 +1009,7 @@ class ClassJacobianAntenna():
             #K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir)#,ApplyTimeJones=ApplyTimeJones)
             #K*=-1
             T.timeit("Calc K0")
-            indRow,indChan=np.where(np.all((K==0),axis=-1))
-            self.DicoData["flags"][indRow,indChan,:]=1
-            T.timeit("Calc K1")
+
 
                 #gc.collect()
                 #print gc.garbage
@@ -1035,8 +1030,8 @@ class ClassJacobianAntenna():
                 K_XX=(K_XX+K_YY)/2.
                 K_YY=K_XX
 
-            self.K_XX[iDir,:,:]=K_XX
-            self.K_YY[iDir,:,:]=K_YY
+            self.K_XX_AllChan[iDir,:,:]=K_XX
+            self.K_YY_AllChan[iDir,:,:]=K_YY
             #self.K_XX.append(K_XX)
             #self.K_YY.append(K_YY)
 
@@ -1093,21 +1088,35 @@ class ClassJacobianAntenna():
         # #     del(K,K_XX,K_YY)
 
 
-        DicoData=self.DicoData
-        nr,nch,_=K.shape
-        flags_flat=np.rollaxis(DicoData["flags"],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
-        DicoData["flags_flat"][flags_flat]=1
+
+        # 
 
         #stop
         #gc.collect()
         self.HasKernelMatrix=True
         T.timeit("stuff 4")
 
+    def SelectChannelKernelMat(self):
+        self.K_XX=self.K_XX_AllChan[:,:,self.ch0:self.ch1]
+        self.K_YY=self.K_YY_AllChan[:,:,self.ch0:self.ch1]
+        NDir=self.SM.NDir
+        for iDir in range(NDir):
+            
+            K=self.K_XX[iDir,:,:]
+
+            indRow,indChan=np.where(K==0)
+            self.DicoData["flags"][indRow,indChan,:]=1
+        DicoData=self.DicoData
+        nr,nch=K.shape
+        flags_flat=np.rollaxis(DicoData["flags"],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
+        DicoData["flags_flat"][flags_flat]=1
+
+
 
     def GiveData(self,DATA,iAnt,rms=0.):
         
         DicoData=NpShared.SharedToDico(self.SharedDataDicoName)
-
+        
         if DicoData==None:
             #print "COMPUTE DATA"
             DicoData={}
@@ -1269,6 +1278,16 @@ class ClassJacobianAntenna():
         # DicoData["flags"] = np.concatenate([DATA['flags'][ind0]])
         # DicoData["freqs"]   = DATA['freqs']
 
+        self.DataAllFlagged=False
+        NP,_=DicoData["flags_flat"].shape
+        for ipol in range(NP):
+            f=(DicoData["flags_flat"][ipol]==0)
+            ind=np.where(f)[0]
+            if ind.size==0:
+                self.DataAllFlagged=True
+
+        DicoData["freqs_full"]   = self.DATA['freqs']
+        DicoData["dfreqs_full"]   = self.DATA['dfreqs']
 
         return DicoData
 
