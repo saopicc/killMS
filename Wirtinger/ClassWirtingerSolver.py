@@ -448,7 +448,7 @@ class ClassWirtingerSolver():
             ThisTime=tm
             T.timeit("stuff")
             for (iAnt,iChanSol) in ItP(ListAntSolve,range(self.VS.NChanJones)):
-                print iAnt,iChanSol
+                #print iAnt,iChanSol
                 ch0,ch1=self.VS.JonesToVisChanMapping[iChanSol]
                 JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Precision="S",IdSharedMem=self.IdSharedMem,GD=self.GD,
                                         ChanSel=(ch0,ch1),
@@ -473,9 +473,9 @@ class ClassWirtingerSolver():
                     self.evP[iChanSol,iAnt]=JM.CalcMatrixEvolveCov(self.G[iChanSol],self.P[iChanSol],self.rms)
 
             T.timeit("Evolve")
-            
+            #print
             for iChanSol in range(self.VS.NChanJones):
-
+                #print
                 # Reset Data
                 NpShared.DelAll("%sDicoData"%self.IdSharedMem)
 
@@ -516,7 +516,8 @@ class ClassWirtingerSolver():
                             Pnew[iChanSol,iAnt]=P
     
                         Gnew[iChanSol,iAnt]=x
-                        T.timeit("SolveAnt %i"%iAnt)
+                        T.timeit("  SolveAnt %i [%i->%i]"%(iAnt,JM.ch0,JM.ch1))
+                        
                 
 
                 pylab.figure(1)
@@ -571,8 +572,6 @@ class ClassWirtingerSolver():
         import time
         
         
-        T=ClassTimeIt.ClassTimeIt("ClassWirtinger")
-        T.disable()
                     
 
 
@@ -604,6 +603,8 @@ class ClassWirtingerSolver():
         NDone=0
         iiCount=0
         while True:
+            T=ClassTimeIt.ClassTimeIt("ClassWirtinger DATA[%4.4i]"%NDone)
+            #T.disable()
             T.reinit()
             self.pBarProgress=NDone,float(nt)
             Res=self.setNextData()
@@ -696,6 +697,9 @@ class ClassWirtingerSolver():
                         if rmsFromData!=None:
                             rmsFromDataList.append(rmsFromData)
                         
+                        T.timeit("[%i,%i] get"%(LMIter,iAnt))
+                        "TIMING DIFFERS BETWEEN SINGLE AND PARALLEL_NCPU=1"
+                        stop
                         #T.timeit("result_queue.get()")
                         self.G[iChanSol,iAnt][:]=G[:]
                         if type(P)!=type(None):
@@ -741,7 +745,7 @@ class ClassWirtingerSolver():
                             #print sig
                         
 
-                    T.timeit("getResult")
+                    T.timeit("[%i] OneIter"%LMIter)
                     if len(rmsFromDataList)>0:
                         self.rmsFromData=np.min(rmsFromDataList)
                     iResult=0
@@ -782,7 +786,7 @@ class ClassWirtingerSolver():
                         pylab.pause(0.1)
     
     
-                    T.timeit("Plot")
+                    T.timeit("[%i] Plot"%LMIter)
 
 
 
@@ -902,7 +906,7 @@ class WorkerAntennaLM(multiprocessing.Process):
             ch0,ch1=self.JonesToVisChanMapping[iChanSol]
 
             T0=time.time()
-            T=ClassTimeIt.ClassTimeIt("Worker Ant=%2.2i"%iAnt)
+            T=ClassTimeIt.ClassTimeIt("  Worker Ant=%2.2i"%iAnt)
             T.disable()
             # if DoCalcEvP:
             #     T.disable()
@@ -922,7 +926,12 @@ class WorkerAntennaLM(multiprocessing.Process):
 
             if self.SolverType=="CohJones":
                 x,_,InfoNoise=JM.doLMStep(G[iChanSol])
-                if DoFullPredict: JM.PredictOrigFormat(G[iChanSol])
+                T.timeit("LM")
+                if DoFullPredict: 
+                    JM.PredictOrigFormat(G[iChanSol])
+                    T.timeit("FullPredict")
+
+
                 self.result_queue.put([iAnt,iChanSol,x,None,None,InfoNoise,0.])
 
             elif self.SolverType=="KAFCA":

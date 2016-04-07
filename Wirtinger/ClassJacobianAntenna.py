@@ -117,7 +117,7 @@ def testLM():
 class ClassJacobianAntenna():
     def __init__(self,SM,iAnt,PolMode="IFull",Precision="S",PrecisionDot="D",IdSharedMem="",
                  PM=None,GD=None,NChanSols=1,ChanSel=None,**kwargs):
-        T=ClassTimeIt.ClassTimeIt("ClassJacobianAntenna")
+        T=ClassTimeIt.ClassTimeIt("  InitClassJacobianAntenna")
         T.disable()
 
         self.ChanSel=ChanSel
@@ -131,7 +131,7 @@ class ClassJacobianAntenna():
             setattr(self,key,kwargs[key])
         self.PM=PM
         self.SM=SM
-        
+        T.timeit("Init0")
         if PM==None:
             self.PM=ClassPredict(Precision=Precision,DoSmearing=self.DoSmearing,IdMemShared=IdSharedMem)
             if self.GD["ImageSkyModel"]["BaseImageName"]!="":
@@ -152,8 +152,6 @@ class ClassJacobianAntenna():
 
         self.iAnt=iAnt
         self.SharedDataDicoName="%sDicoData.%2.2i"%(self.IdSharedMem,self.iAnt)
-        self.HasKernelMatrix=False
-        self.LQxInv=None
         self.NChanSols=NChanSols
         
         if self.PolMode=="IFull":
@@ -171,9 +169,13 @@ class ClassJacobianAntenna():
             self.NJacobBlocks_Y=1
             self.npolData=2
         
-        
+        self.Reinit()
         T.timeit("rest")
-    
+
+    def Reinit(self):
+        self.HasKernelMatrix=False
+        self.LQxInv=None
+
     def GiveSubVecGainAnt(self,GainsIn):
         # if (GainsIn.size==self.NDir*2*2): return GainsIn.copy()
         Gains=GainsIn.copy().reshape((self.na,self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y))[self.iAnt]
@@ -189,8 +191,8 @@ class ClassJacobianAntenna():
         #     key=SharedNames.split(".")[1]
         #     self.DATA[key]=NpShared.GiveArray(SharedName)
 
-        T=ClassTimeIt.ClassTimeIt("setDATA_Shared")
-        T.disable()
+        T=ClassTimeIt.ClassTimeIt("  setDATA_Shared")
+        #T.disable()
         
         self.DATA=NpShared.SharedToDico("%sSharedVis"%self.IdSharedMem)
         _,self.NChanMS,_=self.DATA["data"].shape
@@ -486,6 +488,7 @@ class ClassJacobianAntenna():
     def CalcMatrixEvolveCov(self,Gains,P,rms):
         if not(self.HasKernelMatrix):
             self.CalcKernelMatrix(rms)
+            self.SelectChannelKernelMat()
         if self.LQxInv==None:
             self.setQxInvPol()
 #            self.CalcKernelMatrix(rms)
@@ -724,6 +727,7 @@ class ClassJacobianAntenna():
         return z
 
     def PredictOrigFormat(self,Gains):
+        #print "    COMPUTE PredictOrigFormat"
 
         Ga=self.GiveSubVecGainAnt(Gains)
 
@@ -934,7 +938,7 @@ class ClassJacobianAntenna():
             #print "Kernel From shared"
             return
         else:
-#            print "COMPUTE KERNEL"
+            print "    COMPUTE KERNEL"
             pass
 
         T.timeit("stuff 2")
@@ -1118,7 +1122,7 @@ class ClassJacobianAntenna():
         DicoData=NpShared.SharedToDico(self.SharedDataDicoName)
         
         if DicoData==None:
-#            print "COMPUTE DATA"
+            print "     COMPUTE DATA"
             DicoData={}
             ind0=np.where(DATA['A0']==iAnt)[0]
             ind1=np.where(DATA['A1']==iAnt)[0]

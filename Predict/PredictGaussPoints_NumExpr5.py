@@ -55,14 +55,18 @@ class ClassPredict():
         self.DoSmearing=DoSmearing
         self.IdSharedMem=IdMemShared
         
+        Np=2
+        if self.DoSmearing!=0:
+            if not(("F" in DoSmearing)or("T" in DoSmearing)): Np=100000
+
         if LExp==None:
-            x=np.linspace(0.,10,100000)
+            x=np.linspace(0.,10,Np)
             Exp=np.float32(np.exp(-x))
             LExp=[Exp,x[1]-x[0]]
         self.LExp=LExp
 
         if LSinc==None:
-            x=np.linspace(0.,10,100000)
+            x=np.linspace(0.,10,Np)
             Sinc=np.zeros(x.shape,np.float32)
             Sinc[0]=1.
             Sinc[1::]=np.sin(x[1::])/(x[1::])
