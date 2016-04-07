@@ -934,8 +934,8 @@ class ClassJacobianAntenna():
             #print "Kernel From shared"
             return
         else:
+#            print "COMPUTE KERNEL"
             pass
-            #print "COMPUTE KERNEL"
 
         T.timeit("stuff 2")
         # GiveArray(Name)
@@ -1118,7 +1118,7 @@ class ClassJacobianAntenna():
         DicoData=NpShared.SharedToDico(self.SharedDataDicoName)
         
         if DicoData==None:
-            #print "COMPUTE DATA"
+#            print "COMPUTE DATA"
             DicoData={}
             ind0=np.where(DATA['A0']==iAnt)[0]
             ind1=np.where(DATA['A1']==iAnt)[0]
