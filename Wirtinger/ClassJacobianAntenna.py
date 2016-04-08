@@ -116,12 +116,16 @@ def testLM():
 
 class ClassJacobianAntenna():
     def __init__(self,SM,iAnt,PolMode="IFull",Precision="S",PrecisionDot="D",IdSharedMem="",
-                 PM=None,GD=None,NChanSols=1,ChanSel=None,**kwargs):
+                 PM=None,GD=None,NChanSols=1,ChanSel=None,
+                 SharedDicoDescriptors=None,
+                 **kwargs):
         T=ClassTimeIt.ClassTimeIt("  InitClassJacobianAntenna")
         T.disable()
 
         self.ChanSel=ChanSel
-
+        self.SharedVis_Descriptor=SharedDicoDescriptors["SharedVis"]
+        self.PreApplyJones_Descriptor=SharedDicoDescriptors["PreApplyJones"]
+        self.SharedAntennaVis_Descriptor=SharedDicoDescriptors["SharedAntennaVis"]
         self.GD=GD
         self.IdSharedMem=IdSharedMem
         self.PolMode=PolMode
@@ -192,9 +196,12 @@ class ClassJacobianAntenna():
         #     self.DATA[key]=NpShared.GiveArray(SharedName)
 
         T=ClassTimeIt.ClassTimeIt("  setDATA_Shared")
-        T.disable()
+        #T.disable()
         
-        self.DATA=NpShared.SharedToDico("%sSharedVis"%self.IdSharedMem)
+        #self.DATA=NpShared.SharedToDico("%sSharedVis"%self.IdSharedMem)
+        self.DATA=NpShared.SharedObjectToDico(self.SharedVis_Descriptor)
+
+
         _,self.NChanMS,_=self.DATA["data"].shape
         if self.ChanSel==None:
             self.ch0=0
@@ -204,7 +211,9 @@ class ClassJacobianAntenna():
         self.NChanData=self.ch1-self.ch0
 
         T.timeit("SharedToDico0")
-        DicoBeam=NpShared.SharedToDico("%sPreApplyJones"%self.IdSharedMem)
+        #DicoBeam=NpShared.SharedToDico("%sPreApplyJones"%self.IdSharedMem)
+        DicoBeam=NpShared.SharedObjectToDico(self.PreApplyJones_Descriptor)
+        
         T.timeit("SharedToDico1")
         if DicoBeam!=None:
             self.DATA["DicoPreApplyJones"]=DicoBeam

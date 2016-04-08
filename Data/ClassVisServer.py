@@ -344,14 +344,18 @@ class ClassVisServer():
         #stop
 
 
-        if self.VisInSharedMem:
-            self.ClearSharedMemory()
-            DATA=self.PutInShared(DATA)
-            DATA["A0A1"]=(DATA["A0"],DATA["A1"])
+        self.ClearSharedMemory()
+        DATA=self.PutInShared(DATA)
 
+        self.SharedVis_Descriptor=NpShared.SharedDicoDescriptor(self.PrefixShared,DATA)
 
+        DATA["A0A1"]=(DATA["A0"],DATA["A1"])
+
+        self.PreApplyJones_Descriptor=None
         if "PreApplyJones" in D.keys():
             NpShared.DicoToShared("%sPreApplyJones"%self.IdSharedMem,D["PreApplyJones"])
+
+            self.PreApplyJones_Descriptor=NpShared.SharedDicoDescriptor(self.PrefixShared,D["PreApplyJones"])
 
         #it0=np.min(DATA["IndexTimesThisChunk"])
         #it1=np.max(DATA["IndexTimesThisChunk"])+1
@@ -842,7 +846,7 @@ class ClassVisServer():
         DicoOut={}
         for key in Dico.keys():
             if type(Dico[key])!=np.ndarray: continue
-            #print "%s.%s"%(self.PrefixShared,key)
+            print "%s.%s"%(self.PrefixShared,key)
             Shared=NpShared.ToShared("%s.%s"%(self.PrefixShared,key),Dico[key])
             DicoOut[key]=Shared
             self.SharedNames.append("%s.%s"%(self.PrefixShared,key))

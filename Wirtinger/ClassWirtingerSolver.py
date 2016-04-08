@@ -643,8 +643,8 @@ class ClassWirtingerSolver():
                 NIter=self.NIter
 
 
-            #print "!!!!!!!!!!!!!!!!!!!!!!!!!"
-            #NIter=1
+            print "!!!!!!!!!!!!!!!!!!!!!!!!!"
+            NIter=1
 
 
             Gold=self.G.copy()
@@ -695,7 +695,13 @@ class ClassWirtingerSolver():
                         
                     #print LMIter,NIter,DoFullPredict
                     for iAnt in SortedWListAntSolve:
-                        work_queue.put((iAnt,iChanSol,DoCalcEvP,tm,self.rms,DoEvP,DoFullPredict))
+                        SharedDicoDescriptors={"SharedVis":self.VS.SharedVis_Descriptor,
+                                               "PreApplyJones":self.VS.PreApplyJones_Descriptor,
+                                               "SharedAntennaVis":None}
+                        work_queue.put((iAnt,iChanSol,DoCalcEvP,tm,self.rms,DoEvP,DoFullPredict,
+                                        SharedDicoDescriptors))
+                        #work_queue.put((iAnt,iChanSol,DoCalcEvP,tm,self.rms,DoEvP,DoFullPredict,
+                        #                self.VS.SharedVisDescriptor,self.VS.PreApplyJones))
      
                     T.timeit("put in queue")
                     rmsFromDataList=[]
@@ -861,7 +867,8 @@ from killMS2.Predict.PredictGaussPoints_NumExpr5 import ClassPredict
 class WorkerAntennaLM(multiprocessing.Process):
     def __init__(self,
                  work_queue,
-                 result_queue,SM,PolMode,SolverType,IdSharedMem,ConfigJacobianAntenna=None,GD=None,JonesToVisChanMapping=None):
+                 result_queue,SM,PolMode,SolverType,IdSharedMem,ConfigJacobianAntenna=None,
+                 GD=None,JonesToVisChanMapping=None):
         multiprocessing.Process.__init__(self)
         self.work_queue = work_queue
         self.result_queue = result_queue
@@ -906,7 +913,7 @@ class WorkerAntennaLM(multiprocessing.Process):
 
         while not self.kill_received:
             try:
-                iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict = self.work_queue.get()
+                iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get()
             except:
                 break
             #self.e.wait()
@@ -915,11 +922,15 @@ class WorkerAntennaLM(multiprocessing.Process):
 
             T0=time.time()
             T=ClassTimeIt.ClassTimeIt("  Worker Ant=%2.2i"%iAnt)
-            T.disable()
+            # T.disable()
             # if DoCalcEvP:
             #     T.disable()
+            print SharedDicoDescriptors
+
+
             JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,PM=self.PM,IdSharedMem=self.IdSharedMem,GD=self.GD,
                                     ChanSel=(ch0,ch1),
+                                    SharedDicoDescriptors=SharedDicoDescriptors,
                                     **dict(self.ConfigJacobianAntenna))
             T.timeit("ClassJacobianAntenna")
             JM.setDATA_Shared()
