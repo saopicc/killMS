@@ -192,7 +192,7 @@ class ClassJacobianAntenna():
         #     self.DATA[key]=NpShared.GiveArray(SharedName)
 
         T=ClassTimeIt.ClassTimeIt("  setDATA_Shared")
-        #T.disable()
+        T.disable()
         
         self.DATA=NpShared.SharedToDico("%sSharedVis"%self.IdSharedMem)
         _,self.NChanMS,_=self.DATA["data"].shape
@@ -938,7 +938,7 @@ class ClassJacobianAntenna():
             #print "Kernel From shared"
             return
         else:
-            print "    COMPUTE KERNEL"
+            #print "    COMPUTE KERNEL"
             pass
 
         T.timeit("stuff 2")
@@ -1122,7 +1122,7 @@ class ClassJacobianAntenna():
         DicoData=NpShared.SharedToDico(self.SharedDataDicoName)
         
         if DicoData==None:
-            print "     COMPUTE DATA"
+            #print "     COMPUTE DATA"
             DicoData={}
             ind0=np.where(DATA['A0']==iAnt)[0]
             ind1=np.where(DATA['A1']==iAnt)[0]

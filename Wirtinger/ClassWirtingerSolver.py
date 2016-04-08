@@ -420,7 +420,7 @@ class ClassWirtingerSolver():
         self.pBAR.render(0, '%4i/%i' % (0,nt))
 
         T=ClassTimeIt.ClassTimeIt("WirtingerSolver")
-        T.disable()
+        #T.disable()
 
         iiCount=0
         while True:
@@ -428,9 +428,9 @@ class ClassWirtingerSolver():
             NDone+=1
             T.reinit()
 
-            print
-            print "zeros=",np.count_nonzero(NpShared.GiveArray("%sPredictedData"%self.IdSharedMem))
-            print
+            #print
+            #print "zeros=",np.count_nonzero(NpShared.GiveArray("%sPredictedData"%self.IdSharedMem))
+            #print
             Res=self.setNextData()
             if Res=="EndChunk": break
             T.timeit("read data")
@@ -488,7 +488,10 @@ class ClassWirtingerSolver():
                         if self.SolverType=="CohJones":
                             
                             x,_,_=JM.doLMStep(self.G[iChanSol])
-                            if i==self.NIter-1: JM.PredictOrigFormat(self.G[iChanSol])
+                            T.timeit("LMStep")
+                            if i==self.NIter-1: 
+                                JM.PredictOrigFormat(self.G[iChanSol])
+                                T.timeit("PredictOrig")
                         if self.SolverType=="KAFCA":
 
                             EM=ClassModelEvolution(iAnt,iChanSol,
@@ -499,7 +502,6 @@ class ClassWirtingerSolver():
                                                    sigQ=0.01,IdSharedMem=self.IdSharedMem)
     
                             x,P,_=JM.doEKFStep(self.G[iChanSol],self.P[iChanSol],self.evP[iChanSol],self.rms)
-
                             if i==self.NIter-1: JM.PredictOrigFormat(self.G[iChanSol])
                             
                             xe=None
@@ -604,7 +606,7 @@ class ClassWirtingerSolver():
         iiCount=0
         while True:
             T=ClassTimeIt.ClassTimeIt("ClassWirtinger DATA[%4.4i]"%NDone)
-            #T.disable()
+            T.disable()
             T.reinit()
             self.pBarProgress=NDone,float(nt)
             Res=self.setNextData()
@@ -641,6 +643,10 @@ class ClassWirtingerSolver():
                 NIter=self.NIter
 
 
+            #print "!!!!!!!!!!!!!!!!!!!!!!!!!"
+            #NIter=1
+
+
             Gold=self.G.copy()
             DoCalcEvP=False
             if (self.CounterEvolveP())&(self.SolverType=="KAFCA")&(self.iCurrentSol>self.EvolvePStepStart):
@@ -649,6 +655,19 @@ class ClassWirtingerSolver():
                 DoCalcEvP=True
 
             T.timeit("before iterloop")
+            u,v,w=self.DATA["uvw"].T
+            A0=self.DATA["A0"]
+            A1=self.DATA["A1"]
+            meanW=np.zeros((self.VS.MS.na,),np.float32)
+            for iAntMS in ListAntSolve:
+                ind=np.where((A0==iAntMS)|(A1==iAntMS))[0]
+                meanW[iAntMS]=np.mean(np.abs(w[ind]))
+            meanW=meanW[ListAntSolve]
+            indOrderW=np.argsort(meanW)[::-1]
+            SortedWListAntSolve=(np.array(ListAntSolve)[indOrderW]).tolist()
+            #print indOrderW
+
+
             for iChanSol in range(self.VS.NChanJones):
                 # Reset Data
                 NpShared.DelAll("%sDicoData"%self.IdSharedMem)
@@ -674,18 +693,7 @@ class ClassWirtingerSolver():
                     if LMIter==(NIter-1):
                         DoFullPredict=True
                         
-                    u,v,w=self.DATA["uvw"].T
-                    A0=self.DATA["A0"]
-                    A1=self.DATA["A1"]
-                    meanW=np.zeros((self.VS.MS.na,),np.float32)
-                    for iAntMS in ListAntSolve:
-                        ind=np.where((A0==iAntMS)|(A1==iAntMS))[0]
-                        meanW[iAntMS]=np.mean(np.abs(w[ind]))
-                    meanW=meanW[ListAntSolve]
-                    indOrderW=np.argsort(meanW)[::-1]
-                    SortedWListAntSolve=(np.array(ListAntSolve)[indOrderW]).tolist()
-                    #print indOrderW
-    
+                    #print LMIter,NIter,DoFullPredict
                     for iAnt in SortedWListAntSolve:
                         work_queue.put((iAnt,iChanSol,DoCalcEvP,tm,self.rms,DoEvP,DoFullPredict))
      
@@ -698,8 +706,8 @@ class ClassWirtingerSolver():
                             rmsFromDataList.append(rmsFromData)
                         
                         T.timeit("[%i,%i] get"%(LMIter,iAnt))
-                        "TIMING DIFFERS BETWEEN SINGLE AND PARALLEL_NCPU=1"
-                        stop
+                        #"TIMING DIFFERS BETWEEN SINGLE AND PARALLEL_NCPU=1"
+                        #stop
                         #T.timeit("result_queue.get()")
                         self.G[iChanSol,iAnt][:]=G[:]
                         if type(P)!=type(None):

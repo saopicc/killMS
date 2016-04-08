@@ -52,6 +52,7 @@ def GiveArray(Name):
 
 def DicoToShared(Prefix,Dico,DelInput=False):
     DicoOut={}
+    
     print>>log, ModColor.Str("DicoToShared: start [prefix = %s]"%Prefix)
     for key in Dico.keys():
         if type(Dico[key])!=np.ndarray: continue
