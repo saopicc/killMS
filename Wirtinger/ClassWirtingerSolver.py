@@ -452,8 +452,14 @@ class ClassWirtingerSolver():
             for (iAnt,iChanSol) in ItP(ListAntSolve,range(self.VS.NChanJones)):
                 #print iAnt,iChanSol
                 ch0,ch1=self.VS.JonesToVisChanMapping[iChanSol]
+                SharedDicoDescriptors={"SharedVis":self.VS.SharedVis_Descriptor,
+                                       "PreApplyJones":self.VS.PreApplyJones_Descriptor,
+                                       "SharedAntennaVis":None,
+                                       "DicoClusterDirs":self.VS.DicoClusterDirs_Descriptor}
+
                 JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Precision="S",IdSharedMem=self.IdSharedMem,GD=self.GD,
                                         ChanSel=(ch0,ch1),
+                                        SharedDicoDescriptors=SharedDicoDescriptors,
                                         **self.ConfigJacobianAntenna)
                 T.timeit("JM")
                 JM.setDATA_Shared()
@@ -476,6 +482,7 @@ class ClassWirtingerSolver():
 
             T.timeit("Evolve")
             #print
+            Dico_SharedDicoDescriptors={}
             for iChanSol in range(self.VS.NChanJones):
                 #print
                 # Reset Data
@@ -487,6 +494,9 @@ class ClassWirtingerSolver():
                         Pnew=self.P.copy()
                     for iAnt in ListAntSolve:
                         JM=self.DicoJM[(iAnt,iChanSol)]
+                        if i!=0:
+                            JM.SharedDicoDescriptors["SharedAntennaVis"]=Dico_SharedDicoDescriptors[iAnt]
+                        
                         if self.SolverType=="CohJones":
                             
                             x,_,_=JM.doLMStep(self.G[iChanSol])
@@ -519,25 +529,36 @@ class ClassWirtingerSolver():
     
                             Pnew[iChanSol,iAnt]=P
     
+                        Dico_SharedDicoDescriptors[iAnt]=JM.SharedDicoDescriptors["SharedAntennaVis"]
                         Gnew[iChanSol,iAnt]=x
                         T.timeit("  SolveAnt %i [%i->%i]"%(iAnt,JM.ch0,JM.ch1))
-                        
                 
+                    pylab.figure(1)
+                    pylab.clf()
+                    pylab.plot(np.abs(Gnew[iChanSol].flatten()))
+                    pylab.plot(np.abs(self.G[iChanSol].flatten()))
+                    pylab.title("Channel=%i"%iChanSol)
+                    pylab.ylim(0,2)
+                    pylab.draw()
+                    pylab.show(False)
+                    self.G[iChanSol]=Gnew[iChanSol]
 
-                pylab.figure(1)
-                pylab.clf()
-                pylab.plot(np.abs(Gnew.flatten()))
-                if self.SolverType=="KAFCA":
-                    sig=np.sqrt(np.array([np.diag(Pnew[iChanSol,iAnt]) for iAnt in range(self.VS.MS.na)]).flatten())
-                    pylab.plot(np.abs(Gnew[iChanSol].flatten())+sig,color="black",ls="--")
-                    pylab.plot(np.abs(Gnew[iChanSol].flatten())-sig,color="black",ls="--")
-                    self.P[:]=Pnew[:]
-                pylab.plot(np.abs(self.G[iChanSol].flatten()))
-                pylab.ylim(0,2)
-                pylab.draw()
-                pylab.show(False)
-                self.G[:]=Gnew[:]
 
+                # pylab.figure(1)
+                # pylab.clf()
+                # pylab.plot(np.abs(Gnew[iChanSol].flatten()))
+                # if self.SolverType=="KAFCA":
+                #     sig=np.sqrt(np.array([np.diag(Pnew[iChanSol,iAnt]) for iAnt in range(self.VS.MS.na)]).flatten())
+                #     pylab.plot(np.abs(Gnew[iChanSol].flatten())+sig,color="black",ls="--")
+                #     pylab.plot(np.abs(Gnew[iChanSol].flatten())-sig,color="black",ls="--")
+                #     self.P[:]=Pnew[:]
+                # pylab.plot(np.abs(self.G[iChanSol].flatten()))
+                # pylab.ylim(0,2)
+                # pylab.draw()
+                # pylab.show(False)
+                # self.G[:]=Gnew[:]
+
+                JM.SharedDicoDescriptors["SharedAntennaVis"]=None
                 T.timeit("Plot")
 
 
@@ -754,7 +775,10 @@ class ClassWirtingerSolver():
                             #self.Q[iAnt]=(kapaW**2)*self.Q_Init[iAnt]
                             #print kapaW
                             self.Q[iChanSol,iAnt][:]=(kapaW)*self.Q_Init[iChanSol,iAnt][:]
-                            #print kapaW,self.Q[iChanSol,iAnt],self.Q_Init[iChanSol,iAnt]
+                            # print kapaW
+                            # print self.Q[iChanSol,iAnt]
+                            # print self.Q_Init[iChanSol,iAnt]
+                            # print
 
                             # self.Q[iAnt][:]=(kapaW)**2*self.Q_Init[iAnt][:]*1e6
                             # QQ=NpShared.FromShared("%sSharedCovariance_Q"%self.IdSharedMem)[iAnt]
@@ -963,7 +987,7 @@ class WorkerAntennaLM(multiprocessing.Process):
                     T.timeit("FullPredict")
 
 
-                self.result_queue.put([iAnt,iChanSol,x,None,None,InfoNoise,0.,JM.SharedAntennaVis_Descriptor])
+                self.result_queue.put([iAnt,iChanSol,x,None,None,InfoNoise,0.,JM.SharedDicoDescriptors["SharedAntennaVis"]])
 
             elif self.SolverType=="KAFCA":
                 #T.disable()
@@ -1010,4 +1034,4 @@ class WorkerAntennaLM(multiprocessing.Process):
                     Pout=Pa
 
                 DT=time.time()-T0
-                self.result_queue.put([iAnt,iChanSol,x,Pout,rmsFromData,InfoNoise,DT,JM.SharedAntennaVis_Descriptor])
+                self.result_queue.put([iAnt,iChanSol,x,Pout,rmsFromData,InfoNoise,DT,JM.SharedDicoDescriptors["SharedAntennaVis"]])
