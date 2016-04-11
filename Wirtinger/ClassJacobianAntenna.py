@@ -209,6 +209,8 @@ class ClassJacobianAntenna():
             self.ch1=self.NChanMS
         else:
             self.ch0,self.ch1=self.ChanSel
+
+        
         self.NChanData=self.ch1-self.ch0
 
         T.timeit("SharedToDico0")
@@ -1112,8 +1114,13 @@ class ClassJacobianAntenna():
         T.timeit("stuff 4")
 
     def SelectChannelKernelMat(self):
+
         self.K_XX=self.K_XX_AllChan[:,:,self.ch0:self.ch1]
         self.K_YY=self.K_YY_AllChan[:,:,self.ch0:self.ch1]
+
+        
+
+
         NDir=self.SM.NDir
         for iDir in range(NDir):
             

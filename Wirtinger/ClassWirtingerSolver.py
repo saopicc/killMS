@@ -211,8 +211,8 @@ class ClassWirtingerSolver():
         _,_,_,npolx,npoly=self.G.shape
 
 
-        # print "!!!!!!!!!!"
-        # self.G+=np.random.randn(*self.G.shape)*.1#sigP
+        #print "!!!!!!!!!!"
+        self.G+=np.random.randn(*self.G.shape)*.1#sigP
         
         NSols=np.max([1,int(1.5*round(self.VS.MS.DTh/(self.VS.TVisSizeMin/60.)))])
 
@@ -249,11 +249,12 @@ class ClassWirtingerSolver():
 
         self.G=NpShared.ToShared("%sSharedGains"%self.IdSharedMem,self.G)
         self.G0Iter=NpShared.ToShared("%sSharedGains0Iter"%self.IdSharedMem,self.G.copy())
-        self.InitCovariance()
+        #self.InitCovariance()
 
     def InitCovariance(self,FromG=False,sigP=0.1,sigQ=0.01):
         if self.SolverType!="KAFCA": return
         if self.Q!=None: return
+
         na=self.VS.MS.na
         nd=self.SM.NDir
         nChan=self.VS.NChanJones
@@ -327,6 +328,7 @@ class ClassWirtingerSolver():
         self.P=NpShared.ToShared("%sSharedCovariance"%self.IdSharedMem,self.P)
         self.Q=NpShared.ToShared("%sSharedCovariance_Q"%self.IdSharedMem,Q)
         self.Q_Init=self.Q.copy()
+
         self.evP=NpShared.ToShared("%sSharedEvolveCovariance"%self.IdSharedMem,self.evP)
         nbuff=10
 
@@ -369,7 +371,7 @@ class ClassWirtingerSolver():
         else:
             stop
 
-
+        
         #print "rms=",self.rms
 
         return True
@@ -750,9 +752,10 @@ class ClassWirtingerSolver():
                             expW/=np.sum(expW)
                             kapaW=np.sum(expW*np.array(TraceResidList))
                             #self.Q[iAnt]=(kapaW**2)*self.Q_Init[iAnt]
-    
+                            #print kapaW
                             self.Q[iChanSol,iAnt][:]=(kapaW)*self.Q_Init[iChanSol,iAnt][:]
-    
+                            #print kapaW,self.Q[iChanSol,iAnt],self.Q_Init[iChanSol,iAnt]
+
                             # self.Q[iAnt][:]=(kapaW)**2*self.Q_Init[iAnt][:]*1e6
                             # QQ=NpShared.FromShared("%sSharedCovariance_Q"%self.IdSharedMem)[iAnt]
                             # print self.Q[iAnt]-QQ[iAnt]
@@ -798,7 +801,7 @@ class ClassWirtingerSolver():
     
                             pylab.plot(np.abs(self.G[iChanSol,AntPlot].flatten())+sig,color="black",ls="--")
                             pylab.plot(np.abs(self.G[iChanSol,AntPlot].flatten())-sig,color="black",ls="--")
-    
+                        pylab.title("Channel=%i"%iChanSol)
                         pylab.ylim(0,2)
                         pylab.draw()
                         pylab.show(False)

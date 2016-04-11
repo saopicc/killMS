@@ -100,16 +100,16 @@ class ClassSimul():
 
 
 
-        DeltaT_Amp=np.random.randn(na,nd)*60
-        period_Amp=120+np.random.randn(na,nd)*10
-        Amp_Mean=np.random.rand(na,nd)*2
-        Amp_Amp=np.random.randn(na,nd)*.1
+        DeltaT_Amp=np.random.randn(nch,na,nd)*60
+        period_Amp=120+np.random.randn(nch,na,nd)*10
+        Amp_Mean=np.random.rand(nch,na,nd)*2
+        Amp_Amp=np.random.randn(nch,na,nd)*.1
     
-        DeltaT_Phase=np.random.randn(na,nd)*60
-        period_Phase=300+np.random.randn(na,nd)*10
+        DeltaT_Phase=np.random.randn(nch,na,nd)*60
+        period_Phase=300+np.random.randn(nch,na,nd)*10
         #period_Phase=np.random.randn(na,nd)*10
-        PhaseAbs=np.random.randn(na,nd)*np.pi
-        Amp_Phase=np.random.randn(na,nd)*np.pi#*0.1
+        PhaseAbs=np.random.randn(nch,na,nd)*np.pi
+        Amp_Phase=np.random.randn(nch,na,nd)*np.pi#*0.1
     
         #Amp_Amp=np.zeros((na,nd))
         PhaseAbs.fill(0)
@@ -122,32 +122,32 @@ class ClassSimul():
                     for iDir in range(nd):
                         t=Sols.tm[itime]
                         t0=Sols.tm[0]
-                        A=1.#Amp_Mean[iAnt,iDir]+Amp_Amp[iAnt,iDir]*np.sin(DeltaT_Amp[iAnt,iDir]+(t-t0)/period_Amp[iAnt,iDir])
-                        Phase=PhaseAbs[iAnt,iDir]+Amp_Phase[iAnt,iDir]*np.sin(DeltaT_Phase[iAnt,iDir]+(t-t0)/period_Phase[iAnt,iDir])
+                        A=Amp_Mean[ich,iAnt,iDir]+Amp_Amp[ich,iAnt,iDir]*np.sin(DeltaT_Amp[ich,iAnt,iDir]+(t-t0)/period_Amp[ich,iAnt,iDir])
+                        Phase=PhaseAbs[ich,iAnt,iDir]+Amp_Phase[ich,iAnt,iDir]*np.sin(DeltaT_Phase[ich,iAnt,iDir]+(t-t0)/period_Phase[ich,iAnt,iDir])
                         g0=A*np.exp(1j*Phase)
                         Sols.G[itime,ich,iAnt,iDir,0,0]=g0
                         #Sols.G[itime,iAnt,iDir,1,1]=g0
 
         ###############################
 
-        DeltaT_Amp=np.random.randn(na,nd)*60
-        period_Amp=120+np.random.randn(na,nd)*10
-        Amp_Amp=np.random.randn(na,nd)*.1
-        Amp_Mean=np.random.rand(na,nd)*2
+        DeltaT_Amp=np.random.randn(nch,na,nd)*60
+        period_Amp=120+np.random.randn(nch,na,nd)*10
+        Amp_Amp=np.random.randn(nch,na,nd)*.1
+        Amp_Mean=np.random.rand(nch,na,nd)*2
    
-        DeltaT_Phase=np.random.randn(na,nd)*60
-        period_Phase=300+np.random.randn(na,nd)*10
+        DeltaT_Phase=np.random.randn(nch,na,nd)*60
+        period_Phase=300+np.random.randn(nch,na,nd)*10
         #period_Phase=np.random.randn(na,nd)*10
-        PhaseAbs=np.random.randn(na,nd)*np.pi
-        Amp_Phase=np.random.randn(na,nd)*np.pi#*0.1
+        PhaseAbs=np.random.randn(nch,na,nd)*np.pi
+        Amp_Phase=np.random.randn(nch,na,nd)*np.pi#*0.1
     
         #Amp_Amp=np.zeros((na,nd))
         #PhaseAbs.fill(0)
         #Amp_Phase=np.zeros((na,nd))
     
-        print "!!!!!!!!!!!!!!!!!!!!! A=1"
-        print "!!!!!!!!!!!!!!!!!!!!! A=1"
-        print "!!!!!!!!!!!!!!!!!!!!! A=1"
+        #print "!!!!!!!!!!!!!!!!!!!!! A=1"
+        #print "!!!!!!!!!!!!!!!!!!!!! A=1"
+        #print "!!!!!!!!!!!!!!!!!!!!! A=1"
 
 
         for itime in range(0,NSols):
@@ -156,8 +156,8 @@ class ClassSimul():
                     for iDir in range(nd):
                         t=Sols.tm[itime]
                         t0=Sols.tm[0]
-                        A=1.#Amp_Mean[iAnt,iDir]+Amp_Amp[iAnt,iDir]*np.sin(DeltaT_Amp[iAnt,iDir]+(t-t0)/period_Amp[iAnt,iDir])
-                        Phase=PhaseAbs[iAnt,iDir]+Amp_Phase[iAnt,iDir]*np.sin(DeltaT_Phase[iAnt,iDir]+(t-t0)/period_Phase[iAnt,iDir])
+                        A=Amp_Mean[ich,iAnt,iDir]+Amp_Amp[ich,iAnt,iDir]*np.sin(DeltaT_Amp[ich,iAnt,iDir]+(t-t0)/period_Amp[ich,iAnt,iDir])
+                        Phase=PhaseAbs[ich,iAnt,iDir]+Amp_Phase[ich,iAnt,iDir]*np.sin(DeltaT_Phase[ich,iAnt,iDir]+(t-t0)/period_Phase[ich,iAnt,iDir])
                         g0=A*np.exp(1j*Phase)
                         Sols.G[itime,ich,iAnt,iDir,1,1]=g0
                         #Sols.G[itime,iAnt,iDir,1,1]=g0
@@ -168,8 +168,9 @@ class ClassSimul():
             Sols.G[itime,:,:,:,0,0]=Sols.G[-1,:,:,:,0,0]
             Sols.G[itime,:,:,:,1,1]=Sols.G[-1,:,:,:,1,1]
 
-        # Sols.G[:,:,:,0,0]=1
-        # Sols.G[:,:,:,1,1]=1
+        Sols.G.fill(0)
+        Sols.G[:,:,:,:,0,0]=1
+        Sols.G[:,:,:,:,1,1]=1
 
         return Sols
 
@@ -279,6 +280,10 @@ class ClassSimul():
             print "Done"
     
     
+        # #################"
+        # Multiple Channel
+        self.ChanMap=range(nch)
+        # #################"
     
         Jones["Beam"]=G
         Jones["BeamH"]=ModLinAlg.BatchH(G)
