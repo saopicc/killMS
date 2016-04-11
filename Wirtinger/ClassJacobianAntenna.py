@@ -126,6 +126,7 @@ class ClassJacobianAntenna():
         self.SharedVis_Descriptor=SharedDicoDescriptors["SharedVis"]
         self.PreApplyJones_Descriptor=SharedDicoDescriptors["PreApplyJones"]
         self.SharedAntennaVis_Descriptor=SharedDicoDescriptors["SharedAntennaVis"]
+        self.SharedDicoDescriptors=SharedDicoDescriptors
         self.GD=GD
         self.IdSharedMem=IdSharedMem
         self.PolMode=PolMode
@@ -196,7 +197,7 @@ class ClassJacobianAntenna():
         #     self.DATA[key]=NpShared.GiveArray(SharedName)
 
         T=ClassTimeIt.ClassTimeIt("  setDATA_Shared")
-        #T.disable()
+        T.disable()
         
         #self.DATA=NpShared.SharedToDico("%sSharedVis"%self.IdSharedMem)
         self.DATA=NpShared.SharedObjectToDico(self.SharedVis_Descriptor)
@@ -217,7 +218,8 @@ class ClassJacobianAntenna():
         T.timeit("SharedToDico1")
         if DicoBeam!=None:
             self.DATA["DicoPreApplyJones"]=DicoBeam
-            self.DATA["DicoClusterDirs"]=NpShared.SharedToDico("%sDicoClusterDirs"%self.IdSharedMem)
+            # self.DATA["DicoClusterDirs"]=NpShared.SharedToDico("%sDicoClusterDirs"%self.IdSharedMem)
+            self.DATA["DicoClusterDirs"]=NpShared.SharedObjectToDico(self.SharedDicoDescriptors["DicoClusterDirs"])
         T.timeit("SharedToDico2")
 
         #self.DATA["UVW_RefAnt"]=NpShared.GiveArray("%sUVW_RefAnt"%self.IdSharedMem)
@@ -1128,9 +1130,8 @@ class ClassJacobianAntenna():
 
     def GiveData(self,DATA,iAnt,rms=0.):
         
-        DicoData=NpShared.SharedToDico(self.SharedDataDicoName)
-        
-        if DicoData==None:
+        #DicoData=NpShared.SharedToDico(self.SharedDataDicoName)
+        if self.SharedAntennaVis_Descriptor==None:
             #print "     COMPUTE DATA"
             DicoData={}
             ind0=np.where(DATA['A0']==iAnt)[0]
@@ -1258,8 +1259,9 @@ class ClassJacobianAntenna():
 
 
             DicoData=NpShared.DicoToShared(self.SharedDataDicoName,DicoData)
-
+            self.SharedAntennaVis_Descriptor=NpShared.SharedDicoDescriptor(self.SharedDataDicoName,DicoData)
         else:
+            DicoData=NpShared.SharedObjectToDico(self.SharedAntennaVis_Descriptor)
             if rms!=0.:
                 self.Rinv_flat=DicoData["Rinv_flat"]
                 self.R_flat=DicoData["R_flat"]

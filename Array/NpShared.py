@@ -75,7 +75,7 @@ def DicoToShared(Prefix,Dico,DelInput=False):
 def SharedToDico(Prefix):
     print>>log, ModColor.Str("SharedToDico: start [prefix = %s]"%Prefix)
     T=ClassTimeIt.ClassTimeIt("   SharedToDico")
-    #T.disable()
+    T.disable()
     Lnames=ListNames()
     T.timeit("0: ListNames")
     keys=[Name for Name in Lnames if Prefix in Name]

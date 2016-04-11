@@ -643,8 +643,8 @@ class ClassWirtingerSolver():
                 NIter=self.NIter
 
 
-            print "!!!!!!!!!!!!!!!!!!!!!!!!!"
-            NIter=1
+            #print "!!!!!!!!!!!!!!!!!!!!!!!!!"
+            #NIter=1
 
 
             Gold=self.G.copy()
@@ -667,7 +667,7 @@ class ClassWirtingerSolver():
             SortedWListAntSolve=(np.array(ListAntSolve)[indOrderW]).tolist()
             #print indOrderW
 
-
+            Dico_SharedDicoDescriptors={}
             for iChanSol in range(self.VS.NChanJones):
                 # Reset Data
                 NpShared.DelAll("%sDicoData"%self.IdSharedMem)
@@ -697,7 +697,11 @@ class ClassWirtingerSolver():
                     for iAnt in SortedWListAntSolve:
                         SharedDicoDescriptors={"SharedVis":self.VS.SharedVis_Descriptor,
                                                "PreApplyJones":self.VS.PreApplyJones_Descriptor,
-                                               "SharedAntennaVis":None}
+                                               "SharedAntennaVis":None,
+                                               "DicoClusterDirs":self.VS.DicoClusterDirs_Descriptor}
+                        if LMIter!=0:
+                            SharedDicoDescriptors["SharedAntennaVis"]=Dico_SharedDicoDescriptors[iAnt]
+
                         work_queue.put((iAnt,iChanSol,DoCalcEvP,tm,self.rms,DoEvP,DoFullPredict,
                                         SharedDicoDescriptors))
                         #work_queue.put((iAnt,iChanSol,DoCalcEvP,tm,self.rms,DoEvP,DoFullPredict,
@@ -707,7 +711,8 @@ class ClassWirtingerSolver():
                     rmsFromDataList=[]
                     DTs=np.zeros((self.VS.MS.na,),np.float32)
                     while iResult < NJobs:
-                        iAnt,iChanSol,G,P,rmsFromData,InfoNoise,DT = result_queue.get()
+                        iAnt,iChanSol,G,P,rmsFromData,InfoNoise,DT,SharedDicoDescriptors = result_queue.get()
+                        Dico_SharedDicoDescriptors[iAnt]=SharedDicoDescriptors
                         if rmsFromData!=None:
                             rmsFromDataList.append(rmsFromData)
                         
@@ -912,20 +917,23 @@ class WorkerAntennaLM(multiprocessing.Process):
     def run(self):
 
         while not self.kill_received:
-            try:
-                iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get()
-            except:
-                break
-            #self.e.wait()
+            iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get()
+            # try:
+
+            #     iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get()
+                
+            # except:
+            #     break
+            # #self.e.wait()
 
             ch0,ch1=self.JonesToVisChanMapping[iChanSol]
 
             T0=time.time()
             T=ClassTimeIt.ClassTimeIt("  Worker Ant=%2.2i"%iAnt)
-            # T.disable()
+            T.disable()
             # if DoCalcEvP:
             #     T.disable()
-            print SharedDicoDescriptors
+            # print SharedDicoDescriptors
 
 
             JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,PM=self.PM,IdSharedMem=self.IdSharedMem,GD=self.GD,
@@ -933,6 +941,7 @@ class WorkerAntennaLM(multiprocessing.Process):
                                     SharedDicoDescriptors=SharedDicoDescriptors,
                                     **dict(self.ConfigJacobianAntenna))
             T.timeit("ClassJacobianAntenna")
+
             JM.setDATA_Shared()
             T.timeit("setDATA_Shared")
 
@@ -951,7 +960,7 @@ class WorkerAntennaLM(multiprocessing.Process):
                     T.timeit("FullPredict")
 
 
-                self.result_queue.put([iAnt,iChanSol,x,None,None,InfoNoise,0.])
+                self.result_queue.put([iAnt,iChanSol,x,None,None,InfoNoise,0.,JM.SharedAntennaVis_Descriptor])
 
             elif self.SolverType=="KAFCA":
                 #T.disable()
@@ -998,4 +1007,4 @@ class WorkerAntennaLM(multiprocessing.Process):
                     Pout=Pa
 
                 DT=time.time()-T0
-                self.result_queue.put([iAnt,iChanSol,x,Pout,rmsFromData,InfoNoise,DT])
+                self.result_queue.put([iAnt,iChanSol,x,Pout,rmsFromData,InfoNoise,DT,JM.SharedAntennaVis_Descriptor])

@@ -54,7 +54,7 @@ class ClassVisServer():
         self.VisInSharedMem = (PrefixShared!=None)
         self.LofarBeam=LofarBeam
         self.ApplyBeam=False
-        
+        self.DicoClusterDirs_Descriptor=None
         self.Robust=Robust
         self.Weighting=Weighting
 
@@ -780,7 +780,7 @@ class ClassVisServer():
             DicoClusterDirs["Cluster"]=self.SM.ClusterCat.Cluster
             
             NpShared.DicoToShared("%sDicoClusterDirs"%self.IdSharedMem,DicoClusterDirs)
-            
+            self.DicoClusterDirs_Descriptor=NpShared.SharedDicoDescriptor("%sDicoClusterDirs"%self.IdSharedMem,DicoClusterDirs)
 
         return "LoadOK"
 
@@ -846,7 +846,7 @@ class ClassVisServer():
         DicoOut={}
         for key in Dico.keys():
             if type(Dico[key])!=np.ndarray: continue
-            print "%s.%s"%(self.PrefixShared,key)
+            #print "%s.%s"%(self.PrefixShared,key)
             Shared=NpShared.ToShared("%s.%s"%(self.PrefixShared,key),Dico[key])
             DicoOut[key]=Shared
             self.SharedNames.append("%s.%s"%(self.PrefixShared,key))
