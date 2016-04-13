@@ -46,7 +46,9 @@ double complex *p_complex128(PyArrayObject *arrayin)  {
 
 
 float GiveFunc(float xneg, float* Func, float step, int Nmax){
-  int ii=floor(xneg/step);
+
+  size_t ii=floor(xneg/step);
+  //printf("ii=%i [%f, %f]\n",(int)ii,xneg,step);
   float ans;
   if(ii>=Nmax){ans=0.;}
   else{

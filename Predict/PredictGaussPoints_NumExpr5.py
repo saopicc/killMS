@@ -57,7 +57,7 @@ class ClassPredict():
         
         Np=2
         if self.DoSmearing!=0:
-            if not(("F" in DoSmearing)or("T" in DoSmearing)): Np=100000
+            if (("F" in DoSmearing)or("T" in DoSmearing)): Np=100000
 
         if LExp==None:
             x=np.linspace(0.,10,Np)
@@ -71,6 +71,11 @@ class ClassPredict():
             Sinc[0]=1.
             Sinc[1::]=np.sin(x[1::])/(x[1::])
             LSinc=[Sinc,x[1]-x[0]]
+            
+            #phi=1.471034
+            #d=int(phi/(x[1]-x[0]))
+            #print Sinc[d],np.sin(phi)/(phi)
+            #stop
         self.LSinc=LSinc
 
 
@@ -397,7 +402,7 @@ class ClassPredict():
             LSmearMode=[FSmear,TSmear]
             T.timeit("init")
 
-            AllowEqualiseChan=IsChanEquidistant(DicoData["freqs"])
+            AllowEqualiseChan=IsChanEquidistant(DicoData["freqs_full"])
 
             if ApplyTimeJones!=None:
 
@@ -417,6 +422,7 @@ class ClassPredict():
                 predict.predictJones2_Gauss(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan,
                                             self.LExp,
                                             self.LSinc)
+                
                 T.timeit("predict")
 
                 ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
@@ -441,6 +447,7 @@ class ClassPredict():
                 predict.predictJones2_Gauss(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan,
                                             self.LExp,
                                             self.LSinc)
+                #print ColOutDir
                 #predict.predict(ColOutDir,(DicoData["uvw"]),LFreqs,LSM,LUVWSpeed,LSmearMode,AllowEqualiseChan)
                 T.timeit("predict")
                 # d0=ColOutDir.copy()
@@ -489,7 +496,7 @@ class ClassPredict():
         self.SM=SM
         
         
-        freq=DicoData["freqs"]
+        freq=DicoData["freqs_full"]
         times=DicoData["times"]
         nf=freq.size
         na=DicoData["infos"][0]
@@ -556,7 +563,7 @@ class ClassPredict():
             A0=DATA["A0"]
             A1=DATA["A1"]
             A0A1=A0,A1
-            freqs=DATA["freqs"]
+            freqs=DATA["freqs_full"]
 
             DicoJonesMatrices=None
             #DicoJonesMatrices=ApplyTimeJones
@@ -771,6 +778,8 @@ class WorkerPredict(multiprocessing.Process):
             DicoData["uvw"]=D["uvw"][Row0:Row1]
             DicoData["freqs"]=D["freqs"]
             DicoData["dfreqs"]=D["dfreqs"]
+            DicoData["freqs_full"]=D["freqs_full"]
+            DicoData["dfreqs_full"]=D["dfreqs_full"]
             # DicoData["UVW_dt"]=D["UVW_dt"]
             DicoData["infos"]=D["infos"]
 

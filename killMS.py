@@ -11,13 +11,13 @@ from killMS2.Other import PrintOptParse
 from killMS2.Parset import MyOptParse
 import numpy as np
 
-# # ##############################
-# # Catch numpy warning
-# np.seterr(all='raise')
-# import warnings
-# with warnings.catch_warnings():
-#     warnings.filterwarnings('error')
-# # ##############################
+# ##############################
+# Catch numpy warning
+np.seterr(all='raise')
+import warnings
+with warnings.catch_warnings():
+    warnings.filterwarnings('error')
+# ##############################
 
 # log
 log=MyLogger.getLogger("killMS")
@@ -419,9 +419,9 @@ def main(OP=None,MSName=None):
 
         if options.ExtSols=="":
             SaveSols=True
-            #Solver.doNextTimeSolve_Parallel()
+            Solver.doNextTimeSolve_Parallel()
             #Solver.doNextTimeSolve_Parallel(SkipMode=True)
-            Solver.doNextTimeSolve()#SkipMode=True)
+            #Solver.doNextTimeSolve()#SkipMode=True)
             
 
             FullPredictColName=options.FullPredictColName

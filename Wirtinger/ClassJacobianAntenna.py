@@ -1105,14 +1105,12 @@ class ClassJacobianAntenna():
 
 
         # 
-
         #stop
         #gc.collect()
         self.HasKernelMatrix=True
         T.timeit("stuff 4")
 
     def SelectChannelKernelMat(self):
-
         self.K_XX=self.K_XX_AllChan[:,:,self.ch0:self.ch1]
         self.K_YY=self.K_YY_AllChan[:,:,self.ch0:self.ch1]
 
@@ -1130,6 +1128,9 @@ class ClassJacobianAntenna():
         nr,nch=K.shape
         flags_flat=np.rollaxis(DicoData["flags"],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
         DicoData["flags_flat"][flags_flat]=1
+
+
+        #print "SelectChannelKernelMat",np.count_nonzero(DicoData["flags_flat"]),np.count_nonzero(DicoData["flags"])
 
 
 
@@ -1262,6 +1263,13 @@ class ClassJacobianAntenna():
                 DicoData["Rinv_flat"]=self.Rinv_flat
                 DicoData["R_flat"]=self.R_flat
 
+            self.DataAllFlagged=False
+            NP,_=DicoData["flags_flat"].shape
+            for ipol in range(NP):
+                f=(DicoData["flags_flat"][ipol]==0)
+                ind=np.where(f)[0]
+                if ind.size==0:
+                    self.DataAllFlagged=True
 
             DicoData=NpShared.DicoToShared(self.SharedDataDicoName,DicoData)
             self.SharedDicoDescriptors["SharedAntennaVis"]=NpShared.SharedDicoDescriptor(self.SharedDataDicoName,DicoData)

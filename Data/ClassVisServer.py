@@ -151,9 +151,11 @@ class ClassVisServer():
 
         freq=np.mean(self.MS.ChanFreq)
         uvmax=np.max(np.sqrt(u**2+v**2))
-        CellSizeRad=res=uvmax*freq/3.e8
+        CellSizeRad=res=1./(uvmax*freq/3.e8)
         npix=(FOV*np.pi/180)/res
         
+        npix=np.min([npix,30000])
+
         ImShape=(1,1,npix,npix)
         #VisWeights=WEIGHT[:,0]#np.ones((uvw.shape[0],),dtype=np.float32)
         VisWeights=np.ones((uvw.shape[0],),dtype=np.float32)
@@ -636,6 +638,8 @@ class ClassVisServer():
         ThisDataChunk={"times":times,
                        "freqs":freqs,
                        "dfreqs":dfreqs,
+                       "freqs_full":freqs,
+                       "dfreqs_full":dfreqs,
                        #"A0A1":(A0[ind],A1[ind]),
                        #"A0A1":(A0,A1),
                        "A0":A0,

@@ -474,9 +474,12 @@ static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args)
     	  if(FSmear==1){
     	    //phi=PI*PI_C*p_DFreqs[ch]*phase;
     	    phi=PI*(p_DFreqs[ch]/C)*phase;
+	    
     	    if(phi!=0.){
-    	      //phi=(float)sin((double)phi)/((double)phi);
-	      decorr=GiveFunc(phi,p_Sinc,StepSinc, NmaxSinc);
+	      //phi=1.471034;
+    	      decorr=(float)sin((double)phi)/((double)phi);
+	      float decorr2=GiveFunc(fabs(phi),p_Sinc,StepSinc, NmaxSinc);
+	      //printf("%f %f %f\n",phi,decorr,decorr2);
     	      result*=decorr;
     	    };
     	  };
@@ -491,8 +494,8 @@ static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args)
     	    //printf("phi = %f\n",phi);
     	    //printf("dphase = %f\n",dphase);
     	    if(phi!=0.){
-	      //decorr=sin(phi)/(phi);
-    	      decorr=GiveFunc(phi,p_Sinc,StepSinc, NmaxSinc);
+	      decorr=sin(phi)/(phi);
+    	      //decorr=GiveFunc(phi,p_Sinc,StepSinc, NmaxSinc);
     	      result*=decorr;
     	    };
     	  };
