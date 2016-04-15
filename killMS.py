@@ -450,6 +450,24 @@ def main(OP=None,MSName=None):
             #          ModelName=options.SkyModel)
 
 
+            if SaveSols:
+
+                FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.MSName),SolsName)
+
+                print>>log, "Save Solutions in file: %s"%FileName
+                Sols=Solver.GiveSols()
+                StationNames=np.array(Solver.VS.MS.StationNames)
+        
+
+                np.savez(FileName,
+                         Sols=Sols,
+                         StationNames=StationNames,
+                         SkyModel=SM.ClusterCat,
+                         ClusterCat=SM.ClusterCat,
+                         SourceCatSub=SourceCatSub,
+                         ModelName=options.SkyModel,
+                         FreqDomains=VS.SolsFreqDomains)
+
         else:
             Sols=np.load(options.ExtSols)["Sols"]
             Sols=Sols.view(np.recarray)
@@ -489,6 +507,7 @@ def main(OP=None,MSName=None):
             #     indMStime=np.ones((indMStime.size,),np.int32)*it
             #     ind=np.concatenate((ind,indMStime))
 
+            print>>log, "Building VisToJones time mapping..."
             DicoJonesMatrices=Jones
             ind=np.zeros((times.size,),np.int32)
             nt,na,nd,_,_,_=G.shape
@@ -660,23 +679,6 @@ def main(OP=None,MSName=None):
                 
 
 
-    if SaveSols:
-
-        FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.MSName),SolsName)
-
-        print>>log, "Save Solutions in file: %s"%FileName
-        Sols=Solver.GiveSols()
-        StationNames=np.array(Solver.VS.MS.StationNames)
-        
-
-        np.savez(FileName,
-                 Sols=Sols,
-                 StationNames=StationNames,
-                 SkyModel=SM.ClusterCat,
-                 ClusterCat=SM.ClusterCat,
-                 SourceCatSub=SourceCatSub,
-                 ModelName=options.SkyModel,
-                 FreqDomains=VS.SolsFreqDomains)
 
     NpShared.DelAll(IdSharedMem)
 

@@ -140,7 +140,7 @@ void GiveJones(float complex *ptrJonesMatrices, int *JonesDims, float *ptrCoefs,
   size_t offJ0=i_t*nd_Jones*na_Jones*nch_Jones*4
     +i_dir*na_Jones*nch_Jones*4
     +i_ant0*nch_Jones*4
-    +i_ch*nch_Jones*4;
+    +i_ch*4;
   for(ipol=0; ipol<4; ipol++){
     Jout[ipol]=*(ptrJonesMatrices+offJ0+ipol);
   }
