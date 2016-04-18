@@ -422,7 +422,7 @@ class ClassWirtingerSolver():
         self.pBAR.render(0, '%4i/%i' % (0,nt))
 
         T=ClassTimeIt.ClassTimeIt("WirtingerSolver")
-        #T.disable()
+        T.disable()
 
         iiCount=0
         while True:

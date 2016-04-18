@@ -356,8 +356,8 @@ class ClassVisServer():
         self.PreApplyJones_Descriptor=None
         if "PreApplyJones" in D.keys():
             NpShared.DicoToShared("%sPreApplyJones"%self.IdSharedMem,D["PreApplyJones"])
+            self.PreApplyJones_Descriptor=NpShared.SharedDicoDescriptor("%sPreApplyJones"%self.IdSharedMem,D["PreApplyJones"])
 
-            self.PreApplyJones_Descriptor=NpShared.SharedDicoDescriptor(self.PrefixShared,D["PreApplyJones"])
 
         #it0=np.min(DATA["IndexTimesThisChunk"])
         #it1=np.max(DATA["IndexTimesThisChunk"])+1
@@ -708,12 +708,12 @@ class ClassVisServer():
                     nt,nd,na,nch,_,_= Beam.shape
                     Beam=np.mean(Beam,axis=3).reshape((nt,nd,na,1,2,2))
                     
-    
                     DicoBeam={}
                     DicoBeam["t0"]=T0s
                     DicoBeam["t1"]=T1s
                     DicoBeam["tm"]=Tm
                     DicoBeam["Jones"]=Beam
+                    #DicoBeam["ChanMap"]=np.zeros((nch))
                     ListDicoPreApply.append(DicoBeam)
 
                     DoPreApplyJones=True
@@ -758,7 +758,6 @@ class ClassVisServer():
             for DicoJones1 in ListDicoPreApply[1::]:
                 DicoJones=MergeJones.MergeJones(DicoJones1,DicoJones)
                 
-
             ind=np.zeros((times.size,),np.int32)
             #nt,na,nd,_,_,_=Beam.shape
             ii=0

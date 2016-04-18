@@ -220,7 +220,10 @@ class ClassJacobianAntenna():
             self.DATA["DicoPreApplyJones"]=DicoBeam
             # self.DATA["DicoClusterDirs"]=NpShared.SharedToDico("%sDicoClusterDirs"%self.IdSharedMem)
             self.DATA["DicoClusterDirs"]=NpShared.SharedObjectToDico(self.SharedDicoDescriptors["DicoClusterDirs"])
+        stop
+
         T.timeit("SharedToDico2")
+
 
         #self.DATA["UVW_RefAnt"]=NpShared.GiveArray("%sUVW_RefAnt"%self.IdSharedMem)
 

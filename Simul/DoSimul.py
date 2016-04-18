@@ -45,8 +45,8 @@ def main(options=None):
     CS=ClassSimul(ll[0],SMName)
     Sols=CS.GiveSols()
     for l in ll:
-        # CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
-        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
+        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
+        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
         CS.DoSimul()
 
 class ClassSimul():
@@ -265,7 +265,7 @@ class ClassSimul():
             Ones=np.ones((1, 1, 1, nch, 1, 1),np.float32)
             G=G*Ones
             G=ModLinAlg.BatchDot(G,DicoBeam["Jones"])
-            self.ChanMap=range(nch)
+
             # #################"
 
             # G[:,:,:,:,0,0]=1

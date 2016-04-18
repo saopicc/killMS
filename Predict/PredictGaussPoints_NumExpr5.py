@@ -176,7 +176,7 @@ class ClassPredict():
 
         #import pylab
         #pylab.clf()
-        import ppgplot
+        #import ppgplot
 
         MaxMat=np.zeros(Resid.shape,dtype=np.float32)
         CVis=np.zeros_like(Resid)
