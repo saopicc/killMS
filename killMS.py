@@ -496,35 +496,11 @@ def main(OP=None,MSName=None):
                 Jones["Stats"]=None
 
 
-            Jones["ChanMap"]=VS.VisToJonesChanMapping
+            # Jones["ChanMap"]=VS.VisToJonesChanMapping
             times=Solver.VS.ThisDataChunk["times"]
-
-            # ind=np.array([],np.int32)
-            # for it in range(nt):
-            #     t0=Jones["t0"][it]
-            #     t1=Jones["t1"][it]
-            #     indMStime=np.where((times>=t0)&(times<t1))[0]
-            #     indMStime=np.ones((indMStime.size,),np.int32)*it
-            #     ind=np.concatenate((ind,indMStime))
-
-            print>>log, "Building VisToJones time mapping..."
-            DicoJonesMatrices=Jones
-            ind=np.zeros((times.size,),np.int32)
-            nt,na,nd,_,_,_=G.shape
-            ii=0
-            for it in range(nt):
-                t0=DicoJonesMatrices["t0"][it]
-                t1=DicoJonesMatrices["t1"][it]
-                indMStime=np.where((times>=t0)&(times<t1))[0]
-                indMStime=np.ones((indMStime.size,),np.int32)*it
-                ind[ii:ii+indMStime.size]=indMStime[:]
-                ii+=indMStime.size
-
-
-
-
-            Jones["MapJones"]=ind
-
+            freqs=Solver.VS.ThisDataChunk["freqs"]
+            DomainMachine=ClassJonesDomains.ClassJonesDomains()
+            DomainMachine.AddVisToJonesMapping(Jones,times,freqs)
 
 
             if ("Resid" in options.ClipMethod)|("DDEResid" in options.ClipMethod):
