@@ -552,12 +552,17 @@ class ClassJacobianAntenna():
             T.timeit("CalcKernelMatrix")
 
         Ga=self.GiveSubVecGainAnt(Gains)
+
+        f=(self.DicoData["flags_flat"]==0)
+        # ind=np.where(f)[0]
+        # if self.iAnt==56:
+        #     print ind.size/float(f.size),np.abs(Gains[self.iAnt,0,0,0])
+
         if self.DataAllFlagged:
             return Ga.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),None,{"std":-1.,"max":-1.,"kapa":None}
 
 
-        f=(self.DicoData["flags_flat"]==0)
-        # ind=np.where(f)[0]
+
         # if ind.size==0:
         #     return Ga.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),None,{"std":-1.,"max":-1.,"kapa":None}
 
@@ -1268,7 +1273,9 @@ class ClassJacobianAntenna():
             for ipol in range(NP):
                 f=(DicoData["flags_flat"][ipol]==0)
                 ind=np.where(f)[0]
-                if ind.size==0:
+
+                fracFlagged=ind.size/float(f.size)
+                if fracFlagged<0.2:#ind.size==0:
                     self.DataAllFlagged=True
 
             DicoData=NpShared.DicoToShared(self.SharedDataDicoName,DicoData)
@@ -1311,7 +1318,8 @@ class ClassJacobianAntenna():
         for ipol in range(NP):
             f=(DicoData["flags_flat"][ipol]==0)
             ind=np.where(f)[0]
-            if ind.size==0:
+            fracFlagged=ind.size/float(f.size)
+            if fracFlagged<0.2:#ind.size==0:
                 self.DataAllFlagged=True
 
         DicoData["freqs_full"]   = self.DATA['freqs']
