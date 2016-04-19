@@ -22,16 +22,16 @@ try:
 except:
     pass
 
-def SolsToDicoJones(Sols,nf):
-    Jones={}
-    Jones["t0"]=Sols.t0
-    Jones["t1"]=Sols.t1
-    nt,na,nd,_,_=Sols.G.shape
-    G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
-    Jones["Beam"]=G
-    Jones["BeamH"]=ModLinAlg.BatchH(G)
-    Jones["ChanMap"]=np.zeros((nf,))#.tolist()
-    return Jones
+# def SolsToDicoJones(Sols,nf):
+#     Jones={}
+#     Jones["t0"]=Sols.t0
+#     Jones["t1"]=Sols.t1
+#     nt,na,nd,_,_=Sols.G.shape
+#     G=np.swapaxes(Sols.G,1,2).reshape((nt,nd,na,1,2,2))
+#     Jones["Beam"]=G
+#     Jones["BeamH"]=ModLinAlg.BatchH(G)
+#     Jones["ChanMap"]=np.zeros((nf,))#.tolist()
+#     return Jones
 
 
 
@@ -103,8 +103,8 @@ class ClassPredict():
             A0sel=A0[ind]
             A1sel=A1[ind]
             
-            if "ChanMap" in ApplyTimeJones.keys():
-                ChanMap=ApplyTimeJones["ChanMap"]
+            if "Map_VisToJones_Freq" in ApplyTimeJones.keys():
+                ChanMap=ApplyTimeJones["Map_VisToJones_Freq"]
             else:
                 ChanMap=range(nf)
 
@@ -139,18 +139,18 @@ class ClassPredict():
         else:
             DicoJonesMatrices=DicoJonesMatricesIn
         JonesMatrices=np.complex64(DicoJonesMatrices["Jones"])
-        MapJones=np.int32(DicoJonesMatrices["MapJones"])
+        Map_VisToJones_Time=np.int32(DicoJonesMatrices["Map_VisToJones_Time"])
 
         # print DicoJonesMatrices.keys()
         # print DicoJonesMatricesIn.keys()
 
-        ChanMap=np.int32(DicoJonesMatrices["ChanMap"])
+        Map_VisToJones_Freq=np.int32(DicoJonesMatrices["Map_VisToJones_Freq"])
         #MapJones=np.int32(np.arange(A0.shape[0]))
         #print DicoJonesMatrices["MapJones"].shape
         #stop
         A0=np.int32(A0)
         A1=np.int32(A1)
-        ParamJonesList=[MapJones,A0,A1,JonesMatrices,ChanMap]
+        ParamJonesList=[Map_VisToJones_Time,A0,A1,JonesMatrices,Map_VisToJones_Freq]
         return ParamJonesList
 
     def GiveCovariance(self,DicoData,ApplyTimeJones,SM):
@@ -427,6 +427,7 @@ class ClassPredict():
 
                 ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
                 ParamJonesList=ParamJonesList+[iCluster]
+
                 predict.ApplyJones(ColOutDir,ParamJonesList)
                 T.timeit("apply")
 
@@ -801,7 +802,7 @@ class WorkerPredict(multiprocessing.Process):
             ApplyTimeJones=NpShared.SharedToDico("%sApplyTimeJones"%self.IdSharedMem)
             #JonesMatrices=ApplyTimeJones["Beam"]
             #print ApplyTimeJones["Beam"].flags
-            ApplyTimeJones["MapJones"]=ApplyTimeJones["MapJones"][Row0:Row1]
+            ApplyTimeJones["Map_VisToJones_Time"]=ApplyTimeJones["Map_VisToJones_Time"][Row0:Row1]
             
             PM=ClassPredict(NCPU=1,DoSmearing=self.DoSmearing)
             

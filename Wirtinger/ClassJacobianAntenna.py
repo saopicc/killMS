@@ -220,7 +220,7 @@ class ClassJacobianAntenna():
             self.DATA["DicoPreApplyJones"]=DicoBeam
             # self.DATA["DicoClusterDirs"]=NpShared.SharedToDico("%sDicoClusterDirs"%self.IdSharedMem)
             self.DATA["DicoClusterDirs"]=NpShared.SharedObjectToDico(self.SharedDicoDescriptors["DicoClusterDirs"])
-        stop
+
 
         T.timeit("SharedToDico2")
 
@@ -1303,7 +1303,7 @@ class ClassJacobianAntenna():
             DicoJonesMatrices={}
             #DicoApplyJones=NpShared.SharedToDico("%sPreApplyJonesFile"%self.IdSharedMem)
             DicoJonesMatrices["DicoApplyJones"]=DATA["DicoPreApplyJones"]
-            DicoJonesMatrices["DicoApplyJones"]["MapJones"]=DATA["MapJones"]
+            DicoJonesMatrices["DicoApplyJones"]["Map_VisToJones_Time"]=DATA["Map_VisToJones_Time"]
             DicoJonesMatrices["DicoApplyJones"]["DicoClusterDirs"]=DATA["DicoClusterDirs"]
             DicoData["DicoPreApplyJones"]=DicoJonesMatrices
 

@@ -207,7 +207,7 @@ class ClassSimul():
     
     
         useArrayFactor=True
-        useElementBeam=False
+        useElementBeam=True#False
         if ApplyBeam:
             print ModColor.Str("Apply Beam")
             MS.LoadSR(useElementBeam=True,useArrayFactor=True)

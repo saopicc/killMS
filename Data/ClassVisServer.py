@@ -16,8 +16,8 @@ from killMS2.Other import reformat
 import os
 from killMS2.Other.ModChanEquidistant import IsChanEquidistant
 from killMS2.Data import ClassJones
-import MergeJones
-
+#import MergeJones
+from killMS2.Data import ClassJonesDomains
 #from DDFacet.Imager import ClassWeighting as ClassWeightingDDF
 
 
@@ -57,7 +57,7 @@ class ClassVisServer():
         self.DicoClusterDirs_Descriptor=None
         self.Robust=Robust
         self.Weighting=Weighting
-
+        self.DomainsMachine=ClassJonesDomains.ClassJonesDomains()
         self.Init()
 
         self.dTimesVisMin=self.TVisSizeMin
@@ -118,15 +118,15 @@ class ClassVisServer():
 
         MeanFreqJonesChan=(FreqDomains[:,0]+FreqDomains[:,1])/2.
         DFreq=np.abs(self.MS.ChanFreq.reshape((self.MS.NSPWChan,1))-MeanFreqJonesChan.reshape((1,NChanJones)))
-        self.VisToJonesChanMapping=np.argmin(DFreq,axis=1)
-        print>>log,("VisToJonesChanMapping %s"%str(self.VisToJonesChanMapping))
+        self.VisToSolsChanMapping=np.argmin(DFreq,axis=1)
+        print>>log,("VisToSolsChanMapping %s"%str(self.VisToSolsChanMapping))
 
         
-        self.JonesToVisChanMapping=[]
+        self.SolsToVisChanMapping=[]
         for iChanSol in range(NChanJones):
-            ind=np.where(self.VisToJonesChanMapping==iChanSol)[0] 
-            self.JonesToVisChanMapping.append((ind[0],ind[-1]+1))
-        print>>log,("JonesToVisChanMapping %s"%str(self.JonesToVisChanMapping))
+            ind=np.where(self.VisToSolsChanMapping==iChanSol)[0] 
+            self.SolsToVisChanMapping.append((ind[0],ind[-1]+1))
+        print>>log,("SolsToVisChanMapping %s"%str(self.SolsToVisChanMapping))
         
         
 
@@ -231,7 +231,7 @@ class ClassVisServer():
         DATA["indRowsThisChunk"]=indRowsThisChunk
         for key in D.keys():
             if type(D[key])!=np.ndarray: continue
-            if not(key in ['times', 'A1', 'A0', 'flags', 'uvw', 'data', 'MapJones', #"IndexTimesThisChunk", 
+            if not(key in ['times', 'A1', 'A0', 'flags', 'uvw', 'data', 'Map_VisToJones_Time', #"IndexTimesThisChunk", 
                            "W"]):             
                 DATA[key]=D[key]
             else:
@@ -247,7 +247,7 @@ class ClassVisServer():
         A1=DATA["A1"]
         times=DATA["times"]
         W=DATA["W"]
-        MapJones=DATA["MapJones"]
+        Map_VisToJones_Time=DATA["Map_VisToJones_Time"]
         indRowsThisChunk=DATA["indRowsThisChunk"]
         # IndexTimesThisChunk=DATA["IndexTimesThisChunk"]
 
@@ -272,7 +272,7 @@ class ClassVisServer():
                 times=times[ind]
                 #IndexTimesThisChunk=IndexTimesThisChunk[ind]
                 W=W[ind]
-                MapJones=MapJones[ind]
+                Map_VisToJones_Time=Map_VisToJones_Time[ind]
                 indRowsThisChunk=indRowsThisChunk[ind]
 
         for A in self.FlagAntNumber:
@@ -285,7 +285,7 @@ class ClassVisServer():
             times=times[ind]
             # IndexTimesThisChunk=IndexTimesThisChunk[ind]
             W=W[ind]
-            MapJones=MapJones[ind]
+            Map_VisToJones_Time=Map_VisToJones_Time[ind]
             indRowsThisChunk=indRowsThisChunk[ind]
         
         if self.GD["DataSelection"]["FillFactor"]!=1.:
@@ -299,7 +299,7 @@ class ClassVisServer():
             times=times[ind]
             # IndexTimesThisChunk=IndexTimesThisChunk[ind]
             W=W[ind]
-            MapJones=MapJones[ind]
+            Map_VisToJones_Time=Map_VisToJones_Time[ind]
             indRowsThisChunk=indRowsThisChunk[ind]
             
             
@@ -313,7 +313,7 @@ class ClassVisServer():
         times=times[ind]
         #IndexTimesThisChunk=IndexTimesThisChunk[ind]
         W=W[ind]
-        MapJones=MapJones[ind]
+        Map_VisToJones_Time=Map_VisToJones_Time[ind]
         indRowsThisChunk=indRowsThisChunk[ind]
 
         DATA["flags"]=flags
@@ -324,7 +324,7 @@ class ClassVisServer():
         DATA["times"]=times
         #DATA["IndexTimesThisChunk"]=IndexTimesThisChunk
         DATA["W"]=W
-        DATA["MapJones"]=MapJones
+        DATA["Map_VisToJones_Time"]=Map_VisToJones_Time
         DATA["indRowsThisChunk"]=indRowsThisChunk
                 
         DATA["UVW_dt"]=self.MS.Give_dUVW_dt(times,A0,A1)
@@ -661,7 +661,7 @@ class ClassVisServer():
         
         self.ThisDataChunk=ThisDataChunk#NpShared.DicoToShared("%sThisDataChunk"%self.IdSharedMem,ThisDataChunk)
         #self.UpdateCompression()
-        self.ThisDataChunk["MapJones"]=np.zeros((times.size,),np.int32)
+        self.ThisDataChunk["Map_VisToJones_Time"]=np.zeros((times.size,),np.int32)
 
 
         ListDicoPreApply=[]
@@ -704,15 +704,26 @@ class ClassVisServer():
                     ###### 
 
 
-
-                    nt,nd,na,nch,_,_= Beam.shape
-                    Beam=np.mean(Beam,axis=3).reshape((nt,nd,na,1,2,2))
-                    
                     DicoBeam={}
                     DicoBeam["t0"]=T0s
                     DicoBeam["t1"]=T1s
                     DicoBeam["tm"]=Tm
                     DicoBeam["Jones"]=Beam
+
+                    ChanWidth=self.MS.ChanWidth.ravel()[0]
+                    ChanFreqs=self.MS.ChanFreq.flatten()
+
+                    self.DomainsMachine.AddFreqDomains(DicoBeam,ChanFreqs,ChanWidth)
+                    
+                    NChanBeam=self.GD["Beam"]["NChanBeamPerMS"]
+                    if NChanBeam==0:
+                        NChanBeam=self.MS.NSPWChan
+                    FreqDomainsOut=self.DomainsMachine.GiveFreqDomains(ChanFreqs,ChanWidth,NChanJones=NChanBeam)
+                    self.DomainsMachine.AverageInFreq(DicoBeam,FreqDomainsOut)
+
+                    #nt,nd,na,nch,_,_= Beam.shape
+                    #Beam=np.mean(Beam,axis=3).reshape((nt,nd,na,1,2,2))
+                    
                     #DicoBeam["ChanMap"]=np.zeros((nch))
                     ListDicoPreApply.append(DicoBeam)
 
@@ -754,24 +765,31 @@ class ClassVisServer():
             
         if DoPreApplyJones:
             DicoJones=ListDicoPreApply[0]
-
+            DomainsMachine=self.DomainsMachine
+            
             for DicoJones1 in ListDicoPreApply[1::]:
-                DicoJones=MergeJones.MergeJones(DicoJones1,DicoJones)
-                
-            ind=np.zeros((times.size,),np.int32)
-            #nt,na,nd,_,_,_=Beam.shape
-            ii=0
-            for it in range(nt):
-                t0=DicoJones["t0"][it]
-                t1=DicoJones["t1"][it]
-                indMStime=np.where((times>=t0)&(times<t1))[0]
-                indMStime=np.ones((indMStime.size,),np.int32)*it
-                ind[ii:ii+indMStime.size]=indMStime[:]
-                ii+=indMStime.size
-            TimeMapping=ind
+                DicoJones=DomainsMachine.MergeJones(DicoJones1,DicoJones)
 
-            DicoJones["ChanMap"]=self.VisToJonesChanMapping
-            self.ThisDataChunk["MapJones"]=TimeMapping
+            DomainsMachine.AddVisToJonesMapping(DicoJones,self.ThisDataChunk["times"],self.ThisDataChunk["freqs"])
+
+            
+            # ind=np.zeros((times.size,),np.int32)
+            # #nt,na,nd,_,_,_=Beam.shape
+            # ii=0
+            # for it in range(nt):
+            #     t0=DicoJones["t0"][it]
+            #     t1=DicoJones["t1"][it]
+            #     indMStime=np.where((times>=t0)&(times<t1))[0]
+            #     indMStime=np.ones((indMStime.size,),np.int32)*it
+            #     ind[ii:ii+indMStime.size]=indMStime[:]
+            #     ii+=indMStime.size
+            # TimeMapping=ind
+
+            #DicoJones["ChanMap"]=self.VisToJonesChanMapping
+            #self.ThisDataChunk["MapJones"]=TimeMapping
+
+
+
             self.ThisDataChunk["PreApplyJones"]=DicoJones
             
             DicoClusterDirs={}

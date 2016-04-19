@@ -451,7 +451,7 @@ class ClassWirtingerSolver():
             T.timeit("stuff")
             for (iAnt,iChanSol) in ItP(ListAntSolve,range(self.VS.NChanJones)):
                 #print iAnt,iChanSol
-                ch0,ch1=self.VS.JonesToVisChanMapping[iChanSol]
+                ch0,ch1=self.VS.SolsToVisChanMapping[iChanSol]
                 SharedDicoDescriptors={"SharedVis":self.VS.SharedVis_Descriptor,
                                        "PreApplyJones":self.VS.PreApplyJones_Descriptor,
                                        "SharedAntennaVis":None,
@@ -603,7 +603,7 @@ class ClassWirtingerSolver():
         #T=ClassTimeIt.ClassTimeIt()
         #T.disable()
 
-        JonesToVisChanMapping=self.VS.JonesToVisChanMapping
+        JonesToVisChanMapping=self.VS.SolsToVisChanMapping
         for ii in range(NCPU):
              
             W=WorkerAntennaLM(work_queue, result_queue,self.SM,self.PolMode,self.SolverType,self.IdSharedMem,
