@@ -1179,9 +1179,14 @@ class ClassJacobianAntenna():
             D1[:,:,2]=c1
             DicoData["flags"] = np.concatenate([D0, D1])
 
+
+
             if self.SM.Type=="Image":
-                DicoData["flags_image"]=DicoData["flags"].copy()
-                DicoData["flags_image"].fill(0)
+                #DicoData["flags_image"]=DicoData["flags"].copy()
+                nr,_,_=DicoData["data"].shape
+                _,nch,_=DATA['data'].shape
+                DicoData["flags_image"]=np.zeros((nr,nch,4),np.bool8)
+                #DicoData["flags_image"].fill(0)
 
             nr,nch,_=DicoData["data"].shape
             
@@ -1251,9 +1256,6 @@ class ClassJacobianAntenna():
                     W=DicoData["W"]**2
                     W_nrows,W_nch=W.shape
                     W[W==0]=1.e-6
-                    print
-                    print V.shape
-                    print W.shape
                     V=V/W.reshape((W_nrows,W_nch,1))
                     
                 R=rms**2*V

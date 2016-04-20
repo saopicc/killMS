@@ -500,7 +500,7 @@ class ClassVisServer():
             ###
 
             C=3e8
-            freqs=MS.ChanFreq
+            freqs=MS.ChanFreq.flatten()
             x=d.reshape((d.size,1))*(freqs.reshape((1,freqs.size))/C)*CellRad
             fA_all=(x>(1./2))
             
@@ -769,9 +769,9 @@ class ClassVisServer():
             
             for DicoJones1 in ListDicoPreApply[1::]:
                 DicoJones=DomainsMachine.MergeJones(DicoJones1,DicoJones)
-
+            
             DomainsMachine.AddVisToJonesMapping(DicoJones,self.ThisDataChunk["times"],self.ThisDataChunk["freqs"])
-
+            
             
             # ind=np.zeros((times.size,),np.int32)
             # #nt,na,nd,_,_,_=Beam.shape
