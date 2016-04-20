@@ -114,8 +114,7 @@ class ClassJonesDomains():
         CurrentT0=T0
         
         while True:
-            DicoOut["t0"].append(CurrentT0)
-            T0=DicoOut["t0"][it]
+            T0=CurrentT0
             
             dT0=DicoJ0["t1"]-T0
             dT0=dT0[dT0>0]
@@ -130,6 +129,7 @@ class ClassJonesDomains():
             else:
                 dT=np.min([dT0[0],dT1[0]])
                 
+            DicoOut["t0"].append(CurrentT0)
             T1=T0+dT
             DicoOut["t1"].append(T1)
             Tm=(T0+T1)/2.

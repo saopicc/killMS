@@ -58,6 +58,7 @@ from killMS2.Other import ClassTimeIt
 from killMS2.Data import ClassVisServer
 
 from Predict.PredictGaussPoints_NumExpr5 import ClassPredictParallel as ClassPredict 
+#from Predict.PredictGaussPoints_NumExpr5 import ClassPredict as ClassPredict 
 #from Predict.PredictGaussPoints_NumExpr2 import ClassPredictParallel as ClassPredict_orig
 #from Predict.PredictGaussPoints_NumExpr4 import ClassPredict as ClassPredict 
 #from Predict.PredictGaussPoints_NumExpr2 import ClassPredict as ClassPredict_orig
@@ -493,12 +494,12 @@ def main(OP=None,MSName=None):
 
 
             Jones["Jones"]=G
-            Jones["JonesH"]=ModLinAlg.BatchH(G)
+            Jones["JonesH"]=ModLinAlg.BatchH(Jones["Jones"])
+
             try:
                 Jones["Stats"]=Sols.Stats
             except:
                 Jones["Stats"]=None
-
 
             # Jones["ChanMap"]=VS.VisToJonesChanMapping
             times=Solver.VS.ThisDataChunk["times"]
@@ -518,6 +519,7 @@ def main(OP=None,MSName=None):
 
 
             DomainMachine.AddVisToJonesMapping(JonesMerged,times,freqs)
+            JonesMerged["JonesH"]=ModLinAlg.BatchH(JonesMerged["Jones"])
 
 
             if ("Resid" in options.ClipMethod)|("DDEResid" in options.ClipMethod):
@@ -582,9 +584,10 @@ def main(OP=None,MSName=None):
 
             if "ResidAnt" in options.ClipMethod:
                 print>>log,"Compute weighting based on antenna-selected residual"
+                DomainMachine.AddVisToJonesMapping(Jones,times,freqs)
                 nrows=Solver.VS.ThisDataChunk["times"].size
                 Solver.VS.ThisDataChunk["W"]=np.ones((nrows,Solver.VS.MS.ChanFreq.size),np.float64)
-                PM.GiveCovariance(Solver.VS.ThisDataChunk,JonesMerged,SM,Mode="ResidAntCovariance")
+                PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones,SM,Mode="ResidAntCovariance")
 
                 Weights=Solver.VS.ThisDataChunk["W"]
                 Weights/=np.mean(Weights)

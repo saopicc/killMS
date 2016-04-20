@@ -236,6 +236,7 @@ class ClassPredict():
         S[S==0]=1e6
         S[S==-1]=1e6
 
+
         for it in range(lt0.size):
             
             t0,t1=lt0[it],lt1[it]
