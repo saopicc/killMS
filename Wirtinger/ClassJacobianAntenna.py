@@ -1,6 +1,5 @@
 import numpy as np
 from killMS2.Array import NpShared
-
 from killMS2.Predict.PredictGaussPoints_NumExpr5 import ClassPredict
 import os
 from killMS2.Data import ClassVisServer
@@ -1252,8 +1251,11 @@ class ClassJacobianAntenna():
                     W=DicoData["W"]**2
                     W_nrows,W_nch=W.shape
                     W[W==0]=1.e-6
+                    print
+                    print V.shape
+                    print W.shape
                     V=V/W.reshape((W_nrows,W_nch,1))
-
+                    
                 R=rms**2*V
                 
                 Rinv=1./R
