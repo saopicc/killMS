@@ -533,7 +533,7 @@ def main(OP=None,MSName=None):
                 # #PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones)
 
                 print>>log,"   Compute residual data"
-                Predict=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
+                Predict=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=JonesMerged)
                 Solver.VS.ThisDataChunk["resid"]=Solver.VS.ThisDataChunk["data"]-Predict
                 Weights=Solver.VS.ThisDataChunk["W"]
 
@@ -550,7 +550,7 @@ def main(OP=None,MSName=None):
 
                 if "DDEResid" in options.ClipMethod:
                     print>>log,"   Compute corrected residual data in all direction"
-                    PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones,SM)
+                    PM.GiveCovariance(Solver.VS.ThisDataChunk,JonesMerged,SM)
 
 
 
@@ -584,7 +584,7 @@ def main(OP=None,MSName=None):
                 print>>log,"Compute weighting based on antenna-selected residual"
                 nrows=Solver.VS.ThisDataChunk["times"].size
                 Solver.VS.ThisDataChunk["W"]=np.ones((nrows,Solver.VS.MS.ChanFreq.size),np.float64)
-                PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones,SM,Mode="ResidAntCovariance")
+                PM.GiveCovariance(Solver.VS.ThisDataChunk,JonesMerged,SM,Mode="ResidAntCovariance")
 
                 Weights=Solver.VS.ThisDataChunk["W"]
                 Weights/=np.mean(Weights)
@@ -627,7 +627,7 @@ def main(OP=None,MSName=None):
 
             if DoApplyCal:
                 print>>log, ModColor.Str("Apply calibration in direction: %i"%options.ApplyCal,col="green")
-                PM.ApplyCal(Solver.VS.ThisDataChunk,Jones,options.ApplyCal)
+                PM.ApplyCal(Solver.VS.ThisDataChunk,JonesMerged,options.ApplyCal)
 
             Solver.VS.MS.data=Solver.VS.ThisDataChunk["data"]
             Solver.VS.MS.flags_all=Solver.VS.ThisDataChunk["flags"]
