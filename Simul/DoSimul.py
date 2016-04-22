@@ -168,9 +168,9 @@ class ClassSimul():
             Sols.G[itime,:,:,:,0,0]=Sols.G[-1,:,:,:,0,0]
             Sols.G[itime,:,:,:,1,1]=Sols.G[-1,:,:,:,1,1]
 
-        Sols.G.fill(0)
-        Sols.G[:,:,:,:,0,0]=1
-        Sols.G[:,:,:,:,1,1]=1
+        # Sols.G.fill(0)
+        # Sols.G[:,:,:,:,0,0]=1
+        # Sols.G[:,:,:,:,1,1]=1
 
         return Sols
 
@@ -198,9 +198,9 @@ class ClassSimul():
         # G[:,:,:,:,0,0]/=np.abs(G[:,:,:,:,0,0])
         # G[:,:,:,:,1,1]=G[:,:,:,:,0,0]
 
-        # G.fill(0)
-        # G[:,:,:,:,0,0]=1
-        # G[:,:,:,:,1,1]=1
+        G.fill(0)
+        G[:,:,:,:,0,0]=1
+        G[:,:,:,:,1,1]=1
 
         nt,nd,na,nch,_,_=G.shape
 #        G=np.random.randn(*G.shape)+1j*np.random.randn(*G.shape)
@@ -280,10 +280,10 @@ class ClassSimul():
             print "Done"
     
     
-        # #################"
+        # #################
         # Multiple Channel
         self.ChanMap=range(nch)
-        # #################"
+        # #################
     
         Jones["Beam"]=G
         Jones["BeamH"]=ModLinAlg.BatchH(G)
