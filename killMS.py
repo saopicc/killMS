@@ -469,7 +469,7 @@ def main(OP=None,MSName=None):
                          SourceCatSub=SourceCatSub,
                          ModelName=options.SkyModel,
                          FreqDomains=VS.SolsFreqDomains)
-                stop
+
         else:
             DicoLoad=np.load(options.ExtSols)
             Sols=DicoLoad["Sols"]
