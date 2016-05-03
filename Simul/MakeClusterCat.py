@@ -37,7 +37,7 @@ def test():
     #                       "finfo":(100e6,250e6,10)}
 
     DicoPropPointings[0]={"offset":(0,0),
-                          "Ns":25,
+                          "Ns":9,
                           "Nc":0,
                           "Diam":4,
                           "finfo":(50e6,50e6,1),
@@ -261,7 +261,7 @@ class MakeMultipleObs():
         D["NBands"]={"id":0,"val":1}
         D["WriteAutoCorr"]={"id":0,"val":"T"}
 
-        D["NFrequencies"]={"id":0,"val":5} # MS.Nchan}
+        D["NFrequencies"]={"id":0,"val":1} # MS.Nchan}
         D["StepFreq"]={"id":0,"val":10e6} # np.abs(self.MSTemplate.dFreq)}
 
         D["StartFreq"]={"id":0,"val":np.min(self.MSTemplate.ChanFreq.flatten())-np.abs(self.MSTemplate.dFreq[0])/2.}

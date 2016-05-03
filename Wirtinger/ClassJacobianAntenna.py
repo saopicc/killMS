@@ -282,6 +282,7 @@ class ClassJacobianAntenna():
         if self.DataAllFlagged:
             return
         for ipol in range(self.NJacobBlocks_X):
+
             JHJinv=ModLinAlg.invSVD(self.L_JHJ[ipol])
             #JHJinv=ModLinAlg.invSVD(self.JHJ)
             self.L_JHJinv.append(JHJinv)
