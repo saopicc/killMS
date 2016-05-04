@@ -186,7 +186,7 @@ def main(options=None):
             G=Sols.G[:,:,:,iDir,:,:]
             Sols.G[:,:,:,iDir,:,:]=NormMatrices(G)
             
-        ampMax=1.5*np.max(np.median(np.abs(LSols[0].G),axis=1))
+        ampMax=1.5*np.max(np.median(np.abs(LSols[0].G),axis=0))
         if options.PlotMode=="AP":
             op0=np.abs
             op1=np.angle
@@ -209,6 +209,8 @@ def main(options=None):
             op1=None
             ylim0=-np.pi,np.pi
             PlotDiag=[False]
+
+        L_ylim0=[(0,1.5*np.max(np.median(np.abs(LSols[0].G[:,:,:,iDir,:,:]),axis=0))) for iDir in range(nd)]
 
         if options.DoResid!=-1:
             LSols[-1].G[:,:,iDir,:,:]=LSols[1].G[:,:,iDir,:,:]-LSols[0].G[:,:,iDir,:,:]
@@ -237,7 +239,7 @@ def main(options=None):
                     if PlotDiag[0]:
                         ax.plot(Sols.t0,op0(J[:,1,0]),color=Lcol0[iSol],alpha=Lalpha0[iSol],ls=Lls[iSol])
                         ax.plot(Sols.t0,op0(J[:,0,1]),color=Lcol0_off[iSol],alpha=Lalpha0[iSol],ls=Lls_off[iSol])
-                    ax.set_ylim(ylim0)
+                    ax.set_ylim(L_ylim0[iDir])
                     ax.set_xticks([])
                     ax.set_yticks([])
 
@@ -255,7 +257,7 @@ def main(options=None):
                         #print StationNames[iAnt]
 
                 iAnt+=1
-        pylab.suptitle('Direction %i'%iDir)
+        pylab.suptitle('Direction %i [%s]'%(iDir,str(L_ylim0[iDir])))
         pylab.tight_layout(pad=3., w_pad=0.5, h_pad=2.0)
         pylab.draw()
         pylab.show()
