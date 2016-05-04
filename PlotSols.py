@@ -64,6 +64,8 @@ def GiveNXNYPanels(Ns,ratio=800/500):
 from killMS2.Array import ModLinAlg
 
 def NormMatrices(G):
+    print "no norm"
+    return G
     nt,nch,na,_,_=G.shape
 
     for iChan,it in ItP(range(nch),range(nt)):
@@ -148,17 +150,17 @@ def main(options=None):
         # nSol=1
 
     # diag terms
-    Lls=["-","--",":"]
+    Lls=["-",":",":"]
     Lcol0=["black","black","blue"]
     Lcol1=["gray","gray","red"]
     Lalpha0=[1,1,1]
     Lalpha1=[0.5,0.5,0.5]
 
-    Lls=["-","-",":"]
-    Lcol0=["black","blue"]
-    Lcol1=["gray","red"]
-    Lalpha0=[1,0.5,1]
-    Lalpha1=[0.5,0.5,0.5]
+    # Lls=["-","-",":"]
+    # Lcol0=["black","blue","blue"]
+    # Lcol1=["gray","red","red"]
+    # Lalpha0=[1,0.5,1]
+    # Lalpha1=[0.5,0.5,0.5]
 
 
     # off-diag terms

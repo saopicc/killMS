@@ -51,12 +51,12 @@ def test():
     #                       "finfo":(50e6,250e6,1),
     #                       "Mode":"Grid"}
 
-    # DicoPropPointings[0]={"offset":(0,0),
-    #                       "Ns":100,
-    #                       "Nc":10,
-    #                       "Diam":1,
-    #                       "finfo":(50e6,250e6,1),
-    #                       "Mode":"Random"}
+    DicoPropPointings[0]={"offset":(0,0),
+                          "Ns":100,
+                          "Nc":10,
+                          "Diam":1,
+                          "finfo":(50e6,250e6,1),
+                          "Mode":"Random"}
 
 
     # # Single source
@@ -267,8 +267,8 @@ class MakeMultipleObs():
         D["StartFreq"]={"id":0,"val":np.min(self.MSTemplate.ChanFreq.flatten())-np.abs(self.MSTemplate.dFreq[0])/2.}
         D["StartTime"]={"id":0,"val":DateTime}
 
-        D["StepTime"]={"id":0,"val":self.MSTemplate.dt*5}#MS.dt}
-        D["NTimes"]={"id":0,"val":30}#int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
+        D["StepTime"]={"id":0,"val":self.MSTemplate.dt}#MS.dt}
+        D["NTimes"]={"id":0,"val":300}#int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
         #D["NTimes"]={"id":0,"val":int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
         
         D["NParts"]={"id":0,"val":"1"}
