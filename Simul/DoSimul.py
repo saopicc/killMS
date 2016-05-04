@@ -32,7 +32,7 @@ def main(options=None):
     #SMName="ModelRandom00.gauss.txt.npy"
     #SMName="ModelRandom00.4.txt.npy"
     SMName="ModelRandom00.one.txt.npy"
-    SMName="ModelRandom00.txt.npy"
+    #SMName="ModelRandom00.txt.npy"
     #SMName="ModelSimulOne.txt.npy"
     #SMName="Deconv.Corr.npy"
     #ll=sorted(glob.glob("Simul.MS"))
@@ -46,8 +46,8 @@ def main(options=None):
     CS=ClassSimul(ll[0],SMName)
     Sols=CS.GiveSols()
     for l in ll:
-        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
-        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
+        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
+        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
         CS.DoSimul()
 
 class ClassSimul():
@@ -203,9 +203,9 @@ class ClassSimul():
         # G[:,:,:,:,0,0]/=np.abs(G[:,:,:,:,0,0])
         # G[:,:,:,:,1,1]=G[:,:,:,:,0,0]
 
-        # G.fill(0)
-        # G[:,:,:,:,0,0]=1
-        # G[:,:,:,:,1,1]=1
+        G.fill(0)
+        G[:,:,:,:,0,0]=1
+        G[:,:,:,:,1,1]=1
 
         nt,nd,na,nch,_,_=G.shape
 #        G=np.random.randn(*G.shape)+1j*np.random.randn(*G.shape)
