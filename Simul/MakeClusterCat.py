@@ -11,9 +11,10 @@ MSTemplate="/media/6B5E-87D0/MS/SimulTec/L102479_SB144_uv.dppp.MS.dppp.tsel_fixe
 WorkingDir="/media/6B5E-87D0/MS/SimulTec/"
 ProgTables="/home/tasse/sources/LOFAR/build/gnu_opt/LCS/MSLofar/src/makebeamtables"
 
-# MSTemplate="/data/tasse/Simul/BOOTES24_SB100-109.2ch8s.ms.tsel"
-# WorkingDir="/data/tasse/Simul/"
-# ProgTables="makebeamtables"
+
+#MSTemplate="L102479_SB144_uv.dppp.MS.dppp.tsel_fixed"
+#WorkingDir="/data/tasse/Simul2/"
+#ProgTables="makebeamtables"
 
 antennaset="LBA_INNER"
 #antennaset="HBA_INNER"
@@ -226,8 +227,12 @@ class MakeMultipleObs():
             # print ss
             # os.system(ss)
 
-            Prog="/home/tasse/sources/LOFAR/build/gnu_opt/LCS/MSLofar/src/makebeamtables"
-            ss="%s antennafielddir=/home/tasse/sources/StaticMetaData antennaset=LBA_INNER antennasetfile=/home/tasse/sources/AntennaSets.conf ihbadeltadir=/home/tasse/sources/StaticMetaData ms=%s overwrite=1"%(Prog,D["dirMS0Name"])
+            #ss="%s antennafielddir=/home/tasse/sources/StaticMetaData antennaset=LBA_INNER antennasetfile=/home/tasse/sources/AntennaSets.conf ihbadeltadir=/home/tasse/sources/StaticMetaData ms=%s overwrite=1"%(ProgTables,D["dirMS0Name"])
+
+
+            ss="%s antennafielddir=/home/tasse/sources/StaticMetaData antennaset=LBA_INNER antennasetfile=/home/tasse/sources/AntennaSets.conf ihbadeltadir=/home/tasse/sources/StaticMetaData ms=%s overwrite=1"%(ProgTables,D["dirMS0Name"])
+
+            #ss="%s antennafielddir=/home/cyril.tasse/source/LOFARBeamData/AntennaFields antennaset=LBA_INNER antennasetfile=/home/cyril.tasse/source/LOFARBeamData/AntennaSets.conf ihbadeltadir=/home/cyril.tasse/source/LOFARBeamData/iHBADeltas ms=%s overwrite=1"%(ProgTables,D["dirMS0Name"])
             print ss
             os.system(ss)
 
@@ -261,7 +266,7 @@ class MakeMultipleObs():
         D["NBands"]={"id":0,"val":1}
         D["WriteAutoCorr"]={"id":0,"val":"T"}
 
-        D["NFrequencies"]={"id":0,"val":5} # MS.Nchan}
+        D["NFrequencies"]={"id":0,"val":1} # MS.Nchan}
         D["StepFreq"]={"id":0,"val":10e6} # np.abs(self.MSTemplate.dFreq)}
 
         D["StartFreq"]={"id":0,"val":np.min(self.MSTemplate.ChanFreq.flatten())-np.abs(self.MSTemplate.dFreq[0])/2.}
