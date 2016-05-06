@@ -125,6 +125,7 @@ def read_options():
     OP.add_option('LOFARBeamMode',type="str",help='LOFAR beam mode. "AE" sets the beam model to Array and Element. Default is %default')
     OP.add_option('DtBeamMin',type="float",help='Estimate the beam every this interval [in minutes]. Default is %default')
     OP.add_option('CenterNorm',type="str",help='Normalise the beam at the field center. Default is %default')
+    OP.add_option('NChanBeamPerMS',type="int",help='Number of channel in the Beam Jones matrix. Default is %default')
 
     OP.OptionGroup("* PreApply killMS Solutions","PreApply")
     OP.add_option('PreApplySols',type="str",help='Pre-apply killMS solutions in the predict step. Has to be a list. Default is %default')

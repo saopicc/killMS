@@ -1161,6 +1161,7 @@ class ClassJacobianAntenna():
             D1[:,:,2]=c1
             DicoData["data"] = np.concatenate([D0, D1])
             DicoData["indOrig"] = ind0
+            DicoData["indOrig1"] = ind1
             DicoData["uvw"]  = np.concatenate([DATA['uvw'][ind0], -DATA['uvw'][ind1]])
             DicoData["UVW_dt"]  = np.concatenate([DATA["UVW_dt"][ind0], -DATA["UVW_dt"][ind1]])
 
@@ -1307,12 +1308,20 @@ class ClassJacobianAntenna():
 
         if "DicoPreApplyJones" in DATA.keys():
             DicoJonesMatrices={}
+            ind0=DicoData["indOrig"]
+            ind1=DicoData["indOrig1"]
             #DicoApplyJones=NpShared.SharedToDico("%sPreApplyJonesFile"%self.IdSharedMem)
+            
             DicoJonesMatrices["DicoApplyJones"]=DATA["DicoPreApplyJones"]
-            DicoJonesMatrices["DicoApplyJones"]["Map_VisToJones_Time"]=DATA["Map_VisToJones_Time"]
             DicoJonesMatrices["DicoApplyJones"]["DicoClusterDirs"]=DATA["DicoClusterDirs"]
-            DicoData["DicoPreApplyJones"]=DicoJonesMatrices
+            MapTimes=DATA["Map_VisToJones_Time"]
+            MapTimesSel=np.concatenate([MapTimes[ind0], MapTimes[ind1]])
+            DicoJonesMatrices["DicoApplyJones"]["Map_VisToJones_Time"]=MapTimesSel
 
+
+            DicoData["DicoPreApplyJones"]=DicoJonesMatrices
+            #print DATA["Map_VisToJones_Time"].max()
+            #stop
 
         # DicoData["A0"] = np.concatenate([DATA['A0'][ind0]])
         # DicoData["A1"] = np.concatenate([DATA['A1'][ind0]])

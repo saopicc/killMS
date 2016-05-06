@@ -661,7 +661,8 @@ class ClassVisServer():
         
         self.ThisDataChunk=ThisDataChunk#NpShared.DicoToShared("%sThisDataChunk"%self.IdSharedMem,ThisDataChunk)
         #self.UpdateCompression()
-        self.ThisDataChunk["Map_VisToJones_Time"]=np.zeros((times.size,),np.int32)
+        #self.ThisDataChunk["Map_VisToJones_Time"]=np.zeros(([],),np.int32)
+        self.ThisDataChunk["Map_VisToJones_Time"]=np.zeros((0,),np.int32)
 
 
         ListDicoPreApply=[]
@@ -675,13 +676,27 @@ class ClassVisServer():
                     self.MS.LoadSR(useElementBeam=useElementBeam,useArrayFactor=useArrayFactor)
                     print>>log, "Update LOFAR beam [Dt = %3.1f min] ... "%self.DtBeamMin
                     DtBeamSec=self.DtBeamMin*60
-                    tmin,tmax=np.min(times),np.max(times)
-                    TimesBeam=np.arange(np.min(times),np.max(times),DtBeamSec).tolist()
-                    if not(tmax in TimesBeam): TimesBeam.append(tmax)
+                    tmin,tmax=np.min(times)-MS.dt/2.,np.max(times)+MS.dt/2.
+                    # TimesBeam=np.arange(np.min(times),np.max(times),DtBeamSec).tolist()
+                    # if not(tmax in TimesBeam): TimesBeam.append(tmax)
+                    NTimesBeam=round((tmax-tmin)/DtBeamSec)
+                    NTimesBeam=np.max([2,NTimesBeam])
+
+
+                    TimesBeam=np.linspace(np.min(times)-1,np.max(times)+1,NTimesBeam).tolist()
                     TimesBeam=np.array(TimesBeam)
+
                     T0s=TimesBeam[:-1]
                     T1s=TimesBeam[1:]
                     Tm=(T0s+T1s)/2.
+
+
+                    # print "!!!!!!!!!!!!!!!!!!!!"
+                    # T0s=MS.F_times-MS.dt/2.
+                    # T1s=MS.F_times+MS.dt/2.
+                    # Tm=MS.F_times
+
+
                     RA,DEC=self.SM.ClusterCat.ra,self.SM.ClusterCat.dec
                     NDir=RA.size
                     Beam=np.zeros((Tm.size,NDir,self.MS.na,self.MS.NSPWChan,2,2),np.complex64)
@@ -720,6 +735,8 @@ class ClassVisServer():
                         NChanBeam=self.MS.NSPWChan
                     FreqDomainsOut=self.DomainsMachine.GiveFreqDomains(ChanFreqs,ChanWidth,NChanJones=NChanBeam)
                     self.DomainsMachine.AverageInFreq(DicoBeam,FreqDomainsOut)
+
+
 
                     #nt,nd,na,nch,_,_= Beam.shape
                     #Beam=np.mean(Beam,axis=3).reshape((nt,nd,na,1,2,2))
@@ -791,7 +808,7 @@ class ClassVisServer():
 
 
             self.ThisDataChunk["PreApplyJones"]=DicoJones
-            
+
             DicoClusterDirs={}
             DicoClusterDirs["l"]=self.SM.ClusterCat.l
             DicoClusterDirs["m"]=self.SM.ClusterCat.m
@@ -802,6 +819,8 @@ class ClassVisServer():
             
             NpShared.DicoToShared("%sDicoClusterDirs"%self.IdSharedMem,DicoClusterDirs)
             self.DicoClusterDirs_Descriptor=NpShared.SharedDicoDescriptor("%sDicoClusterDirs"%self.IdSharedMem,DicoClusterDirs)
+
+            self.ThisDataChunk["Map_VisToJones_Time"]=self.ThisDataChunk["PreApplyJones"]["Map_VisToJones_Time"]
 
         return "LoadOK"
 

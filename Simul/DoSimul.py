@@ -47,8 +47,8 @@ def main(options=None):
     CS=ClassSimul(ll[0],SMName)
     Sols=CS.GiveSols()
     for l in ll:
-        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
-        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
+        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
+        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
         CS.DoSimul()
 
 class ClassSimul():
@@ -299,6 +299,14 @@ class ClassSimul():
         Jones["ChanMap"]=self.ChanMap
 
 
+        ###### for PM5
+        Jones["Map_VisToJones_Freq"]=self.ChanMap
+        Jones["Jones"]=Jones["Beam"]
+        nt=VS.MS.times_all.size
+        ntJones=DicoBeam["tm"].size
+        d=VS.MS.times_all.reshape((nt,1))-DicoBeam["tm"].reshape((1,ntJones))
+        Jones["Map_VisToJones_Time"]=np.argmin(np.abs(d),axis=1)
+
         return Jones
     
     
@@ -318,6 +326,7 @@ class ClassSimul():
         SM.Calc_LM(MS.rac,MS.decc)
         print MS
         MS.PutBackupCol(incol="CORRECTED_DATA")
+
         self.MS=MS
         self.SM=SM
         # SM.SourceCat.l[:]=-0.009453866781636
@@ -338,7 +347,7 @@ class ClassSimul():
 
         #PM=ClassPredict(NCPU=NCPU,DoSmearing="F")
         PM=ClassPredict(NCPU=NCPU)
-        #PM5=ClassPredict5(NCPU=NCPU)
+        PM5=ClassPredict5(NCPU=NCPU)
         na=MS.na
         nd=SM.NDir
         
@@ -352,7 +361,7 @@ class ClassSimul():
 
 
         PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones,Noise=Noise)
-        #PredictData=PM5.predictKernelPolCluster(VS.ThisDataChunk,SM)
+        #PredictData=PM5.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones)
 
 
         # import pylab

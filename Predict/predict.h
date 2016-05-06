@@ -130,6 +130,19 @@ void MatDot(float complex *A, float complex* B, float complex* Out){
 
 
 
+
+
+void PrintArray(float complex *A){
+  printf("=================\n");
+  printf("[");
+  printf("(%10f, %10f)  ",creal(A[0]),cimag(A[0]));
+  printf("(%10f, %10f)]\n",creal(A[1]),cimag(A[1]));
+  printf("[");
+  printf("(%10f, %10f)  ",creal(A[2]),cimag(A[2]));
+  printf("(%10f, %10f)]\n",creal(A[3]),cimag(A[3]));
+  
+}
+
 void GiveJones(float complex *ptrJonesMatrices, int *JonesDims, float *ptrCoefs, int i_t, int i_ant0, int i_dir, int i_ch, float complex *Jout){
   int nd_Jones,na_Jones,nch_Jones;
   nd_Jones=JonesDims[1];
@@ -144,6 +157,8 @@ void GiveJones(float complex *ptrJonesMatrices, int *JonesDims, float *ptrCoefs,
   for(ipol=0; ipol<4; ipol++){
     Jout[ipol]=*(ptrJonesMatrices+offJ0+ipol);
   }
+
+  //PrintArray(Jout);
 
   //printf("dims nt=%i, nd=%i, na=%i, nch=%i\n",JonesDims[0],JonesDims[1],JonesDims[2],JonesDims[3]);
   //printf("  off=%i\n",offJ0);

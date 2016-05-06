@@ -151,6 +151,7 @@ class ClassPredict():
         A0=np.int32(A0)
         A1=np.int32(A1)
         ParamJonesList=[Map_VisToJones_Time,A0,A1,JonesMatrices,Map_VisToJones_Freq]
+        # print sorted(list(set(ParamJonesList[0].tolist())))
         return ParamJonesList
 
     def GiveCovariance(self,DicoData,ApplyTimeJones,SM):
@@ -429,8 +430,10 @@ class ClassPredict():
                 ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
                 ParamJonesList=ParamJonesList+[iCluster]
 
+                
                 predict.ApplyJones(ColOutDir,ParamJonesList)
                 T.timeit("apply")
+
 
                 # print ColOutDir
 

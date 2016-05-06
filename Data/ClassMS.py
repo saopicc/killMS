@@ -535,6 +535,7 @@ class ClassMS():
 
         table_all=table(MSname,ack=False)
         self.ColNames=table_all.colnames()
+        TimeIntervals=table_all.getcol("INTERVAL")
         SPW=table_all.getcol('DATA_DESC_ID')
         if self.SelectSPW!=None:
             self.ListSPW=self.SelectSPW
@@ -612,9 +613,11 @@ class ClassMS():
         self.F_times_all=F_time_all
         self.F_times=F_time_slots_all
         self.F_ntimes=F_time_slots_all.shape[0]
-        self.dt=F_time_slots_all[1]-F_time_slots_all[0]
-        self.DTs=F_time_slots_all[-1]-F_time_slots_all[0]
+        
+        self.dt=TimeIntervals[0]
+        self.DTs=F_time_all[-1]-F_time_all[0]+self.dt
         self.DTh=self.DTs/3600.
+
         self.radec=(rarad,decrad)
         self.rarad=rarad
         self.decrad=decrad

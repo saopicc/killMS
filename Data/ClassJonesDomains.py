@@ -52,6 +52,9 @@ class ClassJonesDomains():
             t1=DicoJonesMatrices["t1"][it]
             indMStime=np.where((VisTimes>=t0)&(VisTimes<t1))[0]
             indMStime=np.ones((indMStime.size,),np.int32)*it
+            # print "================="
+            # print t0,t1,t1-t0
+            # print it,indMStime.size,np.max(ind)
             ind[ii:ii+indMStime.size]=indMStime[:]
             ii+=indMStime.size
         Jones["Map_VisToJones_Time"]=ind

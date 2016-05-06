@@ -580,6 +580,7 @@ static PyObject *ApplyJones(PyObject *self, PyObject *args)
   
   PyObject *_IDIR  = PyList_GetItem(LJones, 5);
   i_dir=(int) PyFloat_AsDouble(_IDIR);
+  // printf("idir=%i\n",i_dir);
 
   float complex* VisIn=p_complex64(NpVisIn);
   float complex* ThisVis;
@@ -594,18 +595,18 @@ static PyObject *ApplyJones(PyObject *self, PyObject *args)
   int irow;
 
   for ( irow=0; irow<nrow; irow++)  {
+    //printf("irow = %i\n",irow);
     for(ch=0;ch<nchan;ch++){
       int i_t=ptrTimeMappingJonesMatrices[irow];
       int i_chJones=ptrFreqMappingJonesMatrices[ch];
       int i_ant0=ptrA0[irow];
       int i_ant1=ptrA1[irow];
-      
+      //printf("  [%i, %i, %i]: (t,dir,ch)_Jones = (%i, %i, %i)\n",ch,i_ant0,i_ant1, i_t,i_dir,i_chJones);
       GiveJones(ptrJonesMatrices, JonesDims, ptrCoefsInterp, i_t, i_ant0, i_dir, i_chJones, J0);
       GiveJones(ptrJonesMatrices, JonesDims, ptrCoefsInterp, i_t, i_ant1, i_dir, i_chJones, J1);
       
       MatH(J1,J1H);
       MatDot(J0,J1H,JJ);
-    
 
       size_t off=irow*nchan*4+ch*4;
       ThisVis=VisIn+off;
