@@ -166,9 +166,9 @@ class ClassSimul():
 
 
 
-        # for itime in range(0,NSols):
-        #     Sols.G[itime,:,:,:,0,0]=Sols.G[-1,:,:,:,0,0]
-        #     Sols.G[itime,:,:,:,1,1]=Sols.G[-1,:,:,:,1,1]
+        for itime in range(0,NSols):
+            Sols.G[itime,:,:,:,0,0]=Sols.G[-1,:,:,:,0,0]
+            Sols.G[itime,:,:,:,1,1]=Sols.G[-1,:,:,:,1,1]
 
         # Sols.G.fill(0)
         # Sols.G[:,:,:,:,0,0]=1
@@ -177,6 +177,7 @@ class ClassSimul():
         for ich in range(1,nch):
             Sols.G[:,ich,:,:,:,:]=Sols.G[:,0,:,:,:,:]
         Sols.G[:,:,:,:,1,1]=Sols.G[:,:,:,:,0,0]
+
 
         return Sols
 
@@ -204,9 +205,9 @@ class ClassSimul():
         # G[:,:,:,:,0,0]/=np.abs(G[:,:,:,:,0,0])
         # G[:,:,:,:,1,1]=G[:,:,:,:,0,0]
 
-        G.fill(0)
-        G[:,:,:,:,0,0]=1
-        G[:,:,:,:,1,1]=1
+        # G.fill(0)
+        # G[:,:,:,:,0,0]=1
+        # G[:,:,:,:,1,1]=1
 
         nt,nd,na,nch,_,_=G.shape
 #        G=np.random.randn(*G.shape)+1j*np.random.randn(*G.shape)
