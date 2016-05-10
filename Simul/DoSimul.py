@@ -33,6 +33,8 @@ def main(options=None):
     #SMName="ModelRandom00.4.txt.npy"
     SMName="ModelRandom00.one.txt.npy"
     SMName="ModelRandom00.25.txt.npy"
+    SMName="ModelRandom00.49.txt.npy"
+
     #SMName="ModelRandom00.txt.npy"
     #SMName="ModelSimulOne.txt.npy"
     #SMName="Deconv.Corr.npy"
@@ -116,7 +118,10 @@ class ClassSimul():
         #Amp_Amp=np.zeros((na,nd))
         PhaseAbs.fill(0)
         #Amp_Phase=np.zeros((na,nd))
-    
+        
+
+
+
         for itime in range(0,NSols):
             print itime,"/",NSols
             for ich in range(nch):
@@ -178,11 +183,11 @@ class ClassSimul():
             Sols.G[:,ich,:,:,:,:]=Sols.G[:,0,:,:,:,:]
         Sols.G[:,:,:,:,1,1]=Sols.G[:,:,:,:,0,0]
 
-        # Sols.G.fill(0)
-        # Sols.G[:,:,:,:,0,0]=1.
-        # Sols.G[:,:,:,:,1,1]=1.
-        # # Sols.G[:,:,:,1:,0,0]=0.01
-        # # Sols.G[:,:,:,1:,1,1]=0.01
+        Sols.G.fill(0)
+        Sols.G[:,:,:,:,0,0]=1.
+        Sols.G[:,:,:,:,1,1]=1.
+        # Sols.G[:,:,:,1:,0,0]=0.01
+        # Sols.G[:,:,:,1:,1,1]=0.01
 
 
 

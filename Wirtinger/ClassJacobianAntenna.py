@@ -751,8 +751,10 @@ class ClassJacobianAntenna():
     def PredictOrigFormat(self,Gains):
         #print "    COMPUTE PredictOrigFormat"
 
-        Ga=self.GiveSubVecGainAnt(Gains)
-        #Ga.fill(1.)
+        Ga=self.GiveSubVecGainAnt(Gains).copy()
+
+        print "!!!!!!!!!!!!!!!!!"
+        Ga.fill(1.)
 
         self.CalcJacobianAntenna(Gains)
         self.PrepareJHJ_LM()
