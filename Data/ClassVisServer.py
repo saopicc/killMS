@@ -662,7 +662,7 @@ class ClassVisServer():
         self.ThisDataChunk=ThisDataChunk#NpShared.DicoToShared("%sThisDataChunk"%self.IdSharedMem,ThisDataChunk)
         #self.UpdateCompression()
         #self.ThisDataChunk["Map_VisToJones_Time"]=np.zeros(([],),np.int32)
-        self.ThisDataChunk["Map_VisToJones_Time"]=np.zeros((0,),np.int32)
+        self.ThisDataChunk["Map_VisToJones_Time"]=np.zeros((times.size,),np.int32)
 
 
         ListDicoPreApply=[]

@@ -589,6 +589,9 @@ class ClassJacobianAntenna():
         # z_0=np.load("LM.npz")["z"]
         # Jx_0=np.load("LM.npz")["Jx"]
 
+
+
+
         InfoNoise={"std":np.std(zr[f]),"max":np.max(np.abs(zr[f])),"kapa":None}
 
 
@@ -1137,6 +1140,16 @@ class ClassJacobianAntenna():
         nr,nch=K.shape
         flags_flat=np.rollaxis(DicoData["flags"],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
         DicoData["flags_flat"][flags_flat]=1
+
+
+        self.DataAllFlagged=False
+        NP,_=DicoData["flags_flat"].shape
+        for ipol in range(NP):
+            f=(DicoData["flags_flat"][ipol]==0)
+            ind=np.where(f)[0]
+            fracFlagged=ind.size/float(f.size)
+            if fracFlagged<0.2:#ind.size==0:
+                self.DataAllFlagged=True
 
 
         #print "SelectChannelKernelMat",np.count_nonzero(DicoData["flags_flat"]),np.count_nonzero(DicoData["flags"])

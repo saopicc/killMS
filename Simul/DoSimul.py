@@ -47,8 +47,8 @@ def main(options=None):
     CS=ClassSimul(ll[0],SMName)
     Sols=CS.GiveSols()
     for l in ll:
-        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
-        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
+        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
+        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
         CS.DoSimul()
 
 class ClassSimul():
@@ -178,6 +178,13 @@ class ClassSimul():
             Sols.G[:,ich,:,:,:,:]=Sols.G[:,0,:,:,:,:]
         Sols.G[:,:,:,:,1,1]=Sols.G[:,:,:,:,0,0]
 
+        # Sols.G.fill(0)
+        # Sols.G[:,:,:,:,0,0]=1.
+        # Sols.G[:,:,:,:,1,1]=1.
+        # # Sols.G[:,:,:,1:,0,0]=0.01
+        # # Sols.G[:,:,:,1:,1,1]=0.01
+
+
 
         return Sols
 
@@ -300,13 +307,13 @@ class ClassSimul():
         Jones["ChanMap"]=self.ChanMap
 
 
-        ###### for PM5
-        Jones["Map_VisToJones_Freq"]=self.ChanMap
-        Jones["Jones"]=Jones["Beam"]
-        nt=VS.MS.times_all.size
-        ntJones=DicoBeam["tm"].size
-        d=VS.MS.times_all.reshape((nt,1))-DicoBeam["tm"].reshape((1,ntJones))
-        Jones["Map_VisToJones_Time"]=np.argmin(np.abs(d),axis=1)
+        # ###### for PM5
+        # Jones["Map_VisToJones_Freq"]=self.ChanMap
+        # Jones["Jones"]=Jones["Beam"]
+        # nt=VS.MS.times_all.size
+        # ntJones=DicoBeam["tm"].size
+        # d=VS.MS.times_all.reshape((nt,1))-DicoBeam["tm"].reshape((1,ntJones))
+        # Jones["Map_VisToJones_Time"]=np.argmin(np.abs(d),axis=1)
 
         return Jones
     

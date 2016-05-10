@@ -112,6 +112,7 @@ def read_options():
     OP.add_option('BaseImageName')
     OP.add_option('ImagePredictParset')
     OP.add_option('OverS')
+    OP.add_option('wmax')
     OP.add_option('MaskImage')
 
     OP.OptionGroup("* Data Selection","DataSelection")
@@ -295,6 +296,8 @@ def main(OP=None,MSName=None):
         
         if options.OverS!=None:
             GDPredict["ImagerCF"]["OverS"]=options.OverS
+        if options.wmax!=None:
+            GDPredict["ImagerCF"]["wmax"]=options.wmax
         GD["GDImage"]=GDPredict
         GDPredict["GDkMS"]=GD
 
