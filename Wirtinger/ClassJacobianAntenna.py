@@ -753,8 +753,6 @@ class ClassJacobianAntenna():
 
         Ga=self.GiveSubVecGainAnt(Gains).copy()
 
-        print "!!!!!!!!!!!!!!!!!"
-        Ga.fill(1.)
 
         self.CalcJacobianAntenna(Gains)
         self.PrepareJHJ_LM()

@@ -670,11 +670,13 @@ class ClassVisServer():
         if self.GD!=None:
             if self.GD["Beam"]["BeamModel"]!=None:
                 if self.GD["Beam"]["BeamModel"]=="LOFAR":
+                    RA,DEC=self.SM.ClusterCat.ra,self.SM.ClusterCat.dec
+                    NDir=RA.size
                     self.DtBeamMin=self.GD["Beam"]["DtBeamMin"]
                     useArrayFactor=("A" in self.GD["Beam"]["LOFARBeamMode"])
                     useElementBeam=("E" in self.GD["Beam"]["LOFARBeamMode"])
                     self.MS.LoadSR(useElementBeam=useElementBeam,useArrayFactor=useArrayFactor)
-                    print>>log, "Update LOFAR beam [Dt = %3.1f min] ... "%self.DtBeamMin
+                    print>>log, "Update LOFAR beam in %i directions [Dt = %3.1f min] ... "%(NDir,self.DtBeamMin)
                     DtBeamSec=self.DtBeamMin*60
                     tmin,tmax=np.min(times)-MS.dt/2.,np.max(times)+MS.dt/2.
                     # TimesBeam=np.arange(np.min(times),np.max(times),DtBeamSec).tolist()
@@ -697,8 +699,6 @@ class ClassVisServer():
                     # Tm=MS.F_times
 
 
-                    RA,DEC=self.SM.ClusterCat.ra,self.SM.ClusterCat.dec
-                    NDir=RA.size
                     Beam=np.zeros((Tm.size,NDir,self.MS.na,self.MS.NSPWChan,2,2),np.complex64)
                     for itime in range(Tm.size):
                         ThisTime=Tm[itime]

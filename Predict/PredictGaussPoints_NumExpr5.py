@@ -140,7 +140,6 @@ class ClassPredict():
             DicoJonesMatrices=DicoJonesMatricesIn
         JonesMatrices=np.complex64(DicoJonesMatrices["Jones"])
         Map_VisToJones_Time=np.int32(DicoJonesMatrices["Map_VisToJones_Time"])
-
         # print DicoJonesMatrices.keys()
         # print DicoJonesMatricesIn.keys()
 
@@ -150,6 +149,8 @@ class ClassPredict():
         #stop
         A0=np.int32(A0)
         A1=np.int32(A1)
+        #print Map_VisToJones_Time
+        #print Map_VisToJones_Freq
         ParamJonesList=[Map_VisToJones_Time,A0,A1,JonesMatrices,Map_VisToJones_Freq]
         # print sorted(list(set(ParamJonesList[0].tolist())))
         return ParamJonesList
@@ -299,6 +300,7 @@ class ClassPredict():
         self.DicoGM={}
         LFacets=SM.DicoImager.keys()
         for iFacet in LFacets:
+            #print "Initialising Facet %i"%iFacet
             self.DicoGM[iFacet]=self.GiveGM(iFacet,SM)
 
 
@@ -570,26 +572,39 @@ class ClassPredict():
             A0A1=A0,A1
             freqs=DATA["freqs_full"]
 
+
             DicoJonesMatrices=None
             #DicoJonesMatrices=ApplyTimeJones
 
+
+
+            # ModelSharedMemName="%sModelImage.Facet_%3.3i"%(self.IdSharedMem,iFacet)
+            # print "Facet %i: take model image %s"%(iFacet,ModelSharedMemName)
+            # ModelIm = NpShared.GiveArray(ModelSharedMemName)
+
             ModelIm = NpShared.UnPackListArray("%sGrids"%self.IdSharedMem)[iFacet]
+            # ChanMapping=SM.ChanMappingDegrid
+            # print ChanMapping
+
             T.timeit("2: Stuff")
             vis=GridMachine.get(times,uvwThis,ColOutDir,flagsThis,A0A1,ModelIm,DicoJonesMatrices=DicoJonesMatrices,freqs=freqs,
                                 ImToGrid=False)
             T.timeit("2: Predict")
             # get() is substracting
-            
-            if ApplyTimeJones!=None:
-                ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
-                ParamJonesList=ParamJonesList+[iDirection]
-                predict.ApplyJones(ColOutDir,ParamJonesList)
-                T.timeit("apply")
-
 
             DataOut-=ColOutDir
             ColOutDir.fill(0)
-            T.timeit("2: End")
+            
+        if ApplyTimeJones!=None:
+            #print "apply in direction %i"%iDirection
+            ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
+            ParamJonesList=ParamJonesList+[iDirection]
+            predict.ApplyJones(DataOut,ParamJonesList)
+            T.timeit("apply")
+            
+
+
+        T.timeit("2: End")
 
 
         return DataOut

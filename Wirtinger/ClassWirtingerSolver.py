@@ -502,8 +502,11 @@ class ClassWirtingerSolver():
                             x,_,_=JM.doLMStep(self.G[iChanSol])
                             T.timeit("LMStep")
                             if i==self.NIter-1: 
+                                # print "!!!!!!!!!!!!!!!!!!!"
+                                # self.G.fill(1)
                                 JM.PredictOrigFormat(self.G[iChanSol])
                                 T.timeit("PredictOrig")
+                                
                         if self.SolverType=="KAFCA":
 
                             EM=ClassModelEvolution(iAnt,iChanSol,

@@ -17,6 +17,7 @@ from DDFacet.Imager.ModModelMachine import GiveModelMachine
 from DDFacet.Imager.ClassImToGrid import ClassImToGrid
 import DDFacet.Other.MyPickle
 import os
+from DDFacet.Data import ClassVisServer
 
 class ClassImageSM():
     def __init__(self):
@@ -31,7 +32,22 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.BaseImageName=BaseImageName
         self.FileDicoModel="%s.DicoModel"%self.BaseImageName
         self.ModelImageName="%s.model.fits"%self.BaseImageName
+
         self.VS=VS
+        # DC=self.GD
+        # MSName=DC["VisData"]["MSName"]
+        # self.VS=ClassVisServer.ClassVisServer(MSName,
+        #                                       ColName=DC["VisData"]["ColName"],
+        #                                       TVisSizeMin=DC["VisData"]["TChunkSize"]*60,
+        #                                       #DicoSelectOptions=DicoSelectOptions,
+        #                                       TChunkSize=DC["VisData"]["TChunkSize"],
+        #                                       IdSharedMem=self.IdSharedMem,
+        #                                       Robust=DC["ImagerGlobal"]["Robust"],
+        #                                       Weighting=DC["ImagerGlobal"]["Weighting"],
+        #                                       Super=DC["ImagerGlobal"]["Super"],
+        #                                       DicoSelectOptions=dict(DC["DataSelection"]),
+        #                                       NCPU=self.GD["Parallel"]["NCPU"],
+        #                                       GD=self.GD)
 
         #self.GD["GAClean"]["GASolvePars"]=["S","Alpha"]
         
@@ -43,14 +59,6 @@ class ClassPreparePredict(ClassImagerDeconv):
     def LoadModel(self):
 
         
-        # im=image(self.ModelImageName)
-        # data=im.getdata()
-        # nch,npol,_,_=data.shape
-        # for ch in range(nch):
-        #     for pol in range(npol):
-        #         data[ch,pol]=data[ch,pol].T[::-1]
-        # self.ModelImage=data
-
         ClassModelMachine,DicoModel=GiveModelMachine(self.FileDicoModel)
 
         try:
@@ -70,7 +78,15 @@ class ClassPreparePredict(ClassImagerDeconv):
             self.MM.CleanMaskedComponants(self.GD["GDkMS"]["ImageSkyModel"]["MaskImage"])
 
         self.ModelImage=self.MM.GiveModelImage(np.mean(self.VS.MS.ChanFreq))
-        
+
+        # print "im!!!!!!!!!!!!!!!!!!!!!!!"
+        # im=image("MODEL.fits")
+        # data=im.getdata()
+        # nch,npol,nx,_=data.shape
+        # for ch in range(nch):
+        #     for pol in range(npol):
+        #         data[ch,pol]=data[ch,pol].T[::-1]
+        # self.ModelImage=data
 
         #self.ModelImage[self.ModelImage!=0]=10.
 
@@ -168,7 +184,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.SM.rac=self.VS.MS.rac
         self.SM.decc=self.VS.MS.decc
         
-        
+        # self.SM.ChanMappingDegrid=self.VS.DicoMSChanMappingDegridding[0]
 
 
 
