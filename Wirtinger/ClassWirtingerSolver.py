@@ -986,7 +986,10 @@ class WorkerAntennaLM(multiprocessing.Process):
                 x,_,InfoNoise=JM.doLMStep(G[iChanSol])
                 T.timeit("LM")
                 if DoFullPredict: 
-                    JM.PredictOrigFormat(G[iChanSol])
+                    #print "!!!!!!!!!!!!!!!!!!!"
+                    Gc=G.copy()
+                    #Gc.fill(1)
+                    JM.PredictOrigFormat(Gc[iChanSol])
                     T.timeit("FullPredict")
 
 
@@ -1022,7 +1025,8 @@ class WorkerAntennaLM(multiprocessing.Process):
 
                 x,Pout,InfoNoise=JM.doEKFStep(G[iChanSol],P[iChanSol],evP[iChanSol],rms,Gains0Iter=G0Iter)
                 T.timeit("EKFStep")
-                if DoFullPredict: JM.PredictOrigFormat(G[iChanSol])
+                if DoFullPredict: 
+                    JM.PredictOrigFormat(G[iChanSol])
                 T.timeit("PredictOrigFormat")
                 rmsFromData=JM.rmsFromData
 

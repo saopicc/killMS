@@ -360,6 +360,10 @@ class ClassPreparePredict(ClassImagerDeconv):
         
         D={}
         iDirNew=0
+
+        self.ClusterCatOrig=self.ClusterCat.copy()
+        self.NDirsOrig=self.ClusterCat.shape[0]
+
         self.NDirs=self.ClusterCat.shape[0]
         Keep=np.zeros((self.NDirs,),bool)
         for iDirJones in sorted(DicoJonesDirToFacet.keys()):
@@ -369,6 +373,7 @@ class ClassPreparePredict(ClassImagerDeconv):
                 D[iDirNew]=self.DicoJonesDirToFacet[iDirJones]
                 iDirNew+=1
                 Keep[iDirJones]=1
+        self.MapClusterCatOrigToCut=Keep
 
         self.DicoJonesDirToFacet=D
         self.ClusterCat=self.ClusterCat[Keep].copy()

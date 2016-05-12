@@ -462,17 +462,34 @@ def main(OP=None,MSName=None):
 
                 print>>log, "Save Solutions in file: %s"%FileName
                 Sols=Solver.GiveSols()
+                SolsSave=Sols
+                ClusterCat=SM.ClusterCat
+                VS.BeamTimes
+                if SM.Type=="Image":
+                    nt,nch,na,nd,_,_=Sols.G.shape
+                    nd=PreparePredict.NDirsOrig
+                    SolsAll=np.zeros((nt,),dtype=[("t0",np.float64),("t1",np.float64),("G",np.complex64,(nch,na,nd,2,2)),("Stats",np.float32,(nch,na,4))])
+                    SolsAll=SolsAll.view(np.recarray)
+                    SolsAll.G[:,:,:,:,0,0]=1
+                    SolsAll.G[:,:,:,:,1,1]=1
+                    SolsAll.G[:,:,:,PreparePredict.MapClusterCatOrigToCut,:,:]=Sols.G[:,:,:,:,:,:]
+                    SolsAll.t0=Sols.t0
+                    SolsAll.t1=Sols.t1
+                    SolsAll.Stats=Sols.Stats
+                    SolsSave=SolsAll
+                    ClusterCat=PreparePredict.ClusterCatOrig
+
                 StationNames=np.array(Solver.VS.MS.StationNames)
                 
-
                 np.savez(FileName,
-                         Sols=Sols,
+                         Sols=SolsSave,
                          StationNames=StationNames,
-                         SkyModel=SM.ClusterCat,
-                         ClusterCat=SM.ClusterCat,
+                         SkyModel=ClusterCat,
+                         ClusterCat=ClusterCat,
                          SourceCatSub=SourceCatSub,
                          ModelName=options.SkyModel,
-                         FreqDomains=VS.SolsFreqDomains)
+                         FreqDomains=VS.SolsFreqDomains,
+                         BeamTimes=VS.BeamTimes)
 
         else:
             DicoLoad=np.load(options.ExtSols)

@@ -58,8 +58,8 @@ class ClassVisServer():
         self.Robust=Robust
         self.Weighting=Weighting
         self.DomainsMachine=ClassJonesDomains.ClassJonesDomains()
+        self.BeamTimes=np.array([],np.float64)
         self.Init()
-
         self.dTimesVisMin=self.TVisSizeMin
         self.CurrentVisTimes_SinceStart_Sec=0.,0.
         self.iCurrentVisTime=0
@@ -691,19 +691,24 @@ class ClassVisServer():
                     T0s=TimesBeam[:-1]
                     T1s=TimesBeam[1:]
                     Tm=(T0s+T1s)/2.
-
-
+                    
+                    self.BeamTimes=TimesBeam
                     # print "!!!!!!!!!!!!!!!!!!!!"
                     # T0s=MS.F_times-MS.dt/2.
                     # T1s=MS.F_times+MS.dt/2.
                     # Tm=MS.F_times
 
+                    # from killMS2.Other.rad2hmsdms import rad2hmsdms
+                    # for i in range(RA.size): 
+                    #     ra,dec=RA[i],DEC[i]
+                    #     print rad2hmsdms(ra,Type="ra").replace(" ",":"),rad2hmsdms(dec,Type="dec").replace(" ",".")
 
                     Beam=np.zeros((Tm.size,NDir,self.MS.na,self.MS.NSPWChan,2,2),np.complex64)
                     for itime in range(Tm.size):
                         ThisTime=Tm[itime]
                         Beam[itime]=self.MS.GiveBeam(ThisTime,RA,DEC)
     
+
                     ###### Normalise
                     rac,decc=self.MS.radec
                     if self.GD["Beam"]["CenterNorm"]==1:
