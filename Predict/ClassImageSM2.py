@@ -60,27 +60,21 @@ class ClassPreparePredict(ClassImagerDeconv):
 
         
         ClassModelMachine,DicoModel=GiveModelMachine(self.FileDicoModel)
-
         try:
             self.GD["GAClean"]["GASolvePars"]=DicoModel["SolveParam"]
         except:
             self.GD["GAClean"]["GASolvePars"]=["S","Alpha"]
             DicoModel["SolveParam"]=self.GD["GAClean"]["GASolvePars"]
-
         self.MM=ClassModelMachine(self.GD)
         self.MM.FromDico(DicoModel)
-
         #ModelImage0=self.MM.GiveModelImage(np.mean(self.VS.MS.ChanFreq))
-
         #self.MM.CleanNegComponants(box=15,sig=1)
-
         if self.GD["GDkMS"]["ImageSkyModel"]["MaskImage"]!=None:
             self.MM.CleanMaskedComponants(self.GD["GDkMS"]["ImageSkyModel"]["MaskImage"])
-
         self.ModelImage=self.MM.GiveModelImage(np.mean(self.VS.MS.ChanFreq))
 
         # print "im!!!!!!!!!!!!!!!!!!!!!!!"
-        # im=image("MODEL.fits")
+        # im=image("ModelImage.fits")
         # data=im.getdata()
         # nch,npol,nx,_=data.shape
         # for ch in range(nch):
@@ -88,11 +82,8 @@ class ClassPreparePredict(ClassImagerDeconv):
         #         data[ch,pol]=data[ch,pol].T[::-1]
         # self.ModelImage=data
 
-        #self.ModelImage[self.ModelImage!=0]=10.
-
-        #self.FacetMachine.ToCasaImage(ModelImage0,ImageName="Model0",Fits=True)
-        #self.FacetMachine.ToCasaImage(self.ModelImage,ImageName="Model1",Fits=True)
-        
+        self.FacetMachine.ToCasaImage(self.ModelImage,ImageName="Model_kMS",Fits=True)
+        #stop
         self.ModelImage=NpShared.ToShared("%sModelImage"%(self.IdSharedMem),self.ModelImage)
         #del(data)
         self.DicoImager=self.FacetMachine.DicoImager
@@ -383,7 +374,16 @@ class ClassPreparePredict(ClassImagerDeconv):
 
         self.Dirs=self.DicoJonesDirToFacet.keys()
         self.NDirs=len(self.Dirs)
+        
+        print self.ClusterCat.ra
+        print self.DicoJonesDirToFacet
+        
+        from DDFacet.Other import MyPickle
+        np.save("ClusterCat",self.ClusterCat)
+        MyPickle.Save(self.DicoJonesDirToFacet,"DicoJonesDirToFacet")
+        MyPickle.Save(self.FacetMachine.DicoImager,"DicoImager")
 
+        # stop
         NpShared.PackListArray("%sGrids"%(self.IdSharedMem),ListGrid)
         NpShared.DelAll("%sModelFacet"%self.IdSharedMem)
         NpShared.DelAll("%sModelGrid"%self.IdSharedMem)

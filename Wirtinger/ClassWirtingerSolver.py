@@ -502,7 +502,7 @@ class ClassWirtingerSolver():
                             x,_,_=JM.doLMStep(self.G[iChanSol])
                             T.timeit("LMStep")
                             if i==self.NIter-1: 
-                                # print "!!!!!!!!!!!!!!!!!!!"
+                                print "!!!!!!!!!!!!!!!!!!!"
                                 # self.G.fill(1)
                                 JM.PredictOrigFormat(self.G[iChanSol])
                                 T.timeit("PredictOrig")
@@ -836,7 +836,8 @@ class ClassWirtingerSolver():
     
     
                     T.timeit("[%i] Plot"%LMIter)
-
+                # end Niter
+            # end Chan
 
 
 
@@ -868,7 +869,7 @@ class ClassWirtingerSolver():
             T.timeit("Ending")
             
             if OnlyOne: break
-
+        # end while chunk
 
  
         for ii in range(NCPU):
@@ -986,8 +987,18 @@ class WorkerAntennaLM(multiprocessing.Process):
                 x,_,InfoNoise=JM.doLMStep(G[iChanSol])
                 T.timeit("LM")
                 if DoFullPredict: 
-                    #print "!!!!!!!!!!!!!!!!!!!"
-                    Gc=G.copy()
+                    print "!!!!!!!!!!!!!!!!!!!"
+                    x[:]=G[iChanSol,iAnt][:]
+                    Gc0=G.copy()
+                    Gc0[iChanSol,iAnt][:]=x[:]
+                    Gc=Gc0.copy()
+
+                    # #Gc0.fill(1.)
+                    # NoZeroD=5
+                    # Gc.fill(0)
+                    # Gc[:,:,NoZeroD,:,:]=Gc0[:,:,NoZeroD,:,:]
+
+
                     #Gc.fill(1)
                     JM.PredictOrigFormat(Gc[iChanSol])
                     T.timeit("FullPredict")

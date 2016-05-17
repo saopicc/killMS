@@ -698,10 +698,10 @@ class ClassVisServer():
                     # T1s=MS.F_times+MS.dt/2.
                     # Tm=MS.F_times
 
-                    # from killMS2.Other.rad2hmsdms import rad2hmsdms
-                    # for i in range(RA.size): 
-                    #     ra,dec=RA[i],DEC[i]
-                    #     print rad2hmsdms(ra,Type="ra").replace(" ",":"),rad2hmsdms(dec,Type="dec").replace(" ",".")
+                    from killMS2.Other.rad2hmsdms import rad2hmsdms
+                    for i in range(RA.size): 
+                        ra,dec=RA[i],DEC[i]
+                        print rad2hmsdms(ra,Type="ra").replace(" ",":"),rad2hmsdms(dec,Type="dec").replace(" ",".")
 
                     Beam=np.zeros((Tm.size,NDir,self.MS.na,self.MS.NSPWChan,2,2),np.complex64)
                     for itime in range(Tm.size):
@@ -709,19 +709,6 @@ class ClassVisServer():
                         Beam[itime]=self.MS.GiveBeam(ThisTime,RA,DEC)
     
 
-                    ###### Normalise
-                    rac,decc=self.MS.radec
-                    if self.GD["Beam"]["CenterNorm"]==1:
-                        for itime in range(Tm.size):
-                            ThisTime=Tm[itime]
-                            Beam0=self.MS.GiveBeam(ThisTime,np.array([rac]),np.array([decc]))
-                            Beam0inv=ModLinAlg.BatchInverse(Beam0)
-                            nd,_,_,_,_=Beam[itime].shape
-                            Ones=np.ones((nd, 1, 1, 1, 1),np.float32)
-                            Beam0inv=Beam0inv*Ones
-                            Beam[itime]=ModLinAlg.BatchDot(Beam0inv,Beam[itime])
-
-                    ###### 
 
 
                     DicoBeam={}
@@ -740,6 +727,34 @@ class ClassVisServer():
                         NChanBeam=self.MS.NSPWChan
                     FreqDomainsOut=self.DomainsMachine.GiveFreqDomains(ChanFreqs,ChanWidth,NChanJones=NChanBeam)
                     self.DomainsMachine.AverageInFreq(DicoBeam,FreqDomainsOut)
+
+                    ###### Normalise
+                    rac,decc=self.MS.radec
+                    if self.GD["Beam"]["CenterNorm"]==1:
+
+                        Beam=DicoBeam["Jones"]
+                        Beam0=np.zeros((Tm.size,1,self.MS.na,self.MS.NSPWChan,2,2),np.complex64)
+                        for itime in range(Tm.size):
+                            ThisTime=Tm[itime]
+                            Beam0[itime]=self.MS.GiveBeam(ThisTime,np.array([rac]),np.array([decc]))
+
+                            
+                        DicoBeamCenter={}
+                        DicoBeamCenter["t0"]=T0s
+                        DicoBeamCenter["t1"]=T1s
+                        DicoBeamCenter["tm"]=Tm
+                        DicoBeamCenter["Jones"]=Beam0
+                        self.DomainsMachine.AddFreqDomains(DicoBeamCenter,ChanFreqs,ChanWidth)
+                        self.DomainsMachine.AverageInFreq(DicoBeamCenter,FreqDomainsOut)
+                        Beam0=DicoBeamCenter["Jones"]
+                        Beam0inv=ModLinAlg.BatchInverse(Beam0)
+                        nt,nd,_,_,_,_=Beam.shape
+                        Ones=np.ones((nt,nd, 1, 1, 1, 1),np.float32)
+                        Beam0inv=Beam0inv*Ones
+                        DicoBeam["Jones"]=ModLinAlg.BatchDot(Beam0inv,Beam)
+
+                    ###### 
+
 
 
 

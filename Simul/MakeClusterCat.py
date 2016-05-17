@@ -132,7 +132,10 @@ def BBSprintRandomSM(Ns,Ddeg,(ra_mean,dec_mean),OutFile="ModelRandom0",ra_dec_of
         Cat.I=SI
         Cat.Sref=SI
     
+    WriteBBSCat(Cat)
 
+def WriteBBSCat(OutFile,Cat):
+    Ns=Cat.shape[0]
 
     f = open(OutFile, 'w')
     Names=["%3.3i"%i for i in range(Ns)]
