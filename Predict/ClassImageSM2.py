@@ -104,9 +104,9 @@ class ClassPreparePredict(ClassImagerDeconv):
         # ClusterCat=DicoSolsFile["ClusterCat"]
         # ClusterCat=ClusterCat.view(np.recarray)
         
-
-        DicoFacetName="%s.DicoFacet"%self.BaseImageName
-        DicoFacet=DDFacet.Other.MyPickle.Load(DicoFacetName)
+        
+        #DicoFacetName="%s.DicoFacet"%self.BaseImageName
+        #DicoFacet=DDFacet.Other.MyPickle.Load(DicoFacetName)
         
         NodeFile="%s.NodesCat.npy"%self.BaseImageName
         NodesCat=np.load(NodeFile)
@@ -119,7 +119,6 @@ class ClassPreparePredict(ClassImagerDeconv):
                                                         ('l',np.float),('m',np.float),
                                                         ('SumI',np.float),("Cluster",int)])
         ClusterCat=ClusterCat.view(np.recarray)
-        
         ClusterCat.l=NodesCat.l
         ClusterCat.m=NodesCat.m
         ClusterCat.ra=NodesCat.ra
