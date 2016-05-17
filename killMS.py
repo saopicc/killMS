@@ -114,6 +114,7 @@ def read_options():
     OP.add_option('OverS')
     OP.add_option('wmax')
     OP.add_option('MaskImage')
+    OP.add_option('NodesFile')
 
     OP.OptionGroup("* Data Selection","DataSelection")
     OP.add_option('UVMinMax',help='Baseline length selection in km. For example UVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default')

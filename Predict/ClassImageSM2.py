@@ -53,6 +53,11 @@ class ClassPreparePredict(ClassImagerDeconv):
         
         self.IdSharedMem=kwargs["IdSharedMem"]
         self.SM=ClassImageSM()
+
+        if self.GD["GDkMS"]["ImageSkyModel"]["NodesFile"]!=None:
+            self.GD["CatNodes"]=self.GD["GDkMS"]["ImageSkyModel"]["NodesFile"]
+            self.GD["DDESolutions"]["DDSols"]=""
+            
         self.InitFacetMachine()
         self.LoadModel()
 
@@ -374,13 +379,13 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.Dirs=self.DicoJonesDirToFacet.keys()
         self.NDirs=len(self.Dirs)
         
-        print self.ClusterCat.ra
-        print self.DicoJonesDirToFacet
+        # print self.ClusterCat.ra
+        # print self.DicoJonesDirToFacet
         
-        from DDFacet.Other import MyPickle
-        np.save("ClusterCat",self.ClusterCat)
-        MyPickle.Save(self.DicoJonesDirToFacet,"DicoJonesDirToFacet")
-        MyPickle.Save(self.FacetMachine.DicoImager,"DicoImager")
+        # from DDFacet.Other import MyPickle
+        # np.save("ClusterCat",self.ClusterCat)
+        # MyPickle.Save(self.DicoJonesDirToFacet,"DicoJonesDirToFacet")
+        # MyPickle.Save(self.FacetMachine.DicoImager,"DicoImager")
 
         # stop
         NpShared.PackListArray("%sGrids"%(self.IdSharedMem),ListGrid)

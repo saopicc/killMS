@@ -698,10 +698,10 @@ class ClassVisServer():
                     # T1s=MS.F_times+MS.dt/2.
                     # Tm=MS.F_times
 
-                    from killMS2.Other.rad2hmsdms import rad2hmsdms
-                    for i in range(RA.size): 
-                        ra,dec=RA[i],DEC[i]
-                        print rad2hmsdms(ra,Type="ra").replace(" ",":"),rad2hmsdms(dec,Type="dec").replace(" ",".")
+                    # from killMS2.Other.rad2hmsdms import rad2hmsdms
+                    # for i in range(RA.size): 
+                    #     ra,dec=RA[i],DEC[i]
+                    #     print rad2hmsdms(ra,Type="ra").replace(" ",":"),rad2hmsdms(dec,Type="dec").replace(" ",".")
 
                     Beam=np.zeros((Tm.size,NDir,self.MS.na,self.MS.NSPWChan,2,2),np.complex64)
                     for itime in range(Tm.size):
