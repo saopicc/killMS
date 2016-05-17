@@ -32,15 +32,15 @@ def main(options=None):
     #SMName="ModelRandom00.gauss.txt.npy"
     #SMName="ModelRandom00.4.txt.npy"
     SMName="ModelRandom00.one.txt.npy"
-    SMName="ModelRandom00.25.txt.npy"
-    SMName="ModelRandom00.49.txt.npy"
-    SMName="ModelImage.txt.npy"
+    #SMName="ModelRandom00.25.txt.npy"
+    #SMName="ModelRandom00.49.txt.npy"
+    #SMName="ModelImage.txt.npy"
     #SMName="ModelRandom00.txt.npy"
     #SMName="ModelSimulOne.txt.npy"
     #SMName="Deconv.Corr.npy"
     #ll=sorted(glob.glob("Simul.MS"))
     ll=sorted(glob.glob("000?.MS"))
-    ll=sorted(glob.glob("BOOTES24_SB100-109.2ch8s.ms.tsel"))
+    #ll=sorted(glob.glob("BOOTES24_SB100-109.2ch8s.ms.tsel"))
     
 
     #ll=sorted(glob.glob("BOOTES24_SB100-109.2ch8s.ms"))
@@ -190,9 +190,9 @@ class ClassSimul():
             Sols.G[:,ich,:,:,:,:]=Sols.G[:,0,:,:,:,:]
         Sols.G[:,:,:,:,1,1]=Sols.G[:,:,:,:,0,0]
 
-        # Sols.G.fill(0)
-        # Sols.G[:,:,:,:,0,0]=1.
-        # Sols.G[:,:,:,:,1,1]=1.
+        Sols.G.fill(0)
+        Sols.G[:,:,:,:,0,0]=1.
+        Sols.G[:,:,:,:,1,1]=1.
         # # Sols.G[:,:,:,1:,0,0]=0.01
         # # Sols.G[:,:,:,1:,1,1]=0.01
 
