@@ -96,8 +96,11 @@ def read_options():
     OP.add_option('TChunk',help='Time Chunk in hours. Default is %default')
     OP.add_option('InCol',help='Column to work on. Default is %default')
     OP.add_option('OutCol',help='Column to write to. Default is %default')
-    OP.add_option('PredictColName',type="str",help=' . Default is %default')
-    OP.add_option('FullPredictColName',type="str",help=' . Default is %default')
+    #OP.add_option('PredictColName',type="str",help=' . Default is %default')
+    OP.add_option('FreePredictColName',type="str",help=' . Default is %default')
+    OP.add_option('FreePredictGainColName',type="str",help=' . Default is %default')
+
+
 
     OP.OptionGroup("* Sky catalog related options","SkyModel")
     OP.add_option('SkyModel',help='List of targets [no default]')
@@ -430,15 +433,28 @@ def main(OP=None,MSName=None):
             #Solver.doNextTimeSolve_Parallel(SkipMode=True)
             #Solver.doNextTimeSolve()#SkipMode=True)
             
-
-            FullPredictColName=options.FullPredictColName
-            if (FullPredictColName!="")&(FullPredictColName!=None):
+            def SavePredict(ArrayName,FullPredictColName):
                 print>>log, "Writing full predicted data in column %s of %s"%(FullPredictColName,options.MSName)
                 VS.MS.AddCol(FullPredictColName)
-                PredictData=NpShared.GiveArray("%sPredictedData"%IdSharedMem)
+                PredictData=NpShared.GiveArray("%s%s"%(IdSharedMem,ArrayName))
                 t=table(VS.MS.MSName,readonly=False,ack=False)
                 t.putcol(FullPredictColName,PredictData,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
+
+
+            FreePredictGainColName=GD["VisData"]["FreePredictGainColName"]
+            if (FreePredictGainColName!=None):
+                ArrayName="PredictedDataGains"
+                FullPredictColName=FreePredictGainColName
+                SavePredict(ArrayName,FullPredictColName)
+
+            FreePredictColName=GD["VisData"]["FreePredictColName"]
+            if (FreePredictColName!=None):
+                ArrayName="PredictedData"
+                FullPredictColName=FreePredictColName
+                SavePredict(ArrayName,FullPredictColName)
+
+
 
             Sols=Solver.GiveSols(SaveStats=True)
 

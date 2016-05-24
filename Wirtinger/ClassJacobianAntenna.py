@@ -748,11 +748,37 @@ class ClassJacobianAntenna():
         z=np.array(z)
         return z
 
-    def PredictOrigFormat(self,Gains):
+    def PredictOrigFormat(self,GainsIn):
+        if self.GD["VisData"]["FreePredictGainColName"]!=None:
+            self.PredictOrigFormat_Type(GainsIn,Type="Gains")
+        if self.GD["VisData"]["FreePredictColName"]!=None:
+            self.PredictOrigFormat_Type(GainsIn,Type="NoGains")
+
+
+    def PredictOrigFormat_Type(self,GainsIn,Type="Gains"):
         #print "    COMPUTE PredictOrigFormat"
+        Gains=GainsIn.copy()
+        na,nd,_,_=Gains.shape
+        if Type=="NoGains":
+            if self.PolMode=="Scalar":
+                Gains=np.ones((na,nd,1,1),np.complex64)
+            elif self.PolMode=="IDiag":
+                Gains=np.ones((na,nd,2,1),np.complex64)
+            else:
+                Gains=np.zeros((na,nd,2,2),np.complex64)
+                Gains[:,0,0]=1
+                Gains[:,1,1]=1
+            NameShmData="%sPredictedData"%self.IdSharedMem
+            NameShmIndices="%sIndicesData"%self.IdSharedMem
+        elif Type=="Gains":
+            NameShmData="%sPredictedDataGains"%self.IdSharedMem
+            NameShmIndices="%sIndicesDataGains"%self.IdSharedMem
+        
+            
+        PredictedData=NpShared.GiveArray(NameShmData)
+        Indices=NpShared.GiveArray(NameShmIndices)
 
         Ga=self.GiveSubVecGainAnt(Gains).copy()
-
 
         self.CalcJacobianAntenna(Gains)
         self.PrepareJHJ_LM()
@@ -761,12 +787,10 @@ class ClassJacobianAntenna():
 
         nr,nch,_,_=DicoData["flags"].shape
             
-        PredictedData=NpShared.GiveArray("%sPredictedData"%self.IdSharedMem)
         indRowsThisChunk=self.DATA["indRowsThisChunk"]
         indOrig=DicoData["indOrig"]
         indThis=np.arange(DicoData["indOrig"].size)
 
-        Indices=NpShared.GiveArray("%sIndicesData"%self.IdSharedMem)
         IndicesSel0=Indices[indRowsThisChunk,:,:][indOrig,self.ch0:self.ch1,0].ravel()
         IndicesSel1=Indices[indRowsThisChunk,:,:][indOrig,self.ch0:self.ch1,1].ravel()
         IndicesSel2=Indices[indRowsThisChunk,:,:][indOrig,self.ch0:self.ch1,2].ravel()
