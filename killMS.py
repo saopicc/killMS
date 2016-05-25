@@ -385,7 +385,7 @@ def main(OP=None,MSName=None):
     PM2=None#ClassPredict_orig(NCPU=NCPU,IdMemShared=IdSharedMem)
 
 
-
+    Solver.InitMeanBeam()
     if (options.SolverType=="KAFCA"):
 
         if (options.InitLM):

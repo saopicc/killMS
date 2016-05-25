@@ -124,6 +124,19 @@ class ClassWirtingerSolver():
         if DoPlot==2:
             self.InitPlotGraph()
         self.PolMode=PolMode
+
+        if self.PolMode=="IDiag":
+            npolx=2
+            npoly=1
+        elif self.PolMode=="Scalar":
+            npolx=1
+            npoly=1
+        elif self.PolMode=="IFull":
+            npolx=2
+            npoly=2
+
+        self.NJacobBlocks_X,self.NJacobBlocks_Y=npolx,npoly
+
         self.G=None
         self.NIter=NIter
         #self.SolsList=[]
@@ -131,7 +144,7 @@ class ClassWirtingerSolver():
         self.SolverType=SolverType
         self.rms=None
         self.rmsFromData=None
-
+        self.SM.ApparentSumI=None
         # if SolverType=="KAFCA":
         #     print>>log, ModColor.Str("niter=%i"%self.NIter)
         #     #self.NIter=1
@@ -211,7 +224,7 @@ class ClassWirtingerSolver():
         _,_,_,npolx,npoly=self.G.shape
 
 
-        # print "!!!!!!!!!!"
+        # print "int!!!!!!!!!!"
         # self.G+=np.random.randn(*self.G.shape)*.1#sigP
         
         NSols=np.max([1,int(1.5*round(self.VS.MS.DTh/(self.VS.TVisSizeMin/60.)))])
@@ -254,7 +267,7 @@ class ClassWirtingerSolver():
     def InitCovariance(self,FromG=False,sigP=0.1,sigQ=0.01):
         if self.SolverType!="KAFCA": return
         if self.Q!=None: return
-
+        
         na=self.VS.MS.na
         nd=self.SM.NDir
         nChan=self.VS.NChanJones
@@ -263,15 +276,8 @@ class ClassWirtingerSolver():
         _,_,_,npol,_=self.G.shape
         
 
-        if self.PolMode=="IDiag":
-            npolx=2
-            npoly=1
-        elif self.PolMode=="Scalar":
-            npolx=1
-            npoly=1
-        elif self.PolMode=="IFull":
-            npolx=2
-            npoly=2
+
+        npolx,npoly=self.NJacobBlocks_X,self.NJacobBlocks_Y
 
         if FromG==False:
             P=(sigP**2)*np.array([np.diag(np.ones((nd*npolx*npoly,),self.DType)) for iAnt in range(na)])
@@ -281,7 +287,9 @@ class ClassWirtingerSolver():
             P=(sigP**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*np.diag(np.ones((nd*npolx*npoly),self.DType)) for iAnt in range(na)])
             Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*np.diag(np.ones((nd*npolx*npoly),self.DType)) for iAnt in range(na)])
 
-        
+        if self.SM.ApparentSumI==None:
+            self.InitMeanBeam()
+
         QList=[]
         PList=[]
         for iChanSol in range(self.VS.NChanJones):
@@ -302,17 +310,10 @@ class ClassWirtingerSolver():
             F/=F.max()
 
             #stop
-            if self.GD["Beam"]["BeamModel"]!=None:
-                from killMS2.Data import ClassBeam
-                BeamMachine=ClassBeam.ClassBeam(self.VS.MSName,self.GD,self.SM)
-                AbsMeanBeam=BeamMachine.GiveMeanBeam()
-                AbsMeanBeamAnt=np.mean(AbsMeanBeam[:,:,0,0,0],axis=1)
-                for idir in range(nd):
-                    Qa[idir,:,:,idir,:,:]*=(AbsMeanBeamAnt[idir]*F[idir])**2
-            else:
-                for idir in range(nd):
-                    Qa[idir,:,:,idir,:,:]*=(F[idir])**2
-
+            self.SM.ApparentSumI=np.zeros((nd,),np.float32)
+            for idir in range(nd):
+                Qa[idir,:,:,idir,:,:]*=(self.SM.ApparentSumI[idir])**2
+                    
 
     
             Qa=Qa.reshape((nd*npolx*npoly,nd*npolx*npoly))
@@ -332,6 +333,58 @@ class ClassWirtingerSolver():
         self.evP=NpShared.ToShared("%sSharedEvolveCovariance"%self.IdSharedMem,self.evP)
         nbuff=10
 
+    def InitMeanBeam(self):
+        self.NormFluxes=self.SM.ClusterCat.SumI.copy()
+        self.NormFluxes/=self.NormFluxes.max()
+        if self.GD["Beam"]["BeamModel"]==None:
+            self.SM.ApparentSumI=self.NormFluxes
+            self.SM.AbsMeanBeamAnt=np.ones_like(self.SM.ApparentSumI)
+        else:
+            nd=self.SM.ClusterCat.SumI.size
+            self.SM.ApparentSumI=np.zeros((nd,),np.float32)
+            from killMS2.Data import ClassBeam
+            BeamMachine=ClassBeam.ClassBeam(self.VS.MSName,self.GD,self.SM)
+            AbsMeanBeam=BeamMachine.GiveMeanBeam()
+            AbsMeanBeamAnt=np.mean(AbsMeanBeam[:,:,0,0,0],axis=1)
+            self.AbsMeanBeamAnt=AbsMeanBeamAnt
+            self.SM.ApparentSumI=(AbsMeanBeamAnt)*self.NormFluxes
+            self.SM.AbsMeanBeamAnt=AbsMeanBeamAnt
+
+        # pylab.clf()
+        # pylab.scatter(self.SM.ClusterCat.l,self.SM.ClusterCat.m,c=self.SM.ApparentSumI)
+        # pylab.draw()
+        # pylab.show(False)
+        # pylab.pause(0.1)
+        # stop
+
+        self.InitReg()
+
+    def InitReg(self):
+        if self.GD["CohJones"]["LambdaTk"]==0: return
+        NDir=self.SM.NDir
+        X0=np.ones((NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y),dtype=np.float32)
+        L=np.ones((NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y),dtype=np.float32)
+        if self.PolMode=="IFull":
+            X0[:,0,1]=0
+            X0[:,1,0]=0
+                
+        SumI=self.SM.ClusterCat.SumI.copy()
+        SumIApp=SumI*self.SM.AbsMeanBeamAnt**2
+        MaxFlux=1.
+        indFree=np.where(SumIApp>MaxFlux)[0]
+        SumIApp[indFree]=MaxFlux
+        SumIAppNorm=SumIApp/MaxFlux
+        
+        Linv=L/SumIAppNorm.reshape((NDir,1,1))
+        Linv-=np.min(Linv)
+        
+        print>>log, "Using Tikhonov regularisation [LambdaTk = %.2f]"%self.GD["CohJones"]["LambdaTk"]
+        print>>log, "  there are %i free directions"%indFree.size
+        print>>log, "  maximum inverse L-matrix is %.3f"%Linv.max()
+
+        NpShared.ToShared("%sLinv"%self.IdSharedMem,Linv)
+        NpShared.ToShared("%sX0"%self.IdSharedMem,X0)
+        
     def setNextData(self):
         DATA=self.VS.GiveNextVis()
 
@@ -544,6 +597,7 @@ class ClassWirtingerSolver():
                     pylab.ylim(0,2)
                     pylab.draw()
                     pylab.show(False)
+                    pylab.pause(0.1)
                     self.G[iChanSol]=Gnew[iChanSol]
 
 
@@ -987,8 +1041,9 @@ class WorkerAntennaLM(multiprocessing.Process):
                 x,_,InfoNoise=JM.doLMStep(G[iChanSol])
                 T.timeit("LM")
                 if DoFullPredict: 
-                    print "!!!!!!!!!!!!!!!!!!!"
-                    x[:]=G[iChanSol,iAnt][:]
+                    #print "!!!!!!!!!!!!!!!!!!!"
+                    #x[:]=G[iChanSol,iAnt][:]
+
                     Gc0=G.copy()
                     Gc0[iChanSol,iAnt][:]=x[:]
                     Gc=Gc0.copy()

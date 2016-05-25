@@ -132,7 +132,7 @@ def BBSprintRandomSM(Ns,Ddeg,(ra_mean,dec_mean),OutFile="ModelRandom0",ra_dec_of
         Cat.I=SI
         Cat.Sref=SI
     
-    WriteBBSCat(Cat)
+    WriteBBSCat(OutFile,Cat)
 
 def WriteBBSCat(OutFile,Cat):
     Ns=Cat.shape[0]

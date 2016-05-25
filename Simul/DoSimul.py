@@ -32,6 +32,7 @@ def main(options=None):
     #SMName="ModelRandom00.gauss.txt.npy"
     #SMName="ModelRandom00.4.txt.npy"
     SMName="ModelRandom00.one.txt.npy"
+    SMName="ModelRandom00.txt.npy"
     #SMName="ModelRandom00.25.txt.npy"
     #SMName="ModelRandom00.49.txt.npy"
     #SMName="ModelImage.txt.npy"
@@ -233,7 +234,7 @@ class ClassSimul():
     
     
         useArrayFactor=True
-        useElementBeam=True#False
+        useElementBeam=False
         if ApplyBeam:
             print ModColor.Str("Apply Beam")
             MS.LoadSR(useElementBeam=True,useArrayFactor=True)

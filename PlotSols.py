@@ -110,6 +110,7 @@ def main(options=None):
             SolsDico=np.load(FileName)
             Sols=SolsDico["Sols"]
             StationNames=SolsDico["StationNames"]
+            ClusterCat=SolsDico["ClusterCat"]
             Sols=Sols.view(np.recarray)
             nt,nch,na,nd,_,_=Sols.G.shape
         elif "h5" in FileName:
@@ -177,6 +178,9 @@ def main(options=None):
         DirList=[int(i) for i in DirList]
     else:
         DirList=range(nd)
+
+    #DirList=[np.where(ClusterCat["SumI"]==np.max(ClusterCat["SumI"]))[0][0]]
+    #print DirList
 
     for iDir in DirList:
         pylab.figure(0,figsize=(13,8))
@@ -257,7 +261,7 @@ def main(options=None):
                         #print StationNames[iAnt]
 
                 iAnt+=1
-        pylab.suptitle('Direction %i [%s]'%(iDir,str(L_ylim0)))
+        pylab.suptitle('Direction %i [%s]'%(iDir,str(ClusterCat["SumI"][iDir])))#L_ylim0)))
         pylab.tight_layout(pad=3., w_pad=0.5, h_pad=2.0)
         pylab.draw()
         pylab.show()

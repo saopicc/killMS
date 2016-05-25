@@ -170,6 +170,7 @@ class ClassJacobianAntenna():
             self.NJacobBlocks_Y=1
             self.npolData=2
         
+
         self.Reinit()
         T.timeit("rest")
 
@@ -281,9 +282,35 @@ class ClassJacobianAntenna():
         self.L_JHJinv=[]
         if self.DataAllFlagged:
             return
+
         for ipol in range(self.NJacobBlocks_X):
 
-            JHJinv=ModLinAlg.invSVD(self.L_JHJ[ipol])
+            M=self.L_JHJ[ipol]
+            if self.DoTikhonov:
+                self.LambdaTkNorm=self.LambdaTk*np.mean(np.abs(np.diag(M)))
+                
+                # Lin.shape= (self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)
+                Linv=np.diag(self.Linv[:,ipol,:].ravel())
+                Linv*=self.LambdaTkNorm/(1.+self.LambdaLM)
+                M2=M+Linv
+
+                # pylab.clf()
+                # pylab.subplot(1,2,1)
+                # pylab.imshow(np.abs(M),interpolation="nearest")
+                # pylab.colorbar()
+                # pylab.subplot(1,2,2)
+                # pylab.imshow(np.abs(Linv),interpolation="nearest")
+                # pylab.colorbar()
+                # pylab.draw()
+                # pylab.show(False)
+                # pylab.pause(0.1)
+                # stop
+
+            else:
+                M2=M
+
+
+            JHJinv=ModLinAlg.invSVD(M2)
             #JHJinv=ModLinAlg.invSVD(self.JHJ)
             self.L_JHJinv.append(JHJinv)
 
@@ -599,8 +626,22 @@ class ClassJacobianAntenna():
         T.timeit("JH_z")
         #self.JHJinv=ModLinAlg.invSVD(self.JHJ)
         #self.JHJinv=np.linalg.inv(self.JHJ)
-        x1 = (1./(1.+self.LambdaLM)) * self.JHJinv_x(JH_z)
+        xi=Ga.flatten()
         T.timeit("self.JHJinv_x")
+        
+
+        if self.DoTikhonov:
+            self.LambdaTkNorm
+            Gi=xi.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y))
+            JH_z=JH_z.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y))
+            for polIndex in range(self.NJacobBlocks_X):
+                gireg=Gi[:,polIndex,:]
+                #gi=JH_z[:,polIndex,:]
+                x0reg=self.X0[:,polIndex,:]
+                Linv=(self.Linv[:,polIndex,:])
+                JH_z[:,polIndex,:]-=self.LambdaTkNorm*Linv*(gireg-x0reg)
+        dx = (1./(1.+self.LambdaLM)) * self.JHJinv_x(JH_z)
+
         
         
         
@@ -634,13 +675,12 @@ class ClassJacobianAntenna():
  
         # print JH_z.shape
 
-        x0=Ga.flatten()
-        x1+=x0
+        dx+=xi
         del(self.LJacob)
         T.timeit("rest")
         # print self.iAnt,np.mean(x1),x1.size,ind.size
 
-        return x1.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),None,InfoNoise
+        return dx.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),None,InfoNoise
 
                                         
     def JHJinv_x(self,Gains):
@@ -901,6 +941,7 @@ class ClassJacobianAntenna():
             flags=self.DicoData["flags_flat"][polIndex]
             J=self.LJacob[polIndex][flags==0]
             nrow,_=J.shape
+            self.nrow_nonflagged=nrow
             JH=J.T.conj()
             if type(self.Rinv_flat)!=type(None):
                 Rinv=self.Rinv_flat[polIndex][flags==0].reshape((nrow,1))
@@ -1359,6 +1400,15 @@ class ClassJacobianAntenna():
             DicoData["DicoPreApplyJones"]=DicoJonesMatrices
             #print DATA["Map_VisToJones_Time"].max()
             #stop
+
+        self.DoTikhonov=False
+        #self.GD["CohJones"]["LambdaTk"]=0
+        if self.GD["CohJones"]["LambdaTk"]!=0:
+            self.DoTikhonov=True
+            self.LambdaTk=self.GD["CohJones"]["LambdaTk"]
+            self.Linv=NpShared.GiveArray("%sLinv"%self.IdSharedMem)
+            self.X0=NpShared.GiveArray("%sX0"%self.IdSharedMem)
+            
 
         # DicoData["A0"] = np.concatenate([DATA['A0'][ind0]])
         # DicoData["A1"] = np.concatenate([DATA['A1'][ind0]])
