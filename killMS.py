@@ -108,7 +108,6 @@ def read_options():
     OP.add_option('kills',help='Name or number index of sources to kill')
     OP.add_option('invert',help='Invert the selected sources to kill')
     OP.add_option('Decorrelation',type="str",help=' . Default is %default')
-    
 
 
     OP.OptionGroup("* Sky image related options","ImageSkyModel")
@@ -172,6 +171,8 @@ def read_options():
     OP.OptionGroup("* CohJones additional options","CohJones")
     OP.add_option('NIterLM',type="int",help=' Number of iterations for the solve. Default is %default ')
     OP.add_option('LambdaLM',type="float",help=' Lambda parameter for CohJones. Default is %default ')
+    OP.add_option('LambdaTk',type="float",help=' Tikhonov regularisation parameter. Default is %default')
+    
 
     OP.OptionGroup("* KAFCA additional options","KAFCA")
     OP.add_option('NIterKF',type="int",help=' Number of iterations for the solve. Default is %default ')
@@ -454,6 +455,14 @@ def main(OP=None,MSName=None):
                 FullPredictColName=FreePredictColName
                 SavePredict(ArrayName,FullPredictColName)
 
+            if GD["SkyModel"]["FreeFullSub"]:
+                print>>log, "Substracting free predict from data"
+                PredictData=NpShared.GiveArray("%s%s"%(IdSharedMem,"PredictedDataGains"))
+                Solver.VS.ThisDataChunk["data"]-=PredictData
+                print>>log, "  save visibilities in %s column"%WriteColName
+                t=table(Solver.VS.MS.MSName,readonly=False,ack=False)
+                t.putcol(WriteColName,Solver.VS.MS.data,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                t.close()
 
 
             Sols=Solver.GiveSols(SaveStats=True)

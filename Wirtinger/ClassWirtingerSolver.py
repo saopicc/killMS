@@ -346,6 +346,7 @@ class ClassWirtingerSolver():
             BeamMachine=ClassBeam.ClassBeam(self.VS.MSName,self.GD,self.SM)
             AbsMeanBeam=BeamMachine.GiveMeanBeam()
             AbsMeanBeamAnt=np.mean(AbsMeanBeam[:,:,0,0,0],axis=1)
+
             self.AbsMeanBeamAnt=AbsMeanBeamAnt
             self.SM.ApparentSumI=(AbsMeanBeamAnt)*self.NormFluxes
             self.SM.AbsMeanBeamAnt=AbsMeanBeamAnt
@@ -370,17 +371,26 @@ class ClassWirtingerSolver():
                 
         SumI=self.SM.ClusterCat.SumI.copy()
         SumIApp=SumI*self.SM.AbsMeanBeamAnt**2
+
         MaxFlux=1.
-        indFree=np.where(SumIApp>MaxFlux)[0]
-        SumIApp[indFree]=MaxFlux
-        SumIAppNorm=SumIApp/MaxFlux
-        
-        Linv=L/SumIAppNorm.reshape((NDir,1,1))
-        Linv-=np.min(Linv)
-        
+        #indFree=np.where(SumIApp>MaxFlux)[0]
+        #SumIApp[indFree]=MaxFlux
+
+        #SumIAppNorm=SumIApp#/MaxFlux
+        #Linv=L/SumIAppNorm.reshape((NDir,1,1))
+
+        AbsMeanBeamAntsq=self.SM.AbsMeanBeamAnt**2
+        Linv=L/AbsMeanBeamAntsq.reshape((NDir,1,1))
+
+
+        Linv=Linv**2
+
         print>>log, "Using Tikhonov regularisation [LambdaTk = %.2f]"%self.GD["CohJones"]["LambdaTk"]
-        print>>log, "  there are %i free directions"%indFree.size
+        #print>>log, "  there are %i free directions"%indFree.size
+        print>>log, "  minimum inverse L-matrix is %.3f"%Linv.min()
         print>>log, "  maximum inverse L-matrix is %.3f"%Linv.max()
+        # for iDir in range(NDir):
+        #     print>>log, "  #%i : [%7.3fJy x %7.7f] %7.3f Jy -> %7.7f "%(iDir,SumI[iDir],self.SM.AbsMeanBeamAnt[iDir],SumIApp[iDir],Linv.flat[iDir])
 
         NpShared.ToShared("%sLinv"%self.IdSharedMem,Linv)
         NpShared.ToShared("%sX0"%self.IdSharedMem,X0)

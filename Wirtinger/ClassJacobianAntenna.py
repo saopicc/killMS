@@ -1107,14 +1107,14 @@ class ClassJacobianAntenna():
                 #print gc.garbage
 
 
-            if (iDir==31)&(self.iAnt==51):
-                ifile=0
-                while True:
-                    fname="png/Kernel.%5.5i.npy"%ifile
-                    if not(os.path.isfile(fname)) :
-                        np.save(fname,K)
-                        break
-                    ifile+=1
+            # if (iDir==31)&(self.iAnt==51):
+            #     ifile=0
+            #     while True:
+            #         fname="png/Kernel.%5.5i.npy"%ifile
+            #         if not(os.path.isfile(fname)) :
+            #             np.save(fname,K)
+            #             break
+            #         ifile+=1
 
             K_XX=K[:,:,0]
             K_YY=K[:,:,3]
