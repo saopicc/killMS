@@ -310,10 +310,11 @@ class ClassWirtingerSolver():
             F/=F.max()
 
             #stop
-            self.SM.ApparentSumI=np.zeros((nd,),np.float32)
+            #self.SM.ApparentSumI=np.zeros((nd,),np.float32)
+            ApFluxes=self.NormFluxes*self.AbsMeanBeamAnt**2
             for idir in range(nd):
-                Qa[idir,:,:,idir,:,:]*=(self.SM.ApparentSumI[idir])**2
-                    
+                #Qa[idir,:,:,idir,:,:]*=(self.SM.ApparentSumI[idir])**2
+                Qa[idir,:,:,idir,:,:]*=ApFluxes[idir]
 
     
             Qa=Qa.reshape((nd*npolx*npoly,nd*npolx*npoly))
@@ -361,6 +362,7 @@ class ClassWirtingerSolver():
         self.InitReg()
 
     def InitReg(self):
+        if self.SolverType=="KAFCA": return
         if self.GD["CohJones"]["LambdaTk"]==0: return
         NDir=self.SM.NDir
         X0=np.ones((NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y),dtype=np.float32)

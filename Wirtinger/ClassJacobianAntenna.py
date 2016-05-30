@@ -1403,7 +1403,7 @@ class ClassJacobianAntenna():
 
         self.DoTikhonov=False
         #self.GD["CohJones"]["LambdaTk"]=0
-        if self.GD["CohJones"]["LambdaTk"]!=0:
+        if (self.GD["CohJones"]["LambdaTk"]!=0)&(self.GD["Solvers"]["SolverType"]=="CohJones"):
             self.DoTikhonov=True
             self.LambdaTk=self.GD["CohJones"]["LambdaTk"]
             self.Linv=NpShared.GiveArray("%sLinv"%self.IdSharedMem)
