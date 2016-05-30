@@ -1,11 +1,24 @@
 import numpy as np
 from SkyModel.Sky import ClassSM
-from Other import rad2hmsdms
+from killMS2.Other import rad2hmsdms
 import os
-from Data import ClassMS
+from killMS2.Data import ClassMS
 import ephem
-from Other import ModParsetType
+from killMS2.Other import ModParsetType
 from pyrap.tables import table
+
+MSTemplate="/media/6B5E-87D0/MS/SimulTec/L102479_SB144_uv.dppp.MS.dppp.tsel_fixed"
+WorkingDir="/media/6B5E-87D0/MS/SimulTec/"
+ProgTables="/home/tasse/sources/LOFAR/build/gnu_opt/LCS/MSLofar/src/makebeamtables"
+
+
+MSTemplate="L102479_SB144_uv.dppp.MS.dppp.tsel_fixed"
+WorkingDir="/data/tasse/Simul2/"
+ProgTables="makebeamtables"
+
+antennaset="LBA_INNER"
+#antennaset="HBA_INNER"
+StaticMetaDataDir="/home/cyril.tasse/source/LOFARBeamData"
 
 def test():
 
@@ -25,11 +38,11 @@ def test():
     #                       "finfo":(100e6,250e6,10)}
 
     DicoPropPointings[0]={"offset":(0,0),
-                          "Ns":2,
+                          "Ns":9,
                           "Nc":0,
-                          "Diam":1,
-                          "finfo":(100e6,250e6,2),
-                          "Mode":"Random"}
+                          "Diam":4,
+                          "finfo":(50e6,50e6,1),
+                          "Mode":"Grid"}
 
 
     # DicoPropPointings[0]={"offset":(0,0),
@@ -109,6 +122,8 @@ def BBSprintRandomSM(Ns,Ddeg,(ra_mean,dec_mean),OutFile="ModelRandom0",ra_dec_of
     Cat.ra=ra
     Cat.dec=dec
     Cat.I=np.random.rand(Ns)
+    Cat.alpha=-np.random.rand(Ns)
+    Cat.alpha=0.
     #Cat.I[0]=0
     Cat.I.fill(1)
     Cat.I/=np.sum(Cat.I)
@@ -117,7 +132,10 @@ def BBSprintRandomSM(Ns,Ddeg,(ra_mean,dec_mean),OutFile="ModelRandom0",ra_dec_of
         Cat.I=SI
         Cat.Sref=SI
     
+    WriteBBSCat(OutFile,Cat)
 
+def WriteBBSCat(OutFile,Cat):
+    Ns=Cat.shape[0]
 
     f = open(OutFile, 'w')
     Names=["%3.3i"%i for i in range(Ns)]
@@ -127,7 +145,7 @@ def BBSprintRandomSM(Ns,Ddeg,(ra_mean,dec_mean),OutFile="ModelRandom0",ra_dec_of
         SRa=rad2hmsdms.rad2hmsdms(Cat.ra[i],Type="ra").replace(" ",":")
         SDec=rad2hmsdms.rad2hmsdms(Cat.dec[i]).replace(" ",".")
         sI=str(Cat.I[i])
-        sAlpha=0#str(np.random.randn(1)[0]*0.2-0.8)
+        sAlpha=str(Cat.alpha[i])#0#str(np.random.randn(1)[0]*0.2-0.8)
         ss="%s, POINT, %s,  %s, %s, 0.0, 0.0, 0.0, 7.38000e+07, [%s], 0, 0.00000e+00, 0.0"%(Names[i],SRa,SDec,sI,sAlpha)
         print ss
         f.write(ss+'\n')        
@@ -137,8 +155,9 @@ def BBSprintRandomSM(Ns,Ddeg,(ra_mean,dec_mean),OutFile="ModelRandom0",ra_dec_of
 class MakeMultipleObs():
 
     def __init__(self,DicoPropPointings,
-                 MSTemplateName="/media/6B5E-87D0/MS/SimulTec/L102479_SB144_uv.dppp.MS.dppp.tsel_fixed",
-                 BaseDir="/media/6B5E-87D0/MS/SimulTec/"):
+                 MSTemplateName=MSTemplate,
+                 BaseDir=WorkingDir
+    ):
         self.DicoMS={}
         self.MSTemplateName=MSTemplateName
         self.MSTemplate=ClassMS.ClassMS(MSTemplateName,DoReadData=False)
@@ -186,6 +205,8 @@ class MakeMultipleObs():
             print sExec
             os.system(sExec)
 
+
+
             ModelName=SMName+".npy"
 
             D["SM"]=ModelName
@@ -204,11 +225,22 @@ class MakeMultipleObs():
             self.setAntNames(D["dirMS0Name"])
             
 
-            #os.system("cp -r %s/LOFAR_* %s"%(self.MSTemplateName,self.DicoMS["MS0Name"]))
-            Prog="/home/tasse/sources/LOFAR/build/gnu_opt/LCS/MSLofar/src/makebeamtables"
-            ss="%s antennafielddir=/home/tasse/sources/StaticMetaData antennaset=LBA_INNER antennasetfile=/home/tasse/sources/AntennaSets.conf ihbadeltadir=/home/tasse/sources/StaticMetaData ms=%s overwrite=1"%(Prog,D["dirMS0Name"])
+            # #os.system("cp -r %s/LOFAR_* %s"%(self.MSTemplateName,self.DicoMS["MS0Name"]))
+            # ss="%s "%ProgTables + "antennafielddir=%s/AntennaFields "%StaticMetaDataDir + "antennaset=%s antennasetfile=%s/AntennaSets.conf "%(antennaset,StaticMetaDataDir) + "ihbadeltadir=%s/iHBADeltas "%StaticMetaDataDir + "ms=%s overwrite=1"%(D["dirMS0Name"])
+            # print ss
+            # os.system(ss)
+
+            #ss="%s antennafielddir=/home/tasse/sources/StaticMetaData antennaset=LBA_INNER antennasetfile=/home/tasse/sources/AntennaSets.conf ihbadeltadir=/home/tasse/sources/StaticMetaData ms=%s overwrite=1"%(ProgTables,D["dirMS0Name"])
+
+
+            ss="%s antennafielddir=/home/tasse/sources/StaticMetaData antennaset=LBA_INNER antennasetfile=/home/tasse/sources/AntennaSets.conf ihbadeltadir=/home/tasse/sources/StaticMetaData ms=%s overwrite=1"%(ProgTables,D["dirMS0Name"])
+
+            ss="%s antennafielddir=/home/cyril.tasse/source/LOFARBeamData/AntennaFields antennaset=LBA_INNER antennasetfile=/home/cyril.tasse/source/LOFARBeamData/AntennaSets.conf ihbadeltadir=/home/cyril.tasse/source/LOFARBeamData/iHBADeltas ms=%s overwrite=1"%(ProgTables,D["dirMS0Name"])
             print ss
             os.system(ss)
+
+# makebeamtables antennafielddir=/home/cyril.tasse/source/LOFARBeamData/AntennaFields antennaset=LBA_INNER antennasetfile=/home/cyril.tasse/source/LOFARBeamData/AntennaSets.conf ihbadeltadir=/home/cyril.tasse/source/LOFARBeamData/iHBADeltas ms=/data/tasse/Simul/Pointing00/Template_0000.MS_p0 overwrite=1
+# makebeamtables antennafielddir=/home/cyril.tasse/source/StaticMetaData/AntennaFields antennaset=LBA_INNER antennasetfile=/home/cyril.tasse/source/StaticMetaData/AntennaSets.conf ihbadeltadir=/home/cyril.tasse/source/StaticMetaData/iHBADeltas ms=/data/tasse/Simul/Pointing00/Template_0000.MS_p0 overwrite=1
 
     def setAntNames(self,MSName):
         t0=table(self.MSTemplate.MSName+"/ANTENNA",readonly=False)
@@ -234,17 +266,17 @@ class MakeMultipleObs():
         D["Declination"]={"id":0,"val":StrDEC}
         D["RightAscension"]={"id":0,"val":StrRA}
         D["MSName"]={"id":0,"val":MSName}
-        D["StepTime"]={"id":0,"val":self.MSTemplate.dt}#MS.dt}
         D["NBands"]={"id":0,"val":1}
         D["WriteAutoCorr"]={"id":0,"val":"T"}
 
-        D["NFrequencies"]={"id":0,"val":3}#MS.Nchan}
-        D["StepFreq"]={"id":0,"val":0.2e6}#np.abs(self.MSTemplate.dFreq)}
+        D["NFrequencies"]={"id":0,"val":5} # MS.Nchan}
+        D["StepFreq"]={"id":0,"val":10e6} # np.abs(self.MSTemplate.dFreq)}
 
-        D["StartFreq"]={"id":0,"val":np.min(self.MSTemplate.ChanFreq.flatten())-np.abs(self.MSTemplate.dFreq)/2.}
+        D["StartFreq"]={"id":0,"val":np.min(self.MSTemplate.ChanFreq.flatten())-np.abs(self.MSTemplate.dFreq[0])/2.}
         D["StartTime"]={"id":0,"val":DateTime}
 
-        D["NTimes"]={"id":0,"val":30}#int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
+        D["StepTime"]={"id":0,"val":self.MSTemplate.dt*5}#MS.dt}
+        D["NTimes"]={"id":0,"val":100}#int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
         #D["NTimes"]={"id":0,"val":int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
         
         D["NParts"]={"id":0,"val":"1"}
@@ -254,7 +286,7 @@ class MakeMultipleObs():
     
         ModParsetType.DictToParset(D,"makems.tmp.cfg")
         os.system("cat makems.tmp.cfg")
-        os.system("/usr/bin/makems makems.tmp.cfg")
+        os.system("makems makems.tmp.cfg")
 
     def DuplicateMSInFreq(self):
         for key in sorted(self.DicoPropPointings.keys()):
@@ -273,9 +305,12 @@ class MakeMultipleObs():
                 #outn="%s%4.4i.MS"%(dirMS,iSB)
                 outn="%4.4i.MS"%(iSB)
                 D["ListMS"].append(outn)
+
+                ss="cp -r %s %s "%(dirMS0Name,outn)
                 print "make ",outn,", at f=",freq
+                print "       %s"%ss
                 #os.system("cp -r /media/6B5E-87D0/MS/SimulTec/Simul_one.beam_off.gauss.MS.tsel "+outn)
-                os.system("cp -r %s %s "%(dirMS0Name,outn))
+                os.system(ss)
                 ta_spectral=table(outn+'/SPECTRAL_WINDOW/',ack=False,readonly=False)
 
                 dummy=ta_spectral.getcol('REF_FREQUENCY')

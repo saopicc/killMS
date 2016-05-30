@@ -3,8 +3,8 @@
 import optparse
 import sys
 
-from Other import MyLogger
-from Array import NpShared
+from killMS2.Other import MyLogger
+from killMS2.Array import NpShared
 log=MyLogger.getLogger("ClearSHM")
 
 def read_options():

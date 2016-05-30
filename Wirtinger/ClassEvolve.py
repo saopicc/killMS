@@ -2,15 +2,16 @@
 
 import numpy as np
 import pylab
-from Array import NpShared
+from killMS2.Array import NpShared
 
 class ClassModelEvolution():
-    def __init__(self,iAnt,WeightType="exp",WeigthScale=1,order=1,StepStart=5,BufferNPoints=10,sigQ=0.01,DoEvolve=True,IdSharedMem=""):
+    def __init__(self,iAnt,iChanSol,WeightType="exp",WeigthScale=1,order=1,StepStart=5,BufferNPoints=10,sigQ=0.01,DoEvolve=True,IdSharedMem=""):
         self.WeightType=WeightType 
         self.WeigthScale=WeigthScale*60. #in min
         self.order=order
         self.StepStart=StepStart
         self.iAnt=iAnt
+        self.iChanSol=iChanSol
         self.BufferNPoints=BufferNPoints
         self.sigQ=sigQ
         self.DoEvolve=DoEvolve
@@ -21,7 +22,7 @@ class ClassModelEvolution():
         indDone=np.where(done==1)[0]
         #print kapa
         #print type(NpShared.GiveArray("%sSharedCovariance_Q"%self.IdSharedMem))
-        Q=kapa*NpShared.GiveArray("%sSharedCovariance_Q"%self.IdSharedMem)[self.iAnt]
+        Q=kapa*NpShared.GiveArray("%sSharedCovariance_Q"%self.IdSharedMem)[self.iChanSol,self.iAnt]
         #print indDone.size
         #print "mean",np.mean(Q)
 
@@ -51,10 +52,10 @@ class ClassModelEvolution():
         tm=NpShared.GiveArray("%sSolsArray_tm"%self.IdSharedMem)[indDone]
 
 
-        G=NpShared.GiveArray("%sSolsArray_G"%self.IdSharedMem)[indDone][:,self.iAnt,:,:,:]
+        G=NpShared.GiveArray("%sSolsArray_G"%self.IdSharedMem)[indDone][:,self.iChanSol,self.iAnt,:,:,:]
 
         
-        nt,nd,npol,_=G.shape
+        nt,nd,npolx,npoly=G.shape
 
         #if nt<=self.StepStart: return None
 
@@ -65,11 +66,11 @@ class ClassModelEvolution():
         G=G.copy()
 
         nt,_,_,_=G.shape
-        NPars=nd*npol*npol
+        NPars=nd*npolx*npoly
         G=G.reshape((nt,NPars))
         
 
-        F=np.ones((NPars,),np.complex128)
+        F=np.ones((NPars,),G.dtype)
         PaOut=np.zeros_like(Pa)
 
         tm0=tm.copy()
@@ -145,7 +146,7 @@ class ClassModelEvolution():
         Gout[:]=G[-1]
 
 
-        F=np.ones((NPars,),np.complex128)
+        F=np.ones((NPars,),G.dtype)
         if self.DoEvolve:
             if self.WeightType=="exp":
                 w=np.exp(-tm0/self.WeigthScale)
@@ -208,9 +209,9 @@ class ClassModelEvolution():
         PaOut=F.reshape((NPars,1))*Pa*F.reshape((1,NPars)).conj()+Q
         
         
-
+        
         Gout=Gout.reshape((nd,npol,npol))
-
+        print np.diag(PaOut)
 
         return Gout,PaOut
   

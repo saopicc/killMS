@@ -2,16 +2,19 @@
 
 import optparse
 import sys
-from Other import MyPickle
-from Other import ModColor
+from killMS2.Other import MyPickle
+from killMS2.Other import ModColor
+from pyrap.tables import table
+import glob
 
 sys.path=[name for name in sys.path if not(("pyrap" in name)&("/usr/local/lib/" in name))]
 
 
 import numpy as np
-from Data import ClassMS
-from Other import MyLogger
+from killMS2.Data import ClassMS
+from killMS2.Other import MyLogger
 log=MyLogger.getLogger("MSTools")
+import os
 
 def read_options():
     desc="""CohJones Questions and suggestions: cyril.tasse@obspm.fr"""
@@ -31,35 +34,87 @@ def read_options():
     group = optparse.OptionGroup(opt, "* COPY options")
     group.add_option('--InOutCol',help='Column to copy, default is %default',default='CORRECTED_DATA_BACKUP,CORRECTED_DATA')
     opt.add_option_group(group)
+
+    group = optparse.OptionGroup(opt, "* SPLIT_SCAN options")
+    group.add_option('--OutputMSList',type="str",help='OutputMSList, default is %default',default='MSList.txt')
+    opt.add_option_group(group)
     
     options, arguments = opt.parse_args()
     options.TChunk=float(options.TChunk)
     
     return options
 
-def PutBackupCols(options):
-    MS=ClassMS.ClassMS(options.ms,DoReadData=False,TimeChunkSize=options.TChunk)
-    MS.PutBackupCol(incol=options.Col)
+class MSTools():
+    def __init__(self,options):
+        self.options=options
 
-def PutCasaCols(options):
-    MS=ClassMS.ClassMS(options.ms,DoReadData=False,TimeChunkSize=options.TChunk)
-    MS.PutCasaCols()
+    def PutBackupCols(self):
+        options=self.options
+        MS=ClassMS.ClassMS(options.ms,DoReadData=False,TimeChunkSize=options.TChunk)
+        MS.PutBackupCol(incol=options.Col)
     
+    def PutCasaCols(self):
+        options=self.options
+        MS=ClassMS.ClassMS(options.ms,DoReadData=False,TimeChunkSize=options.TChunk)
+        MS.PutCasaCols()
+        
+    
+    def Copy(self):
+        options=self.options
+        MS=ClassMS.ClassMS(options.ms,DoReadData=False,TimeChunkSize=options.TChunk)
+        In,Out=options.InOutCol.split(",")
+        MS.CopyCol(In,Out)
+    
+    
+    def SplitSCAN_MS_List(self):
+        options=self.options
+        MSList=options.ms
+        self.ListFiles=[]
+        #self.ScansDir="SCANS"
+        #os.system("mkdir -p %s"%self.ScansDir)
 
-def Copy(options=None):
-    MS=ClassMS.ClassMS(options.ms,DoReadData=False,TimeChunkSize=options.TChunk)
-    In,Out=options.InOutCol.split(",")
-    MS.CopyCol(In,Out)
+        ll=glob.glob(MSList)
+        print ll
+        
+        for MSn in ll:
+            self.SplitSCAN_MS(MSn)
 
+        OutputMSList=options.OutputMSList
+        print "Writing list of MS in %s"%OutputMSList
+        f = open(OutputMSList, 'w')
+        for MSn in self.ListFiles:
+            f.write('%s\n'%MSn)
+        f.close()
+        
+        
+    def SplitSCAN_MS(self,MSName):
 
+        t=table(MSName,ack=False)
+        ListScanID=sorted(list(set(list(t.getcol("SCAN_NUMBER")))))
+        t.close()
+        
+        ID=0
+        for ScanID in ListScanID:
+            #MSOut="%s.SCAN_%4.4i.MS"%(self.ScansDir,MSName,ID)
+            MSOut="SCAN_%4.4i.%s"%(ID,MSName)
+            ID+=1
+            ss="taql 'SELECT FROM %s WHERE SCAN_NUMBER==%i GIVING %s'"%(MSName,ScanID,MSOut)
+            print ss
+            os.system(ss)
+            self.ListFiles.append(MSOut)
+
+        
 
 if __name__=="__main__":
     options = read_options()
+    MST=MSTools(options)
 
     if options.Operation=="BACKUP":
-        PutBackupCols(options)
+        MST.PutBackupCols()
     elif options.Operation=="CasaCols":
-        PutCasaCols(options)
+        MST.PutCasaCols()
     elif options.Operation=="COPY":
-        Copy(options)
+        MST.Copy()
+    elif options.Operation=="SPLIT_SCAN":
+        MST.SplitSCAN_MS_List()
 

@@ -1,15 +1,15 @@
 import numpy as np
 from pyrap.tables import table
-from Other.rad2hmsdms import rad2hmsdms
-from Other import ModColor
-from Other import reformat
+from killMS2.Other.rad2hmsdms import rad2hmsdms
+from killMS2.Other import ModColor
+from killMS2.Other import reformat
 import os
 import pyrap.quanta as qa
 import pyrap.measures as pm
 import ephem
-from Other import MyLogger
+from killMS2.Other import MyLogger
 log=MyLogger.getLogger("ClassMS")
-from Other import ClassTimeIt
+from killMS2.Other import ClassTimeIt
 
 class ClassMS():
     def __init__(self,MSname,Col="DATA",zero_flag=True,ReOrder=False,EqualizeFlag=False,DoPrint=True,DoReadData=True,
@@ -102,6 +102,8 @@ class ClassMS():
     def PutLOFARKeys(self):
         keys=["LOFAR_ELEMENT_FAILURE", "LOFAR_STATION", "LOFAR_ANTENNA_FIELD"]
         t=table(self.MSName,ack=False)
+        
+
         for key in keys:
             t.putkeyword(key,'Table: %s/%s'%(self.MSName,key))
         t.close()
@@ -126,13 +128,13 @@ class ClassMS():
         # t.close()
                
         import lofar.stationresponse as lsr
-        f=self.ChanFreq.flatten()
-        if f.shape[0]>1:
-            t=table(self.MSName+"/SPECTRAL_WINDOW/",ack=False)
-            c=t.getcol("CHAN_WIDTH")
-            c.fill(np.abs((f[0:-1]-f[1::])[0]))
-            t.putcol("CHAN_WIDTH",c)
-            t.close()
+        # f=self.ChanFreq.flatten()
+        # if f.shape[0]>1:
+        #     t=table(self.MSName+"/SPECTRAL_WINDOW/",ack=False)
+        #     c=t.getcol("CHAN_WIDTH")
+        #     c.fill(np.abs((f[0:-1]-f[1::])[0]))
+        #     t.putcol("CHAN_WIDTH",c)
+        #     t.close()
 
         self.SR = lsr.stationresponse(self.MSName,
                                       useElementResponse=useElementBeam,
@@ -188,7 +190,7 @@ class ClassMS():
         
         
     def GiveBeam(self,time,ra,dec):
-        self.LoadSR()
+        #self.LoadSR()
         Beam=np.zeros((ra.shape[0],self.na,self.NSPWChan,2,2),dtype=np.complex)
         for i in range(ra.shape[0]):
             self.SR.setDirection(ra[i],dec[i])
@@ -329,7 +331,7 @@ class ClassMS():
         row0=0
         row1=self.F_nrows
 
-
+        DATA_CHUNK={}
         if t1>t0:
 
             t0=t0*3600.
@@ -354,6 +356,12 @@ class ClassMS():
         self.ROW0=row0
         self.ROW1=row1
         self.nRowRead=row1-row0
+
+        DATA_CHUNK["ROW0"]=row0
+        DATA_CHUNK["ROW1"]=row1
+        DATA_CHUNK["nRowRead"]=self.nRowRead
+
+
         nRowRead=self.nRowRead
 
         table_all=table(self.MSName,ack=False)
@@ -414,8 +422,8 @@ class ClassMS():
                     self.data.append(vis_all)
             else:
                 vis_all=table_all.getcol(self.ColName,row0,nRowRead)
-                if self.zero_flag: vis_all[flag_all==1]=0.
-                vis_all[np.isnan(vis_all)]=0.
+                #if self.zero_flag: vis_all[flag_all==1]=0.
+                #vis_all[np.isnan(vis_all)]=0.
                 self.data=vis_all
 
 
@@ -457,6 +465,13 @@ class ClassMS():
 
             
 
+        # DATA_CHUNK["uvw"]=self.uvw
+        # DATA_CHUNK["data"]=self.data
+        # DATA_CHUNK["flags"]=self.flag_all
+        # DATA_CHUNK["A0"]=self.A0
+        # DATA_CHUNK["A1"]=self.A1
+        # DATA_CHUNK["TimeInterVal"]=self.TimeInterVal
+        # return DATA_CHUNK
 
         
 
@@ -505,7 +520,8 @@ class ClassMS():
         T.enableIncr()
         T.disable()
         #print MSname+'/ANTENNA'
-        ta=table(MSname+'/ANTENNA',ack=False)
+
+        ta=table(MSname+'::ANTENNA',ack=False)
 
         StationNames=ta.getcol('NAME')
 
@@ -519,6 +535,7 @@ class ClassMS():
 
         table_all=table(MSname,ack=False)
         self.ColNames=table_all.colnames()
+        TimeIntervals=table_all.getcol("INTERVAL")
         SPW=table_all.getcol('DATA_DESC_ID')
         if self.SelectSPW!=None:
             self.ListSPW=self.SelectSPW
@@ -542,7 +559,7 @@ class ClassMS():
 
         T.timeit()
 
-        ta_spectral=table(MSname+'/SPECTRAL_WINDOW/',ack=False)
+        ta_spectral=table(MSname+'::SPECTRAL_WINDOW',ack=False)
         reffreq=ta_spectral.getcol('REF_FREQUENCY')
         chan_freq=ta_spectral.getcol('CHAN_FREQ')
         self.dFreq=ta_spectral.getcol("CHAN_WIDTH").flatten()
@@ -555,11 +572,11 @@ class ClassMS():
 
         T.timeit()
 
-        wavelength=299792458./reffreq
+        wavelength=299792456./reffreq
         NSPW=chan_freq.shape[0]
         self.ChanFreq=chan_freq
         self.Freq_Mean=np.mean(chan_freq)
-        wavelength_chan=299792458./chan_freq
+        wavelength_chan=299792456./chan_freq
 
         if NSPW>1:
             print "Don't deal with multiple SPW yet"
@@ -567,7 +584,7 @@ class ClassMS():
 
         Nchan=wavelength_chan.shape[1]
         NSPWChan=NSPW*Nchan
-        ta=table(MSname+'/FIELD/',ack=False)
+        ta=table(MSname+'::FIELD',ack=False)
         rarad,decrad=ta.getcol('PHASE_DIR')[0][0]
         if rarad<0.: rarad+=2.*np.pi
 
@@ -596,9 +613,11 @@ class ClassMS():
         self.F_times_all=F_time_all
         self.F_times=F_time_slots_all
         self.F_ntimes=F_time_slots_all.shape[0]
-        self.dt=F_time_slots_all[1]-F_time_slots_all[0]
-        self.DTs=F_time_slots_all[-1]-F_time_slots_all[0]
+        
+        self.dt=TimeIntervals[0]
+        self.DTs=F_time_all[-1]-F_time_all[0]+self.dt
         self.DTh=self.DTs/3600.
+
         self.radec=(rarad,decrad)
         self.rarad=rarad
         self.decrad=decrad
@@ -832,6 +851,18 @@ class ClassMS():
                 t.putcol(Colout,t.getcol(Colin,row0,NRow),row0,NRow)
         t.close()
 
+    def AddCol(self,ColName,LikeCol="DATA"):
+        t=table(self.MSName,readonly=False,ack=False)
+        if (ColName in t.colnames()):
+            print>>log, "  Column %s already in %s"%(ColName,self.MSName)
+            t.close()
+            return
+        print>>log, "  Putting column %s in %s"%(ColName,self.MSName)
+        desc=t.getcoldesc(LikeCol)
+        desc["name"]=ColName
+        desc['comment']=desc['comment'].replace(" ","_")
+        t.addcols(desc)
+        t.close()
         
     def PutBackupCol(self,incol="CORRECTED_DATA"):
         backname="%s_BACKUP"%incol
@@ -874,7 +905,7 @@ class ClassMS():
     def RotateMS(self,radec):
         import ModRotate
         ModRotate.Rotate(self,radec)
-        ta=table(self.MSName+'/FIELD/',ack=False,readonly=False)
+        ta=table(self.MSName+'::FIELD',ack=False,readonly=False)
         ra,dec=radec
         radec=np.array([[[ra,dec]]])
         ta.putcol("DELAY_DIR",radec)

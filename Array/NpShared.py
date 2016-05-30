@@ -1,8 +1,11 @@
-import sharedarray.SharedArray as SharedArray
-from Other import ModColor
+#import sharedarray.SharedArray as SharedArray
+import SharedArray
+from killMS2.Other import ModColor
 import numpy as np
-from Other import MyLogger
+from killMS2.Other import MyLogger
 log=MyLogger.getLogger("NpShared")
+from killMS2.Other import ClassTimeIt
+
 
 def zeros(*args,**kwargs):
     return SharedArray.create(*args,**kwargs)
@@ -26,6 +29,9 @@ def DelArray(Name):
         pass
 
 def ListNames():
+    
+    T=ClassTimeIt.ClassTimeIt("   SharedToDico")
+    
     ll=list(SharedArray.list())
     return [AR.name for AR in ll]
     
@@ -54,6 +60,7 @@ def DicoToShared(Prefix,Dico,DelInput=False):
         print>>log, ModColor.Str("  %s -> %s"%(key,ThisKeyPrefix))
         ar=Dico[key]
         Shared=ToShared(ThisKeyPrefix,ar)
+        #T.timeit("getarray %s"%ThisKeyPrefix)
         DicoOut[key]=Shared
         if DelInput:
             del(Dico[key],ar)
@@ -66,17 +73,48 @@ def DicoToShared(Prefix,Dico,DelInput=False):
 
 
 def SharedToDico(Prefix):
-
     print>>log, ModColor.Str("SharedToDico: start [prefix = %s]"%Prefix)
+    T=ClassTimeIt.ClassTimeIt("   SharedToDico")
+    T.disable()
     Lnames=ListNames()
+    T.timeit("0: ListNames")
     keys=[Name for Name in Lnames if Prefix in Name]
     if len(keys)==0: return None
     DicoOut={}
+    T.timeit("1")
     for Sharedkey in keys:
         key=Sharedkey.split(".")[-1]
         print>>log, ModColor.Str("  %s -> %s"%(Sharedkey,key))
         Shared=GiveArray(Sharedkey)
         DicoOut[key]=Shared
+    T.timeit("2a")
+    print>>log, ModColor.Str("SharedToDico: done")
+
+
+    return DicoOut
+
+class SharedDicoDescriptor():
+    def __init__(self,prefixName,Dico):
+        self.prefixName=prefixName
+        self.DicoKeys=Dico.keys()
+
+
+def SharedObjectToDico(SObject):
+    if SObject==None: return None
+    Prefix=SObject.prefixName
+    Fields=SObject.DicoKeys
+    print>>log, ModColor.Str("SharedToDico: start [prefix = %s]"%Prefix)
+    T=ClassTimeIt.ClassTimeIt("   SharedToDico")
+    T.disable()
+
+    DicoOut={}
+    T.timeit("1")
+    for field in Fields:
+        Sharedkey="%s.%s"%(Prefix,field)
+        #print>>log, ModColor.Str("  %s -> %s"%(Sharedkey,key))
+        Shared=GiveArray(Sharedkey)
+        DicoOut[field]=Shared
+    T.timeit("2a")
     print>>log, ModColor.Str("SharedToDico: done")
 
 

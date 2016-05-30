@@ -19,6 +19,9 @@ def FormatValue(ValueIn,StrMode=False):
         ValueIn=ValueIn.split("#")[0]
 
     
+    if ('"' in ValueIn)|("'" in ValueIn):
+        Value=ValueIn.replace(" ","").replace('"',"")
+        Value=ValueIn.replace(" ","").replace("'","")
 
     if StrMode:
         return ValueIn
@@ -31,8 +34,6 @@ def FormatValue(ValueIn,StrMode=False):
         Value=False
     elif "None" in ValueIn:
         Value=None
-    elif '"' in ValueIn:
-        Value=ValueIn.replace(" ","").replace('"',"")
     elif ("[" in ValueIn):
 
         Value0=ValueIn[1:-1].split(",")
@@ -60,6 +61,14 @@ class Parset():
     def __init__(self,File="../Parset/DefaultParset.cfg"):
         self.File=File
         self.Read()
+
+    def update (self, other):
+        """Updates this Parset with all keys found in other parset"""
+        for secname, secmap in other.DicoPars.iteritems():
+            if secname in self.DicoPars:
+                self.DicoPars[secname].update(secmap)
+            else:
+                self.DicoPars[secname] = secmap
     
 
     def Read(self):
@@ -87,11 +96,13 @@ class Parset():
 
             Val=Config.get(section, option)
             Val=Val.replace(" ","")
+            Val=Val.replace("'","")
+            Val=Val.replace('"',"")
             FVal=FormatValue(Val)#,StrMode=True)
 
             dict1[option] = FVal
-            if dict1[option] == -1:
-                DebugPrint("skip: %s" % option)
+            # if dict1[option] == -1:
+            #     DebugPrint("skip: %s" % option)
         return dict1
 
 

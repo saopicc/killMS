@@ -45,12 +45,29 @@ double complex *p_complex128(PyArrayObject *arrayin)  {
 
 
 
+float GiveFunc(float xneg, float* Func, float step, int Nmax){
+
+  size_t ii=floor(xneg/step);
+  //printf("ii=%i [%f, %f]\n",(int)ii,xneg,step);
+  float ans;
+  if(ii>=Nmax){ans=0.;}
+  else{
+    ans=Func[ii];
+  }
+  //printf("%i %i %f\n",ii,Nmax,ans);
+  return ans;
+}
+
+
 
 
 
 
 static PyObject *predict(PyObject *self, PyObject *args);
 static PyObject *predictJones(PyObject *self, PyObject *args);
+static PyObject *predictJones2(PyObject *self, PyObject *args);
+static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args);
+static PyObject *ApplyJones(PyObject *self, PyObject *args);
 static PyObject *CorrVis(PyObject *self, PyObject *args);
 static PyObject *GiveMaxCorr(PyObject *self, PyObject *args);
 
@@ -113,19 +130,35 @@ void MatDot(float complex *A, float complex* B, float complex* Out){
 
 
 
-void GiveJones(float complex *ptrJonesMatrices, int *JonesDims, float *ptrCoefs, int i_t, int i_ant0, int i_dir, float complex *Jout){
+
+
+void PrintArray(float complex *A){
+  printf("=================\n");
+  printf("[");
+  printf("(%10f, %10f)  ",creal(A[0]),cimag(A[0]));
+  printf("(%10f, %10f)]\n",creal(A[1]),cimag(A[1]));
+  printf("[");
+  printf("(%10f, %10f)  ",creal(A[2]),cimag(A[2]));
+  printf("(%10f, %10f)]\n",creal(A[3]),cimag(A[3]));
+  
+}
+
+void GiveJones(float complex *ptrJonesMatrices, int *JonesDims, float *ptrCoefs, int i_t, int i_ant0, int i_dir, int i_ch, float complex *Jout){
   int nd_Jones,na_Jones,nch_Jones;
   nd_Jones=JonesDims[1];
   na_Jones=JonesDims[2];
   nch_Jones=JonesDims[3];
   
   int ipol,idir;
-  int offJ0=i_t*nd_Jones*na_Jones*nch_Jones*4
+  size_t offJ0=i_t*nd_Jones*na_Jones*nch_Jones*4
     +i_dir*na_Jones*nch_Jones*4
-    +i_ant0*nch_Jones*4;
+    +i_ant0*nch_Jones*4
+    +i_ch*4;
   for(ipol=0; ipol<4; ipol++){
     Jout[ipol]=*(ptrJonesMatrices+offJ0+ipol);
   }
+
+  //PrintArray(Jout);
 
   //printf("dims nt=%i, nd=%i, na=%i, nch=%i\n",JonesDims[0],JonesDims[1],JonesDims[2],JonesDims[3]);
   //printf("  off=%i\n",offJ0);

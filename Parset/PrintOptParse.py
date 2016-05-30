@@ -1,5 +1,5 @@
 import ClassPrint
-from Other import ModColor
+from killMS2.Other import ModColor
 
 def test():
     import MyPickle

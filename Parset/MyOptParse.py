@@ -5,7 +5,7 @@ import PrintOptParse
 import ReadCFG
 
 import ClassPrint
-from Other import ModColor
+from killMS2.Other import ModColor
 #global Parset
 #Parset=ReadCFG.Parset("/media/tasse/data/DDFacet/Parset/DefaultParset.cfg")
 #D=Parset.DicoPars 
@@ -70,6 +70,16 @@ class MyOptParse():
 
         return self.DefaultDict
 
+    def ToParset(self,ParsetName):
+        Dico=self.GiveDicoConfig()
+        f=open(ParsetName,"w")
+        for MainKey in Dico.keys():
+            f.write('[%s]\n'%MainKey)
+            D=Dico[MainKey]
+            for SubKey in D.keys():
+                f.write('%s = %s \n'%(SubKey,str(D[SubKey])))
+            f.write('\n')
+        f.close()
 
     def Print(self,RejectGroup=[]):
         P=ClassPrint.ClassPrint(HW=50)
