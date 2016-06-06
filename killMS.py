@@ -834,7 +834,14 @@ if __name__=="__main__":
 
     import glob
     MSName=options.MSName
-    if ".txt" in MSName:
+
+    if type(MSName)==list:
+        lMS=MSName
+        print>>log, "In batch mode, running killMS on the following MS:"
+        for MS in lMS:
+            print>>log, "  %s"%MS
+        
+    elif ".txt" in MSName:
         f=open(MSName)
         Ls=f.readlines()
         f.close()
