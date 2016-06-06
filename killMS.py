@@ -108,6 +108,7 @@ def read_options():
     OP.add_option('kills',help='Name or number index of sources to kill')
     OP.add_option('invert',help='Invert the selected sources to kill')
     OP.add_option('Decorrelation',type="str",help=' . Default is %default')
+    OP.add_option('FreeFullSub',type="int",help=' . Default is %default')
 
 
     OP.OptionGroup("* Sky image related options","ImageSkyModel")
