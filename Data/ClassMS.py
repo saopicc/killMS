@@ -474,6 +474,13 @@ class ClassMS():
         # return DATA_CHUNK
 
         
+    def ToOrigFreqOrder(self,data):
+        
+        if self.DoRevertChans:
+            d=data[:,::-1].copy()
+            return d
+        else:
+            return data
 
     def SaveAllDataStruct(self):
         t=table(self.MSName,ack=False,readonly=False)

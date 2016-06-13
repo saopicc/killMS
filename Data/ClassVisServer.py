@@ -222,11 +222,14 @@ class ClassVisServer():
 
         # Calculate uvw speed for time spearing
 
-
+        Tmax=self.ThisDataChunk["times"][-1]
         # time selection
         indRowsThisChunk=np.where((self.ThisDataChunk["times"]>=t0_sec)&(self.ThisDataChunk["times"]<t1_sec))[0]
         if indRowsThisChunk.shape[0]==0:
-            return "EndChunk"
+            if t0_sec>=Tmax:
+                return "EndChunk"
+            else:
+                return "AllFlaggedThisTime"
         DATA={}
         DATA["indRowsThisChunk"]=indRowsThisChunk
         for key in D.keys():
@@ -414,6 +417,16 @@ class ClassVisServer():
         freqs=MS.ChanFreq.flatten()
         nbl=MS.nbl
         dfreqs=MS.dFreq
+
+
+        # if Nchan>1:
+        #     DoRevertChans=(freqs.flatten()[0]>freqs.flatten()[-1])
+        # if self.DoRevertChans:
+        #     print ModColor.Str("  ====================== >> Revert Channel order!")
+        #     wavelength_chan=wavelength_chan[0,::-1]
+        #     freqs=freqs[0,::-1]
+        #     self.dFreq=np.abs(self.dFreq)
+        
         
         
 

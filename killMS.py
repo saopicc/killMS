@@ -439,8 +439,9 @@ def main(OP=None,MSName=None):
                 print>>log, "Writing full predicted data in column %s of %s"%(FullPredictColName,options.MSName)
                 VS.MS.AddCol(FullPredictColName)
                 PredictData=NpShared.GiveArray("%s%s"%(IdSharedMem,ArrayName))
+
                 t=table(VS.MS.MSName,readonly=False,ack=False)
-                t.putcol(FullPredictColName,PredictData,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                t.putcol(FullPredictColName,VS.MS.ToOrigFreqOrder(PredictData),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
 
@@ -462,7 +463,7 @@ def main(OP=None,MSName=None):
                 Solver.VS.ThisDataChunk["data"]-=PredictData
                 print>>log, "  save visibilities in %s column"%WriteColName
                 t=table(Solver.VS.MS.MSName,readonly=False,ack=False)
-                t.putcol(WriteColName,Solver.VS.MS.data,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                t.putcol(WriteColName,VS.MS.ToOrigFreqOrder(Solver.VS.MS.data),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
 
@@ -625,7 +626,7 @@ def main(OP=None,MSName=None):
 
                 print>>log, "  Writting in IMAGING_WEIGHT column "
                 t=table(Solver.VS.MS.MSName,readonly=False,ack=False)
-                t.putcol("IMAGING_WEIGHT",Weights,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                t.putcol("IMAGING_WEIGHT",VS.MS.ToOrigFreqOrder(Weights),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
 
@@ -641,7 +642,7 @@ def main(OP=None,MSName=None):
                 Weights/=np.mean(Weights)
                 print>>log, "  Writting in IMAGING_WEIGHT column "
                 t=table(Solver.VS.MS.MSName,readonly=False,ack=False)
-                t.putcol("IMAGING_WEIGHT",Weights,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                t.putcol("IMAGING_WEIGHT",VS.MS.ToOrigFreqOrder(Weights),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
             if DoSubstract:
@@ -661,7 +662,7 @@ def main(OP=None,MSName=None):
                         print>>log, "Writing predicted data in column %s of %s"%(PredictColName,MSName)
                         VS.MS.AddCol(PredictColName)
                         t=table(VS.MS.MSName,readonly=False,ack=False)
-                        t.putcol(PredictColName,PredictData,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                        t.putcol(PredictColName,VS.MS.ToOrigFreqOrder(PredictData),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                         t.close()
                     
                     #PredictData2=PM2.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
@@ -687,8 +688,8 @@ def main(OP=None,MSName=None):
             if (DoSubstract|DoApplyCal):
                 print>>log, "Save visibilities in %s column"%WriteColName
                 t=table(Solver.VS.MS.MSName,readonly=False,ack=False)
-                t.putcol(WriteColName,Solver.VS.MS.data,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
-                t.putcol("FLAG",Solver.VS.MS.flags_all,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                t.putcol(WriteColName,VS.MS.ToOrigFreqOrder(Solver.VS.MS.data),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                t.putcol("FLAG",VS.MS.ToOrigFreqOrder(Solver.VS.MS.flags_all),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
                 
