@@ -340,6 +340,7 @@ class ClassWirtingerSolver():
         if self.GD["Beam"]["BeamModel"]==None:
             self.SM.ApparentSumI=self.NormFluxes
             self.SM.AbsMeanBeamAnt=np.ones_like(self.SM.ApparentSumI)
+            self.AbsMeanBeamAnt=self.SM.AbsMeanBeamAnt
         else:
             nd=self.SM.ClusterCat.SumI.size
             self.SM.ApparentSumI=np.zeros((nd,),np.float32)
