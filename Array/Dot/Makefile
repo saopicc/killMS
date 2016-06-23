@@ -11,4 +11,4 @@ dotSSE.so:  dotSSE.o
 
 # ---- gcc C compile ------------------
 dotSSE.o:  dotSSE.c dotSSE.h
-	gcc -O3 --fast-math  -c dotSSE.c -I/usr/include/python2.7 -I/home/cyril.tasse/bin/lib/python2.7/site-packages/numpy/core/include/numpy  -I/home/tasse/bin/lib/python2.7/site-packages/numpy/core/include/numpy -fPIC
+	gcc -O3 --fast-math  -c dotSSE.c -I/usr/include/python2.7 -I/home/cyril.tasse/bin/lib/python2.7/site-packages/numpy/core/include/numpy  -I/home/tasse/bin/lib/python2.7/site-packages/numpy/core/include/numpy -I/home/tasse/bin/lib64/python2.7/site-packages/numpy-1.8.0-py2.7-linux-x86_64.egg/numpy/core/include/numpy -fPIC

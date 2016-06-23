@@ -812,7 +812,7 @@ def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2,ConfigJacobianAnte
 
 
 if __name__=="__main__":
-    os.system('clear')
+    #os.system('clear')
     logo.print_logo()
 
 
