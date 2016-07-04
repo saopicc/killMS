@@ -12,7 +12,7 @@ from killMS2.Array import NpShared
 #ne.evaluate=lambda sin: ("return %s"%sin)
 import time
 from killMS2.Predict import predict 
-from killMS2.Predict import predict_np19 
+#from killMS2.Predict import predict_np19 
 from killMS2.Other import findrms
 from killMS2.Other import ModColor
 from killMS2.Other.ModChanEquidistant import IsChanEquidistant
