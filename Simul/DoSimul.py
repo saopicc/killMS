@@ -110,14 +110,15 @@ class ClassSimul():
 
         DeltaT_Amp=np.random.randn(nch,na,nd)*60
         period_Amp=120+np.random.randn(nch,na,nd)*10
-        Amp_Mean=np.random.rand(nch,na,nd)*2
+        Amp_Mean=.9+np.random.rand(nch,na,nd)*0.2
+        
         Amp_Amp=np.random.randn(nch,na,nd)*.1
     
         DeltaT_Phase=np.random.randn(nch,na,nd)*60
         period_Phase=300+np.random.randn(nch,na,nd)*10
         #period_Phase=np.random.randn(na,nd)*10
         PhaseAbs=np.random.randn(nch,na,nd)*np.pi
-        Amp_Phase=np.random.randn(nch,na,nd)*np.pi#*0.1
+        Amp_Phase=np.random.rand(nch,na,nd)*np.pi*0.1
     
         #Amp_Amp=np.zeros((na,nd))
         PhaseAbs.fill(0)
@@ -127,8 +128,8 @@ class ClassSimul():
 
 
         for itime in range(0,NSols):
-            if itime>0: 
-                continue
+            # if itime>0: 
+            #     continue
             print itime,"/",NSols
             for ich in range(nch):
                 for iAnt in range(na):
@@ -179,9 +180,9 @@ class ClassSimul():
 
 
 
-        for itime in range(NSols):
-            Sols.G[itime,:,:,:,0,0]=Sols.G[0,:,:,:,0,0]
-            Sols.G[itime,:,:,:,1,1]=Sols.G[0,:,:,:,1,1]
+        # for itime in range(NSols):
+        #     Sols.G[itime,:,:,:,0,0]=Sols.G[0,:,:,:,0,0]
+        #     Sols.G[itime,:,:,:,1,1]=Sols.G[0,:,:,:,1,1]
 
         # Sols.G.fill(0)
         # Sols.G[:,:,:,:,0,0]=1
@@ -191,9 +192,10 @@ class ClassSimul():
             Sols.G[:,ich,:,:,:,:]=Sols.G[:,0,:,:,:,:]
         Sols.G[:,:,:,:,1,1]=Sols.G[:,:,:,:,0,0]
 
-        Sols.G.fill(0)
-        Sols.G[:,:,:,:,0,0]=1.
-        Sols.G[:,:,:,:,1,1]=1.
+        # Sols.G.fill(0)
+        # Sols.G[:,:,:,:,0,0]=1.
+        # Sols.G[:,:,:,:,1,1]=1.
+
         # # Sols.G[:,:,:,1:,0,0]=0.01
         # # Sols.G[:,:,:,1:,1,1]=0.01
 
