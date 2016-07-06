@@ -76,7 +76,10 @@ class ClassPreparePredict(ClassImagerDeconv):
         #self.MM.CleanNegComponants(box=15,sig=1)
         if self.GD["GDkMS"]["ImageSkyModel"]["MaskImage"]!=None:
             self.MM.CleanMaskedComponants(self.GD["GDkMS"]["ImageSkyModel"]["MaskImage"])
-        self.ModelImage=self.MM.GiveModelImage(np.mean(self.VS.MS.ChanFreq))
+
+        
+        #self.ModelImage=self.MM.GiveModelImage(np.mean(self.VS.MS.ChanFreq))
+        self.ModelImage=self.MM.GiveModelImage(self.VS.FreqChanDegridding)
 
         # print "im!!!!!!!!!!!!!!!!!!!!!!!"
         # im=image("ModelImage.fits")
@@ -87,7 +90,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         #         data[ch,pol]=data[ch,pol].T[::-1]
         # self.ModelImage=data
 
-        self.FacetMachine.ToCasaImage(self.ModelImage,ImageName="Model_kMS",Fits=True)
+        #self.FacetMachine.ToCasaImage(self.ModelImage,ImageName="Model_kMS",Fits=True)
         #stop
         self.ModelImage=NpShared.ToShared("%sModelImage"%(self.IdSharedMem),self.ModelImage)
         #del(data)
@@ -179,7 +182,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.SM.rac=self.VS.MS.rac
         self.SM.decc=self.VS.MS.decc
         
-        # self.SM.ChanMappingDegrid=self.VS.DicoMSChanMappingDegridding[0]
+        self.SM.ChanMappingDegrid=self.VS.MappingDegrid
 
 
 

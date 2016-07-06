@@ -583,12 +583,12 @@ class ClassPredict():
             # ModelIm = NpShared.GiveArray(ModelSharedMemName)
 
             ModelIm = NpShared.UnPackListArray("%sGrids"%self.IdSharedMem)[iFacet]
-            # ChanMapping=SM.ChanMappingDegrid
+            ChanMapping=np.int32(SM.ChanMappingDegrid)
             # print ChanMapping
-
+            
             T.timeit("2: Stuff")
             vis=GridMachine.get(times,uvwThis,ColOutDir,flagsThis,A0A1,ModelIm,DicoJonesMatrices=DicoJonesMatrices,freqs=freqs,
-                                ImToGrid=False)
+                                ImToGrid=False,ChanMapping=ChanMapping)
             T.timeit("2: Predict")
             # get() is substracting
 

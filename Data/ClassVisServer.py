@@ -128,8 +128,25 @@ class ClassVisServer():
             self.SolsToVisChanMapping.append((ind[0],ind[-1]+1))
         print>>log,("SolsToVisChanMapping %s"%str(self.SolsToVisChanMapping))
         
-        
 
+        # ChanDegrid
+        FreqBands=ChanEdges
+        self.FreqBandsMean=(FreqBands[0:-1]+FreqBands[1::])/2.
+        self.FreqBandsMin=FreqBands[0:-1].copy()
+        self.FreqBandsMax=FreqBands[1::].copy()
+        
+        NChanDegrid = NChanJones
+        MS=self.MS
+        ChanDegridding=np.linspace(FreqBands.min(),FreqBands.max(),NChanDegrid+1)
+        FreqChanDegridding=(ChanDegridding[1::]+ChanDegridding[0:-1])/2.
+        self.FreqChanDegridding=FreqChanDegridding
+        NChanDegrid=FreqChanDegridding.size
+        NChanMS=MS.ChanFreq.size
+        DChan=np.abs(MS.ChanFreq.reshape((NChanMS,1))-FreqChanDegridding.reshape((1,NChanDegrid)))
+        ThisMappingDegrid=np.argmin(DChan,axis=1)
+        self.MappingDegrid=ThisMappingDegrid
+        print>>log,"Mapping degrid: %s"%str(self.MappingDegrid)
+        #NpShared.ToShared("%sMappingDegrid"%self.IdSharedMem,self.MappingDegrid)
 
         ######################################################
         
