@@ -90,7 +90,9 @@ class ClassVisServer():
 
     def Init(self,PointingID=0,NChanJones=1):
         #MSName=self.MDC.giveMS(PointingID).MSName
-        MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False)
+        MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False,
+                           Field=self.GD["DataSelection"]["FieldID"],
+                           DDID=self.GD["DataSelection"]["DDID"])
 
         TimesInt=np.arange(0,MS.DTh,self.TMemChunkSize).tolist()
         if not(MS.DTh+1./3600 in TimesInt): TimesInt.append(MS.DTh+1./3600)
@@ -922,7 +924,7 @@ class ClassVisServer():
 
 
     def GiveAllUVW(self):
-        t=table(self.MS.MSName,ack=False)
+        t=self.MS.GiveMainTable()
         uvw=t.getcol("UVW")
         WEIGHT=t.getcol("WEIGHT")
         F=t.getcol("FLAG")

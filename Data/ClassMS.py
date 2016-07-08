@@ -13,7 +13,7 @@ from killMS2.Other import ClassTimeIt
 
 class ClassMS():
     def __init__(self,MSname,Col="DATA",zero_flag=True,ReOrder=False,EqualizeFlag=False,DoPrint=True,DoReadData=True,
-                 TimeChunkSize=None,GetBeam=False,RejectAutoCorr=False,SelectSPW=None,DelStationList=None):
+                 TimeChunkSize=None,GetBeam=False,RejectAutoCorr=False,SelectSPW=None,DelStationList=None,Field=0,DDID=0):
 
 
         if MSname=="": exit()
@@ -28,6 +28,9 @@ class ClassMS():
         self.RejectAutoCorr=RejectAutoCorr
         self.SelectSPW=SelectSPW
         self.DelStationList=DelStationList
+        self.Field=Field
+        self.DDID=DDID
+        self.TaQL = "FIELD_ID==%d && DATA_DESC_ID==%d" % (Field, DDID)
         self.ReadMSInfo(MSname,DoPrint=DoPrint)
         self.LFlaggedStations=[]
 
@@ -47,6 +50,14 @@ class ClassMS():
         self.SR=None
         if GetBeam:
             self.LoadSR()
+
+    def GiveMainTable (self,**kw):
+        """Returns main MS table, applying TaQL selection if any"""
+        t = table(self.MSName,ack=False,**kw)
+
+        if self.TaQL:
+            t = t.query(self.TaQL)
+        return t
 
     def GiveDate(self,tt):
         time_start = qa.quantity(tt, 's')
@@ -101,7 +112,7 @@ class ClassMS():
 
     def PutLOFARKeys(self):
         keys=["LOFAR_ELEMENT_FAILURE", "LOFAR_STATION", "LOFAR_ANTENNA_FIELD"]
-        t=table(self.MSName,ack=False)
+        t=self.GiveMainTable()#table(self.MSName,ack=False)
         
 
         for key in keys:
@@ -153,6 +164,9 @@ class ClassMS():
         return MSnodata
 
     def LoadLOFAR_ANTENNA_FIELD(self):
+        
+
+
         t=table("%s/LOFAR_ANTENNA_FIELD"%self.MSName,ack=False)
         #print>>log, ModColor.Str(" ... Loading LOFAR_ANTENNA_FIELD table...")
         na,NTiles,dummy=t.getcol("ELEMENT_OFFSET").shape
@@ -364,7 +378,8 @@ class ClassMS():
 
         nRowRead=self.nRowRead
 
-        table_all=table(self.MSName,ack=False)
+        #table_all=table(self.MSName,ack=False)
+        table_all = self.GiveMainTable()
         SPW=table_all.getcol('DATA_DESC_ID',row0,nRowRead)
         A0=table_all.getcol('ANTENNA1',row0,nRowRead)[SPW==self.ListSPW[0]]
         A1=table_all.getcol('ANTENNA2',row0,nRowRead)[SPW==self.ListSPW[0]]
@@ -483,7 +498,7 @@ class ClassMS():
             return data
 
     def SaveAllDataStruct(self):
-        t=table(self.MSName,ack=False,readonly=False)
+        t=self.GiveMainTable()#table(self.MSName,ack=False,readonly=False)
 
         t.putcol('ANTENNA1',self.A0)
         t.putcol('ANTENNA2',self.A1)
@@ -528,7 +543,12 @@ class ClassMS():
         T.disable()
         #print MSname+'/ANTENNA'
 
-        ta=table(MSname+'::ANTENNA',ack=False)
+        # open main table
+        table_all=table(MSname,ack=False)
+
+        #print MSname+'/ANTENNA'
+        ta=table(table_all.getkeyword('ANTENNA'),ack=False)
+        #ta=table(MSname+'::ANTENNA',ack=False)
 
         StationNames=ta.getcol('NAME')
 
@@ -540,7 +560,7 @@ class ClassMS():
         T.timeit()
 
 
-        table_all=table(MSname,ack=False)
+        #table_all=table(MSname,ack=False)
         self.ColNames=table_all.colnames()
         TimeIntervals=table_all.getcol("INTERVAL")
         SPW=table_all.getcol('DATA_DESC_ID')
@@ -562,11 +582,10 @@ class ClassMS():
 
         F_time_slots_all=np.array(sorted(list(set(F_time_all.tolist()))))
         F_ntimes=F_time_slots_all.shape[0]
-        table_all.close()
 
         T.timeit()
 
-        ta_spectral=table(MSname+'::SPECTRAL_WINDOW',ack=False)
+        ta_spectral=table(table_all.getkeyword('SPECTRAL_WINDOW'),ack=False)
         reffreq=ta_spectral.getcol('REF_FREQUENCY')
         chan_freq=ta_spectral.getcol('CHAN_FREQ')
         self.dFreq=ta_spectral.getcol("CHAN_WIDTH").flatten()
@@ -591,8 +610,8 @@ class ClassMS():
 
         Nchan=wavelength_chan.shape[1]
         NSPWChan=NSPW*Nchan
-        ta=table(MSname+'::FIELD',ack=False)
-        rarad,decrad=ta.getcol('PHASE_DIR')[0][0]
+        ta=table(table_all.getkeyword('FIELD'),ack=False)
+        rarad,decrad=ta.getcol('PHASE_DIR')[self.Field][0]
         if rarad<0.: rarad+=2.*np.pi
 
         T.timeit()
@@ -611,6 +630,7 @@ class ClassMS():
             self.dFreq=np.abs(self.dFreq)
 
         T.timeit()
+        table_all.close()
 
         self.na=na
         self.Nchan=Nchan
@@ -704,6 +724,7 @@ class ClassMS():
         ll.append(ModColor.Str(" MS PROPERTIES: "))
         ll.append("   - File Name: %s"%ModColor.Str(self.MSName,col="green"))
         ll.append("   - Column Name: %s"%ModColor.Str(str(self.ColName),col="green"))
+        ll.append("   - Selection: %s"%( ModColor.Str(str(self.TaQL),col="green")))
         ll.append("   - Pointing center: (ra, dec)=(%s, %s) "%(rad2hmsdms(self.rarad,Type="ra").replace(" ",":")\
                                                                ,rad2hmsdms(self.decrad,Type="dec").replace(" ",".")))
         ll.append("   - Frequency = %s MHz"%str(self.reffreq/1e6))
@@ -727,7 +748,9 @@ class ClassMS():
         if vis==None:
             vis=self.data
         if DoPrint: print>>log, "Writting data in column %s"%ModColor.Str(Col,col="green")
-        table_all=table(self.MSName,ack=False,readonly=False)
+
+        
+        table_all=self.GiveMainTable(readonly=False)
 
         if self.swapped:
             visout=np.swapaxes(vis[spw*self.Nchan:(spw+1)*self.Nchan],0,1)
@@ -796,7 +819,7 @@ class ClassMS():
             pylab.show()
 
     def GiveCol(self,ColName):
-        t=table(self.MSName,readonly=False,ack=False)
+        t=self.GiveMainTable()
         col=t.getcol(ColName)
         t.close()
         return col

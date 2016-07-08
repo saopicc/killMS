@@ -11,13 +11,6 @@ from killMS2.Other import PrintOptParse
 from killMS2.Parset import MyOptParse
 import numpy as np
 
-# # ##############################
-# # Catch numpy warning
-# np.seterr(all='raise')
-# import warnings
-# with warnings.catch_warnings():
-#     warnings.filterwarnings('error')
-# # ##############################
 
 # log
 log=MyLogger.getLogger("killMS")
@@ -124,6 +117,8 @@ def read_options():
     OP.add_option('FlagAnts',type="str",help='FlagAntenna patern. Default is %default')
     OP.add_option('DistMaxToCore',type="float",help='Maximum distance to core in km. Default is %default')
     OP.add_option('FillFactor',type="float")
+    OP.add_option('FieldID',type="int")
+    OP.add_option('DDID',type="int")
 
     OP.OptionGroup("* Beam Options","Beam")
     OP.add_option('BeamModel',type="str",help='Apply beam model, Can be set to: None/LOFAR. Default is %default')
@@ -423,6 +418,14 @@ def main(OP=None,MSName=None):
 
     SourceCatSub=None
     SaveSols=False
+    # # ##############################
+    # # Catch numpy warning
+    # np.seterr(all='raise')
+    # import warnings
+    # with warnings.catch_warnings():
+    #     warnings.filterwarnings('error')
+    # # ##############################
+
     while True:
 
         Load=VS.LoadNextVisChunk()
@@ -440,7 +443,7 @@ def main(OP=None,MSName=None):
                 VS.MS.AddCol(FullPredictColName)
                 PredictData=NpShared.GiveArray("%s%s"%(IdSharedMem,ArrayName))
 
-                t=table(VS.MS.MSName,readonly=False,ack=False)
+                t=VS.MS.GiveMainTable(readonly=False)#table(VS.MS.MSName,readonly=False,ack=False)
                 t.putcol(FullPredictColName,VS.MS.ToOrigFreqOrder(PredictData),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
@@ -462,7 +465,7 @@ def main(OP=None,MSName=None):
                 PredictData=NpShared.GiveArray("%s%s"%(IdSharedMem,"PredictedDataGains"))
                 Solver.VS.ThisDataChunk["data"]-=PredictData
                 print>>log, "  save visibilities in %s column"%WriteColName
-                t=table(Solver.VS.MS.MSName,readonly=False,ack=False)
+                t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
                 t.putcol(WriteColName,VS.MS.ToOrigFreqOrder(Solver.VS.MS.data),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
@@ -626,7 +629,7 @@ def main(OP=None,MSName=None):
 
                 print>>log, "  Writting in IMAGING_WEIGHT column "
                 VS.MS.AddCol("IMAGING_WEIGHT")
-                t=table(Solver.VS.MS.MSName,readonly=False,ack=False)
+                t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
                 t.putcol("IMAGING_WEIGHT",VS.MS.ToOrigFreqOrder(Weights),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
@@ -642,7 +645,7 @@ def main(OP=None,MSName=None):
                 Weights=Solver.VS.ThisDataChunk["W"]
                 Weights/=np.mean(Weights)
                 print>>log, "  Writting in IMAGING_WEIGHT column "
-                t=table(Solver.VS.MS.MSName,readonly=False,ack=False)
+                t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
                 t.putcol("IMAGING_WEIGHT",VS.MS.ToOrigFreqOrder(Weights),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
@@ -662,7 +665,7 @@ def main(OP=None,MSName=None):
                     if PredictColName!="":
                         print>>log, "Writing predicted data in column %s of %s"%(PredictColName,MSName)
                         VS.MS.AddCol(PredictColName)
-                        t=table(VS.MS.MSName,readonly=False,ack=False)
+                        t=Solver.VS.MS.GiveMainTable(readonly=False)#table(VS.MS.MSName,readonly=False,ack=False)
                         t.putcol(PredictColName,VS.MS.ToOrigFreqOrder(PredictData),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                         t.close()
                     
@@ -688,7 +691,7 @@ def main(OP=None,MSName=None):
 
             if (DoSubstract|DoApplyCal):
                 print>>log, "Save visibilities in %s column"%WriteColName
-                t=table(Solver.VS.MS.MSName,readonly=False,ack=False)
+                t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
                 t.putcol(WriteColName,VS.MS.ToOrigFreqOrder(Solver.VS.MS.data),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.putcol("FLAG",VS.MS.ToOrigFreqOrder(Solver.VS.MS.flags_all),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()

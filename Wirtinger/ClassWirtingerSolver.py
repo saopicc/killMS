@@ -754,6 +754,7 @@ class ClassWirtingerSolver():
             meanW=np.zeros((self.VS.MS.na,),np.float32)
             for iAntMS in ListAntSolve:
                 ind=np.where((A0==iAntMS)|(A1==iAntMS))[0]
+                if ind.size==0: continue
                 meanW[iAntMS]=np.mean(np.abs(w[ind]))
             meanW=meanW[ListAntSolve]
             indOrderW=np.argsort(meanW)[::-1]

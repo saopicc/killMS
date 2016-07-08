@@ -1212,6 +1212,9 @@ class ClassJacobianAntenna():
         for ipol in range(NP):
             f=(DicoData["flags_flat"][ipol]==0)
             ind=np.where(f)[0]
+            if ind.size==0: 
+                self.DataAllFlagged=True
+                continue
             fracFlagged=ind.size/float(f.size)
             if fracFlagged<0.2:#ind.size==0:
                 self.DataAllFlagged=True
@@ -1361,6 +1364,10 @@ class ClassJacobianAntenna():
             for ipol in range(NP):
                 f=(DicoData["flags_flat"][ipol]==0)
                 ind=np.where(f)[0]
+                
+                if ind.size==0: 
+                    self.DataAllFlagged=True
+                    continue
 
                 fracFlagged=ind.size/float(f.size)
                 if fracFlagged<0.2:#ind.size==0:
@@ -1423,6 +1430,9 @@ class ClassJacobianAntenna():
         for ipol in range(NP):
             f=(DicoData["flags_flat"][ipol]==0)
             ind=np.where(f)[0]
+            if ind.size==0: 
+                self.DataAllFlagged=True
+                continue
             fracFlagged=ind.size/float(f.size)
             if fracFlagged<0.2:#ind.size==0:
                 self.DataAllFlagged=True
