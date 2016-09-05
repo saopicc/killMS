@@ -471,7 +471,7 @@ class ClassWirtingerSolver():
 
 
 
-        if self.G==None:
+        if type(self.G)==type(None):
             self.InitSol()
 
         ListAntSolve=[i for i in range(self.VS.MS.na) if not(i in self.VS.FlagAntNumber)]

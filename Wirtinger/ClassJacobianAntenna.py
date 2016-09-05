@@ -151,7 +151,7 @@ class ClassJacobianAntenna():
         self.TypeDot="Numpy"
         #self.TypeDot="SSE"
 
-        self.iAnt=iAnt
+        self.iAnt=int(iAnt)
         self.SharedDataDicoName="%sDicoData.%2.2i"%(self.IdSharedMem,self.iAnt)
         self.NChanSols=NChanSols
         
@@ -974,7 +974,7 @@ class ClassJacobianAntenna():
         T.disable()
         DATA=self.DATA
         iAnt=self.iAnt
-        na=DATA['infos'][0]
+        na=int(DATA['infos'][0])
         self.na=na
         NDir=self.SM.NDir
         self.NDir=NDir
