@@ -453,7 +453,7 @@ class ClassJacobianAntenna():
 
         # estimate x
         zr=(z-Jx)
-        
+        zr[self.DicoData["flags_flat"]]=0
 
         T.timeit("Resid")
 
@@ -609,6 +609,7 @@ class ClassJacobianAntenna():
         Jx=self.J_x(Ga)
         T.timeit("Jx")
         zr=z-Jx
+        zr[self.DicoData["flags_flat"]]=0
         T.timeit("resid")
 
         # JH_z_0=np.load("LM.npz")["JH_z"]
