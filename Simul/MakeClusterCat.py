@@ -12,9 +12,9 @@ WorkingDir="/media/6B5E-87D0/MS/SimulTec/"
 ProgTables="/home/tasse/sources/LOFAR/build/gnu_opt/LCS/MSLofar/src/makebeamtables"
 
 
-MSTemplate="L102479_SB144_uv.dppp.MS.dppp.tsel_fixed"
-WorkingDir="/data/tasse/Simul2/"
-ProgTables="makebeamtables"
+# MSTemplate="L102479_SB144_uv.dppp.MS.dppp.tsel_fixed"
+# WorkingDir="/data/tasse/Simul2/"
+# ProgTables="makebeamtables"
 
 antennaset="LBA_INNER"
 #antennaset="HBA_INNER"
@@ -41,7 +41,7 @@ def test():
                           "Ns":9,
                           "Nc":0,
                           "Diam":4,
-                          "finfo":(50e6,50e6,1),
+                          "finfo":(40e6,60e6,2),
                           "Mode":"Grid"}
 
 
@@ -235,7 +235,7 @@ class MakeMultipleObs():
 
             ss="%s antennafielddir=/home/tasse/sources/StaticMetaData antennaset=LBA_INNER antennasetfile=/home/tasse/sources/AntennaSets.conf ihbadeltadir=/home/tasse/sources/StaticMetaData ms=%s overwrite=1"%(ProgTables,D["dirMS0Name"])
 
-            ss="%s antennafielddir=/home/cyril.tasse/source/LOFARBeamData/AntennaFields antennaset=LBA_INNER antennasetfile=/home/cyril.tasse/source/LOFARBeamData/AntennaSets.conf ihbadeltadir=/home/cyril.tasse/source/LOFARBeamData/iHBADeltas ms=%s overwrite=1"%(ProgTables,D["dirMS0Name"])
+#            ss="%s antennafielddir=/home/cyril.tasse/source/LOFARBeamData/AntennaFields antennaset=LBA_INNER antennasetfile=/home/cyril.tasse/source/LOFARBeamData/AntennaSets.conf ihbadeltadir=/home/cyril.tasse/source/LOFARBeamData/iHBADeltas ms=%s overwrite=1"%(ProgTables,D["dirMS0Name"])
             print ss
             os.system(ss)
 
@@ -269,14 +269,14 @@ class MakeMultipleObs():
         D["NBands"]={"id":0,"val":1}
         D["WriteAutoCorr"]={"id":0,"val":"T"}
 
-        D["NFrequencies"]={"id":0,"val":5} # MS.Nchan}
-        D["StepFreq"]={"id":0,"val":10e6} # np.abs(self.MSTemplate.dFreq)}
+        D["NFrequencies"]={"id":0,"val":4} # MS.Nchan}
+        D["StepFreq"]={"id":0,"val":2e6} # np.abs(self.MSTemplate.dFreq)}
 
         D["StartFreq"]={"id":0,"val":np.min(self.MSTemplate.ChanFreq.flatten())-np.abs(self.MSTemplate.dFreq[0])/2.}
         D["StartTime"]={"id":0,"val":DateTime}
 
         D["StepTime"]={"id":0,"val":self.MSTemplate.dt*5}#MS.dt}
-        D["NTimes"]={"id":0,"val":100}#int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
+        D["NTimes"]={"id":0,"val":30}#int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
         #D["NTimes"]={"id":0,"val":int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
         
         D["NParts"]={"id":0,"val":"1"}

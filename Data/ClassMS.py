@@ -749,7 +749,7 @@ class ClassMS():
             vis=self.data
         if DoPrint: print>>log, "Writting data in column %s"%ModColor.Str(Col,col="green")
 
-        
+        print "Givemain"
         table_all=self.GiveMainTable(readonly=False)
 
         if self.swapped:
@@ -759,11 +759,15 @@ class ClassMS():
             visout=vis
             flag_all=self.flag_all
 
+        print "Col"
         table_all.putcol(Col,visout.astype(self.data.dtype),self.ROW0,self.nRowRead)
+        print "Flag"
         table_all.putcol("FLAG",flag_all,self.ROW0,self.nRowRead)
+        print "Weight"
         if self.HasWeights:
             table_all.putcol("WEIGHT",self.Weights,self.ROW0,self.nRowRead)
             #print "ok w"
+        print "Close"
         table_all.close()
         
     def GiveUvwBL(self,a0,a1):

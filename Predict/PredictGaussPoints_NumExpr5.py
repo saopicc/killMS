@@ -287,13 +287,46 @@ class ClassPredict():
 
 
 
+    # def GiveGM(self,iFacet,SM):
+    #     GridMachine=ClassDDEGridMachine.ClassDDEGridMachine(SM.GD,
+    #                                                         SM.DicoImager[iFacet]["DicoConfigGM"]["ChanFreq"],
+    #                                                         SM.DicoImager[iFacet]["DicoConfigGM"]["Npix"],
+    #                                                         lmShift=SM.DicoImager[iFacet]["lmShift"],
+    #                                                         IdSharedMem=self.IdSharedMem,
+    #                                                         IDFacet=SM.DicoImager[iFacet]["IDFacet"],
+    #                                                         SpheNorm=False)
+
     def GiveGM(self,iFacet,SM):
-        GridMachine=ClassDDEGridMachine.ClassDDEGridMachine(SM.GD,
+        """
+        Factory: Initializes a gridding machine for this facet
+        Args:
+            iFacet: index of facet
+
+        Returns:
+            grid machine instance
+        """
+        IdSharedMem=SM.IDsShared["IdSharedMem"]
+        ChunkDataCache=SM.IDsShared["ChunkDataCache"]
+        FacetDataCache=SM.IDsShared["FacetDataCache"]
+        IdSharedMemData=SM.IDsShared["IdSharedMemData"]
+
+        GridMachine=ClassDDEGridMachine.ClassDDEGridMachine(SM.GD,#RaDec=self.DicoImager[iFacet]["RaDec"],
                                                             SM.DicoImager[iFacet]["DicoConfigGM"]["ChanFreq"],
                                                             SM.DicoImager[iFacet]["DicoConfigGM"]["Npix"],
                                                             lmShift=SM.DicoImager[iFacet]["lmShift"],
-                                                            IdSharedMem=self.IdSharedMem,IDFacet=SM.DicoImager[iFacet]["IDFacet"],
+                                                            IdSharedMem=IdSharedMem,
+                                                            IdSharedMemData=IdSharedMemData,
+                                                            FacetDataCache=FacetDataCache,
+                                                            ChunkDataCache=ChunkDataCache,
+                                                            IDFacet=SM.DicoImager[iFacet]["IDFacet"],
                                                             SpheNorm=False)
+                                                            #,
+                                                            #NFreqBands=self.VS.NFreqBands,
+                                                            #DataCorrelationFormat=self.VS.StokesConverter.AvailableCorrelationProductsIds(),
+                                                            #ExpectedOutputStokes=self.VS.StokesConverter.RequiredStokesProductsIds(),
+                                                            #ListSemaphores=self.ListSemaphores)        
+
+
         return GridMachine
 
     def InitGM(self,SM):

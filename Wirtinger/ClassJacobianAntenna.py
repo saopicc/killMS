@@ -134,7 +134,10 @@ class ClassJacobianAntenna():
         self.SM=SM
         T.timeit("Init0")
         if PM==None:
-            self.PM=ClassPredict(Precision=Precision,DoSmearing=self.DoSmearing,IdMemShared=IdSharedMem)
+            self.PM=ClassPredict(Precision=Precision,
+                                 DoSmearing=self.DoSmearing,
+                                 IdMemShared=IdSharedMem)
+            
             if self.GD["ImageSkyModel"]["BaseImageName"]!="":
                 self.PM.InitGM(self.SM)
 

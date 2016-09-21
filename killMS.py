@@ -49,6 +49,7 @@ from killMS2.Wirtinger.ClassWirtingerSolver import ClassWirtingerSolver
 
 from killMS2.Other import ClassTimeIt
 from killMS2.Data import ClassVisServer
+from DDFacet.Data import ClassVisServer as ClassVisServer_DDF
 
 from Predict.PredictGaussPoints_NumExpr5 import ClassPredictParallel as ClassPredict 
 #from Predict.PredictGaussPoints_NumExpr5 import ClassPredict as ClassPredict 
@@ -291,7 +292,8 @@ def main(OP=None,MSName=None):
                GDPredict["ImagerGlobal"]["PSFFacets"]=0
                GDPredict["ImagerGlobal"]["PSFOversize"]=1
 
-
+        GDPredict["Beam"]["NChanBeamPerMS"]=options.NChanBeamPerMS
+        GDPredict["MultiFreqs"]["NChanDegridPerMS"]=options.NChanSols
         GDPredict["Compression"]["CompDeGridMode"]=False
         #GDPredict["Compression"]["CompDeGridMode"]=True
         
@@ -301,6 +303,20 @@ def main(OP=None,MSName=None):
             GDPredict["ImagerCF"]["wmax"]=options.wmax
         GD["GDImage"]=GDPredict
         GDPredict["GDkMS"]=GD
+
+        VS_DDFacet=ClassVisServer_DDF.ClassVisServer(options.MSName,
+                                                     ColName=GDPredict["VisData"]["ColName"],
+                                                     TVisSizeMin=GDPredict["VisData"]["ChunkHours"]*60,
+                                                     #DicoSelectOptions=DicoSelectOptions,
+                                                     TChunkSize=GDPredict["VisData"]["ChunkHours"],
+                                                     IdSharedMem=IdSharedMem,
+                                                     Robust=GDPredict["ImagerGlobal"]["Robust"],
+                                                     Weighting=GDPredict["ImagerGlobal"]["Weighting"],
+                                                     MFSWeighting=GDPredict["ImagerGlobal"]["MFSWeighting"],
+                                                     Super=GDPredict["ImagerGlobal"]["Super"],
+                                                     DicoSelectOptions=dict(GDPredict["DataSelection"]),
+                                                     NCPU=GDPredict["Parallel"]["NCPU"],
+                                                     GD=GDPredict)
 
 
     #SM.SourceCat.I*=1000**2
@@ -330,7 +346,8 @@ def main(OP=None,MSName=None):
     else:
         from killMS2.Predict import ClassImageSM2 as ClassImageSM
         #from killMS2.Predict import ClassImageSM3 as ClassImageSM
-        PreparePredict=ClassImageSM.ClassPreparePredict(BaseImageName,VS,GD=GDPredict,DoDeconvolve=False,IdSharedMem=IdSharedMem)
+        
+        PreparePredict=ClassImageSM.ClassPreparePredict(BaseImageName,VS_DDFacet,GD=GDPredict,DoDeconvolve=False,IdSharedMem=IdSharedMem)
         SM=PreparePredict.SM
         #VS.setGridProps(PreparePredict.FacetMachine.Cell,PreparePredict.FacetMachine.NpixPaddedFacet)
         VS.setGridProps(PreparePredict.FacetMachine.Cell,None)#PreparePredict.FacetMachine.NpixPaddedFacet)

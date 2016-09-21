@@ -35,11 +35,14 @@ def main(options=None):
     SMName="ModelRandom00.txt.npy"
     #SMName="ModelRandom00.25.txt.npy"
     #SMName="ModelRandom00.49.txt.npy"
-    SMName="ModelImage.txt.npy"
     #SMName="ModelRandom00.txt.npy"
     #SMName="ModelSimulOne.txt.npy"
     #SMName="Deconv.Corr.npy"
     #ll=sorted(glob.glob("Simul.MS"))
+
+    SMName="ModelRandom00.txt.npy"
+    SMName="ModelRandom00.oneOff.txt.npy"
+    SMName="ModelRandom00.oneCenter.txt.npy"
     ll=sorted(glob.glob("000?.MS"))
     #ll=sorted(glob.glob("BOOTES24_SB100-109.2ch8s.ms.tsel"))
     
@@ -192,9 +195,9 @@ class ClassSimul():
             Sols.G[:,ich,:,:,:,:]=Sols.G[:,0,:,:,:,:]
         Sols.G[:,:,:,:,1,1]=Sols.G[:,:,:,:,0,0]
 
-        # Sols.G.fill(0)
-        # Sols.G[:,:,:,:,0,0]=1.
-        # Sols.G[:,:,:,:,1,1]=1.
+        Sols.G.fill(0)
+        Sols.G[:,:,:,:,0,0]=1.
+        Sols.G[:,:,:,:,1,1]=1.
 
         # # Sols.G[:,:,:,1:,0,0]=0.01
         # # Sols.G[:,:,:,1:,1,1]=0.01
@@ -359,7 +362,7 @@ class ClassSimul():
 
     def DoSimul(self):
     
-        Noise=.01
+        Noise=.0
         MS=self.MS
         SM=self.SM
         VS=self.VS

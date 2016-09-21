@@ -90,9 +90,12 @@ class ClassVisServer():
 
     def Init(self,PointingID=0,NChanJones=1):
         #MSName=self.MDC.giveMS(PointingID).MSName
-        MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False,
-                           Field=self.GD["DataSelection"]["FieldID"],
-                           DDID=self.GD["DataSelection"]["DDID"])
+        kwargs={}
+        if self.GD!=None:
+            kwargs["Field"]=self.GD["DataSelection"]["FieldID"]
+            kwargs["DDID"]=self.GD["DataSelection"]["DDID"]
+
+        MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False,**kwargs)
 
         TimesInt=np.arange(0,MS.DTh,self.TMemChunkSize).tolist()
         if not(MS.DTh+1./3600 in TimesInt): TimesInt.append(MS.DTh+1./3600)
