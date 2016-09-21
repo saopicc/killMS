@@ -311,15 +311,20 @@ class ClassWirtingerSolver():
 
             #stop
             #self.SM.ApparentSumI=np.zeros((nd,),np.float32)
+            Qa.fill(0)
             ApFluxes=self.NormFluxes*self.AbsMeanBeamAnt**2
             for idir in range(nd):
                 #Qa[idir,:,:,idir,:,:]*=(self.SM.ApparentSumI[idir])**2
-                Qa[idir,:,:,idir,:,:]*=ApFluxes[idir]
+                #Qa[idir,:,:,idir,:,:]*=ApFluxes[idir]**2
+                #Qa[idir,:,:,idir,:,:]=1
+                Qa[idir,:,:,idir,:,:]=ApFluxes[idir]
 
-    
+
             Qa=Qa.reshape((nd*npolx*npoly,nd*npolx*npoly))
             #print np.diag(Qa)
             Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iChanSol,iAnt]))**2*Qa for iAnt in range(na)])
+            #print Q[0]
+
             QList.append(Q)
             PList.append(P)
         Q=np.array(QList)
@@ -471,7 +476,7 @@ class ClassWirtingerSolver():
 
 
 
-        if self.G==None:
+        if type(self.G)==type(None):
             self.InitSol()
 
         ListAntSolve=[i for i in range(self.VS.MS.na) if not(i in self.VS.FlagAntNumber)]

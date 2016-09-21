@@ -12,6 +12,7 @@ from killMS2.Parset import MyOptParse
 import numpy as np
 
 
+
 # log
 log=MyLogger.getLogger("killMS")
 MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
@@ -435,13 +436,18 @@ def main(OP=None,MSName=None):
 
     SourceCatSub=None
     SaveSols=False
+
     # # ##############################
     # # Catch numpy warning
     # np.seterr(all='raise')
     # import warnings
-    # with warnings.catch_warnings():
-    #     warnings.filterwarnings('error')
+
+    # #with warnings.catch_warnings():
+    # #    warnings.filterwarnings('error')
+    # warnings.catch_warnings()
+    # warnings.filterwarnings('error')
     # # ##############################
+
 
     while True:
 
