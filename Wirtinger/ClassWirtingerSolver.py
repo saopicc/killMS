@@ -196,6 +196,22 @@ class ClassWirtingerSolver():
 
 
         Sols=self.SolsArray_Full[0:ind.size].copy()
+
+        if Sols.size==0:
+            na=self.VS.MS.na
+            nd=self.SM.NDir
+            nChan=self.VS.NChanJones
+            Sols=np.zeros((1,),dtype=[("t0",np.float64),
+                                      ("t1",np.float64),
+                                      ("G",np.complex64,(nChan,na,nd,2,2)),
+                                      ("Stats",np.float32,(nChan,na,4))])
+            Sols=Sols.view(np.recarray)
+            Sols.t0[0]=0
+            Sols.t1[0]=self.VS.MS.times_all[-1]
+            Sols.G[0,:,:,:,0,0]=1
+            Sols.G[0,:,:,:,1,1]=1
+            
+
         Sols.t1[-1]+=1e3
         Sols.t0[0]-=1e3
 

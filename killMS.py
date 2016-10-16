@@ -54,6 +54,7 @@ from DDFacet.Data import ClassVisServer as ClassVisServer_DDF
 
 from Predict.PredictGaussPoints_NumExpr5 import ClassPredictParallel as ClassPredict 
 #from Predict.PredictGaussPoints_NumExpr5 import ClassPredict as ClassPredict 
+
 #from Predict.PredictGaussPoints_NumExpr2 import ClassPredictParallel as ClassPredict_orig
 #from Predict.PredictGaussPoints_NumExpr4 import ClassPredict as ClassPredict 
 #from Predict.PredictGaussPoints_NumExpr2 import ClassPredict as ClassPredict_orig
@@ -343,6 +344,8 @@ def main(OP=None,MSName=None):
                            killdirs=kills,
                            invert=invert)
         SM.Type="Catalog"
+        Alpha=SM.SourceCat.alpha
+        Alpha[np.isnan(Alpha)]=0
 
     else:
         from killMS2.Predict import ClassImageSM2 as ClassImageSM
@@ -356,7 +359,6 @@ def main(OP=None,MSName=None):
         VS.setFOV(FacetMachine.OutImShape,FacetMachine.PaddedGridShape,FacetMachine.FacetShape,FacetMachine.CellSizeRad)
     VS.setSM(SM)
     VS.CalcWeigths()
-    
         
 
 
@@ -455,9 +457,14 @@ def main(OP=None,MSName=None):
         if Load=="EndOfObservation":
             break
 
+
         if options.ExtSols=="":
             SaveSols=True
-            Solver.doNextTimeSolve_Parallel()
+            if options.SubOnly==0:
+                Solver.doNextTimeSolve_Parallel()
+            else:
+                DoSubstract=1
+
             #Solver.doNextTimeSolve_Parallel(SkipMode=True)
             #Solver.doNextTimeSolve()#SkipMode=True)
             
@@ -465,7 +472,6 @@ def main(OP=None,MSName=None):
                 print>>log, "Writing full predicted data in column %s of %s"%(FullPredictColName,options.MSName)
                 VS.MS.AddCol(FullPredictColName)
                 PredictData=NpShared.GiveArray("%s%s"%(IdSharedMem,ArrayName))
-
                 t=VS.MS.GiveMainTable(readonly=False)#table(VS.MS.MSName,readonly=False,ack=False)
                 t.putcol(FullPredictColName,VS.MS.ToOrigFreqOrder(PredictData),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
@@ -658,7 +664,7 @@ def main(OP=None,MSName=None):
 
 
 
-            if "ResidAnt" in options.ClipMethod:
+            if "ResidAnt" in options.ClipMethod and options.SubOnly==0:
                 print>>log,"Compute weighting based on antenna-selected residual"
                 DomainMachine.AddVisToJonesMapping(Jones,times,freqs)
                 nrows=Solver.VS.ThisDataChunk["times"].size
@@ -674,32 +680,29 @@ def main(OP=None,MSName=None):
 
             if DoSubstract:
                 print>>log, ModColor.Str("Substract sources ... ",col="green")
-                SM.SelectSubCat(SM.SourceCat.kill==1)
+                if options.SubOnly==0:
+                    SM.SelectSubCat(SM.SourceCat.kill==1)
 
                 SourceCatSub=SM.SourceCat.copy()
 
-                if options.SubOnly==1:
-                    print>>log, ModColor.Str(" Sublonly ... ",col="green")
-                    PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM)
-                else:
-                    PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=JonesMerged)
+                PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=JonesMerged)
+
+                # PredictColName=options.PredictColName
+                # if PredictColName!="":
+                #     print>>log, "Writing predicted data in column %s of %s"%(PredictColName,MSName)
+                #     VS.MS.AddCol(PredictColName)
+                #     t=Solver.VS.MS.GiveMainTable(readonly=False)#table(VS.MS.MSName,readonly=False,ack=False)
+                #     t.putcol(PredictColName,VS.MS.ToOrigFreqOrder(PredictData),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                #     t.close()
                     
-                    PredictColName=options.PredictColName
-                    if PredictColName!="":
-                        print>>log, "Writing predicted data in column %s of %s"%(PredictColName,MSName)
-                        VS.MS.AddCol(PredictColName)
-                        t=Solver.VS.MS.GiveMainTable(readonly=False)#table(VS.MS.MSName,readonly=False,ack=False)
-                        t.putcol(PredictColName,VS.MS.ToOrigFreqOrder(PredictData),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
-                        t.close()
-                    
-                    #PredictData2=PM2.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
-                    #diff=(PredictData-PredictData2)
-                    #print diff
-                    #ind=np.where(diff==np.max(diff))
-                    #print ind
-                    #print np.max(PredictData-PredictData2)
-                    #print np.where(np.isnan(diff))
-                    #print PredictData[1997:1999],PredictData[1997:1999]
+                #PredictData2=PM2.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
+                #diff=(PredictData-PredictData2)
+                #print diff
+                #ind=np.where(diff==np.max(diff))
+                #print ind
+                #print np.max(PredictData-PredictData2)
+                #print np.where(np.isnan(diff))
+                #print PredictData[1997:1999],PredictData[1997:1999]
 
                 Solver.VS.ThisDataChunk["data"]-=PredictData
                 SM.RestoreCat()
@@ -715,8 +718,8 @@ def main(OP=None,MSName=None):
             if (DoSubstract|DoApplyCal):
                 print>>log, "Save visibilities in %s column"%WriteColName
                 t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
-                t.putcol(WriteColName,VS.MS.ToOrigFreqOrder(Solver.VS.MS.data),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
-                t.putcol("FLAG",VS.MS.ToOrigFreqOrder(Solver.VS.MS.flags_all),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                t.putcol(WriteColName,VS.MS.ToOrigFreqOrder(Solver.VS.ThisDataChunk["data"]),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                #t.putcol("FLAG",VS.MS.ToOrigFreqOrder(Solver.VS.MS.flags_all),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
                 

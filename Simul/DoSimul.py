@@ -42,7 +42,7 @@ def main(options=None):
 
     SMName="ModelRandom00.txt.npy"
     SMName="ModelRandom00.oneOff.txt.npy"
-    SMName="ModelRandom00.oneCenter.txt.npy"
+    #SMName="ModelRandom00.oneCenter.txt.npy"
     ll=sorted(glob.glob("000?.MS"))
     #ll=sorted(glob.glob("BOOTES24_SB100-109.2ch8s.ms.tsel"))
     
