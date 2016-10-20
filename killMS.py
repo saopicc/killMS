@@ -705,6 +705,9 @@ def main(OP=None,MSName=None):
                 #print PredictData[1997:1999],PredictData[1997:1999]
 
                 Solver.VS.ThisDataChunk["data"]-=PredictData
+
+                #print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+                #Solver.VS.ThisDataChunk["data"]=PredictData
                 SM.RestoreCat()
 
             if DoApplyCal:
