@@ -906,4 +906,4 @@ if __name__=="__main__":
             main(OP=OP,MSName=MSName)
     except:
         NpShared.DelAll(IdSharedMem)
-            
+        raise
