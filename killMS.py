@@ -296,9 +296,10 @@ def main(OP=None,MSName=None):
 
         GDPredict["Beam"]["NChanBeamPerMS"]=options.NChanBeamPerMS
         GDPredict["MultiFreqs"]["NChanDegridPerMS"]=options.NChanSols
-        GDPredict["Compression"]["CompDeGridMode"]=False
+        #GDPredict["Compression"]["CompDeGridMode"]=False
         #GDPredict["Compression"]["CompDeGridMode"]=True
-        
+        GDPredict["ImagerGlobal"]["DeGriderType"]="Classic"
+
         if options.OverS!=None:
             GDPredict["ImagerCF"]["OverS"]=options.OverS
         if options.wmax!=None:

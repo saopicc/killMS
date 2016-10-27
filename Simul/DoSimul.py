@@ -43,7 +43,10 @@ def main(options=None):
     SMName="ModelRandom00.txt.npy"
     SMName="ModelRandom00.oneOff.txt.npy"
     #SMName="ModelRandom00.oneCenter.txt.npy"
+    SMName="ModelImage.txt.npy"
+    
     ll=sorted(glob.glob("000?.MS"))
+    ll=sorted(glob.glob("0000.MS"))
     #ll=sorted(glob.glob("BOOTES24_SB100-109.2ch8s.ms.tsel"))
     
 
@@ -56,8 +59,8 @@ def main(options=None):
     CS=ClassSimul(ll[0],SMName)
     Sols=CS.GiveSols()
     for l in ll:
-        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
-        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
+        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
+        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
         CS.DoSimul()
 
 class ClassSimul():
@@ -133,6 +136,7 @@ class ClassSimul():
         for itime in range(0,NSols):
             # if itime>0: 
             #     continue
+            continue
             print itime,"/",NSols
             for ich in range(nch):
                 for iAnt in range(na):
