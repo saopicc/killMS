@@ -463,11 +463,11 @@ def main(OP=None,MSName=None):
             SaveSols=True
             if options.SubOnly==0:
                 Solver.doNextTimeSolve_Parallel()
+                #Solver.doNextTimeSolve_Parallel(SkipMode=True)
+                #Solver.doNextTimeSolve()#SkipMode=True)
             else:
                 DoSubstract=1
 
-            #Solver.doNextTimeSolve_Parallel(SkipMode=True)
-            #Solver.doNextTimeSolve()#SkipMode=True)
             
             def SavePredict(ArrayName,FullPredictColName):
                 print>>log, "Writing full predicted data in column %s of %s"%(FullPredictColName,options.MSName)

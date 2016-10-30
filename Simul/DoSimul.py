@@ -118,16 +118,20 @@ class ClassSimul():
         period_Amp=120+np.random.randn(nch,na,nd)*10
         Amp_Mean=.9+np.random.rand(nch,na,nd)*0.2
         
-        Amp_Amp=np.random.randn(nch,na,nd)*.1
+        Amp_Amp=np.random.randn(nch,na,nd)
+
+        Amp_Mean.fill(1.)
+        Amp_Amp.fill(0.)
     
         DeltaT_Phase=np.random.randn(nch,na,nd)*60
         period_Phase=300+np.random.randn(nch,na,nd)*10
         #period_Phase=np.random.randn(na,nd)*10
-        PhaseAbs=np.random.randn(nch,na,nd)*np.pi
+        PhaseAbs=np.random.randn(nch,na,nd)*np.pi*0.5
         Amp_Phase=np.random.rand(nch,na,nd)*np.pi*0.1
     
         #Amp_Amp=np.zeros((na,nd))
-        PhaseAbs.fill(0)
+        #PhaseAbs.fill(0)
+        Amp_Phase.fill(0)
         #Amp_Phase=np.zeros((na,nd))
         
 
@@ -136,7 +140,7 @@ class ClassSimul():
         for itime in range(0,NSols):
             # if itime>0: 
             #     continue
-            continue
+            #continue
             print itime,"/",NSols
             for ich in range(nch):
                 for iAnt in range(na):
@@ -187,21 +191,23 @@ class ClassSimul():
 
 
 
-        # for itime in range(NSols):
-        #     Sols.G[itime,:,:,:,0,0]=Sols.G[0,:,:,:,0,0]
-        #     Sols.G[itime,:,:,:,1,1]=Sols.G[0,:,:,:,1,1]
+        # Equalise in time
+        for itime in range(NSols):
+            Sols.G[itime,:,:,:,0,0]=Sols.G[0,:,:,:,0,0]
+            Sols.G[itime,:,:,:,1,1]=Sols.G[0,:,:,:,1,1]
 
-        # Sols.G.fill(0)
-        # Sols.G[:,:,:,:,0,0]=1
-        # Sols.G[:,:,:,:,1,1]=1
-
+        # equalise in freq
         for ich in range(1,nch):
             Sols.G[:,ich,:,:,:,:]=Sols.G[:,0,:,:,:,:]
+
+        # make scalar
         Sols.G[:,:,:,:,1,1]=Sols.G[:,:,:,:,0,0]
 
+        # unity
         Sols.G.fill(0)
         Sols.G[:,:,:,:,0,0]=1.
         Sols.G[:,:,:,:,1,1]=1.
+
 
         # # Sols.G[:,:,:,1:,0,0]=0.01
         # # Sols.G[:,:,:,1:,1,1]=0.01
