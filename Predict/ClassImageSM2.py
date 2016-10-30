@@ -76,27 +76,28 @@ class ClassPreparePredict(ClassImagerDeconv):
         # self.MM=ClassModelMachine(self.GD)
         # self.MM.FromDico(DicoModel)
         
+
+
+        # From DicoModel
         ModConstructor = ClassModModelMachine()
         self.MM=ModConstructor.GiveInitialisedMMFromFile(self.FileDicoModel)
-
-
         #ModelImage0=self.MM.GiveModelImage(np.mean(self.VS.MS.ChanFreq))
         #self.MM.CleanNegComponants(box=15,sig=1)
         if self.GD["GDkMS"]["ImageSkyModel"]["MaskImage"]!=None:
             self.MM.CleanMaskedComponants(self.GD["GDkMS"]["ImageSkyModel"]["MaskImage"])
-
-        
         #self.ModelImage=self.MM.GiveModelImage(np.mean(self.VS.MS.ChanFreq))
         self.ModelImage=self.MM.GiveModelImage(self.VS.FreqBandChannelsDegrid[0])
 
-        # print "im!!!!!!!!!!!!!!!!!!!!!!!"
-        # im=image("ModelImage.fits")
-        # data=im.getdata()
-        # nch,npol,nx,_=data.shape
-        # for ch in range(nch):
-        #     for pol in range(npol):
-        #         data[ch,pol]=data[ch,pol].T[::-1]
-        # self.ModelImage=data
+
+        # From ModelImage
+        print "im!!!!!!!!!!!!!!!!!!!!!!!"
+        im=image("ModelImage.fits")
+        data=im.getdata()
+        nch,npol,nx,_=data.shape
+        for ch in range(nch):
+            for pol in range(npol):
+                data[ch,pol]=data[ch,pol].T[::-1]
+        self.ModelImage=data
 
         #self.FacetMachine.ToCasaImage(self.ModelImage,ImageName="Model_kMS",Fits=True)
         #stop
@@ -192,6 +193,9 @@ class ClassPreparePredict(ClassImagerDeconv):
         
         #self.SM.ChanMappingDegrid=self.VS.FreqBandChannelsDegrid[0]
         self.SM.ChanMappingDegrid=self.VS.DicoMSChanMappingDegridding[0]
+        # import pprint
+        # pprint.pprint(self.DicoJonesDirToFacet)
+
 
         self.SM.IDsShared={}
         self.SM.IDsShared["IdSharedMem"]=self.FacetMachine.IdSharedMem

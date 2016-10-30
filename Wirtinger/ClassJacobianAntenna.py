@@ -1083,7 +1083,7 @@ class ClassJacobianAntenna():
 
         # ##############################################
         # from SkyModel.Sky import ClassSM
-        # SM=ClassSM.ClassSM("ModelRandom00.4.txt.npy")
+        # SM=ClassSM.ClassSM("ModelImage.txt.npy")
         # SM.Type="Catalog"
         # SM.Calc_LM(self.SM.rac,self.SM.decc)
         # self.KernelMat1=np.zeros((1,NDir,n4vis/nchan,nchan),dtype=self.CType)
@@ -1095,7 +1095,7 @@ class ClassJacobianAntenna():
         # pylab.figure(1)
         # pylab.clf()
         # pylab.figure(0)
-        
+         
         
 
 
@@ -1150,7 +1150,7 @@ class ClassJacobianAntenna():
         #     pylab.plot(op0(d0))
         #     pylab.plot(op0(d1))
         #     #pylab.plot(op0(d1)/op0(d0))
-        #     pylab.ylim(-15,15)
+        #     pylab.ylim(-100,100)
         #     pylab.draw()
         #     pylab.show(False)
 
@@ -1183,7 +1183,7 @@ class ClassJacobianAntenna():
 
         # #     del(K1,K1_XX,K1_YY)
         # #     del(K,K_XX,K_YY)
-
+        # stop
 
 
         # 

@@ -240,8 +240,8 @@ class ClassWirtingerSolver():
         _,_,_,npolx,npoly=self.G.shape
 
 
-        # print "int!!!!!!!!!!"
-        # self.G+=np.random.randn(*self.G.shape)*.1#sigP
+        print "int!!!!!!!!!!"
+        self.G+=np.random.randn(*self.G.shape)*.5#sigP
         
         NSols=np.max([1,int(1.5*round(self.VS.MS.DTh/(self.VS.TVisSizeMin/60.)))])
 
