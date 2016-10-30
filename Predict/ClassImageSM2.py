@@ -89,18 +89,18 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.ModelImage=self.MM.GiveModelImage(self.VS.FreqBandChannelsDegrid[0])
 
 
-        # From ModelImage
-        print "im!!!!!!!!!!!!!!!!!!!!!!!"
-        im=image("ModelImage.fits")
-        data=im.getdata()
-        nch,npol,nx,_=data.shape
-        for ch in range(nch):
-            for pol in range(npol):
-                data[ch,pol]=data[ch,pol].T[::-1]
-        self.ModelImage=data
+        # # From ModelImage
+        # print "im!!!!!!!!!!!!!!!!!!!!!!!"
+        # im=image("ModelImage.fits")
+        # data=im.getdata()
+        # nch,npol,nx,_=data.shape
+        # for ch in range(nch):
+        #     for pol in range(npol):
+        #         data[ch,pol]=data[ch,pol].T[::-1]
+        # self.ModelImage=data
+        # #self.FacetMachine.ToCasaImage(self.ModelImage,ImageName="Model_kMS",Fits=True)
+        # #stop
 
-        #self.FacetMachine.ToCasaImage(self.ModelImage,ImageName="Model_kMS",Fits=True)
-        #stop
         self.ModelImage=NpShared.ToShared("%sModelImage"%(self.IdSharedMem),self.ModelImage)
         #del(data)
         self.DicoImager=self.FacetMachine.DicoImager
