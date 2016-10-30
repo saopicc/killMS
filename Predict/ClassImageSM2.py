@@ -358,7 +358,7 @@ class ClassPreparePredict(ClassImagerDeconv):
             intPercent=int(100*  NDone / float(NFacets))
             pBAR.render(intPercent, '%4i/%i' % (NDone,NFacets))
 
-        pprint.pprint(DicoJonesDirToFacet)
+        #pprint.pprint(DicoJonesDirToFacet)
 
         for ii in range(NCPU):
             workerlist[ii].shutdown()
