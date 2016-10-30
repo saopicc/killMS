@@ -289,6 +289,7 @@ def main(OP=None,MSName=None):
             ParsetName="%s.parset"%BaseImageName
         print>>log,"Predict Mode: Image, with Parset: %s"%ParsetName
         GDPredict=ReadCFG.Parset(ParsetName).DicoPars
+        GDPredict["VisData"]["MSName"]=options.MSName
 
         if not("PSFFacets" in GDPredict["ImagerGlobal"].keys()):
                GDPredict["ImagerGlobal"]["PSFFacets"]=0

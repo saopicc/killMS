@@ -803,6 +803,7 @@ class ClassJacobianAntenna():
         #print "    COMPUTE PredictOrigFormat"
         Gains=GainsIn.copy()
         na,nd,_,_=Gains.shape
+        #Type="NoGains"
         if Type=="NoGains":
             if self.PolMode=="Scalar":
                 Gains=np.ones((na,nd,1,1),np.complex64)
