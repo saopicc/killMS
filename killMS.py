@@ -568,7 +568,7 @@ def main(OP=None,MSName=None):
             Jones["FreqDomain"]=SolsFreqDomain
             nt,nch,na,nd,_,_=Sols.G.shape
             G=np.swapaxes(Sols.G,1,3).reshape((nt,nd,na,nch,2,2))
-            G=np.require(G, dtype=np.complex64, requirements="C_CONTIGUOUS")
+            G=np.require(G, dtype=np.complex64, requirements="C")
 
             # if not("A" in options.ApplyMode):
             #     gabs=np.abs(G)
