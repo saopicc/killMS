@@ -300,6 +300,7 @@ def main(OP=None,MSName=None):
         #GDPredict["Compression"]["CompDeGridMode"]=False
         #GDPredict["Compression"]["CompDeGridMode"]=True
         GDPredict["ImagerGlobal"]["DeGriderType"]="Classic"
+        GDPredict["DDESolutions"]["DecorrMode"]=options.Decorrelation
 
         if options.OverS!=None:
             GDPredict["ImagerCF"]["OverS"]=options.OverS
@@ -307,7 +308,6 @@ def main(OP=None,MSName=None):
             GDPredict["ImagerCF"]["wmax"]=options.wmax
         GD["GDImage"]=GDPredict
         GDPredict["GDkMS"]=GD
-
         VS_DDFacet=ClassVisServer_DDF.ClassVisServer(options.MSName,
                                                      ColName=GDPredict["VisData"]["ColName"],
                                                      TVisSizeMin=GDPredict["VisData"]["ChunkHours"]*60,
