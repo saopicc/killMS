@@ -811,8 +811,8 @@ class ClassJacobianAntenna():
                 Gains=np.ones((na,nd,2,1),np.complex64)
             else:
                 Gains=np.zeros((na,nd,2,2),np.complex64)
-                Gains[:,0,0]=1
-                Gains[:,1,1]=1
+                Gains[:,:,0,0]=1
+                Gains[:,:,1,1]=1
             NameShmData="%sPredictedData"%self.IdSharedMem
             NameShmIndices="%sIndicesData"%self.IdSharedMem
         elif Type=="Gains":
