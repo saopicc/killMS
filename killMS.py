@@ -300,7 +300,12 @@ def main(OP=None,MSName=None):
         #GDPredict["Compression"]["CompDeGridMode"]=False
         #GDPredict["Compression"]["CompDeGridMode"]=True
         GDPredict["ImagerGlobal"]["DeGriderType"]="Classic"
-        GDPredict["DDESolutions"]["DecorrMode"]=options.Decorrelation
+        #GDPredict["Caching"]["ResetCache"]=1
+
+        if options.Decorrelation is not None and options.Decorrelation is not "":
+            print>>log,ModColor.Str("Overwritting DDF parset decorrelation mode [%s] with kMS option [%s]"\
+                                    %(GDPredict["DDESolutions"]["DecorrMode"],options.Decorrelation))
+            GDPredict["DDESolutions"]["DecorrMode"]=options.Decorrelation
 
         if options.OverS!=None:
             GDPredict["ImagerCF"]["OverS"]=options.OverS
