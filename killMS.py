@@ -276,7 +276,7 @@ def main(OP=None,MSName=None):
 
     ParsetName="%skillMS.%s.sols.parset"%(reformat.reformat(options.MSName),SolsName)
     OP.ToParset(ParsetName)
-
+    
     GD=OP.DicoConfig
     if GD["ImageSkyModel"]["BaseImageName"]=="":
         print>>log,"Predict Mode: Catalog"
@@ -472,9 +472,9 @@ def main(OP=None,MSName=None):
         if options.ExtSols=="":
             SaveSols=True
             if options.SubOnly==0:
-                #Solver.doNextTimeSolve_Parallel()
+                Solver.doNextTimeSolve_Parallel()
                 #Solver.doNextTimeSolve_Parallel(SkipMode=True)
-                Solver.doNextTimeSolve()#SkipMode=True)
+                #Solver.doNextTimeSolve()#SkipMode=True)
             else:
                 DoSubstract=1
 
