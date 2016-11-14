@@ -306,11 +306,15 @@ def main(OP=None,MSName=None):
             print>>log,ModColor.Str("Overwritting DDF parset decorrelation mode [%s] with kMS option [%s]"\
                                     %(GDPredict["DDESolutions"]["DecorrMode"],options.Decorrelation))
             GDPredict["DDESolutions"]["DecorrMode"]=options.Decorrelation
+        else:
+            GD["SkyModel"]["Decorrelation"]=DoSmearing=options.Decorrelation=GDPredict["DDESolutions"]["DecorrMode"]
+            
 
-        if options.OverS!=None:
+        if options.OverS is not None:
             GDPredict["ImagerCF"]["OverS"]=options.OverS
-        if options.wmax!=None:
+        if options.wmax is not None:
             GDPredict["ImagerCF"]["wmax"]=options.wmax
+
         GD["GDImage"]=GDPredict
         GDPredict["GDkMS"]=GD
         VS_DDFacet=ClassVisServer_DDF.ClassVisServer(options.MSName,
@@ -358,7 +362,7 @@ def main(OP=None,MSName=None):
         from killMS2.Predict import ClassImageSM2 as ClassImageSM
         #from killMS2.Predict import ClassImageSM3 as ClassImageSM
         
-        PreparePredict=ClassImageSM.ClassPreparePredict(BaseImageName,VS_DDFacet,GD=GDPredict,DoDeconvolve=False,IdSharedMem=IdSharedMem)
+        PreparePredict=ClassImageSM.ClassPreparePredict(BaseImageName,VS_DDFacet,GD=GDPredict,IdSharedMem=IdSharedMem)
         SM=PreparePredict.SM
         #VS.setGridProps(PreparePredict.FacetMachine.Cell,PreparePredict.FacetMachine.NpixPaddedFacet)
         VS.setGridProps(PreparePredict.FacetMachine.Cell,None)#PreparePredict.FacetMachine.NpixPaddedFacet)
@@ -468,9 +472,9 @@ def main(OP=None,MSName=None):
         if options.ExtSols=="":
             SaveSols=True
             if options.SubOnly==0:
-                Solver.doNextTimeSolve_Parallel()
+                #Solver.doNextTimeSolve_Parallel()
                 #Solver.doNextTimeSolve_Parallel(SkipMode=True)
-                #Solver.doNextTimeSolve()#SkipMode=True)
+                Solver.doNextTimeSolve()#SkipMode=True)
             else:
                 DoSubstract=1
 

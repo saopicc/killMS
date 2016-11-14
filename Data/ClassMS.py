@@ -13,10 +13,12 @@ from killMS2.Other import ClassTimeIt
 
 class ClassMS():
     def __init__(self,MSname,Col="DATA",zero_flag=True,ReOrder=False,EqualizeFlag=False,DoPrint=True,DoReadData=True,
-                 TimeChunkSize=None,GetBeam=False,RejectAutoCorr=False,SelectSPW=None,DelStationList=None,Field=0,DDID=0):
+                 TimeChunkSize=None,GetBeam=False,RejectAutoCorr=False,SelectSPW=None,DelStationList=None,Field=0,DDID=0,
+                 ReadUVWDT=False):
 
 
         if MSname=="": exit()
+        self.ReadUVWDT=ReadUVWDT
         MSname=reformat.reformat(os.path.abspath(MSname),LastSlash=False)
         self.MSName=MSname
         self.ColName=Col
@@ -443,6 +445,17 @@ class ClassMS():
 
 
         self.flag_all=flag_all
+        self.uvw_dt=None
+        if self.ReadUVWDT:
+            if 'UVWDT' not in table_all.colnames():
+                import DDFacet.MSTools
+                DDFacet.MSTools.AddUVW_dt(self.MSName)
+            print>>log,"Reading uvw_dt column"
+            self.uvw_dt=np.float64(table_all.getcol('UVWDT', row0, nRowRead))
+
+        table_all.close()
+
+
         if self.RejectAutoCorr:
             indGetCorrelation=np.where(A0!=A1)[0]
             A0=A0[indGetCorrelation]
@@ -457,7 +470,6 @@ class ClassMS():
                 self.flag_all=self.flag_all[indGetCorrelation,:,:]
             self.nbl=(self.na*(self.na-1))/2
 
-        table_all.close()
         if self.DoRevertChans:
             self.flag_all=self.flag_all[:,::-1,:]
             if not(type(self.data)==list):

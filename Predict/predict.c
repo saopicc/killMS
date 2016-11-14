@@ -327,7 +327,7 @@ static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args)
   //PyArrayObject *NpDFreqs;
   PyObject *_DT  = PyList_GetItem(LUVWSpeed, 1);
   float DT=(float) PyFloat_AsDouble(_DT);
-  float *UVW_dt=p_float32(NpUVW_dt);
+  double *UVW_dt=p_float64(NpUVW_dt);
 
   PyObject *_FSmear  = PyList_GetItem(LSmearMode, 0);
   int FSmear=(int) PyFloat_AsDouble(_FSmear);

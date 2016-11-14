@@ -380,13 +380,17 @@ class ClassPredict():
 
         TSmear=0.
         FSmear=0.
-
-
-        if self.DoSmearing!=0:
+        DT=DicoData["infos"][1]
+        UVW_dt=DicoData["uvw"]
+        if self.DoSmearing:
             if "T" in self.DoSmearing:
                 TSmear=1.
+                UVW_dt=DicoData["UVW_dt"]
             if "F" in self.DoSmearing:
                 FSmear=1.
+
+
+
 
         # self.SourceCat.m[:]=0
         # self.SourceCat.l[:]=0.1
@@ -400,8 +404,6 @@ class ClassPredict():
         # self.DicoData["IndexTimesThisChunk"]=self.DicoData["IndexTimesThisChunk"][1:2]
         # self.SourceCat=self.SourceCat[0:1]
 
-        DT=DicoData["infos"][1]
-        UVW_dt=DicoData["UVW_dt"]
         
         ColOutDir=np.zeros(DataOut.shape,np.complex64)
 
@@ -529,7 +531,8 @@ class ClassPredict():
     ######################################################
 
 
-    def predictKernelPolClusterImage(self,DicoData,SM,iDirection=None,ApplyJones=None,ApplyTimeJones=None,Noise=None):
+    def predictKernelPolClusterImage(self,DicoData,SM,iDirection=None,ApplyJones=None,ApplyTimeJones=None,Noise=None,ForceNoDecorr=False):
+
         T=ClassTimeIt("predictKernelPolClusterImage")
         T.disable()
         self.DicoData=DicoData
@@ -585,8 +588,9 @@ class ClassPredict():
         # self.SourceCat=self.SourceCat[0:1]
 
         DT=DicoData["infos"][1]
-        UVW_dt=DicoData["UVW_dt"]
-        
+        #UVW_dt=DicoData["UVW_dt"]
+        Dnu=DicoData["dfreqs_full"][0]
+
         ColOutDir=np.zeros(DataOut.shape,np.complex64)
         DATA=DicoData
 
@@ -619,6 +623,18 @@ class ClassPredict():
             ChanMapping=np.int32(SM.ChanMappingDegrid)
             # print ChanMapping
             
+            GridMachine.LSmear=[]
+            DecorrMode = SM.GD["DDESolutions"]["DecorrMode"]
+            CondSmear=(not ForceNoDecorr) and (('F' in DecorrMode) | ("T" in DecorrMode))
+            if CondSmear:
+                #print "DOSMEAR",ForceNoDecorr, (('F' in DecorrMode) | ("T" in DecorrMode))
+                uvw_dt = DicoData["UVW_dt"]#DATA["uvw_dt"]
+                lm_min=None
+                if SM.GD["DDESolutions"]["DecorrLocation"]=="Edge":
+                    lm_min=SM.DicoImager[iFacet]["lm_min"]
+                GridMachine.setDecorr(uvw_dt, DT, Dnu, SmearMode=SM.GD["DDESolutions"]["DecorrMode"], lm_min=lm_min)
+                
+
             T.timeit("2: Stuff")
             vis=GridMachine.get(times,uvwThis,ColOutDir,flagsThis,A0A1,ModelIm,DicoJonesMatrices=DicoJonesMatrices,freqs=freqs,
                                 ImToGrid=False,ChanMapping=ChanMapping)

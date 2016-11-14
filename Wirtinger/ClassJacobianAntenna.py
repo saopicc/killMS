@@ -659,7 +659,7 @@ class ClassJacobianAntenna():
         #     pylab.draw()
         #     pylab.show(False)
         #     pylab.pause(0.1)
-        #     #stop
+        #     stop
 
         # # pylab.figure(2)
         # # pylab.clf()
@@ -1101,7 +1101,6 @@ class ClassJacobianAntenna():
 
         for iDir in range(NDir):
             
-
             K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones)
             #K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir)#,ApplyTimeJones=ApplyTimeJones)
             #K*=-1
@@ -1135,11 +1134,12 @@ class ClassJacobianAntenna():
 
 
         #     ######################
-        #     K1=self.PM.predictKernelPolCluster(self.DicoData,SM,iDirection=iDir)#,ApplyTimeJones=ApplyTimeJones)
+        #     # K1=self.PM.predictKernelPolCluster(self.DicoData,SM,iDirection=iDir)#,ApplyTimeJones=ApplyTimeJones)
+        #     K1=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones,ForceNoDecorr=True)
 
         #     A0=self.DicoData["A0"]
         #     A1=self.DicoData["A1"]
-        #     ind=np.where((A0==0)&(A1==26))[0]
+        #     ind=np.arange(K1.shape[0])#np.where((A0==0)&(A1==26))[0]
         #     d1=K[ind,0,0] 
         #     d0=K1[ind,0,0]
         #     #op0=np.abs
@@ -1249,7 +1249,8 @@ class ClassJacobianAntenna():
             DicoData["indOrig"] = ind0
             DicoData["indOrig1"] = ind1
             DicoData["uvw"]  = np.concatenate([DATA['uvw'][ind0], -DATA['uvw'][ind1]])
-            DicoData["UVW_dt"]  = np.concatenate([DATA["UVW_dt"][ind0], -DATA["UVW_dt"][ind1]])
+            if "UVW_dt" in DATA.keys():
+                DicoData["UVW_dt"]  = np.concatenate([DATA["UVW_dt"][ind0], -DATA["UVW_dt"][ind1]])
 
             if "W" in DATA.keys():
                 DicoData["W"] = np.concatenate([DATA['W'][ind0,self.ch0:self.ch1], DATA['W'][ind1,self.ch0:self.ch1]])
