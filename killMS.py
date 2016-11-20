@@ -10,6 +10,7 @@ from killMS2.Other import MyPickle
 from killMS2.Other import PrintOptParse
 from killMS2.Parset import MyOptParse
 import numpy as np
+import DDFacet.Other.MyPickle
 
 
 
@@ -284,11 +285,15 @@ def main(OP=None,MSName=None):
     else:
         PredictMode="Image"
         BaseImageName=GD["ImageSkyModel"]["BaseImageName"]
-        ParsetName=GD["ImageSkyModel"]["ImagePredictParset"]
-        if ParsetName=="":
-            ParsetName="%s.parset"%BaseImageName
-        print>>log,"Predict Mode: Image, with Parset: %s"%ParsetName
-        GDPredict=ReadCFG.Parset(ParsetName).DicoPars
+
+        # ParsetName=GD["ImageSkyModel"]["ImagePredictParset"]
+        # if ParsetName=="":
+        #     ParsetName="%s.parset"%BaseImageName
+        # print>>log,"Predict Mode: Image, with Parset: %s"%ParsetName
+        # GDPredict=ReadCFG.Parset(ParsetName).DicoPars
+        
+        FileDicoModel="%s.DicoModel"%BaseImageName
+        GDPredict=DDFacet.Other.MyPickle.Load(FileDicoModel)["GD"]
         GDPredict["VisData"]["MSName"]=options.MSName
 
         if not("PSFFacets" in GDPredict["ImagerGlobal"].keys()):
@@ -302,19 +307,18 @@ def main(OP=None,MSName=None):
         GDPredict["ImagerGlobal"]["DeGriderType"]="Classic"
         #GDPredict["Caching"]["ResetCache"]=1
 
-        # if options.Decorrelation is not None and options.Decorrelation is not "":
-        #     print>>log,ModColor.Str("Overwritting DDF parset decorrelation mode [%s] with kMS option [%s]"\
-        #                             %(GDPredict["DDESolutions"]["DecorrMode"],options.Decorrelation))
-        #     GDPredict["DDESolutions"]["DecorrMode"]=options.Decorrelation
-        # else:
-        #     GD["SkyModel"]["Decorrelation"]=DoSmearing=options.Decorrelation=GDPredict["DDESolutions"]["DecorrMode"]
-
-        if options.Decorrelation != GDPredict["DDESolutions"]["DecorrMode"]:
-            print>>log,ModColor.Str("Decorrelation modes for DDFacet and killMS are different [%s vs %s respectively]"\
+        if options.Decorrelation is not None and options.Decorrelation is not "":
+            print>>log,ModColor.Str("Overwritting DDF parset decorrelation mode [%s] with kMS option [%s]"\
                                     %(GDPredict["DDESolutions"]["DecorrMode"],options.Decorrelation))
+            GDPredict["DDESolutions"]["DecorrMode"]=options.Decorrelation
+        else:
+            GD["SkyModel"]["Decorrelation"]=DoSmearing=options.Decorrelation=GDPredict["DDESolutions"]["DecorrMode"]
+
+        # if options.Decorrelation != GDPredict["DDESolutions"]["DecorrMode"]:
+        #     print>>log,ModColor.Str("Decorrelation modes for DDFacet and killMS are different [%s vs %s respectively]"\
+        #                             %(GDPredict["DDESolutions"]["DecorrMode"],options.Decorrelation))
 
         GDPredict["DDESolutions"]["DecorrMode"]=options.Decorrelation
-            
         
         if options.OverS is not None:
             GDPredict["ImagerCF"]["OverS"]=options.OverS
