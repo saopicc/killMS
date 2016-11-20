@@ -448,24 +448,22 @@ class ClassMS():
         self.flag_all=flag_all
         self.uvw_dt=None
 
-        ColNames=table_all.colnames()
-        table_all.close()
-        del(table_all)
 
         if self.ReadUVWDT:
-            if 'UVWDT' not in ColNames:
-                print>>log,"Adding uvw speed info to main table: %s"%self.MSName
+            print>>log,"Adding uvw speed info to main table: %s"%self.MSName
+            tu=table(self.MSName,readonly=False,ack=False)
+            if 'UVWDT' not in tu.colnames():
                 self.AddUVW_dt()
-            print>>log,"Reading UVWDT column"
-            tu=table(self.MSName,ack=False)
-            uvw_dt=tu.getcol('UVWDT', row0, nRowRead)
             tu.close()
-            print>>log,"  ok"
-            DATA["uvw_dt"]=np.float64(uvw_dt)
-            DATA["MSInfos"]=np.array([self.dt,self.ChanWidth.ravel()[0]],np.float32)
+            del(tu)
+            print>>log,"Reading uvw_dt column"
+            tu=table(self.MSName,readonly=False,ack=False)
+            self.uvw_dt=np.float64(tu.getcol('UVWDT', row0, nRowRead))
+            tu.close()
 
 
 
+        table_all.close()
 
 
         if self.RejectAutoCorr:

@@ -302,16 +302,20 @@ def main(OP=None,MSName=None):
         GDPredict["ImagerGlobal"]["DeGriderType"]="Classic"
         #GDPredict["Caching"]["ResetCache"]=1
 
-        if options.Decorrelation is not None and options.Decorrelation is not "":
-            print>>log,ModColor.Str("Overwritting DDF parset decorrelation mode [%s] with kMS option [%s]"\
+        # if options.Decorrelation is not None and options.Decorrelation is not "":
+        #     print>>log,ModColor.Str("Overwritting DDF parset decorrelation mode [%s] with kMS option [%s]"\
+        #                             %(GDPredict["DDESolutions"]["DecorrMode"],options.Decorrelation))
+        #     GDPredict["DDESolutions"]["DecorrMode"]=options.Decorrelation
+        # else:
+        #     GD["SkyModel"]["Decorrelation"]=DoSmearing=options.Decorrelation=GDPredict["DDESolutions"]["DecorrMode"]
+
+        if options.Decorrelation != GDPredict["DDESolutions"]["DecorrMode"]:
+            print>>log,ModColor.Str("Decorrelation modes for DDFacet and killMS are different [%s vs %s respectively]"\
                                     %(GDPredict["DDESolutions"]["DecorrMode"],options.Decorrelation))
-            GDPredict["DDESolutions"]["DecorrMode"]=options.Decorrelation
-        else:
-            GD["SkyModel"]["Decorrelation"]=DoSmearing=options.Decorrelation=GDPredict["DDESolutions"]["DecorrMode"]
+
+        GDPredict["DDESolutions"]["DecorrMode"]=options.Decorrelation
             
-
-        print GD
-
+        
         if options.OverS is not None:
             GDPredict["ImagerCF"]["OverS"]=options.OverS
         if options.wmax is not None:
