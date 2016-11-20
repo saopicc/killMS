@@ -10,6 +10,7 @@ import ephem
 from killMS2.Other import MyLogger
 log=MyLogger.getLogger("ClassMS")
 from killMS2.Other import ClassTimeIt
+from DDFacet.Other.progressbar import ProgressBar
 
 class ClassMS():
     def __init__(self,MSname,Col="DATA",zero_flag=True,ReOrder=False,EqualizeFlag=False,DoPrint=True,DoReadData=True,
@@ -447,22 +448,24 @@ class ClassMS():
         self.flag_all=flag_all
         self.uvw_dt=None
 
+        ColNames=table_all.colnames()
+        table_all.close()
+        del(table_all)
 
         if self.ReadUVWDT:
-            print>>log,"Adding uvw speed info to main table: %s"%self.MSName
-            tu=table(self.MSName,readonly=False,ack=False)
-            if 'UVWDT' not in tu.colnames():
+            if 'UVWDT' not in ColNames:
+                print>>log,"Adding uvw speed info to main table: %s"%self.MSName
                 self.AddUVW_dt()
+            print>>log,"Reading UVWDT column"
+            tu=table(self.MSName,ack=False)
+            uvw_dt=tu.getcol('UVWDT', row0, nRowRead)
             tu.close()
-            del(tu)
-            print>>log,"Reading uvw_dt column"
-            tu=table(self.MSName,readonly=False,ack=False)
-            self.uvw_dt=np.float64(tu.getcol('UVWDT', row0, nRowRead))
-            tu.close()
+            print>>log,"  ok"
+            DATA["uvw_dt"]=np.float64(uvw_dt)
+            DATA["MSInfos"]=np.array([self.dt,self.ChanWidth.ravel()[0]],np.float32)
 
 
 
-        table_all.close()
 
 
         if self.RejectAutoCorr:
