@@ -310,6 +310,8 @@ def main(OP=None,MSName=None):
             GD["SkyModel"]["Decorrelation"]=DoSmearing=options.Decorrelation=GDPredict["DDESolutions"]["DecorrMode"]
             
 
+        print GD
+
         if options.OverS is not None:
             GDPredict["ImagerCF"]["OverS"]=options.OverS
         if options.wmax is not None:
