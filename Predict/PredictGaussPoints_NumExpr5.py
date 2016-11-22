@@ -854,7 +854,8 @@ class WorkerPredict(multiprocessing.Process):
 
             #DicoData["IndRows_All_UVW_dt"]=D["IndRows_All_UVW_dt"]
             #DicoData["All_UVW_dt"]=D["All_UVW_dt"]
-            DicoData["UVW_dt"]=D["UVW_dt"][Row0:Row1]
+            if self.DoSmearing and "T" in self.Dosmearing:
+                DicoData["UVW_dt"]=D["UVW_dt"][Row0:Row1]
 
             # DicoData["IndexTimesThisChunk"]=D["IndexTimesThisChunk"][Row0:Row1]
             # it0=np.min(DicoData["IndexTimesThisChunk"])
