@@ -111,6 +111,7 @@ def read_options():
     OP.OptionGroup("* Sky image related options","ImageSkyModel")
     OP.add_option('BaseImageName')
     OP.add_option('ImagePredictParset')
+    OP.add_option('DicoModel')
     OP.add_option('OverS')
     OP.add_option('wmax')
     OP.add_option('MaskImage')
