@@ -63,7 +63,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.SM=ClassImageSM()
 
         if self.GD["GDkMS"]["ImageSkyModel"]["NodesFile"]!=None:
-            self.GD["CatNodes"]=self.GD["GDkMS"]["ImageSkyModel"]["NodesFile"]
+            self.GD["DDESolutions"]["CatNodes"]=self.GD["GDkMS"]["ImageSkyModel"]["NodesFile"]
             self.GD["DDESolutions"]["DDSols"]=""
             
         self.InitFacetMachine()
