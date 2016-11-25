@@ -317,8 +317,7 @@ def main(OP=None,MSName=None):
         # if options.Decorrelation != GDPredict["DDESolutions"]["DecorrMode"]:
         #     print>>log,ModColor.Str("Decorrelation modes for DDFacet and killMS are different [%s vs %s respectively]"\
         #                             %(GDPredict["DDESolutions"]["DecorrMode"],options.Decorrelation))
-
-        GDPredict["DDESolutions"]["DecorrMode"]=options.Decorrelation
+        # GDPredict["DDESolutions"]["DecorrMode"]=options.Decorrelation
         
         if options.OverS is not None:
             GDPredict["ImagerCF"]["OverS"]=options.OverS
