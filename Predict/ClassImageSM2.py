@@ -1,9 +1,9 @@
-
 import numpy as np
 from DDFacet.Imager.ClassDeconvMachine import ClassImagerDeconv
 from pyrap.images import image
 from killMS2.Array import NpShared
 from killMS2.Other import reformat
+from killMS2.Other import ModColor
 
 from killMS2.Other import MyLogger
 log=MyLogger.getLogger("ClassImageSM")
@@ -32,7 +32,12 @@ class ClassPreparePredict(ClassImagerDeconv):
         ClassImagerDeconv.__init__(self,**kwargs)
 
         self.BaseImageName=BaseImageName
+
         self.FileDicoModel="%s.DicoModel"%self.BaseImageName
+        if self.GD["GDkMS"]["ImageSkyModel"]["DicoModel"] is not None:
+            print>>log,ModColor.Str("Using %s instead of %s"%(self.GD["GDkMS"]["ImageSkyModel"]["DicoModel"],self.FileDicoModel))
+            self.FileDicoModel=self.GD["GDkMS"]["ImageSkyModel"]["DicoModel"]
+
         self.ModelImageName="%s.model.fits"%self.BaseImageName
 
         self.VS=VS

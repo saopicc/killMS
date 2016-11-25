@@ -1,7 +1,4 @@
-
-
 import numpy as np
-import pylab
 from killMS2.Array import NpShared
 
 class ClassModelEvolution():

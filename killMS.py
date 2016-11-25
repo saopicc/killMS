@@ -111,6 +111,7 @@ def read_options():
     OP.OptionGroup("* Sky image related options","ImageSkyModel")
     OP.add_option('BaseImageName')
     OP.add_option('ImagePredictParset')
+    OP.add_option('DicoModel')
     OP.add_option('OverS')
     OP.add_option('wmax')
     OP.add_option('MaskImage')
@@ -308,11 +309,12 @@ def main(OP=None,MSName=None):
         #GDPredict["Caching"]["ResetCache"]=1
 
         if options.Decorrelation is not None and options.Decorrelation is not "":
-            print>>log,ModColor.Str("Overwritting DDF parset decorrelation mode [%s] with kMS option [%s]"\
+            print>>log,ModColor.Str("Overwriting DDF parset decorrelation mode [%s] with kMS option [%s]"\
                                     %(GDPredict["DDESolutions"]["DecorrMode"],options.Decorrelation))
             GDPredict["DDESolutions"]["DecorrMode"]=options.Decorrelation
         else:
             GD["SkyModel"]["Decorrelation"]=DoSmearing=options.Decorrelation=GDPredict["DDESolutions"]["DecorrMode"]
+            print>>log,ModColor.Str("Decorrelation mode will be [%s]" % DoSmearing)
 
         # if options.Decorrelation != GDPredict["DDESolutions"]["DecorrMode"]:
         #     print>>log,ModColor.Str("Decorrelation modes for DDFacet and killMS are different [%s vs %s respectively]"\

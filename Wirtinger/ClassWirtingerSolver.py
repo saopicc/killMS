@@ -6,7 +6,7 @@ from killMS2.Array import NpShared
 from killMS2.Data import ClassVisServer
 #from Sky import ClassSM
 from killMS2.Array import ModLinAlg
-import matplotlib.pyplot as pylab
+#import matplotlib.pyplot as pylab
 
 from killMS2.Other import MyLogger
 log=MyLogger.getLogger("ClassWirtingerSolver")
@@ -469,6 +469,7 @@ class ClassWirtingerSolver():
     def InitPlotGraph(self):
         from Plot import Graph
         print>>log,"Initialising plots ..." 
+        import pylab
         #pylab.ion()
         self.Graph=Graph.ClassMplWidget(self.VS.MS.na)
         
@@ -490,7 +491,7 @@ class ClassWirtingerSolver():
 
     def doNextTimeSolve(self,SkipMode=False):
 
-
+        import pylab
 
         if type(self.G)==type(None):
             self.InitSol()
@@ -898,6 +899,7 @@ class ClassWirtingerSolver():
                     # pylab.pause(0.1)
     
                     if self.DoPlot==1:
+                        import pylab
                         AntPlot=np.arange(self.VS.MS.na)#np.array(ListAntSolve)
                         pylab.clf()
                         pylab.plot(np.abs(self.G[iChanSol,AntPlot].flatten()))

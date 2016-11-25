@@ -5,11 +5,11 @@ import os
 from killMS2.Data import ClassVisServer
 #from Sky import ClassSM
 from killMS2.Array import ModLinAlg
-import pylab
 from killMS2.Other import ClassTimeIt
 from killMS2.Array.Dot import NpDotSSE
 
 def testLM():
+    import pylab
     SM=ClassSM.ClassSM("../TEST/ModelRandom00.txt.npy")
     rabeam,decbeam=SM.ClusterCat.ra,SM.ClusterCat.dec
     LofarBeam=("AE",5,rabeam,decbeam)
@@ -1454,6 +1454,7 @@ class ClassJacobianAntenna():
 
 
 def testPredict():
+    import pylab
     VS=ClassVisServer.ClassVisServer("../TEST/0000.MS/")
 
     MS=VS.MS
