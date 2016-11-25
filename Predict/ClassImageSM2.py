@@ -1,9 +1,9 @@
-
 import numpy as np
 from DDFacet.Imager.ClassDeconvMachine import ClassImagerDeconv
 from pyrap.images import image
 from killMS2.Array import NpShared
 from killMS2.Other import reformat
+from killMS2.Other import ModColor
 
 from killMS2.Other import MyLogger
 log=MyLogger.getLogger("ClassImageSM")
