@@ -907,16 +907,29 @@ class ClassMS():
                 t.putcol(Colout,t.getcol(Colin,row0,NRow),row0,NRow)
         t.close()
 
-    def AddCol(self,ColName,LikeCol="DATA"):
+    def AddCol(self,ColName,LikeCol="DATA",ColDesc=None):
         t=table(self.MSName,readonly=False,ack=False)
         if (ColName in t.colnames()):
             print>>log, "  Column %s already in %s"%(ColName,self.MSName)
             t.close()
             return
         print>>log, "  Putting column %s in %s"%(ColName,self.MSName)
-        desc=t.getcoldesc(LikeCol)
-        desc["name"]=ColName
-        desc['comment']=desc['comment'].replace(" ","_")
+        if ColDesc is None:
+            desc=t.getcoldesc(LikeCol)
+            desc["name"]=ColName
+            desc['comment']=desc['comment'].replace(" ","_")
+        elif ColDesc=="IMAGING_WEIGHT":
+            desc={'_c_order': True,
+                  'comment': '',
+                  'dataManagerGroup': 'imagingweight',
+                  'dataManagerType': 'TiledShapeStMan',
+                  'maxlen': 0,
+                  'ndim': 1,
+                  'option': 4,
+                  'shape': array([self.Nchan], dtype=int32),
+                  'valueType': 'float'}
+        else:
+            print "Not supported"
         t.addcols(desc)
         t.close()
         

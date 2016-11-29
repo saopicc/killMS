@@ -679,7 +679,7 @@ def main(OP=None,MSName=None):
                 # Solver.VS.MS.Weights[:]=Weights[:]
 
                 print>>log, "  Writting in IMAGING_WEIGHT column "
-                VS.MS.AddCol("IMAGING_WEIGHT")
+                VS.MS.AddCol("IMAGING_WEIGHT",ColDesc="IMAGING_WEIGHT")
                 t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
                 t.putcol("IMAGING_WEIGHT",VS.MS.ToOrigFreqOrder(Weights),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
@@ -696,7 +696,7 @@ def main(OP=None,MSName=None):
                 Weights=Solver.VS.ThisDataChunk["W"]
                 Weights/=np.mean(Weights)
                 print>>log, "  Writting in IMAGING_WEIGHT column "
-                VS.MS.AddCol("IMAGING_WEIGHT")
+                VS.MS.AddCol("IMAGING_WEIGHT",ColDesc="IMAGING_WEIGHT")
                 t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
                 t.putcol("IMAGING_WEIGHT",VS.MS.ToOrigFreqOrder(Weights),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
