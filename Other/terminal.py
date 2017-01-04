@@ -12,7 +12,7 @@ import sys
  
 # The current module
 MODULE = sys.modules[__name__]
- 
+
 COLORS = "BLUE GREEN CYAN RED MAGENTA YELLOW WHITE BLACK".split()
 # List of terminal controls, you can add more to the list.
 CONTROLS = {
@@ -78,4 +78,7 @@ try:
 except Exception, e:
     # There is a failure; set all attributes to default
     print 'Warning: %s' % e
+    setattr(MODULE, 'failed', True)
     default()
+else:
+    setattr(MODULE, 'failed', False)
