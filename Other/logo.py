@@ -12,7 +12,7 @@ def print_logo():
     version = subprocess.check_output(["git", "describe"])
     os.chdir(cwd)
 
-    os.system('clear')
+    #os.system('clear')
                                                        
 
 

@@ -90,9 +90,17 @@ class ClassVisServer():
 
     def Init(self,PointingID=0,NChanJones=1):
         #MSName=self.MDC.giveMS(PointingID).MSName
-        MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False,
-                           Field=self.GD["DataSelection"]["FieldID"],
-                           DDID=self.GD["DataSelection"]["DDID"])
+        kwargs={}
+        DecorrMode=""
+        ReadUVWDT=False
+        if self.GD!=None:
+            kwargs["Field"]=self.GD["DataSelection"]["FieldID"]
+            kwargs["DDID"]=self.GD["DataSelection"]["DDID"]
+            DecorrMode=self.GD["SkyModel"]["Decorrelation"]
+            ReadUVWDT=(("T" in DecorrMode) or ("F" in DecorrMode))
+
+        self.ReadUVWDT=ReadUVWDT
+        MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False,ReadUVWDT=ReadUVWDT,**kwargs)
 
         TimesInt=np.arange(0,MS.DTh,self.TMemChunkSize).tolist()
         if not(MS.DTh+1./3600 in TimesInt): TimesInt.append(MS.DTh+1./3600)
@@ -253,7 +261,7 @@ class ClassVisServer():
         DATA["indRowsThisChunk"]=indRowsThisChunk
         for key in D.keys():
             if type(D[key])!=np.ndarray: continue
-            if not(key in ['times', 'A1', 'A0', 'flags', 'uvw', 'data', 'Map_VisToJones_Time', #"IndexTimesThisChunk", 
+            if not(key in ['times', 'A1', 'A0', 'flags', 'uvw', 'data', 'Map_VisToJones_Time', "UVW_dt",#"IndexTimesThisChunk", 
                            "W"]):             
                 DATA[key]=D[key]
             else:
@@ -271,6 +279,8 @@ class ClassVisServer():
         W=DATA["W"]
         Map_VisToJones_Time=DATA["Map_VisToJones_Time"]
         indRowsThisChunk=DATA["indRowsThisChunk"]
+        if self.ReadUVWDT: duvw_dt=DATA["UVW_dt"]
+
         # IndexTimesThisChunk=DATA["IndexTimesThisChunk"]
 
 
@@ -292,10 +302,12 @@ class ClassVisServer():
                 A1=A1[ind]
                 uvw=uvw[ind]
                 times=times[ind]
+
                 #IndexTimesThisChunk=IndexTimesThisChunk[ind]
                 W=W[ind]
                 Map_VisToJones_Time=Map_VisToJones_Time[ind]
                 indRowsThisChunk=indRowsThisChunk[ind]
+                if self.ReadUVWDT: duvw_dt=duvw_dt[ind]
 
         for A in self.FlagAntNumber:
             ind=np.where((A0!=A)&(A1!=A))[0]
@@ -309,6 +321,7 @@ class ClassVisServer():
             W=W[ind]
             Map_VisToJones_Time=Map_VisToJones_Time[ind]
             indRowsThisChunk=indRowsThisChunk[ind]
+            if self.ReadUVWDT: duvw_dt=duvw_dt[ind]
         
         if self.GD["DataSelection"]["FillFactor"]!=1.:
             Mask=np.random.rand(flags.shape[0])<self.GD["DataSelection"]["FillFactor"]
@@ -323,6 +336,7 @@ class ClassVisServer():
             W=W[ind]
             Map_VisToJones_Time=Map_VisToJones_Time[ind]
             indRowsThisChunk=indRowsThisChunk[ind]
+            if self.ReadUVWDT: duvw_dt=duvw_dt[ind]
             
             
 
@@ -337,7 +351,8 @@ class ClassVisServer():
         W=W[ind]
         Map_VisToJones_Time=Map_VisToJones_Time[ind]
         indRowsThisChunk=indRowsThisChunk[ind]
-
+        if self.ReadUVWDT: duvw_dt=duvw_dt[ind]
+                
         DATA["flags"]=flags
         DATA["uvw"]=uvw
         DATA["data"]=data
@@ -348,8 +363,11 @@ class ClassVisServer():
         DATA["W"]=W
         DATA["Map_VisToJones_Time"]=Map_VisToJones_Time
         DATA["indRowsThisChunk"]=indRowsThisChunk
-                
-        DATA["UVW_dt"]=self.MS.Give_dUVW_dt(times,A0,A1)
+        if self.ReadUVWDT: DATA["UVW_dt"]=duvw_dt
+                                
+
+
+        #DATA["UVW_dt"]=self.MS.Give_dUVW_dt(times,A0,A1)
         
         fFlagged=np.count_nonzero(DATA["flags"])/float(DATA["flags"].size)
         #print fFlagged
@@ -436,7 +454,7 @@ class ClassVisServer():
         freqs=MS.ChanFreq.flatten()
         nbl=MS.nbl
         dfreqs=MS.dFreq
-
+        duvw_dt=MS.uvw_dt
 
         # if Nchan>1:
         #     DoRevertChans=(freqs.flatten()[0]>freqs.flatten()[-1])
@@ -638,24 +656,24 @@ class ClassVisServer():
         #################################################
 
 
-        Dt_UVW_dt=1.*3600
-        t0=times[0]
-        t1=times[-1]
-        All_UVW_dt=[]
-        Times=np.arange(t0,t1,Dt_UVW_dt).tolist()
-        if not(t1 in Times): Times.append(t1+1)
+        # Dt_UVW_dt=1.*3600
+        # t0=times[0]
+        # t1=times[-1]
+        # All_UVW_dt=[]
+        # Times=np.arange(t0,t1,Dt_UVW_dt).tolist()
+        # if not(t1 in Times): Times.append(t1+1)
 
-        All_UVW_dt=np.array([],np.float32).reshape((0,3))
-        for it in range(len(Times)-1):
-            t0=Times[it]
-            t1=Times[it+1]
-            tt=(t0+t1)/2.
-            indRows=np.where((times>=t0)&(times<t1))[0]
-            All_UVW_dt=np.concatenate((All_UVW_dt,self.MS.Give_dUVW_dt(tt,A0[indRows],A1[indRows])))
+        # All_UVW_dt=np.array([],np.float32).reshape((0,3))
+        # for it in range(len(Times)-1):
+        #     t0=Times[it]
+        #     t1=Times[it+1]
+        #     tt=(t0+t1)/2.
+        #     indRows=np.where((times>=t0)&(times<t1))[0]
+        #     All_UVW_dt=np.concatenate((All_UVW_dt,self.MS.Give_dUVW_dt(tt,A0[indRows],A1[indRows])))
 
             
 
-        UVW_dt=All_UVW_dt
+        # UVW_dt=All_UVW_dt
 
 
 
@@ -695,9 +713,10 @@ class ClassVisServer():
                        #"UVW_RefAnt": Luvw,
                        "W":self.VisWeights[MS.ROW0:MS.ROW1],
                        #"IndRows_All_UVW_dt":IndRows_All_UVW_dt,
-                       "UVW_dt":UVW_dt
+                       "UVW_dt":duvw_dt
                      }
-        
+
+
         self.ThisDataChunk=ThisDataChunk#NpShared.DicoToShared("%sThisDataChunk"%self.IdSharedMem,ThisDataChunk)
         #self.UpdateCompression()
         #self.ThisDataChunk["Map_VisToJones_Time"]=np.zeros(([],),np.int32)

@@ -10,13 +10,16 @@ import ephem
 from killMS2.Other import MyLogger
 log=MyLogger.getLogger("ClassMS")
 from killMS2.Other import ClassTimeIt
+from DDFacet.Other.progressbar import ProgressBar
 
 class ClassMS():
     def __init__(self,MSname,Col="DATA",zero_flag=True,ReOrder=False,EqualizeFlag=False,DoPrint=True,DoReadData=True,
-                 TimeChunkSize=None,GetBeam=False,RejectAutoCorr=False,SelectSPW=None,DelStationList=None,Field=0,DDID=0):
+                 TimeChunkSize=None,GetBeam=False,RejectAutoCorr=False,SelectSPW=None,DelStationList=None,Field=0,DDID=0,
+                 ReadUVWDT=False):
 
 
         if MSname=="": exit()
+        self.ReadUVWDT=ReadUVWDT
         MSname=reformat.reformat(os.path.abspath(MSname),LastSlash=False)
         self.MSName=MSname
         self.ColName=Col
@@ -443,6 +446,26 @@ class ClassMS():
 
 
         self.flag_all=flag_all
+        self.uvw_dt=None
+
+
+        if self.ReadUVWDT:
+            print>>log,"Adding uvw speed info to main table: %s"%self.MSName
+            tu=table(self.MSName,readonly=False,ack=False)
+            if 'UVWDT' not in tu.colnames():
+                self.AddUVW_dt()
+            tu.close()
+            del(tu)
+            print>>log,"Reading uvw_dt column"
+            tu=table(self.MSName,readonly=False,ack=False)
+            self.uvw_dt=np.float64(tu.getcol('UVWDT', row0, nRowRead))
+            tu.close()
+
+
+
+        table_all.close()
+
+
         if self.RejectAutoCorr:
             indGetCorrelation=np.where(A0!=A1)[0]
             A0=A0[indGetCorrelation]
@@ -457,7 +480,6 @@ class ClassMS():
                 self.flag_all=self.flag_all[indGetCorrelation,:,:]
             self.nbl=(self.na*(self.na-1))/2
 
-        table_all.close()
         if self.DoRevertChans:
             self.flag_all=self.flag_all[:,::-1,:]
             if not(type(self.data)==list):
@@ -749,7 +771,7 @@ class ClassMS():
             vis=self.data
         if DoPrint: print>>log, "Writting data in column %s"%ModColor.Str(Col,col="green")
 
-        
+        print "Givemain"
         table_all=self.GiveMainTable(readonly=False)
 
         if self.swapped:
@@ -759,11 +781,16 @@ class ClassMS():
             visout=vis
             flag_all=self.flag_all
 
+        print "Col"
         table_all.putcol(Col,visout.astype(self.data.dtype),self.ROW0,self.nRowRead)
+        print "Flag"
         table_all.putcol("FLAG",flag_all,self.ROW0,self.nRowRead)
+        print "Weight"
         if self.HasWeights:
+            
             table_all.putcol("WEIGHT",self.Weights,self.ROW0,self.nRowRead)
             #print "ok w"
+        print "Close"
         table_all.close()
         
     def GiveUvwBL(self,a0,a1):
@@ -881,16 +908,29 @@ class ClassMS():
                 t.putcol(Colout,t.getcol(Colin,row0,NRow),row0,NRow)
         t.close()
 
-    def AddCol(self,ColName,LikeCol="DATA"):
+    def AddCol(self,ColName,LikeCol="DATA",ColDesc=None):
         t=table(self.MSName,readonly=False,ack=False)
         if (ColName in t.colnames()):
             print>>log, "  Column %s already in %s"%(ColName,self.MSName)
             t.close()
             return
         print>>log, "  Putting column %s in %s"%(ColName,self.MSName)
-        desc=t.getcoldesc(LikeCol)
-        desc["name"]=ColName
-        desc['comment']=desc['comment'].replace(" ","_")
+        if ColDesc is None:
+            desc=t.getcoldesc(LikeCol)
+            desc["name"]=ColName
+            desc['comment']=desc['comment'].replace(" ","_")
+        elif ColDesc=="IMAGING_WEIGHT":
+            desc={'_c_order': True,
+                  'comment': '',
+                  'dataManagerGroup': 'imagingweight',
+                  'dataManagerType': 'TiledShapeStMan',
+                  'maxlen': 0,
+                  'ndim': 1,
+                  'option': 4,
+                  'shape': array([self.Nchan], dtype=int32),
+                  'valueType': 'float'}
+        else:
+            print "Not supported"
         t.addcols(desc)
         t.close()
         
@@ -952,3 +992,67 @@ class ClassMS():
         pyrap.tables.addImagingColumns(self.MSName,ack=False)
         #self.PutNewCol("CORRECTED_DATA")
         #self.PutNewCol("MODEL_DATA")
+
+    def AddUVW_dt(self):
+        print>>log,"Compute UVW speed column"
+        MSName=self.MSName
+        MS=self
+        t=table(MSName,readonly=False,ack=False)
+        times=t.getcol("TIME")
+        A0=t.getcol("ANTENNA1")
+        A1=t.getcol("ANTENNA2")
+        UVW=t.getcol("UVW")
+        UVW_dt=np.zeros_like(UVW)
+        if "UVWDT" not in t.colnames():
+            print>>log,"Adding column UVWDT in %s"%self.MSName
+            desc=t.getcoldesc("UVW")
+            desc["name"]="UVWDT"
+            desc['comment']=desc['comment'].replace(" ","_")
+            t.addcols(desc)
+        
+        # # #######################
+        # LTimes=np.sort(np.unique(times))
+        # for iTime,ThisTime in enumerate(LTimes):
+        #     print iTime,LTimes.size
+        #     ind=np.where(times==ThisTime)[0]
+        #     UVW_dt[ind]=MS.Give_dUVW_dt(times[ind],A0[ind],A1[ind])
+        # # #######################
+        
+        na=MS.na
+        pBAR= ProgressBar('white', width=50, block='=', empty=' ',Title=" Calc dUVW/dt ", HeaderSize=10,TitleSize=13)
+        pBAR.render(0, '%4i/%i' % (0,na))
+        for ant0 in range(na):
+            for ant1 in range(ant0,MS.na):
+                if ant0==ant1: continue
+                C0=((A0==ant0)&(A1==ant1))
+                C1=((A1==ant0)&(A0==ant1))
+                ind=np.where(C0|C1)[0]
+                UVWs=UVW[ind]
+                timess=times[ind]
+                dtimess=timess[1::]-timess[0:-1]
+                UVWs_dt0=(UVWs[1::]-UVWs[0:-1])/dtimess.reshape((-1,1))
+                UVW_dt[ind[0:-1]]=UVWs_dt0
+                UVW_dt[ind[-1]]=UVWs_dt0[-1]
+            intPercent = int(100 * (ant0+1) / float(na))
+            pBAR.render(intPercent, '%4i/%i' % (ant0+1, na))
+                    
+    
+        print>>log,"Writting in column UVWDT"
+        t.putcol("UVWDT",UVW_dt)
+        t.close()
+    
+        # import pylab
+        # u,v,w=t.getcol("UVW").T
+        # A0=t.getcol("ANTENNA1")
+        # A1=t.getcol("ANTENNA2")
+        # ind=np.where((A0==0)&(A1==10))[0]
+        # us=u[ind]
+        # du,dv,dw=t.getcol("UVWDT").T
+        # dus1=du[ind]
+        # dus0=us[1::]-us[0:-1]
+        # pylab.show()
+        # DT=t.getcol("INTERVAL")[0]
+        # pylab.plot(dus0/DT)
+        # pylab.plot(dus1)
+        # pylab.show()
+    

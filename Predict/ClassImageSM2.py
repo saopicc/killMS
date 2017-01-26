@@ -1,9 +1,9 @@
-
 import numpy as np
 from DDFacet.Imager.ClassDeconvMachine import ClassImagerDeconv
 from pyrap.images import image
 from killMS2.Array import NpShared
 from killMS2.Other import reformat
+from killMS2.Other import ModColor
 
 from killMS2.Other import MyLogger
 log=MyLogger.getLogger("ClassImageSM")
@@ -12,12 +12,14 @@ from DDFacet.ToolsDir.GiveEdges import GiveEdges
 #from DDFacet.Imager.ClassModelMachine import ClassModelMachine
 #print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
 #from DDFacet.Imager.ClassModelMachineGA import ClassModelMachine
-from DDFacet.Imager.ModModelMachine import GiveModelMachine
+#from DDFacet.Imager.ModModelMachine import GiveModelMachine
 
 from DDFacet.Imager.ClassImToGrid import ClassImToGrid
 import DDFacet.Other.MyPickle
 import os
 from DDFacet.Data import ClassVisServer
+import pprint
+from DDFacet.Imager.ModModelMachine import ClassModModelMachine
 
 class ClassImageSM():
     def __init__(self):
@@ -30,10 +32,16 @@ class ClassPreparePredict(ClassImagerDeconv):
         ClassImagerDeconv.__init__(self,**kwargs)
 
         self.BaseImageName=BaseImageName
+
         self.FileDicoModel="%s.DicoModel"%self.BaseImageName
+        if self.GD["GDkMS"]["ImageSkyModel"]["DicoModel"] is not None:
+            print>>log,ModColor.Str("Using %s instead of %s"%(self.GD["GDkMS"]["ImageSkyModel"]["DicoModel"],self.FileDicoModel))
+            self.FileDicoModel=self.GD["GDkMS"]["ImageSkyModel"]["DicoModel"]
+
         self.ModelImageName="%s.model.fits"%self.BaseImageName
 
         self.VS=VS
+
         # DC=self.GD
         # MSName=DC["VisData"]["MSName"]
         # self.VS=ClassVisServer.ClassVisServer(MSName,
@@ -55,7 +63,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.SM=ClassImageSM()
 
         if self.GD["GDkMS"]["ImageSkyModel"]["NodesFile"]!=None:
-            self.GD["CatNodes"]=self.GD["GDkMS"]["ImageSkyModel"]["NodesFile"]
+            self.GD["ImagerMainFacet"]["CatNodes"]=self.GD["GDkMS"]["ImageSkyModel"]["NodesFile"]
             self.GD["DDESolutions"]["DDSols"]=""
             
         self.InitFacetMachine()
@@ -64,23 +72,29 @@ class ClassPreparePredict(ClassImagerDeconv):
     def LoadModel(self):
 
         
-        ClassModelMachine,DicoModel=GiveModelMachine(self.FileDicoModel)
-        try:
-            self.GD["GAClean"]["GASolvePars"]=DicoModel["SolveParam"]
-        except:
-            self.GD["GAClean"]["GASolvePars"]=["S","Alpha"]
-            DicoModel["SolveParam"]=self.GD["GAClean"]["GASolvePars"]
-        self.MM=ClassModelMachine(self.GD)
-        self.MM.FromDico(DicoModel)
+        # ClassModelMachine,DicoModel=GiveModelMachine(self.FileDicoModel)
+        # try:
+        #     self.GD["GAClean"]["GASolvePars"]=DicoModel["SolveParam"]
+        # except:
+        #     self.GD["GAClean"]["GASolvePars"]=["S","Alpha"]
+        #     DicoModel["SolveParam"]=self.GD["GAClean"]["GASolvePars"]
+        # self.MM=ClassModelMachine(self.GD)
+        # self.MM.FromDico(DicoModel)
+        
+
+
+        # From DicoModel
+        ModConstructor = ClassModModelMachine()
+        self.MM=ModConstructor.GiveInitialisedMMFromFile(self.FileDicoModel)
         #ModelImage0=self.MM.GiveModelImage(np.mean(self.VS.MS.ChanFreq))
         #self.MM.CleanNegComponants(box=15,sig=1)
         if self.GD["GDkMS"]["ImageSkyModel"]["MaskImage"]!=None:
             self.MM.CleanMaskedComponants(self.GD["GDkMS"]["ImageSkyModel"]["MaskImage"])
-
-        
         #self.ModelImage=self.MM.GiveModelImage(np.mean(self.VS.MS.ChanFreq))
-        self.ModelImage=self.MM.GiveModelImage(self.VS.FreqChanDegridding)
+        self.ModelImage=self.MM.GiveModelImage(self.VS.FreqBandChannelsDegrid[0])
 
+
+        # # From ModelImage
         # print "im!!!!!!!!!!!!!!!!!!!!!!!"
         # im=image("ModelImage.fits")
         # data=im.getdata()
@@ -89,9 +103,9 @@ class ClassPreparePredict(ClassImagerDeconv):
         #     for pol in range(npol):
         #         data[ch,pol]=data[ch,pol].T[::-1]
         # self.ModelImage=data
+        # #self.FacetMachine.ToCasaImage(self.ModelImage,ImageName="Model_kMS",Fits=True)
+        # #stop
 
-        #self.FacetMachine.ToCasaImage(self.ModelImage,ImageName="Model_kMS",Fits=True)
-        #stop
         self.ModelImage=NpShared.ToShared("%sModelImage"%(self.IdSharedMem),self.ModelImage)
         #del(data)
         self.DicoImager=self.FacetMachine.DicoImager
@@ -179,13 +193,20 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.SM.GD=self.FacetMachine.GD
         self.SM.DicoImager=self.FacetMachine.DicoImager
         self.SM.GD["Compression"]["CompDeGridMode"]=0
-        self.SM.rac=self.VS.MS.rac
-        self.SM.decc=self.VS.MS.decc
+        self.SM.rac=self.VS.CurrentMS.rac
+        self.SM.decc=self.VS.CurrentMS.decc
         
-        self.SM.ChanMappingDegrid=self.VS.MappingDegrid
+        #self.SM.ChanMappingDegrid=self.VS.FreqBandChannelsDegrid[0]
+        self.SM.ChanMappingDegrid=self.VS.DicoMSChanMappingDegridding[0]
+        # import pprint
+        # pprint.pprint(self.DicoJonesDirToFacet)
 
 
-
+        self.SM.IDsShared={}
+        self.SM.IDsShared["IdSharedMem"]=self.FacetMachine.IdSharedMem
+        self.SM.IDsShared["ChunkDataCache"]="file://" + self.VS.cache.dirname + "/"
+        self.SM.IDsShared["FacetDataCache"]=self.FacetMachine.FacetDataCache
+        self.SM.IDsShared["IdSharedMemData"]=self.FacetMachine.IdSharedMemData
 
 
     def BuildGridsParallel(self):
@@ -202,13 +223,19 @@ class ClassPreparePredict(ClassImagerDeconv):
 
         NJobs=NFacets
         for iFacet in range(NFacets):
-            work_queue.put(iFacet)
+            GM=self.FacetMachine.GiveGM(iFacet)
+            Job={"iFacet":iFacet,
+                 "SharedMemNameSphe":GM.WTerm.SharedMemNameSphe,
+                 "FacetDataCache":self.FacetMachine.FacetDataCache}
+            work_queue.put(Job)
 
 
-        self.FacetMachine.BuildFacetNormImage()#GiveNormImage()
-        _=NpShared.ToShared("%sNormImage"%self.IdSharedMem,self.FacetMachine.NormImage)
+        NormImage=self.FacetMachine.BuildFacetNormImage()#GiveNormImage()
+        _=NpShared.ToShared("%sNormImage"%self.IdSharedMem,NormImage)
 
         GM=self.FacetMachine.GiveGM(0)
+        
+
         argsImToGrid=(GM.GridShape,GM.PaddingInnerCoord,GM.OverS,GM.Padding,GM.dtype)
         
         workerlist=[]
@@ -336,6 +363,7 @@ class ClassPreparePredict(ClassImagerDeconv):
             intPercent=int(100*  NDone / float(NFacets))
             pBAR.render(intPercent, '%4i/%i' % (NDone,NFacets))
 
+        #pprint.pprint(DicoJonesDirToFacet)
 
         for ii in range(NCPU):
             workerlist[ii].shutdown()
@@ -431,7 +459,7 @@ class Worker(multiprocessing.Process):
     def run(self):
         while not self.kill_received:
             try:
-                iFacet = self.work_queue.get()
+                Job = self.work_queue.get()
             except:
                 break
 
@@ -441,13 +469,19 @@ class Worker(multiprocessing.Process):
             # _=NpShared.ToShared("%sModelGrid.%3.3i"%(self.IdSharedMem,iFacet),Grid)
             # self.result_queue.put({"Success":True})
 
+            iFacet=Job["iFacet"]
+            FacetDataCache=Job["FacetDataCache"]
+
             Image=NpShared.GiveArray("%sModelImage"%(self.IdSharedMem))
             
             
             #Grid,SumFlux=self.ClassImToGrid.GiveGridFader(Image,self.DicoImager,iFacet,NormImage)
-            SharedMemName="%sSpheroidal.Facet_%3.3i"%(self.IdSharedMem,iFacet)
-            SPhe=NpShared.GiveArray(SharedMemName)
-            SpacialWeight=NpShared.GiveArray("%sSpacialWeight_%3.3i"%(self.IdSharedMem,iFacet))
+            #SharedMemName="%sSpheroidal.Facet_%3.3i"%(self.IdSharedMem,iFacet)
+            SPhe=NpShared.GiveArray(Job["SharedMemNameSphe"])
+            #print SharedMemName
+
+            SpacialWeight=NpShared.GiveArray("%sSpacialWeight.Facet_%3.3i" % (FacetDataCache, iFacet))
+            
             NormImage=NpShared.GiveArray("%sNormImage"%self.IdSharedMem)
             
             Im2Grid=ClassImToGrid(OverS=self.GD["ImagerCF"]["OverS"],GD=self.GD)

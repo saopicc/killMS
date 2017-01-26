@@ -5,11 +5,11 @@ import os
 from killMS2.Data import ClassVisServer
 #from Sky import ClassSM
 from killMS2.Array import ModLinAlg
-import pylab
 from killMS2.Other import ClassTimeIt
 from killMS2.Array.Dot import NpDotSSE
 
 def testLM():
+    import pylab
     SM=ClassSM.ClassSM("../TEST/ModelRandom00.txt.npy")
     rabeam,decbeam=SM.ClusterCat.ra,SM.ClusterCat.dec
     LofarBeam=("AE",5,rabeam,decbeam)
@@ -134,7 +134,10 @@ class ClassJacobianAntenna():
         self.SM=SM
         T.timeit("Init0")
         if PM==None:
-            self.PM=ClassPredict(Precision=Precision,DoSmearing=self.DoSmearing,IdMemShared=IdSharedMem)
+            self.PM=ClassPredict(Precision=Precision,
+                                 DoSmearing=self.DoSmearing,
+                                 IdMemShared=IdSharedMem)
+            
             if self.GD["ImageSkyModel"]["BaseImageName"]!="":
                 self.PM.InitGM(self.SM)
 
@@ -656,7 +659,7 @@ class ClassJacobianAntenna():
         #     pylab.draw()
         #     pylab.show(False)
         #     pylab.pause(0.1)
-        #     #stop
+        #     stop
 
         # # pylab.figure(2)
         # # pylab.clf()
@@ -800,6 +803,7 @@ class ClassJacobianAntenna():
         #print "    COMPUTE PredictOrigFormat"
         Gains=GainsIn.copy()
         na,nd,_,_=Gains.shape
+        #Type="NoGains"
         if Type=="NoGains":
             if self.PolMode=="Scalar":
                 Gains=np.ones((na,nd,1,1),np.complex64)
@@ -807,8 +811,8 @@ class ClassJacobianAntenna():
                 Gains=np.ones((na,nd,2,1),np.complex64)
             else:
                 Gains=np.zeros((na,nd,2,2),np.complex64)
-                Gains[:,0,0]=1
-                Gains[:,1,1]=1
+                Gains[:,:,0,0]=1
+                Gains[:,:,1,1]=1
             NameShmData="%sPredictedData"%self.IdSharedMem
             NameShmIndices="%sIndicesData"%self.IdSharedMem
         elif Type=="Gains":
@@ -1079,7 +1083,7 @@ class ClassJacobianAntenna():
 
         # ##############################################
         # from SkyModel.Sky import ClassSM
-        # SM=ClassSM.ClassSM("ModelRandom00.4.txt.npy")
+        # SM=ClassSM.ClassSM("ModelImage.txt.npy")
         # SM.Type="Catalog"
         # SM.Calc_LM(self.SM.rac,self.SM.decc)
         # self.KernelMat1=np.zeros((1,NDir,n4vis/nchan,nchan),dtype=self.CType)
@@ -1091,13 +1095,12 @@ class ClassJacobianAntenna():
         # pylab.figure(1)
         # pylab.clf()
         # pylab.figure(0)
-        
+         
         
 
 
         for iDir in range(NDir):
             
-
             K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones)
             #K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir)#,ApplyTimeJones=ApplyTimeJones)
             #K*=-1
@@ -1131,11 +1134,12 @@ class ClassJacobianAntenna():
 
 
         #     ######################
-        #     K1=self.PM.predictKernelPolCluster(self.DicoData,SM,iDirection=iDir)#,ApplyTimeJones=ApplyTimeJones)
+        #     # K1=self.PM.predictKernelPolCluster(self.DicoData,SM,iDirection=iDir)#,ApplyTimeJones=ApplyTimeJones)
+        #     K1=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones,ForceNoDecorr=True)
 
         #     A0=self.DicoData["A0"]
         #     A1=self.DicoData["A1"]
-        #     ind=np.where((A0==0)&(A1==26))[0]
+        #     ind=np.arange(K1.shape[0])#np.where((A0==0)&(A1==26))[0]
         #     d1=K[ind,0,0] 
         #     d0=K1[ind,0,0]
         #     #op0=np.abs
@@ -1146,7 +1150,7 @@ class ClassJacobianAntenna():
         #     pylab.plot(op0(d0))
         #     pylab.plot(op0(d1))
         #     #pylab.plot(op0(d1)/op0(d0))
-        #     pylab.ylim(-15,15)
+        #     pylab.ylim(-100,100)
         #     pylab.draw()
         #     pylab.show(False)
 
@@ -1179,7 +1183,7 @@ class ClassJacobianAntenna():
 
         # #     del(K1,K1_XX,K1_YY)
         # #     del(K,K_XX,K_YY)
-
+        # stop
 
 
         # 
@@ -1245,7 +1249,8 @@ class ClassJacobianAntenna():
             DicoData["indOrig"] = ind0
             DicoData["indOrig1"] = ind1
             DicoData["uvw"]  = np.concatenate([DATA['uvw'][ind0], -DATA['uvw'][ind1]])
-            DicoData["UVW_dt"]  = np.concatenate([DATA["UVW_dt"][ind0], -DATA["UVW_dt"][ind1]])
+            if "UVW_dt" in DATA.keys():
+                DicoData["UVW_dt"]  = np.concatenate([DATA["UVW_dt"][ind0], -DATA["UVW_dt"][ind1]])
 
             if "W" in DATA.keys():
                 DicoData["W"] = np.concatenate([DATA['W'][ind0,self.ch0:self.ch1], DATA['W'][ind1,self.ch0:self.ch1]])
@@ -1449,6 +1454,7 @@ class ClassJacobianAntenna():
 
 
 def testPredict():
+    import pylab
     VS=ClassVisServer.ClassVisServer("../TEST/0000.MS/")
 
     MS=VS.MS

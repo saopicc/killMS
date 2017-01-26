@@ -6,7 +6,7 @@ from killMS2.Array import NpShared
 from killMS2.Data import ClassVisServer
 #from Sky import ClassSM
 from killMS2.Array import ModLinAlg
-import matplotlib.pyplot as pylab
+#import matplotlib.pyplot as pylab
 
 from killMS2.Other import MyLogger
 log=MyLogger.getLogger("ClassWirtingerSolver")
@@ -196,6 +196,22 @@ class ClassWirtingerSolver():
 
 
         Sols=self.SolsArray_Full[0:ind.size].copy()
+
+        if Sols.size==0:
+            na=self.VS.MS.na
+            nd=self.SM.NDir
+            nChan=self.VS.NChanJones
+            Sols=np.zeros((1,),dtype=[("t0",np.float64),
+                                      ("t1",np.float64),
+                                      ("G",np.complex64,(nChan,na,nd,2,2)),
+                                      ("Stats",np.float32,(nChan,na,4))])
+            Sols=Sols.view(np.recarray)
+            Sols.t0[0]=0
+            Sols.t1[0]=self.VS.MS.times_all[-1]
+            Sols.G[0,:,:,:,0,0]=1
+            Sols.G[0,:,:,:,1,1]=1
+            
+
         Sols.t1[-1]+=1e3
         Sols.t0[0]-=1e3
 
@@ -225,7 +241,7 @@ class ClassWirtingerSolver():
 
 
         # print "int!!!!!!!!!!"
-        # self.G+=np.random.randn(*self.G.shape)*.1#sigP
+        # self.G+=np.random.randn(*self.G.shape)*.5#sigP
         
         NSols=np.max([1,int(1.5*round(self.VS.MS.DTh/(self.VS.TVisSizeMin/60.)))])
 
@@ -453,6 +469,7 @@ class ClassWirtingerSolver():
     def InitPlotGraph(self):
         from Plot import Graph
         print>>log,"Initialising plots ..." 
+        import pylab
         #pylab.ion()
         self.Graph=Graph.ClassMplWidget(self.VS.MS.na)
         
@@ -474,7 +491,7 @@ class ClassWirtingerSolver():
 
     def doNextTimeSolve(self,SkipMode=False):
 
-
+        import pylab
 
         if type(self.G)==type(None):
             self.InitSol()
@@ -882,6 +899,7 @@ class ClassWirtingerSolver():
                     # pylab.pause(0.1)
     
                     if self.DoPlot==1:
+                        import pylab
                         AntPlot=np.arange(self.VS.MS.na)#np.array(ListAntSolve)
                         pylab.clf()
                         pylab.plot(np.abs(self.G[iChanSol,AntPlot].flatten()))

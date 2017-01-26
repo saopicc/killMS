@@ -10,6 +10,7 @@ from killMS2.Other import MyPickle
 from killMS2.Other import PrintOptParse
 from killMS2.Parset import MyOptParse
 import numpy as np
+import DDFacet.Other.MyPickle
 
 
 
@@ -50,9 +51,11 @@ from killMS2.Wirtinger.ClassWirtingerSolver import ClassWirtingerSolver
 
 from killMS2.Other import ClassTimeIt
 from killMS2.Data import ClassVisServer
+from DDFacet.Data import ClassVisServer as ClassVisServer_DDF
 
 from Predict.PredictGaussPoints_NumExpr5 import ClassPredictParallel as ClassPredict 
 #from Predict.PredictGaussPoints_NumExpr5 import ClassPredict as ClassPredict 
+
 #from Predict.PredictGaussPoints_NumExpr2 import ClassPredictParallel as ClassPredict_orig
 #from Predict.PredictGaussPoints_NumExpr4 import ClassPredict as ClassPredict 
 #from Predict.PredictGaussPoints_NumExpr2 import ClassPredict as ClassPredict_orig
@@ -108,6 +111,7 @@ def read_options():
     OP.OptionGroup("* Sky image related options","ImageSkyModel")
     OP.add_option('BaseImageName')
     OP.add_option('ImagePredictParset')
+    OP.add_option('DicoModel')
     OP.add_option('OverS')
     OP.add_option('wmax')
     OP.add_option('MaskImage')
@@ -274,7 +278,7 @@ def main(OP=None,MSName=None):
 
     ParsetName="%skillMS.%s.sols.parset"%(reformat.reformat(options.MSName),SolsName)
     OP.ToParset(ParsetName)
-
+    
     GD=OP.DicoConfig
     if GD["ImageSkyModel"]["BaseImageName"]=="":
         print>>log,"Predict Mode: Catalog"
@@ -282,26 +286,61 @@ def main(OP=None,MSName=None):
     else:
         PredictMode="Image"
         BaseImageName=GD["ImageSkyModel"]["BaseImageName"]
-        ParsetName=GD["ImageSkyModel"]["ImagePredictParset"]
-        if ParsetName=="":
-            ParsetName="%s.parset"%BaseImageName
-        print>>log,"Predict Mode: Image, with Parset: %s"%ParsetName
-        GDPredict=ReadCFG.Parset(ParsetName).DicoPars
+
+        # ParsetName=GD["ImageSkyModel"]["ImagePredictParset"]
+        # if ParsetName=="":
+        #     ParsetName="%s.parset"%BaseImageName
+        # print>>log,"Predict Mode: Image, with Parset: %s"%ParsetName
+        # GDPredict=ReadCFG.Parset(ParsetName).DicoPars
+        
+        FileDicoModel="%s.DicoModel"%BaseImageName
+        GDPredict=DDFacet.Other.MyPickle.Load(FileDicoModel)["GD"]
+        GDPredict["VisData"]["MSName"]=options.MSName
 
         if not("PSFFacets" in GDPredict["ImagerGlobal"].keys()):
                GDPredict["ImagerGlobal"]["PSFFacets"]=0
                GDPredict["ImagerGlobal"]["PSFOversize"]=1
 
-
-        GDPredict["Compression"]["CompDeGridMode"]=False
+        GDPredict["Beam"]["NChanBeamPerMS"]=options.NChanBeamPerMS
+        GDPredict["MultiFreqs"]["NChanDegridPerMS"]=options.NChanSols
+        #GDPredict["Compression"]["CompDeGridMode"]=False
         #GDPredict["Compression"]["CompDeGridMode"]=True
+        GDPredict["ImagerGlobal"]["DeGriderType"]="Classic"
+        #GDPredict["Caching"]["ResetCache"]=1
+
+        if options.Decorrelation is not None and options.Decorrelation is not "":
+            print>>log,ModColor.Str("Overwriting DDF parset decorrelation mode [%s] with kMS option [%s]"\
+                                    %(GDPredict["DDESolutions"]["DecorrMode"],options.Decorrelation))
+            GDPredict["DDESolutions"]["DecorrMode"]=options.Decorrelation
+        else:
+            GD["SkyModel"]["Decorrelation"]=DoSmearing=options.Decorrelation=GDPredict["DDESolutions"]["DecorrMode"]
+            print>>log,ModColor.Str("Decorrelation mode will be [%s]" % DoSmearing)
+
+        # if options.Decorrelation != GDPredict["DDESolutions"]["DecorrMode"]:
+        #     print>>log,ModColor.Str("Decorrelation modes for DDFacet and killMS are different [%s vs %s respectively]"\
+        #                             %(GDPredict["DDESolutions"]["DecorrMode"],options.Decorrelation))
+        # GDPredict["DDESolutions"]["DecorrMode"]=options.Decorrelation
         
-        if options.OverS!=None:
+        if options.OverS is not None:
             GDPredict["ImagerCF"]["OverS"]=options.OverS
-        if options.wmax!=None:
+        if options.wmax is not None:
             GDPredict["ImagerCF"]["wmax"]=options.wmax
+
         GD["GDImage"]=GDPredict
         GDPredict["GDkMS"]=GD
+        VS_DDFacet=ClassVisServer_DDF.ClassVisServer(options.MSName,
+                                                     ColName=GDPredict["VisData"]["ColName"],
+                                                     TVisSizeMin=GDPredict["VisData"]["ChunkHours"]*60,
+                                                     #DicoSelectOptions=DicoSelectOptions,
+                                                     TChunkSize=GDPredict["VisData"]["ChunkHours"],
+                                                     IdSharedMem=IdSharedMem,
+                                                     Robust=GDPredict["ImagerGlobal"]["Robust"],
+                                                     Weighting=GDPredict["ImagerGlobal"]["Weighting"],
+                                                     MFSWeighting=GDPredict["ImagerGlobal"]["MFSWeighting"],
+                                                     Super=GDPredict["ImagerGlobal"]["Super"],
+                                                     DicoSelectOptions=dict(GDPredict["DataSelection"]),
+                                                     NCPU=GDPredict["Parallel"]["NCPU"],
+                                                     GD=GDPredict)
 
 
     #SM.SourceCat.I*=1000**2
@@ -327,11 +366,14 @@ def main(OP=None,MSName=None):
                            killdirs=kills,
                            invert=invert)
         SM.Type="Catalog"
+        Alpha=SM.SourceCat.alpha
+        Alpha[np.isnan(Alpha)]=0
 
     else:
         from killMS2.Predict import ClassImageSM2 as ClassImageSM
         #from killMS2.Predict import ClassImageSM3 as ClassImageSM
-        PreparePredict=ClassImageSM.ClassPreparePredict(BaseImageName,VS,GD=GDPredict,DoDeconvolve=False,IdSharedMem=IdSharedMem)
+        
+        PreparePredict=ClassImageSM.ClassPreparePredict(BaseImageName,VS_DDFacet,GD=GDPredict,IdSharedMem=IdSharedMem)
         SM=PreparePredict.SM
         #VS.setGridProps(PreparePredict.FacetMachine.Cell,PreparePredict.FacetMachine.NpixPaddedFacet)
         VS.setGridProps(PreparePredict.FacetMachine.Cell,None)#PreparePredict.FacetMachine.NpixPaddedFacet)
@@ -339,7 +381,6 @@ def main(OP=None,MSName=None):
         VS.setFOV(FacetMachine.OutImShape,FacetMachine.PaddedGridShape,FacetMachine.FacetShape,FacetMachine.CellSizeRad)
     VS.setSM(SM)
     VS.CalcWeigths()
-    
         
 
 
@@ -438,17 +479,21 @@ def main(OP=None,MSName=None):
         if Load=="EndOfObservation":
             break
 
+
         if options.ExtSols=="":
             SaveSols=True
-            Solver.doNextTimeSolve_Parallel()
-            #Solver.doNextTimeSolve_Parallel(SkipMode=True)
-            #Solver.doNextTimeSolve()#SkipMode=True)
+            if options.SubOnly==0:
+                Solver.doNextTimeSolve_Parallel()
+                #Solver.doNextTimeSolve_Parallel(SkipMode=True)
+                #Solver.doNextTimeSolve()#SkipMode=True)
+            else:
+                DoSubstract=1
+
             
             def SavePredict(ArrayName,FullPredictColName):
                 print>>log, "Writing full predicted data in column %s of %s"%(FullPredictColName,options.MSName)
                 VS.MS.AddCol(FullPredictColName)
                 PredictData=NpShared.GiveArray("%s%s"%(IdSharedMem,ArrayName))
-
                 t=VS.MS.GiveMainTable(readonly=False)#table(VS.MS.MSName,readonly=False,ack=False)
                 t.putcol(FullPredictColName,VS.MS.ToOrigFreqOrder(PredictData),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
@@ -543,7 +588,7 @@ def main(OP=None,MSName=None):
             Jones["FreqDomain"]=SolsFreqDomain
             nt,nch,na,nd,_,_=Sols.G.shape
             G=np.swapaxes(Sols.G,1,3).reshape((nt,nd,na,nch,2,2))
-            G=np.require(G, dtype=np.complex64, requirements="C_CONTIGUOUS")
+            G=np.require(G, dtype=np.complex64, requirements="C")
 
             # if not("A" in options.ApplyMode):
             #     gabs=np.abs(G)
@@ -634,14 +679,14 @@ def main(OP=None,MSName=None):
                 # Solver.VS.MS.Weights[:]=Weights[:]
 
                 print>>log, "  Writting in IMAGING_WEIGHT column "
-                VS.MS.AddCol("IMAGING_WEIGHT")
+                VS.MS.AddCol("IMAGING_WEIGHT",ColDesc="IMAGING_WEIGHT")
                 t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
                 t.putcol("IMAGING_WEIGHT",VS.MS.ToOrigFreqOrder(Weights),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
 
 
-            if "ResidAnt" in options.ClipMethod:
+            if "ResidAnt" in options.ClipMethod and options.SubOnly==0:
                 print>>log,"Compute weighting based on antenna-selected residual"
                 DomainMachine.AddVisToJonesMapping(Jones,times,freqs)
                 nrows=Solver.VS.ThisDataChunk["times"].size
@@ -651,40 +696,41 @@ def main(OP=None,MSName=None):
                 Weights=Solver.VS.ThisDataChunk["W"]
                 Weights/=np.mean(Weights)
                 print>>log, "  Writting in IMAGING_WEIGHT column "
+                VS.MS.AddCol("IMAGING_WEIGHT",ColDesc="IMAGING_WEIGHT")
                 t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
                 t.putcol("IMAGING_WEIGHT",VS.MS.ToOrigFreqOrder(Weights),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
             if DoSubstract:
                 print>>log, ModColor.Str("Substract sources ... ",col="green")
-                SM.SelectSubCat(SM.SourceCat.kill==1)
+                if options.SubOnly==0:
+                    SM.SelectSubCat(SM.SourceCat.kill==1)
 
                 SourceCatSub=SM.SourceCat.copy()
 
-                if options.SubOnly==1:
-                    print>>log, ModColor.Str(" Sublonly ... ",col="green")
-                    PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM)
-                else:
-                    PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=JonesMerged)
+                PredictData=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=JonesMerged)
+
+                # PredictColName=options.PredictColName
+                # if PredictColName!="":
+                #     print>>log, "Writing predicted data in column %s of %s"%(PredictColName,MSName)
+                #     VS.MS.AddCol(PredictColName)
+                #     t=Solver.VS.MS.GiveMainTable(readonly=False)#table(VS.MS.MSName,readonly=False,ack=False)
+                #     t.putcol(PredictColName,VS.MS.ToOrigFreqOrder(PredictData),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                #     t.close()
                     
-                    PredictColName=options.PredictColName
-                    if PredictColName!="":
-                        print>>log, "Writing predicted data in column %s of %s"%(PredictColName,MSName)
-                        VS.MS.AddCol(PredictColName)
-                        t=Solver.VS.MS.GiveMainTable(readonly=False)#table(VS.MS.MSName,readonly=False,ack=False)
-                        t.putcol(PredictColName,VS.MS.ToOrigFreqOrder(PredictData),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
-                        t.close()
-                    
-                    #PredictData2=PM2.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
-                    #diff=(PredictData-PredictData2)
-                    #print diff
-                    #ind=np.where(diff==np.max(diff))
-                    #print ind
-                    #print np.max(PredictData-PredictData2)
-                    #print np.where(np.isnan(diff))
-                    #print PredictData[1997:1999],PredictData[1997:1999]
+                #PredictData2=PM2.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=Jones)
+                #diff=(PredictData-PredictData2)
+                #print diff
+                #ind=np.where(diff==np.max(diff))
+                #print ind
+                #print np.max(PredictData-PredictData2)
+                #print np.where(np.isnan(diff))
+                #print PredictData[1997:1999],PredictData[1997:1999]
 
                 Solver.VS.ThisDataChunk["data"]-=PredictData
+
+                #print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+                #Solver.VS.ThisDataChunk["data"]=PredictData
                 SM.RestoreCat()
 
             if DoApplyCal:
@@ -698,8 +744,8 @@ def main(OP=None,MSName=None):
             if (DoSubstract|DoApplyCal):
                 print>>log, "Save visibilities in %s column"%WriteColName
                 t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
-                t.putcol(WriteColName,VS.MS.ToOrigFreqOrder(Solver.VS.MS.data),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
-                t.putcol("FLAG",VS.MS.ToOrigFreqOrder(Solver.VS.MS.flags_all),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                t.putcol(WriteColName,VS.MS.ToOrigFreqOrder(Solver.VS.ThisDataChunk["data"]),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                #t.putcol("FLAG",VS.MS.ToOrigFreqOrder(Solver.VS.MS.flags_all),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
                 
