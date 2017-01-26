@@ -66,7 +66,8 @@ class ClassPreparePredict(ClassImagerDeconv):
             self.GD["ImagerMainFacet"]["CatNodes"]=self.GD["GDkMS"]["ImageSkyModel"]["NodesFile"]
             self.GD["DDESolutions"]["DDSols"]=""
             
-        self.InitFacetMachine()
+        # self.InitFacetMachine()
+        self.CreateFacetMachines()
         self.LoadModel()
 
     def LoadModel(self):
@@ -172,11 +173,16 @@ class ClassPreparePredict(ClassImagerDeconv):
             self.FacetMachine.DicoImager[iFacet]["iDirJones"]=idDir[iFacet]
 
 
-        
+            
+        from DDFacet.Other.AsyncProcessPool import APP
+        APP.startWorkers()
+        self.FacetMachine.initCFInBackground()
+        self.FacetMachine.awaitInitCompletion()
 
         for iFacet in range(NFacets):
-            self.FacetMachine.SpacialWeigth[iFacet]=NpShared.ToShared("%sSpacialWeight_%3.3i"%(self.IdSharedMem,iFacet),self.FacetMachine.SpacialWeigth[iFacet])
-
+            
+            #self.FacetMachine.SpacialWeigth[iFacet]=NpShared.ToShared("%sSpacialWeight_%3.3i"%(self.IdSharedMem,iFacet),self.FacetMachine.SpacialWeigth[iFacet])
+            self.FacetMachine.SpacialWeigth[iFacet]=self.FacetMachine._CF[iFacet]["SW"]
         print>>log, "  Splitting model image"
         self.BuildGridsParallel()
 
@@ -224,6 +230,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         NJobs=NFacets
         for iFacet in range(NFacets):
             GM=self.FacetMachine.GiveGM(iFacet)
+            
             Job={"iFacet":iFacet,
                  "SharedMemNameSphe":GM.WTerm.SharedMemNameSphe,
                  "FacetDataCache":self.FacetMachine.FacetDataCache}

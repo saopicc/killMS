@@ -624,15 +624,15 @@ class ClassPredict():
             # print ChanMapping
             
             GridMachine.LSmear=[]
-            DecorrMode = SM.GD["DDESolutions"]["DecorrMode"]
+            DecorrMode = SM.GD["ImToVis"]["DecorrMode"]
             CondSmear=(not ForceNoDecorr) and (('F' in DecorrMode) | ("T" in DecorrMode))
             if CondSmear:
                 #print "DOSMEAR",ForceNoDecorr, (('F' in DecorrMode) | ("T" in DecorrMode))
                 uvw_dt = DicoData["UVW_dt"]#DATA["uvw_dt"]
                 lm_min=None
-                if SM.GD["DDESolutions"]["DecorrLocation"]=="Edge":
+                if SM.GD["ImToVis"]["DecorrLocation"]=="Edge":
                     lm_min=SM.DicoImager[iFacet]["lm_min"]
-                GridMachine.setDecorr(uvw_dt, DT, Dnu, SmearMode=SM.GD["DDESolutions"]["DecorrMode"], lm_min=lm_min)
+                GridMachine.setDecorr(uvw_dt, DT, Dnu, SmearMode=SM.GD["ImToVis"]["DecorrMode"], lm_min=lm_min)
                 
 
             T.timeit("2: Stuff")

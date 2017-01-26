@@ -295,25 +295,25 @@ def main(OP=None,MSName=None):
         
         FileDicoModel="%s.DicoModel"%BaseImageName
         GDPredict=DDFacet.Other.MyPickle.Load(FileDicoModel)["GD"]
-        GDPredict["VisData"]["MSName"]=options.MSName
+        GDPredict["Data"]["MS"]=options.MSName
 
-        if not("PSFFacets" in GDPredict["ImagerGlobal"].keys()):
-               GDPredict["ImagerGlobal"]["PSFFacets"]=0
-               GDPredict["ImagerGlobal"]["PSFOversize"]=1
+        if not("PSFFacets" in GDPredict["ImToVis"].keys()):
+               GDPredict["ImToVis"]["PSFFacets"]=0
+               GDPredict["ImToVis"]["PSFOversize"]=1
 
-        GDPredict["Beam"]["NChanBeamPerMS"]=options.NChanBeamPerMS
-        GDPredict["MultiFreqs"]["NChanDegridPerMS"]=options.NChanSols
+        GDPredict["Beam"]["NBand"]=options.NChanBeamPerMS
+        GDPredict["Freq"]["NDegridBand"]=options.NChanSols
         #GDPredict["Compression"]["CompDeGridMode"]=False
         #GDPredict["Compression"]["CompDeGridMode"]=True
-        GDPredict["ImagerGlobal"]["DeGriderType"]="Classic"
+        GDPredict["ImToVis"]["ForwardMode"]="Classic"
         #GDPredict["Caching"]["ResetCache"]=1
 
         if options.Decorrelation is not None and options.Decorrelation is not "":
             print>>log,ModColor.Str("Overwriting DDF parset decorrelation mode [%s] with kMS option [%s]"\
-                                    %(GDPredict["DDESolutions"]["DecorrMode"],options.Decorrelation))
-            GDPredict["DDESolutions"]["DecorrMode"]=options.Decorrelation
+                                    %(GDPredict["ImToVis"]["DecorrMode"],options.Decorrelation))
+            GDPredict["ImToVis"]["DecorrMode"]=options.Decorrelation
         else:
-            GD["SkyModel"]["Decorrelation"]=DoSmearing=options.Decorrelation=GDPredict["DDESolutions"]["DecorrMode"]
+            GD["SkyModel"]["Decorrelation"]=DoSmearing=options.Decorrelation=GDPredict["ImToVis"]["DecorrMode"]
             print>>log,ModColor.Str("Decorrelation mode will be [%s]" % DoSmearing)
 
         # if options.Decorrelation != GDPredict["DDESolutions"]["DecorrMode"]:
@@ -322,24 +322,28 @@ def main(OP=None,MSName=None):
         # GDPredict["DDESolutions"]["DecorrMode"]=options.Decorrelation
         
         if options.OverS is not None:
-            GDPredict["ImagerCF"]["OverS"]=options.OverS
+            GDPredict["CF"]["OverS"]=options.OverS
         if options.wmax is not None:
-            GDPredict["ImagerCF"]["wmax"]=options.wmax
+            GDPredict["CF"]["wmax"]=options.wmax
 
         GD["GDImage"]=GDPredict
         GDPredict["GDkMS"]=GD
+
+        from DDFacet.Other import AsyncProcessPool
+        AsyncProcessPool.init(ncpu=GDPredict["Parallel"]["NCPU"], affinity=GDPredict["Parallel"]["Affinity"],
+                              verbose=GDPredict["Debug"]["APPVerbose"])
         VS_DDFacet=ClassVisServer_DDF.ClassVisServer(options.MSName,
-                                                     ColName=GDPredict["VisData"]["ColName"],
-                                                     TVisSizeMin=GDPredict["VisData"]["ChunkHours"]*60,
+                                                     ColName=GDPredict["Data"]["ColName"],
+                                                     #TVisSizeMin=GDPredict["Data"]["ChunkHours"]*60,
                                                      #DicoSelectOptions=DicoSelectOptions,
-                                                     TChunkSize=GDPredict["VisData"]["ChunkHours"],
-                                                     IdSharedMem=IdSharedMem,
-                                                     Robust=GDPredict["ImagerGlobal"]["Robust"],
-                                                     Weighting=GDPredict["ImagerGlobal"]["Weighting"],
-                                                     MFSWeighting=GDPredict["ImagerGlobal"]["MFSWeighting"],
-                                                     Super=GDPredict["ImagerGlobal"]["Super"],
-                                                     DicoSelectOptions=dict(GDPredict["DataSelection"]),
-                                                     NCPU=GDPredict["Parallel"]["NCPU"],
+                                                     TChunkSize=GDPredict["Data"]["ChunkHours"],
+                                                     #IdSharedMem=IdSharedMem,
+                                                     #Robust=GDPredict["Weight"]["Robust"],
+                                                     #Weighting=GDPredict["Weight"]["Type"],
+                                                     #MFSWeighting=GDPredict["Weight"]["MFSWeighting"],
+                                                     #Super=GDPredict["Weight"]["Super"],
+                                                     #DicoSelectOptions=dict(GDPredict["Selection"]),
+                                                     #NCPU=GDPredict["Parallel"]["NCPU"],
                                                      GD=GDPredict)
 
 
