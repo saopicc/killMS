@@ -44,9 +44,10 @@ def main(options=None):
     SMName="ModelRandom00.oneOff.txt.npy"
     #SMName="ModelRandom00.oneCenter.txt.npy"
     SMName="ModelImage.txt.npy"
-    
+    SMName="ModelRandom00.txt.npy"
+
     ll=sorted(glob.glob("000?.MS"))
-    ll=sorted(glob.glob("0000.MS"))
+    #ll=sorted(glob.glob("0000.MS"))
     #ll=sorted(glob.glob("BOOTES24_SB100-109.2ch8s.ms.tsel"))
     
 
@@ -59,8 +60,8 @@ def main(options=None):
     CS=ClassSimul(ll[0],SMName)
     Sols=CS.GiveSols()
     for l in ll:
-        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
-        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
+        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
+        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
         CS.DoSimul()
 
 class ClassSimul():
@@ -126,12 +127,12 @@ class ClassSimul():
         DeltaT_Phase=np.random.randn(nch,na,nd)*60
         period_Phase=300+np.random.randn(nch,na,nd)*10
         #period_Phase=np.random.randn(na,nd)*10
-        PhaseAbs=np.random.randn(nch,na,nd)*np.pi*0.5
-        Amp_Phase=np.random.rand(nch,na,nd)*np.pi*0.1
+        PhaseAbs=np.random.randn(nch,na,nd)*np.pi*0.3
+        Amp_Phase=np.random.rand(nch,na,nd)*np.pi*0.5
     
         #Amp_Amp=np.zeros((na,nd))
         #PhaseAbs.fill(0)
-        Amp_Phase.fill(0)
+        #Amp_Phase.fill(0)
         #Amp_Phase=np.zeros((na,nd))
         
 
@@ -203,10 +204,10 @@ class ClassSimul():
         # make scalar
         Sols.G[:,:,:,:,1,1]=Sols.G[:,:,:,:,0,0]
 
-        # unity
-        Sols.G.fill(0)
-        Sols.G[:,:,:,:,0,0]=1.
-        Sols.G[:,:,:,:,1,1]=1.
+        # # unity
+        # Sols.G.fill(0)
+        # Sols.G[:,:,:,:,0,0]=1.
+        # Sols.G[:,:,:,:,1,1]=1.
 
 
         # # Sols.G[:,:,:,1:,0,0]=0.01
@@ -252,7 +253,7 @@ class ClassSimul():
         useElementBeam=False
         if ApplyBeam:
             print ModColor.Str("Apply Beam")
-            MS.LoadSR(useElementBeam=True,useArrayFactor=True)
+            MS.LoadSR(useElementBeam=False,useArrayFactor=True)
             RA=SM.ClusterCat.ra
             DEC=SM.ClusterCat.dec
             NDir=RA.size

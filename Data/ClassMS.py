@@ -787,6 +787,7 @@ class ClassMS():
         table_all.putcol("FLAG",flag_all,self.ROW0,self.nRowRead)
         print "Weight"
         if self.HasWeights:
+            
             table_all.putcol("WEIGHT",self.Weights,self.ROW0,self.nRowRead)
             #print "ok w"
         print "Close"

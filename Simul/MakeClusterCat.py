@@ -1,3 +1,4 @@
+
 import numpy as np
 from SkyModel.Sky import ClassSM
 from killMS2.Other import rad2hmsdms
@@ -9,7 +10,8 @@ from pyrap.tables import table
 
 MSTemplate="/media/6B5E-87D0/MS/SimulTec/L102479_SB144_uv.dppp.MS.dppp.tsel_fixed"
 WorkingDir="/media/6B5E-87D0/MS/SimulTec/"
-ProgTables="/home/tasse/sources/LOFAR/build/gnu_opt/LCS/MSLofar/src/makebeamtables"
+#ProgTables="/home/tasse/sources/LOFAR/build/gnu_opt/LCS/MSLofar/src/makebeamtables"
+ProgTables="makebeamtables"
 
 
 # MSTemplate="L102479_SB144_uv.dppp.MS.dppp.tsel_fixed"
@@ -276,7 +278,7 @@ class MakeMultipleObs():
         D["StartTime"]={"id":0,"val":DateTime}
 
         D["StepTime"]={"id":0,"val":self.MSTemplate.dt*5}#MS.dt}
-        D["NTimes"]={"id":0,"val":30}#int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
+        D["NTimes"]={"id":0,"val":300}#int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
         #D["NTimes"]={"id":0,"val":int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
         
         D["NParts"]={"id":0,"val":"1"}

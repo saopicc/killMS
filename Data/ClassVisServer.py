@@ -91,12 +91,14 @@ class ClassVisServer():
     def Init(self,PointingID=0,NChanJones=1):
         #MSName=self.MDC.giveMS(PointingID).MSName
         kwargs={}
+        DecorrMode=""
+        ReadUVWDT=False
         if self.GD!=None:
             kwargs["Field"]=self.GD["DataSelection"]["FieldID"]
             kwargs["DDID"]=self.GD["DataSelection"]["DDID"]
+            DecorrMode=self.GD["SkyModel"]["Decorrelation"]
+            ReadUVWDT=(("T" in DecorrMode) or ("F" in DecorrMode))
 
-        DecorrMode=self.GD["SkyModel"]["Decorrelation"]
-        ReadUVWDT=(("T" in DecorrMode) or ("F" in DecorrMode))
         self.ReadUVWDT=ReadUVWDT
         MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False,ReadUVWDT=ReadUVWDT,**kwargs)
 
