@@ -18,6 +18,7 @@ from killMS2.Other import ModColor
 from killMS2.Other.ModChanEquidistant import IsChanEquidistant
 
 try:
+    from DDFacet.Array import SharedDict
     from DDFacet.Imager import ClassDDEGridMachine
 except:
     pass
@@ -305,27 +306,38 @@ class ClassPredict():
         Returns:
             grid machine instance
         """
-        IdSharedMem=SM.IDsShared["IdSharedMem"]
-        ChunkDataCache=SM.IDsShared["ChunkDataCache"]
-        FacetDataCache=SM.IDsShared["FacetDataCache"]
-        IdSharedMemData=SM.IDsShared["IdSharedMemData"]
 
-        GridMachine=ClassDDEGridMachine.ClassDDEGridMachine(SM.GD,#RaDec=self.DicoImager[iFacet]["RaDec"],
-                                                            SM.DicoImager[iFacet]["DicoConfigGM"]["ChanFreq"],
-                                                            SM.DicoImager[iFacet]["DicoConfigGM"]["Npix"],
-                                                            lmShift=SM.DicoImager[iFacet]["lmShift"],
-                                                            IdSharedMem=IdSharedMem,
-                                                            IdSharedMemData=IdSharedMemData,
-                                                            FacetDataCache=FacetDataCache,
-                                                            ChunkDataCache=ChunkDataCache,
-                                                            IDFacet=SM.DicoImager[iFacet]["IDFacet"],
-                                                            SpheNorm=False)
-                                                            #,
-                                                            #NFreqBands=self.VS.NFreqBands,
-                                                            #DataCorrelationFormat=self.VS.StokesConverter.AvailableCorrelationProductsIds(),
-                                                            #ExpectedOutputStokes=self.VS.StokesConverter.RequiredStokesProductsIds(),
-                                                            #ListSemaphores=self.ListSemaphores)        
+        # GridMachine=ClassDDEGridMachine.ClassDDEGridMachine(SM.GD,#RaDec=self.DicoImager[iFacet]["RaDec"],
+        #                                                     SM.DicoImager[iFacet]["DicoConfigGM"]["ChanFreq"],
+        #                                                     SM.DicoImager[iFacet]["DicoConfigGM"]["NPix"],
+        #                                                     lmShift=SM.DicoImager[iFacet]["lmShift"],
+        #                                                     IdSharedMem=IdSharedMem,
+        #                                                     IdSharedMemData=IdSharedMemData,
+        #                                                     FacetDataCache=FacetDataCache,
+        #                                                     ChunkDataCache=ChunkDataCache,
+        #                                                     IDFacet=SM.DicoImager[iFacet]["IDFacet"],
+        #                                                     SpheNorm=False)
+        #                                                     #,
+        #                                                     #NFreqBands=self.VS.NFreqBands,
+        #                                                     #DataCorrelationFormat=self.VS.StokesConverter.AvailableCorrelationProductsIds(),
+        #                                                     #ExpectedOutputStokes=self.VS.StokesConverter.RequiredStokesProductsIds(),
+        #                                                     #ListSemaphores=self.ListSemaphores)        
 
+        SpheNorm = False
+        FacetInfo = SM.DicoImager[iFacet]
+        IDFacet=FacetInfo["IDFacet"]
+        cf_dict=SharedDict.attach(SM.Path["cf_dict_path"])[IDFacet]
+        #print iFacet,IDFacet
+        GridMachine= ClassDDEGridMachine.ClassDDEGridMachine(SM.GD,
+                                                             FacetInfo["DicoConfigGM"]["ChanFreq"],
+                                                             FacetInfo["DicoConfigGM"]["NPix"],
+                                                             lmShift=FacetInfo["lmShift"],
+                                                             IDFacet=IDFacet,
+                                                             SpheNorm=SpheNorm, 
+                                                             NFreqBands=SM.NFreqBands,
+                                                             DataCorrelationFormat=SM.AvailableCorrelationProductsIds,
+                                                             ExpectedOutputStokes=SM.RequiredStokesProductsIds,
+                                                             cf_dict=cf_dict)
 
         return GridMachine
 
@@ -624,18 +636,19 @@ class ClassPredict():
             # print ChanMapping
             
             GridMachine.LSmear=[]
-            DecorrMode = SM.GD["ImToVis"]["DecorrMode"]
+            DecorrMode = SM.GD["RIME"]["DecorrMode"]
             CondSmear=(not ForceNoDecorr) and (('F' in DecorrMode) | ("T" in DecorrMode))
             if CondSmear:
                 #print "DOSMEAR",ForceNoDecorr, (('F' in DecorrMode) | ("T" in DecorrMode))
                 uvw_dt = DicoData["UVW_dt"]#DATA["uvw_dt"]
                 lm_min=None
-                if SM.GD["ImToVis"]["DecorrLocation"]=="Edge":
+                if SM.GD["RIME"]["DecorrLocation"]=="Edge":
                     lm_min=SM.DicoImager[iFacet]["lm_min"]
-                GridMachine.setDecorr(uvw_dt, DT, Dnu, SmearMode=SM.GD["ImToVis"]["DecorrMode"], lm_min=lm_min)
+                GridMachine.setDecorr(uvw_dt, DT, Dnu, SmearMode=SM.GD["RIME"]["DecorrMode"], lm_min=lm_min)
                 
 
             T.timeit("2: Stuff")
+            
             vis=GridMachine.get(times,uvwThis,ColOutDir,flagsThis,A0A1,ModelIm,DicoJonesMatrices=DicoJonesMatrices,freqs=freqs,
                                 ImToGrid=False,ChanMapping=ChanMapping)
             T.timeit("2: Predict")

@@ -278,7 +278,7 @@ def main(OP=None,MSName=None):
 
     ParsetName="%skillMS.%s.sols.parset"%(reformat.reformat(options.MSName),SolsName)
     OP.ToParset(ParsetName)
-    
+    APP=None
     GD=OP.DicoConfig
     if GD["ImageSkyModel"]["BaseImageName"]=="":
         print>>log,"Predict Mode: Catalog"
@@ -297,23 +297,23 @@ def main(OP=None,MSName=None):
         GDPredict=DDFacet.Other.MyPickle.Load(FileDicoModel)["GD"]
         GDPredict["Data"]["MS"]=options.MSName
 
-        if not("PSFFacets" in GDPredict["ImToVis"].keys()):
-               GDPredict["ImToVis"]["PSFFacets"]=0
-               GDPredict["ImToVis"]["PSFOversize"]=1
+        if not("PSFFacets" in GDPredict["RIME"].keys()):
+               GDPredict["RIME"]["PSFFacets"]=0
+               GDPredict["RIME"]["PSFOversize"]=1
 
         GDPredict["Beam"]["NBand"]=options.NChanBeamPerMS
         GDPredict["Freq"]["NDegridBand"]=options.NChanSols
         #GDPredict["Compression"]["CompDeGridMode"]=False
         #GDPredict["Compression"]["CompDeGridMode"]=True
-        GDPredict["ImToVis"]["ForwardMode"]="Classic"
+        GDPredict["RIME"]["ForwardMode"]="Classic"
         #GDPredict["Caching"]["ResetCache"]=1
 
         if options.Decorrelation is not None and options.Decorrelation is not "":
             print>>log,ModColor.Str("Overwriting DDF parset decorrelation mode [%s] with kMS option [%s]"\
-                                    %(GDPredict["ImToVis"]["DecorrMode"],options.Decorrelation))
-            GDPredict["ImToVis"]["DecorrMode"]=options.Decorrelation
+                                    %(GDPredict["RIME"]["DecorrMode"],options.Decorrelation))
+            GDPredict["RIME"]["DecorrMode"]=options.Decorrelation
         else:
-            GD["SkyModel"]["Decorrelation"]=DoSmearing=options.Decorrelation=GDPredict["ImToVis"]["DecorrMode"]
+            GD["SkyModel"]["Decorrelation"]=DoSmearing=options.Decorrelation=GDPredict["RIME"]["DecorrMode"]
             print>>log,ModColor.Str("Decorrelation mode will be [%s]" % DoSmearing)
 
         # if options.Decorrelation != GDPredict["DDESolutions"]["DecorrMode"]:
@@ -330,7 +330,8 @@ def main(OP=None,MSName=None):
         GDPredict["GDkMS"]=GD
 
         from DDFacet.Other import AsyncProcessPool
-        AsyncProcessPool.init(ncpu=GDPredict["Parallel"]["NCPU"], affinity=GDPredict["Parallel"]["Affinity"],
+        APP=AsyncProcessPool.APP
+        AsyncProcessPool.init(ncpu=NCPU, affinity=GDPredict["Parallel"]["Affinity"],
                               verbose=GDPredict["Debug"]["APPVerbose"])
         VS_DDFacet=ClassVisServer_DDF.ClassVisServer(options.MSName,
                                                      ColName=GDPredict["Data"]["ColName"],
@@ -755,7 +756,9 @@ def main(OP=None,MSName=None):
                 
 
 
-
+    if APP is not None:
+        #APP.terminate()
+        APP.shutdown()
     NpShared.DelAll(IdSharedMem)
 
     

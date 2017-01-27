@@ -490,7 +490,7 @@ class ClassVisServer():
 
         if self.SM.Type=="Image":
             u,v,w=uvw.T
-            wmax=self.GD["GDImage"]["ImagerCF"]["wmax"]
+            wmax=self.GD["GDImage"]["CF"]["wmax"]
             wmaxkm=wmax/1000.
             print>>log, "Flagging baselines with w > %f km"%(wmaxkm)
             C=299792458.
