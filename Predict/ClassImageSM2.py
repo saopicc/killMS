@@ -63,7 +63,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.SM=ClassImageSM()
 
         if self.GD["GDkMS"]["ImageSkyModel"]["NodesFile"]!=None:
-            self.GD["ImagerMainFacet"]["CatNodes"]=self.GD["GDkMS"]["ImageSkyModel"]["NodesFile"]
+            self.GD["Facets"]["CatNodes"]=self.GD["GDkMS"]["ImageSkyModel"]["NodesFile"]
             self.GD["DDESolutions"]["DDSols"]=""
             
         # self.InitFacetMachine()
@@ -136,9 +136,9 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.NDir=NodesCat.shape[0]
 
         ClusterCat=np.zeros((self.NDir,),dtype=[('Name','|S200'),
-                                                        ('ra',np.float),('dec',np.float),
-                                                        ('l',np.float),('m',np.float),
-                                                        ('SumI',np.float),("Cluster",int)])
+                                                ('ra',np.float),('dec',np.float),
+                                                ('l',np.float),('m',np.float),
+                                                ('SumI',np.float),("Cluster",int)])
         ClusterCat=ClusterCat.view(np.recarray)
         ClusterCat.l=NodesCat.l
         ClusterCat.m=NodesCat.m
