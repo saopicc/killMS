@@ -308,7 +308,8 @@ def main(OP=None,MSName=None):
         #GDPredict["Compression"]["CompDeGridMode"]=True
         GDPredict["RIME"]["ForwardMode"]="Classic"
         #GDPredict["Caching"]["ResetCache"]=1
-        GDPredict["Facets"]["DiamMax"]=options.MaxFacetSize
+        if options.MaxFacetSize:
+            GDPredict["Facets"]["DiamMax"]=options.MaxFacetSize
 
         if options.Decorrelation is not None and options.Decorrelation is not "":
             print>>log,ModColor.Str("Overwriting DDF parset decorrelation mode [%s] with kMS option [%s]"\
