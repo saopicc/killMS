@@ -199,8 +199,9 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.SM.GD=self.FacetMachine.GD
         self.SM.DicoImager=self.FacetMachine.DicoImager
         #self.SM.GD["Comp"]["CompDeGridMode"]=0
-        self.SM.rac=self.VS.CurrentMS.rac
-        self.SM.decc=self.VS.CurrentMS.decc
+        CurrentMS=self.VS.ListMS[self.VS.iCurrentMS]
+        self.SM.rac=CurrentMS.rac
+        self.SM.decc=CurrentMS.decc
         self.SM.AvailableCorrelationProductsIds=self.VS.StokesConverter.AvailableCorrelationProductsIds()
         self.SM.RequiredStokesProductsIds=self.VS.StokesConverter.RequiredStokesProductsIds()
         self.SM.NFreqBands=self.VS.NFreqBands
