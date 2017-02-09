@@ -18,7 +18,7 @@ from killMS2.Other import ModColor
 from killMS2.Other.ModChanEquidistant import IsChanEquidistant
 
 try:
-    from DDFacet.Array import SharedDict
+    from DDFacet.Array import shared_dict
     from DDFacet.Imager import ClassDDEGridMachine
 except:
     pass
@@ -326,7 +326,7 @@ class ClassPredict():
         SpheNorm = False
         FacetInfo = SM.DicoImager[iFacet]
         IDFacet=FacetInfo["IDFacet"]
-        cf_dict=SharedDict.attach(SM.Path["cf_dict_path"])[IDFacet]
+        cf_dict=shared_dict.attach(SM.Path["cf_dict_path"])[IDFacet]
         #print iFacet,IDFacet
         GridMachine= ClassDDEGridMachine.ClassDDEGridMachine(SM.GD,
                                                              FacetInfo["DicoConfigGM"]["ChanFreq"],
