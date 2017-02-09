@@ -1,4 +1,3 @@
-
 from ClassJacobianAntenna import ClassJacobianAntenna
 import numpy as np
 from killMS2.Array import NpShared
@@ -303,7 +302,7 @@ class ClassWirtingerSolver():
             P=(sigP**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*np.diag(np.ones((nd*npolx*npoly),self.DType)) for iAnt in range(na)])
             Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iAnt]))**2*np.diag(np.ones((nd*npolx*npoly),self.DType)) for iAnt in range(na)])
 
-        if self.SM.ApparentSumI==None:
+        if self.SM.ApparentSumI is None:
             self.InitMeanBeam()
 
         QList=[]
@@ -358,7 +357,7 @@ class ClassWirtingerSolver():
     def InitMeanBeam(self):
         self.NormFluxes=self.SM.ClusterCat.SumI.copy()
         self.NormFluxes/=self.NormFluxes.max()
-        if self.GD["Beam"]["BeamModel"]==None:
+        if self.GD["Beam"]["BeamModel"] is None:
             self.SM.ApparentSumI=self.NormFluxes
             self.SM.AbsMeanBeamAnt=np.ones_like(self.SM.ApparentSumI)
             self.AbsMeanBeamAnt=self.SM.AbsMeanBeamAnt
