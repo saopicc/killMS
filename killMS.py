@@ -381,7 +381,7 @@ def main(OP=None,MSName=None):
         from killMS2.Predict import ClassImageSM2 as ClassImageSM
         #from killMS2.Predict import ClassImageSM3 as ClassImageSM
         
-        PreparePredict=ClassImageSM.ClassPreparePredict(BaseImageName,VS_DDFacet,GD=GDPredict,IdSharedMem=IdSharedMem)
+        PreparePredict=ClassImageSM.ClassPreparePredict(BaseImageName,VS_DDFacet,IdSharedMem,GD=GDPredict)#,IdSharedMem=IdSharedMem)
         SM=PreparePredict.SM
         #VS.setGridProps(PreparePredict.FacetMachine.Cell,PreparePredict.FacetMachine.NpixPaddedFacet)
         VS.setGridProps(PreparePredict.FacetMachine.Cell,None)#PreparePredict.FacetMachine.NpixPaddedFacet)

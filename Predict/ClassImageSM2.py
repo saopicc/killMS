@@ -28,7 +28,7 @@ class ClassImageSM():
 
 class ClassPreparePredict(ClassImagerDeconv):
 
-    def __init__(self,BaseImageName,VS,*args,**kwargs):
+    def __init__(self,BaseImageName,VS,IdSharedMem,*args,**kwargs):
         ClassImagerDeconv.__init__(self,**kwargs)
 
         self.BaseImageName=BaseImageName
@@ -59,7 +59,7 @@ class ClassPreparePredict(ClassImagerDeconv):
 
         #self.GD["GAClean"]["GASolvePars"]=["S","Alpha"]
         
-        self.IdSharedMem=kwargs["IdSharedMem"]
+        self.IdSharedMem=IdSharedMem#kwargs["IdSharedMem"]
         self.SM=ClassImageSM()
 
         if self.GD["GDkMS"]["ImageSkyModel"]["NodesFile"]!=None:
