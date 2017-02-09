@@ -333,6 +333,7 @@ def main(OP=None,MSName=None):
         GDPredict["GDkMS"]=GD
 
         from DDFacet.Other import AsyncProcessPool
+        from DDFacet.Other import Multiprocessing
         APP=AsyncProcessPool.APP
         AsyncProcessPool.init(ncpu=NCPU, affinity=GDPredict["Parallel"]["Affinity"],
                               verbose=GDPredict["Debug"]["APPVerbose"])
@@ -762,8 +763,8 @@ def main(OP=None,MSName=None):
     if APP is not None:
         #APP.terminate()
         APP.shutdown()
-    NpShared.DelAll(IdSharedMem)
-
+        NpShared.DelAll(IdSharedMem)
+        Multiprocessing.cleanupShm()
     
 def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2,ConfigJacobianAntenna,GD):
     print>>log, ModColor.Str("Initialising Kalman filter with Levenberg-Maquardt estimate")
