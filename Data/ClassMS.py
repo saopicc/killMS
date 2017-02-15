@@ -10,7 +10,7 @@ import ephem
 from killMS2.Other import MyLogger
 log=MyLogger.getLogger("ClassMS")
 from killMS2.Other import ClassTimeIt
-from DDFacet.Other.progressbar import ProgressBar
+from killMS2.Other.progressbar import ProgressBar
 
 class ClassMS():
     def __init__(self,MSname,Col="DATA",zero_flag=True,ReOrder=False,EqualizeFlag=False,DoPrint=True,DoReadData=True,

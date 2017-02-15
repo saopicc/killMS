@@ -90,7 +90,7 @@ class ClassPredict():
         A0=DicoData["A0"]
         A1=DicoData["A1"]
         times=DicoData["times"]
-        na=DicoData["infos"][0]
+        na=int(DicoData["infos"][0])
 
         
         for it in range(lt0.size):
