@@ -31,6 +31,7 @@ class ClassVisServer():
                  AddNoiseJy=None,IdSharedMem="",
                  SM=None,NCPU=None,
                  Robust=2,Weighting="Natural",
+                 WeightUVMinMax=None, WTUV=1.0,
                  GD=None,GDImag=None):
 
         self.GD=GD
@@ -63,7 +64,8 @@ class ClassVisServer():
         self.dTimesVisMin=self.TVisSizeMin
         self.CurrentVisTimes_SinceStart_Sec=0.,0.
         self.iCurrentVisTime=0
-
+        self.WeightUVMinMax=WeightUVMinMax
+        self.WTUV=WTUV
         # self.LoadNextVisChunk()
 
         # self.TEST_TLIST=[]
@@ -177,7 +179,8 @@ class ClassVisServer():
         u,v,w=uvw.T
 
         freq=np.mean(self.MS.ChanFreq)
-        uvmax=np.max(np.sqrt(u**2+v**2))
+        uvdist=np.sqrt(u**2+v**2)
+        uvmax=np.max(uvdist)
         CellSizeRad=res=1./(uvmax*freq/3.e8)
         npix=(FOV*np.pi/180)/res
         
@@ -207,6 +210,14 @@ class ClassVisServer():
         VisWeights=WeightMachine.CalcWeights(uvw,VisWeights,flags,self.MS.ChanFreq,
                                              Robust=Robust,
                                              Weighting=self.Weighting)
+
+        if self.WeightUVMinMax is not None:
+            uvmin,uvmax=self.WeightUVMinMax
+            print >>log,'Giving full weight to data in range %f - %f km' % (uvmin, uvmax)
+            uvmin*=1000
+            uvmax*=1000
+            VisWeights[(uvdist<uvmin) | (uvdist>uvmax)]*=self.WTUV
+
         MeanW=np.mean(VisWeights[VisWeights!=0.])
         VisWeights/=MeanW
         #VisWeight[VisWeight==0.]=1.

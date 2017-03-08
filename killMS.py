@@ -80,7 +80,6 @@ Parset=ReadCFG.Parset("%s/killMS2/Parset/DefaultParset.cfg"%os.environ["KILLMS_D
 
 def read_options():
     D=Parset.DicoPars
-
     desc="""Questions and suggestions: cyril.tasse@obspm.fr"""
 
     OP=MyOptParse.MyOptParse(usage='Usage: %prog --MSName=somename.MS --SkyModel=SM.npy <options>',description=desc,
@@ -142,6 +141,8 @@ def read_options():
     OP.add_option('Resolution',type="float",help='Resolution in arcsec. Default is %default')
     OP.add_option('Weighting',type="str",help='Weighting scheme. Default is %default')
     OP.add_option('Robust',type="float",help='Briggs Robust parameter. Default is %default')
+    OP.add_option('WeightUVMinMax',help='Baseline length selection in km for full weight. For example WeightUVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default')
+    OP.add_option('WTUV',type="float",help='Scaling factor to apply to weights outside range of WeightUVMinMax. Default is %default')
     
     OP.OptionGroup("* Action options","Actions")
     OP.add_option('DoPlot',type="int",help='Plot the solutions, for debugging. Default is %default')
@@ -360,6 +361,8 @@ def main(OP=None,MSName=None):
                                      NCPU=NCPU,
                                      Weighting=options.Weighting,
                                      Robust=options.Robust,
+                                     WeightUVMinMax=options.WeightUVMinMax,
+                                     WTUV=options.WTUV,
                                      GD=GD)
 
     print VS.MS
