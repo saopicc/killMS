@@ -462,7 +462,18 @@ class ClassJacobianAntenna():
 
         kapa=self.CalcKapa_i(zr,Pa,rms)
 
-        InfoNoise={"std":np.std(zr[f]),"max":np.max(np.abs(zr[f])),"kapa":kapa}
+
+
+        # Weighted std estimate 
+        zrs=zr[f]
+        ws=self.DicoData["Rinv_flat"][f]
+        std=np.sum(ws*zrs**2)/np.sum(ws)
+
+        # # Original std estimate 
+        # std=np.std(zr[f])
+
+
+        InfoNoise={"std":std,"max":np.max(np.abs(zr[f])),"kapa":kapa}
         #print self.iAnt,InfoNoise
         #T.timeit("kapa")
 
