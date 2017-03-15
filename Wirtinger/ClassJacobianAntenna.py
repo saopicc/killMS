@@ -467,7 +467,7 @@ class ClassJacobianAntenna():
         # Weighted std estimate 
         zrs=zr[f]
         ws=self.DicoData["Rinv_flat"][f]
-        std=np.sum(ws*zrs**2)/np.sum(ws)
+        std=np.sqrt(np.sum(ws*zrs**2)/np.sum(ws))
 
         # # Original std estimate 
         # std=np.std(zr[f])
