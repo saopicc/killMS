@@ -216,10 +216,13 @@ class ClassVisServer():
             print >>log,'Giving full weight to data in range %f - %f km' % (uvmin, uvmax)
             uvmin*=1000
             uvmax*=1000
-            VisWeights[(uvdist<uvmin) | (uvdist>uvmax)]*=self.WTUV
+            filter=(uvdist<uvmin) | (uvdist>uvmax)
+            print >>log,'Downweighting %i out of %i visibilities' % (np.sum(filter),len(uvdist))
+            VisWeights[filter]*=self.WTUV
 
         MeanW=np.mean(VisWeights[VisWeights!=0.])
         VisWeights/=MeanW
+        print >>log, 'Min weight is %f max is %f' % (np.min(VisWeights),np.max(VisWeights))
         #VisWeight[VisWeight==0.]=1.
         self.VisWeights=VisWeights
 

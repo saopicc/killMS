@@ -157,7 +157,7 @@ def read_options():
     OP.OptionGroup("* Solution-related options","Solutions")
     OP.add_option('ExtSols',type="str",help='External solution file. If set, will not solve.')
     #OP.add_option('ApplyMode',type="str",help='Substact selected sources. ')
-    OP.add_option('ClipMethod',type="str",help='Clip data in the IMAGING_WEIGHT column. Can be set to Resid or DDEResid . Default is %default')
+    OP.add_option('ClipMethod',type="str",help='Clip data in the IMAGING_WEIGHT column. Can be set to Resid, DDEResid or ResidAnt . Default is %default')
     OP.add_option('OutSolsName',type="str",help='If specified will save the estimated solutions in this file. Default is %default')
     OP.add_option('ApplyCal',type="int",help='Apply direction averaged gains to residual data in the mentioned direction. \
     If ApplyCal=-1 takes the mean gain over directions. -2 if off. Default is %default')
@@ -636,8 +636,7 @@ def main(OP=None,MSName=None):
             DomainMachine.AddVisToJonesMapping(JonesMerged,times,freqs)
             JonesMerged["JonesH"]=ModLinAlg.BatchH(JonesMerged["Jones"])
 
-
-            if ("Resid" in options.ClipMethod)|("DDEResid" in options.ClipMethod):
+            if ("Resid" in options.ClipMethod) or ("DDEResid" in options.ClipMethod):
                 print>>log, ModColor.Str("Clipping bad solution-based data ... ",col="green")
                 
 
@@ -690,7 +689,7 @@ def main(OP=None,MSName=None):
                 # Weights=Weights.reshape((Weights.size,1))*np.ones((1,4))
                 # Solver.VS.MS.Weights[:]=Weights[:]
 
-                print>>log, "  Writting in IMAGING_WEIGHT column "
+                print>>log, "  Writing in IMAGING_WEIGHT column "
                 VS.MS.AddCol("IMAGING_WEIGHT",ColDesc="IMAGING_WEIGHT")
                 t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
                 t.putcol("IMAGING_WEIGHT",VS.MS.ToOrigFreqOrder(Weights),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
@@ -707,7 +706,7 @@ def main(OP=None,MSName=None):
 
                 Weights=Solver.VS.ThisDataChunk["W"]
                 Weights/=np.mean(Weights)
-                print>>log, "  Writting in IMAGING_WEIGHT column "
+                print>>log, "  Writing in IMAGING_WEIGHT column "
                 VS.MS.AddCol("IMAGING_WEIGHT",ColDesc="IMAGING_WEIGHT")
                 t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
                 t.putcol("IMAGING_WEIGHT",VS.MS.ToOrigFreqOrder(Weights),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
