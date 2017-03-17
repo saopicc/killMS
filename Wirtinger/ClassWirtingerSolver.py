@@ -452,7 +452,10 @@ class ClassWirtingerSolver():
         elif (self.TypeRMS=="GlobalData"):
             Dpol=DATA["data"][:,:,1:3]
             Fpol=DATA["flags"][:,:,1:3]
-            self.rms=np.std(Dpol[Fpol==0])/np.sqrt(2.)
+            nrow,nch,_=DATA["flags"].shape
+            w=DATA["W"].reshape((nrow,nch,1))*np.ones((1,1,2))
+            
+            self.rms=np.sum((w[Fpol==0]*np.absolute(Dpol[Fpol==0]))**2.0)/np.sum(w[Fpol==0]**2.0)/np.sqrt(2.)
             #print>>log," rmsFromGlobalData: %s"%self.rms
         else:
             stop
