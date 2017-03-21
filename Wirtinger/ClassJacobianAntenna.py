@@ -261,6 +261,9 @@ class ClassJacobianAntenna():
             JHJinv=ModLinAlg.invSVD(JHJ)
             self.L_JHJinv.append(JHJinv)
 
+
+
+
     def CalcKapa_i(self,yr,Pa,rms):
         kapaout=0
         for ipol in range(self.NJacobBlocks_X):
@@ -269,14 +272,20 @@ class ClassJacobianAntenna():
             pa=np.abs(np.diag(PaPol))
             pa=pa.reshape(1,pa.size)
             JP=J*pa
-            trJPJH=np.sum(np.abs(JP*J.conj()))
-            trYYH=np.sum(np.abs(yr)**2)
-            Np=np.where(self.DicoData["flags_flat"]==0)[0].size
+            nrow,_=J.shape
+            flags=(self.DicoData["flags_flat"][ipol]==0)
+            Rinv=self.Rinv_flat[ipol].reshape((nrow,1))
+            Jw=Rinv*J
+            trJPJH=np.sum(np.abs(JP[flags]*Jw[flags].conj()))
+            trYYH=np.sum(np.abs(yr[ipol,flags])**2)
+            #Np=np.where(self.DicoData["flags_flat"]==0)[0].size
             Take=(self.DicoData["flags_flat"]==0)
             trR=np.sum(self.R_flat[Take])#Np*rms**2
             kapa=np.abs((trYYH-trR)/trJPJH)
             kapaout+=np.sqrt(kapa)
-            # print self.iAnt,rms,np.sqrt(kapa),trYYH,trR,trJPJH,pa
+            # if self.iAnt==3:
+            #     print self.iAnt,rms,np.sqrt(kapa),trYYH,trR,trJPJH,pa
+
         kapaout=np.max([1.,kapaout])
         return kapaout
 
@@ -511,13 +520,12 @@ class ClassJacobianAntenna():
 
 
         x3=self.ApplyK_vec(zr,rms,Pa)
-
+        
         T.timeit("ApplyK_vec")
         x0=Ga.flatten()
         x4=x0+self.LambdaKF*x3.flatten()
 
         # estimate P
-
 
         #Pa_new1=Pa-np.dot(evPa,Pa)
         evPa=evP[self.iAnt]
@@ -537,10 +545,15 @@ class ClassJacobianAntenna():
         del(self.LJacob)
         T.timeit("Rest")
         
+        # if self.iAnt==3:
+        #     print x4,Pa_new1,InfoNoise
+        #     stop
+
         return x4.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),Pa_new1,InfoNoise
 
 
     def CalcMatrixEvolveCov(self,Gains,P,rms):
+        #print "EVOLVE!!!!!!!!!"
         if not(self.HasKernelMatrix):
             self.CalcKernelMatrix(rms)
             self.SelectChannelKernelMat()

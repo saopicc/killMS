@@ -95,7 +95,8 @@ def read_options():
     #OP.add_option('PredictColName',type="str",help=' . Default is %default')
     OP.add_option('FreePredictColName',type="str",help=' . Default is %default')
     OP.add_option('FreePredictGainColName',type="str",help=' . Default is %default')
-
+    OP.add_option('Parallel',type="int",help=' . Default is %default')
+    
 
 
     OP.OptionGroup("* Sky catalog related options","SkyModel")
@@ -495,9 +496,11 @@ def main(OP=None,MSName=None):
         if options.ExtSols=="":
             SaveSols=True
             if options.SubOnly==0:
-                Solver.doNextTimeSolve_Parallel()
-                #Solver.doNextTimeSolve_Parallel(SkipMode=True)
-                #Solver.doNextTimeSolve()#SkipMode=True)
+                if options.Parallel:
+                    Solver.doNextTimeSolve_Parallel(Parallel=True)
+                else:
+                    #Solver.doNextTimeSolve_Parallel(SkipMode=True)
+                    Solver.doNextTimeSolve()#SkipMode=True)
             else:
                 DoSubstract=1
 
