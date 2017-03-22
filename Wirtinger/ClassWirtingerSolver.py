@@ -771,6 +771,9 @@ class ClassWirtingerSolver():
         self.pBAR.render(0, '%4i/%i' % (0,nt))
         NDone=0
         iiCount=0
+        ThisG=self.G.copy()
+        ThisP=self.P.copy()
+        ThisQ=self.Q.copy()
         while True:
             T=ClassTimeIt.ClassTimeIt("ClassWirtinger DATA[%4.4i]"%NDone)
             T.disable()
@@ -841,9 +844,9 @@ class ClassWirtingerSolver():
                 # Reset Data
                 NpShared.DelAll("%sDicoData"%self.IdSharedMem)
                 for LMIter in range(NIter):
-                    ThisG=self.G.copy()
-                    ThisP=self.P.copy()
-                    ThisQ=self.Q.copy()
+                    ThisG[:]=self.G[:]
+                    ThisP[:]=self.P[:]
+                    ThisQ[:]=self.Q[:]
                     #print
                     # for EKF
     
@@ -1151,6 +1154,7 @@ class WorkerAntennaLM(multiprocessing.Process):
             PPrevious=P#NpShared.GiveArray("%sSharedPPrevious"%self.IdSharedMem)
 
             G0Iter=NpShared.GiveArray("%sSharedGains0Iter"%self.IdSharedMem)
+
             #Q=NpShared.GiveArray("%sSharedCovariance_Q"%self.IdSharedMem)
             evP=NpShared.GiveArray("%sSharedEvolveCovariance"%self.IdSharedMem)
             T.timeit("GiveArray")
