@@ -272,23 +272,42 @@ class ClassJacobianAntenna():
             pa=np.abs(np.diag(PaPol))
             pa=pa.reshape(1,pa.size)
             JP=J*pa
-            nrow,_=J.shape
-            flags=(self.DicoData["flags_flat"][ipol]==0)
-            Rinv=self.Rinv_flat[ipol].reshape((nrow,1))
-            Weigths=self.Weights_flat[ipol].reshape((nrow,1))
-            Jw=Rinv*J
-            trJPJH=np.sum(np.abs(JP[flags]*Jw[flags].conj()))
-            trYYH=np.sum(np.abs(Weigths[flags]*yr[ipol,flags])**2)
-            #Np=np.where(self.DicoData["flags_flat"]==0)[0].size
+            trJPJH=np.sum(np.abs(JP*J.conj()))
+            trYYH=np.sum(np.abs(yr)**2)
+            Np=np.where(self.DicoData["flags_flat"]==0)[0].size
             Take=(self.DicoData["flags_flat"]==0)
             trR=np.sum(self.R_flat[Take])#Np*rms**2
             kapa=np.abs((trYYH-trR)/trJPJH)
             kapaout+=np.sqrt(kapa)
-            #if self.iAnt==0:
-            #    print self.iAnt,rms,np.sqrt(kapa),trYYH,trR,trJPJH,pa
-
+            # print self.iAnt,rms,np.sqrt(kapa),trYYH,trR,trJPJH,pa
         kapaout=np.max([1.,kapaout])
         return kapaout
+
+
+    # def CalcKapa_i(self,yr,Pa,rms):
+    #     kapaout=0
+    #     for ipol in range(self.NJacobBlocks_X):
+    #         J=self.LJacob[ipol]
+    #         PaPol=self.GivePaPol(Pa,ipol)
+    #         pa=np.abs(np.diag(PaPol))
+    #         pa=pa.reshape(1,pa.size)
+    #         JP=J*pa
+    #         nrow,_=J.shape
+    #         flags=(self.DicoData["flags_flat"][ipol]==0)
+    #         Rinv=self.Rinv_flat[ipol].reshape((nrow,1))
+    #         Weigths=self.Weights_flat[ipol].reshape((nrow,1))
+    #         Jw=Rinv*J
+    #         trJPJH=np.sum(np.abs(JP[flags]*Jw[flags].conj()))
+    #         trYYH=np.sum(np.abs(Weigths[flags]*yr[ipol,flags])**2)
+    #         #Np=np.where(self.DicoData["flags_flat"]==0)[0].size
+    #         Take=(self.DicoData["flags_flat"]==0)
+    #         trR=np.sum(self.R_flat[Take])#Np*rms**2
+    #         kapa=np.abs((trYYH-trR)/trJPJH)
+    #         kapaout+=np.sqrt(kapa)
+    #         #if self.iAnt==0:
+    #         #    print self.iAnt,rms,np.sqrt(kapa),trYYH,trR,trJPJH,pa
+    #     kapaout=np.max([1.,kapaout])
+    #     return kapaout
 
     def PrepareJHJ_LM(self):
 
