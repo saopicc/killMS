@@ -834,8 +834,8 @@ class ClassWirtingerSolver():
             indOrderW=np.argsort(meanW)[::-1]
             SortedWListAntSolve=(np.array(ListAntSolve)[indOrderW]).tolist()
             #print indOrderW
-            NpShared.ToShared("%sSharedGainsPrevious"%self.IdSharedMem,self.G.copy())
-            NpShared.ToShared("%sSharedPPrevious"%self.IdSharedMem,self.P.copy())
+            #NpShared.ToShared("%sSharedGainsPrevious"%self.IdSharedMem,self.G.copy())
+            #NpShared.ToShared("%sSharedPPrevious"%self.IdSharedMem,self.P.copy())
             Dico_SharedDicoDescriptors={}
             for iChanSol in range(self.VS.NChanJones):
                 # Reset Data
@@ -1145,10 +1145,12 @@ class WorkerAntennaLM(multiprocessing.Process):
             T.timeit("setDATA_Shared")
 
             G=NpShared.GiveArray("%sSharedGains"%self.IdSharedMem)
-            GPrevious=NpShared.GiveArray("%sSharedGainsPrevious"%self.IdSharedMem)
-            PPrevious=NpShared.GiveArray("%sSharedPPrevious"%self.IdSharedMem)
-            G0Iter=NpShared.GiveArray("%sSharedGains0Iter"%self.IdSharedMem)
             P=NpShared.GiveArray("%sSharedCovariance"%self.IdSharedMem)
+
+            GPrevious=G#NpShared.GiveArray("%sSharedGainsPrevious"%self.IdSharedMem)
+            PPrevious=P#NpShared.GiveArray("%sSharedPPrevious"%self.IdSharedMem)
+
+            G0Iter=NpShared.GiveArray("%sSharedGains0Iter"%self.IdSharedMem)
             #Q=NpShared.GiveArray("%sSharedCovariance_Q"%self.IdSharedMem)
             evP=NpShared.GiveArray("%sSharedEvolveCovariance"%self.IdSharedMem)
             T.timeit("GiveArray")
