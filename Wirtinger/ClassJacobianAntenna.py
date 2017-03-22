@@ -275,16 +275,17 @@ class ClassJacobianAntenna():
             nrow,_=J.shape
             flags=(self.DicoData["flags_flat"][ipol]==0)
             Rinv=self.Rinv_flat[ipol].reshape((nrow,1))
+            Weigths=self.Weights_flat[ipol].reshape((nrow,1))
             Jw=Rinv*J
             trJPJH=np.sum(np.abs(JP[flags]*Jw[flags].conj()))
-            trYYH=np.sum(np.abs(yr[ipol,flags])**2)
+            trYYH=np.sum(np.abs(Weigths[flags]*yr[ipol,flags])**2)
             #Np=np.where(self.DicoData["flags_flat"]==0)[0].size
             Take=(self.DicoData["flags_flat"]==0)
             trR=np.sum(self.R_flat[Take])#Np*rms**2
             kapa=np.abs((trYYH-trR)/trJPJH)
             kapaout+=np.sqrt(kapa)
-            # if self.iAnt==3:
-            #     print self.iAnt,rms,np.sqrt(kapa),trYYH,trR,trJPJH,pa
+            #if self.iAnt==0:
+            #    print self.iAnt,rms,np.sqrt(kapa),trYYH,trR,trJPJH,pa
 
         kapaout=np.max([1.,kapaout])
         return kapaout
@@ -442,7 +443,8 @@ class ClassJacobianAntenna():
         self.Ga=Ga
         self.rms=rms
 
-
+        #if self.iAnt==1:
+        #    print evP.ravel()
         self.rmsFromData=None
         if ind.size==0:
             return Ga.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),Pa,{"std":-1.,"max":-1.,"kapa":-1.}
@@ -545,9 +547,9 @@ class ClassJacobianAntenna():
         del(self.LJacob)
         T.timeit("Rest")
         
-        # if self.iAnt==3:
-        #     print x4,Pa_new1,InfoNoise
-        #     stop
+        #if self.iAnt==0:
+        #    print x4,Pa_new1,InfoNoise,evPa,Pa
+
 
         return x4.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),Pa_new1,InfoNoise
 
@@ -577,6 +579,9 @@ class ClassJacobianAntenna():
         evPa= PaOnes-evPa#(np.diag(np.diag(Pa-Pa_new)))#Pa-Pa_new#np.abs(np.diag(np.diag(Pa-Pa_new)))
         evPa=np.diag(np.diag(evPa))
         #print evPa.min(),evPa.real.min()
+        #print "=========Ev",self.iAnt,evPa
+        #if self.iAnt==0:
+        #    print evPa,Gains.ravel(),P.ravel()
         return evPa
            
             
@@ -1375,9 +1380,11 @@ class ClassJacobianAntenna():
                 R=rms**2*V
                 
                 Rinv=1./R
+                Weights=W.reshape((W_nrows,W_nch,1))
                 
                 self.R_flat=np.rollaxis(R,2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
                 self.Rinv_flat=np.rollaxis(Rinv,2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
+                self.Weights_flat=np.rollaxis(Weights,2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
 
                 self.R_flat=np.require(self.R_flat,dtype=self.CType)
                 self.Rinv_flat=np.require(self.Rinv_flat,dtype=self.CType)
@@ -1388,6 +1395,8 @@ class ClassJacobianAntenna():
                 DicoData["flags_flat"][Flag]=1
                 DicoData["Rinv_flat"]=self.Rinv_flat
                 DicoData["R_flat"]=self.R_flat
+                DicoData["Weights_flat"]=self.Weights_flat
+                
 
             self.DataAllFlagged=False
             NP,_=DicoData["flags_flat"].shape
@@ -1410,6 +1419,7 @@ class ClassJacobianAntenna():
             if rms!=0.:
                 self.Rinv_flat=DicoData["Rinv_flat"]
                 self.R_flat=DicoData["R_flat"]
+                self.Weights_flat=DicoData["Weights_flat"]
 
             #print "DATA From shared"
             #print np.max(DicoData["A0"])

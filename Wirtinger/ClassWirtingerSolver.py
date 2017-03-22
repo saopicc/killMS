@@ -456,10 +456,10 @@ class ClassWirtingerSolver():
             w=DATA["W"].reshape((nrow,nch,1))*np.ones((1,1,2))
             
             self.rms=np.sqrt(np.sum((w[Fpol==0]*np.absolute(Dpol[Fpol==0]))**2.0)/np.sum(w[Fpol==0]**2.0))/np.sqrt(2.)
-            print
-            print>>log," rmsFromGlobalData: %s"%self.rms
-            print DATA["data"].shape
-            print
+            # print
+            # print>>log," rmsFromGlobalData: %s"%self.rms
+            # print DATA["data"].shape
+            # print
         else:
             stop
 
@@ -724,7 +724,7 @@ class ClassWirtingerSolver():
 
         
 
-
+        #Parallel=False
 
 
         ListAntSolve=[i for i in range(self.VS.MS.na) if not(i in self.VS.FlagAntNumber)]
@@ -834,12 +834,16 @@ class ClassWirtingerSolver():
             indOrderW=np.argsort(meanW)[::-1]
             SortedWListAntSolve=(np.array(ListAntSolve)[indOrderW]).tolist()
             #print indOrderW
-
+            NpShared.ToShared("%sSharedGainsPrevious"%self.IdSharedMem,self.G.copy())
+            NpShared.ToShared("%sSharedPPrevious"%self.IdSharedMem,self.P.copy())
             Dico_SharedDicoDescriptors={}
             for iChanSol in range(self.VS.NChanJones):
                 # Reset Data
                 NpShared.DelAll("%sDicoData"%self.IdSharedMem)
                 for LMIter in range(NIter):
+                    ThisG=self.G.copy()
+                    ThisP=self.P.copy()
+                    ThisQ=self.Q.copy()
                     #print
                     # for EKF
     
@@ -851,7 +855,7 @@ class ClassWirtingerSolver():
                         DoCalcEvP=False
                         DoEvP=False
                     elif LMIter==0:
-                        self.G0Iter[:]=self.G[:]
+                        self.G0Iter[:]=ThisG[:]
                         DoEvP=False
     
                     if LMIter==(NIter-1):
@@ -862,8 +866,8 @@ class ClassWirtingerSolver():
                         DoFullPredict=True
                         
                     #print self.G.ravel()[0::5],self.Q.ravel()[0::5],self.evP.ravel()[0::5],self.P.ravel()[0::5]
-                    #print self.evP.ravel()[0::5]
-                    #if NDone==1: stop
+                    #print self.evP.ravel()#[0::5]
+                    #if NDone==2: stop
 
                     #print LMIter,NIter,DoFullPredict
                     for iAnt in SortedWListAntSolve:
@@ -896,9 +900,10 @@ class ClassWirtingerSolver():
                         #"TIMING DIFFERS BETWEEN SINGLE AND PARALLEL_NCPU=1"
                         #stop
                         #T.timeit("result_queue.get()")
-                        self.G[iChanSol,iAnt][:]=G[:]
+                        ThisG[iChanSol,iAnt][:]=G[:]
                         if type(P)!=type(None):
-                            self.P[iChanSol,iAnt,:]=P[:]
+                            #P.fill(0.1)
+                            ThisP[iChanSol,iAnt,:]=P[:]
                             
                         DTs[iAnt]=DT
                         kapa=InfoNoise["kapa"]
@@ -910,8 +915,8 @@ class ClassWirtingerSolver():
                         self.SolsArray_Stats[self.iCurrentSol][iChanSol,iAnt][2]=InfoNoise["kapa"]
                         self.SolsArray_Stats[self.iCurrentSol][iChanSol,iAnt][3]=self.rms
                         
-                        # if iAnt==3 and NDone==2:
-                        #     print self.G[iChanSol]
+                        # if iAnt==1 and NDone==2:
+                        #     print G.ravel(),P.ravel(),
                         #     stop
 
                         iResult+=1
@@ -931,7 +936,7 @@ class ClassWirtingerSolver():
                             kapaW=np.sum(expW*np.array(TraceResidList))
                             #self.Q[iAnt]=(kapaW**2)*self.Q_Init[iAnt]
                             #print kapaW
-                            self.Q[iChanSol,iAnt][:]=(kapaW)*self.Q_Init[iChanSol,iAnt][:]
+                            ThisQ[iChanSol,iAnt][:]=(kapaW)*self.Q_Init[iChanSol,iAnt][:]
                             # print kapaW
                             # print self.Q[iChanSol,iAnt]
                             # print self.Q_Init[iChanSol,iAnt]
@@ -966,23 +971,23 @@ class ClassWirtingerSolver():
                         import pylab
                         AntPlot=np.arange(self.VS.MS.na)#np.array(ListAntSolve)
                         pylab.clf()
-                        pylab.plot(np.abs(self.G[iChanSol,AntPlot].flatten()))
+                        pylab.plot(np.abs(ThisG[iChanSol,AntPlot].flatten()))
                         pylab.plot(np.abs(Gold[iChanSol,AntPlot].flatten()))
                         
                         if self.SolverType=="KAFCA":
     
                             sig=[]
                             for iiAnt in AntPlot:
-                                xx=np.array([np.diag(self.P[iChanSol,iiAnt]) ])
+                                xx=np.array([np.diag(ThisP[iChanSol,iiAnt]) ])
                                 if iiAnt in ListAntSolve:
                                     sig.append(np.sqrt(np.abs(xx)).flatten().tolist())
                                 else:
-                                    sig.append(np.zeros((xx.size,),self.P.dtype).tolist())
+                                    sig.append(np.zeros((xx.size,),ThisP.dtype).tolist())
                             
                             sig=np.array(sig).flatten()
     
-                            pylab.plot(np.abs(self.G[iChanSol,AntPlot].flatten())+sig,color="black",ls="--")
-                            pylab.plot(np.abs(self.G[iChanSol,AntPlot].flatten())-sig,color="black",ls="--")
+                            pylab.plot(np.abs(ThisG[iChanSol,AntPlot].flatten())+sig,color="black",ls="--")
+                            pylab.plot(np.abs(ThisG[iChanSol,AntPlot].flatten())-sig,color="black",ls="--")
                         pylab.title("Channel=%i"%iChanSol)
                         pylab.ylim(0,2)
                         pylab.draw()
@@ -991,6 +996,11 @@ class ClassWirtingerSolver():
     
     
                     T.timeit("[%i] Plot"%LMIter)
+
+                self.G[:]=ThisG[:]
+                self.P[:]=ThisP[:]
+                self.Q[:]=ThisQ[:]
+                
                 # end Niter
             # end Chan
 
@@ -1002,7 +1012,6 @@ class ClassWirtingerSolver():
 
             self.AppendGToSolArray()
             T.timeit("AppendGToSolArray")
-            
 
             self.iCurrentSol+=1
 
@@ -1022,7 +1031,8 @@ class ClassWirtingerSolver():
             #_T.timeit()
 
             T.timeit("Ending")
-            
+            #if NDone==1:
+            #    break
             if OnlyOne: break
         # end while chunk
 
@@ -1032,6 +1042,8 @@ class ClassWirtingerSolver():
                 workerlist[ii].terminate()
                 workerlist[ii].join()
 
+#        print self.G.ravel()
+#        stop
             
         return True
 
@@ -1133,6 +1145,8 @@ class WorkerAntennaLM(multiprocessing.Process):
             T.timeit("setDATA_Shared")
 
             G=NpShared.GiveArray("%sSharedGains"%self.IdSharedMem)
+            GPrevious=NpShared.GiveArray("%sSharedGainsPrevious"%self.IdSharedMem)
+            PPrevious=NpShared.GiveArray("%sSharedPPrevious"%self.IdSharedMem)
             G0Iter=NpShared.GiveArray("%sSharedGains0Iter"%self.IdSharedMem)
             P=NpShared.GiveArray("%sSharedCovariance"%self.IdSharedMem)
             #Q=NpShared.GiveArray("%sSharedCovariance_Q"%self.IdSharedMem)
@@ -1166,7 +1180,9 @@ class WorkerAntennaLM(multiprocessing.Process):
             elif self.SolverType=="KAFCA":
                 #T.disable()
                 if DoCalcEvP:
-                    evP[iChanSol,iAnt]=JM.CalcMatrixEvolveCov(G[iChanSol],P[iChanSol],rms)
+                    evP[iChanSol,iAnt]=JM.CalcMatrixEvolveCov(GPrevious[iChanSol],PPrevious[iChanSol],rms)
+                    #if iAnt==1:
+                    #    print "EVVV",evP[iChanSol]
                     T.timeit("Estimate Evolve")
 
                 # EM=ClassModelEvolution(iAnt,
