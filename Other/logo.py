@@ -4,17 +4,19 @@ from killMS2.Other import ModColor
 
 import subprocess
 
-
-def print_logo():
+def report_version():
     cwd=os.getcwd()
     KILLMS_DIR="%s/killMS2"%os.environ["KILLMS_DIR"]
     os.chdir(KILLMS_DIR)
     version = subprocess.check_output(["git", "describe"])
     os.chdir(cwd)
+    return version.rstrip()
+
+def print_logo():
 
     #os.system('clear')
                                                        
-
+    version=report_version()
 
     print """       __        _   __   __   ____    ____   ______     """
     print """      [  |  _   (_) [  | [  | |_   \  /   _|.' ____ \    """
