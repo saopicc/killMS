@@ -307,7 +307,7 @@ class ClassJacobianAntenna():
             T.timeit(iT); iT+=1
             trJPJH=np.sum(np.abs(JP[flags]*Jw[flags].conj()))
             T.timeit(iT); iT+=1
-            ww=(Weigths[flags]).ravel()
+            ww=(Weigths[flags]).ravel().copy()
             ww/=np.sum(ww)
             trYYH=np.sum(np.abs(ww*yr[ipol,flags])**2)
             T.timeit(iT); iT+=1
