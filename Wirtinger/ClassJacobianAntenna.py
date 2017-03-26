@@ -264,27 +264,28 @@ class ClassJacobianAntenna():
 
 
 
-    # def CalcKapa_i(self,yr,Pa,rms):
-    #     kapaout=0
-    #     for ipol in range(self.NJacobBlocks_X):
-    #         J=self.LJacob[ipol]
-    #         PaPol=self.GivePaPol(Pa,ipol)
-    #         pa=np.abs(np.diag(PaPol))
-    #         pa=pa.reshape(1,pa.size)
-    #         JP=J*pa
-    #         trJPJH=np.sum(np.abs(JP*J.conj()))
-    #         trYYH=np.sum(np.abs(yr)**2)
-    #         Np=np.where(self.DicoData["flags_flat"]==0)[0].size
-    #         Take=(self.DicoData["flags_flat"]==0)
-    #         trR=np.sum(self.R_flat[Take])#Np*rms**2
-    #         kapa=np.abs((trYYH-trR)/trJPJH)
-    #         kapaout+=np.sqrt(kapa)
-    #         # print self.iAnt,rms,np.sqrt(kapa),trYYH,trR,trJPJH,pa
-    #     kapaout=np.max([1.,kapaout])
-    #     return kapaout
-
-
     def CalcKapa_i(self,yr,Pa,rms):
+        kapaout=0
+        for ipol in range(self.NJacobBlocks_X):
+            J=self.LJacob[ipol]
+            PaPol=self.GivePaPol(Pa,ipol)
+            pa=np.abs(np.diag(PaPol))
+            pa=pa.reshape(1,pa.size)
+            JP=J*pa
+            trJPJH=np.sum(np.abs(JP*J.conj()))
+            trYYH=np.sum(np.abs(yr)**2)
+            Np=np.where(self.DicoData["flags_flat"]==0)[0].size
+            Take=(self.DicoData["flags_flat"]==0)
+            trR=np.sum(self.R_flat[Take])#Np*rms**2
+            kapa=np.abs((trYYH-trR)/trJPJH)
+            kapaout+=np.sqrt(kapa)
+            if self.iAnt==0:
+                print self.iAnt,rms,np.sqrt(kapa),trYYH,trR,trJPJH,pa
+        kapaout=np.max([1.,kapaout])
+        return kapaout
+
+
+    def CalcKapa_i_new(self,yr,Pa,rms):
         kapaout=0
         T=ClassTimeIt.ClassTimeIt("    Kapa")
         T.disable()
@@ -303,13 +304,13 @@ class ClassJacobianAntenna():
             T.timeit(iT); iT+=1
             Weigths=self.Weights_flat[ipol].reshape((nrow,1))
             T.timeit(iT); iT+=1
-            Jw=Rinv*J
+            Jw=Rinv*J*rms**2
             T.timeit(iT); iT+=1
             trJPJH=np.sum(np.abs(JP[flags]*Jw[flags].conj()))
             T.timeit(iT); iT+=1
             ww=(Weigths[flags]).ravel()
-            ww=ww/np.sum(ww)
             trYYH=np.sum(np.abs(ww*yr[ipol,flags])**2)
+            #trYYH=np.sum(np.abs(yr[ipol,flags])**2)
             T.timeit(iT); iT+=1
             #Np=np.where(self.DicoData["flags_flat"]==0)[0].size
             Take=(self.DicoData["flags_flat"]==0)
@@ -318,8 +319,8 @@ class ClassJacobianAntenna():
             T.timeit(iT); iT+=1
             kapa=np.abs((trYYH-trR)/trJPJH)
             kapaout+=np.sqrt(kapa)
-            #if self.iAnt==0:
-            #    print self.iAnt,rms,np.sqrt(kapa),trYYH,trR,trJPJH,pa
+            if self.iAnt==0:
+                print self.iAnt,rms,np.sqrt(kapa),trYYH,trR,trJPJH,pa
         kapaout=np.max([1.,kapaout])
         return kapaout
 
@@ -503,9 +504,9 @@ class ClassJacobianAntenna():
         zr[self.DicoData["flags_flat"]]=0
 
         T.timeit("Resid")
-
-        kapa=self.CalcKapa_i(zr,Pa,rms)
-
+        
+        #kapa=self.CalcKapa_i(zr,Pa,rms)
+        kapa=self.CalcKapa_i_new(zr,Pa,rms)
 
 
         # Weighted std estimate 
