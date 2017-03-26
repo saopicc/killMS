@@ -319,8 +319,8 @@ class ClassJacobianAntenna():
             T.timeit(iT); iT+=1
             kapa=np.abs((trYYH-trR)/trJPJH)
             kapaout+=np.sqrt(kapa)
-            if self.iAnt==0:
-                print self.iAnt,rms,np.sqrt(kapa),trYYH,trR,trJPJH,pa
+            #if self.iAnt==0:
+            #    print self.iAnt,rms,np.sqrt(kapa),trYYH,trR,trJPJH,pa
         kapaout=np.max([1.,kapaout])
         return kapaout
 
