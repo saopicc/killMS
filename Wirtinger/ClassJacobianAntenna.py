@@ -505,8 +505,8 @@ class ClassJacobianAntenna():
 
         T.timeit("Resid")
         
-        #kapa=self.CalcKapa_i(zr,Pa,rms)
-        kapa=self.CalcKapa_i_new(zr,Pa,rms)
+        kapa=self.CalcKapa_i(zr,Pa,rms)
+        #kapa=self.CalcKapa_i_new(zr,Pa,rms)
 
 
         # Weighted std estimate 
