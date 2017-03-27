@@ -279,8 +279,8 @@ class ClassJacobianAntenna():
             trR=np.sum(self.R_flat[Take])#Np*rms**2
             kapa=np.abs((trYYH-trR)/trJPJH)
             kapaout+=np.sqrt(kapa)
-            if self.iAnt==0:
-                print self.iAnt,rms,np.sqrt(kapa),trYYH,trR,trJPJH,pa
+            #if self.iAnt==0:
+            #    print self.iAnt,rms,np.sqrt(kapa),trYYH,trR,trJPJH,pa
         kapaout=np.max([1.,kapaout])
         return kapaout
 
