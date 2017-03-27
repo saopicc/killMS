@@ -772,8 +772,9 @@ class ClassWirtingerSolver():
         NDone=0
         iiCount=0
         ThisG=self.G.copy()
-        ThisP=self.P.copy()
-        ThisQ=self.Q.copy()
+        if self.SolverType=="KAFCA":
+            ThisP=self.P.copy()
+            ThisQ=self.Q.copy()
         while True:
             T=ClassTimeIt.ClassTimeIt("ClassWirtinger DATA[%4.4i]"%NDone)
             T.disable()
@@ -845,8 +846,9 @@ class ClassWirtingerSolver():
                 NpShared.DelAll("%sDicoData"%self.IdSharedMem)
                 for LMIter in range(NIter):
                     ThisG[:]=self.G[:]
-                    ThisP[:]=self.P[:]
-                    ThisQ[:]=self.Q[:]
+                    if self.SolverType=="KAFCA":
+                        ThisP[:]=self.P[:]
+                        ThisQ[:]=self.Q[:]
                     #print
                     # for EKF
     
@@ -1001,8 +1003,10 @@ class ClassWirtingerSolver():
                     T.timeit("[%i] Plot"%LMIter)
 
                 self.G[:]=ThisG[:]
-                self.P[:]=ThisP[:]
-                self.Q[:]=ThisQ[:]
+
+                if self.SolverType=="KAFCA":
+                    self.P[:]=ThisP[:]
+                    self.Q[:]=ThisQ[:]
                 
                 # end Niter
             # end Chan
