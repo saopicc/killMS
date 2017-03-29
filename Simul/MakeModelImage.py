@@ -3,7 +3,7 @@ import numpy as np
 import MakeClusterCat
 import os
 
-TemplateImage="TestImage.dirty.fits"#Clean.SS2.app.residual.fits"
+TemplateImage="image.NewLayOut.All.Noise.dirty.fits"#Clean.SS2.app.residual.fits"
 #TemplateImage="Test_deconv.Corr.GA.dirty.fits"
 OutFile="ModelImage"
 Nc=0
