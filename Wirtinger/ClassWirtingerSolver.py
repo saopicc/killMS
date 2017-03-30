@@ -906,10 +906,11 @@ class ClassWirtingerSolver():
                         #stop
                         #T.timeit("result_queue.get()")
                         ThisG[iChanSol,iAnt][:]=G[:]
+                        #self.G[iChanSol,iAnt][:]=G[:]
                         if type(P)!=type(None):
                             #P.fill(0.1)
                             ThisP[iChanSol,iAnt,:]=P[:]
-                            
+
                         DTs[iAnt]=DT
                         kapa=InfoNoise["kapa"]
                         self.DicoStd[iAnt,iChanSol].append(InfoNoise["std"])
@@ -1002,11 +1003,19 @@ class ClassWirtingerSolver():
     
                     T.timeit("[%i] Plot"%LMIter)
 
-                self.G[:]=ThisG[:]
+                    self.G[:]=ThisG[:]
+                    if self.SolverType=="KAFCA":
+                       self.P[:]=ThisP[:]
+                       self.Q[:]=ThisQ[:]
 
-                if self.SolverType=="KAFCA":
-                    self.P[:]=ThisP[:]
-                    self.Q[:]=ThisQ[:]
+
+                # self.G[:]=ThisG[:]
+                # #self.G[:]=G[:]
+                # #print self.G.shape,G.shape
+                # if self.SolverType=="KAFCA":
+                #     self.P[:]=ThisP[:]
+                #     self.Q[:]=ThisQ[:]
+
                 
                 # end Niter
             # end Chan

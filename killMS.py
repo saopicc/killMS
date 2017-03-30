@@ -497,6 +497,7 @@ def main(OP=None,MSName=None):
             SaveSols=True
             if options.SubOnly==0:
                 if options.Parallel:
+                    #Solver.doNextTimeSolve_Parallel(Parallel=True)
                     Solver.doNextTimeSolve_Parallel(Parallel=True)
                 else:
                     #Solver.doNextTimeSolve_Parallel(SkipMode=True)

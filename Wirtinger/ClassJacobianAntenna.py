@@ -323,6 +323,7 @@ class ClassJacobianAntenna():
             trYYH_R=np.sum(ww**2*(YYH-R))
             T.timeit(iT); iT+=1
             kapa=np.abs(trYYH_R/trJPJH)
+            #kapa=1
             kapaout+=np.sqrt(kapa)
             #if self.iAnt==0:
             #    print "new",self.iAnt,rms,np.sqrt(kapa),trYYH_R,trJPJH,pa
