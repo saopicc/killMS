@@ -103,7 +103,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         #     for pol in range(npol):
         #         data[ch,pol]=data[ch,pol].T[::-1]
         # self.ModelImage=data
-        # #self.FacetMachine.ToCasaImage(self.ModelImage,ImageName="Model_kMS",Fits=True)
+        self.FacetMachine.ToCasaImage(ModelImage,ImageName="Model_kMS",Fits=True)
         # #stop
 
         #del(data)
