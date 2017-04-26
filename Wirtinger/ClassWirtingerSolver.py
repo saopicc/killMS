@@ -1,4 +1,3 @@
-from ClassJacobianAntenna import ClassJacobianAntenna
 import numpy as np
 from killMS2.Array import NpShared
 
@@ -19,7 +18,8 @@ from killMS2.Other import Counter
 from ClassEvolve import ClassModelEvolution
 import time
 from itertools import product as ItP
-
+from killMS2.Wirtinger import ClassSolverLM
+from killMS2.Wirtinger import ClassSolverEKF
 def test():
 
 
@@ -550,10 +550,13 @@ class ClassWirtingerSolver():
                                        "SharedAntennaVis":None,
                                        "DicoClusterDirs":self.VS.DicoClusterDirs_Descriptor}
 
+                
+
                 JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,Precision="S",IdSharedMem=self.IdSharedMem,GD=self.GD,
                                         ChanSel=(ch0,ch1),
                                         SharedDicoDescriptors=SharedDicoDescriptors,
                                         **self.ConfigJacobianAntenna)
+                    
                 T.timeit("JM")
                 JM.setDATA_Shared()
                 T.timeit("Setdata_Shared")
@@ -1150,11 +1153,16 @@ class WorkerAntennaLM(multiprocessing.Process):
             #     T.disable()
             # print SharedDicoDescriptors
 
+            if self.SolverType=="CohJones":
+                SolverClass=ClassSolverLM.ClassSolverLM
+            elif self.SolverType=="KAFCA":
+                SolverClass=ClassSolverEKF.ClassSolverEKF
 
-            JM=ClassJacobianAntenna(self.SM,iAnt,PolMode=self.PolMode,PM=self.PM,IdSharedMem=self.IdSharedMem,GD=self.GD,
-                                    ChanSel=(ch0,ch1),
-                                    SharedDicoDescriptors=SharedDicoDescriptors,
-                                    **dict(self.ConfigJacobianAntenna))
+            JM=SolverClass(self.SM,iAnt,PolMode=self.PolMode,PM=self.PM,IdSharedMem=self.IdSharedMem,GD=self.GD,
+                           ChanSel=(ch0,ch1),
+                           SharedDicoDescriptors=SharedDicoDescriptors,
+                           **dict(self.ConfigJacobianAntenna))
+
             T.timeit("ClassJacobianAntenna")
 
             JM.setDATA_Shared()
