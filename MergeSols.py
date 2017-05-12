@@ -16,7 +16,7 @@ def read_options():
     opt = optparse.OptionParser(usage='Usage: %prog --ms=somename.MS <options>',version='%prog version 1.0',description=desc)
 
     group = optparse.OptionGroup(opt, "* Data-related options", "Won't work if not specified.")
-    group.add_option('--SolsFilesIn',help='Solution name patern. Flor example "*.MS/killMS.lala.npz')
+    group.add_option('--SolsFilesIn',help='Solution name patern. For example "*.MS/killMS.lala.npz')
     group.add_option('--SolFileOut',help='Name of the output file')
     opt.add_option_group(group)
 
@@ -24,7 +24,6 @@ def read_options():
     options, arguments = opt.parse_args()
     f = open(SaveName,"wb")
     pickle.dump(options,f)
-
 
 class ClassMergeSols():
     def __init__(self,ListFilesSols):
@@ -51,6 +50,20 @@ class ClassMergeSols():
         indSort=np.argsort(ListCentralFreqs)
         self.ListDictSols=[self.ListDictSols[iSort] for iSort in indSort]
         self.ListJonesSols=[self.ListJonesSols[iSort] for iSort in indSort]
+
+    def NormMatrices(self,G):
+        print>>log,"  Normalising Jones matrices (to antenna 0)"
+        nt,nch,na,nd,_,_=G.shape
+        for ich in range(nch):
+            #print "%i,%i"%(ich,nch)
+            for it in range(nt):
+                for iDir in range(nd):
+                    Gt=G[it,ich,:,iDir,:,:]
+                    u,s,v=np.linalg.svd(Gt[0])
+                    U=np.dot(u,v)
+                    for iAnt in range(0,na):
+                        Gt[iAnt,:,:]=np.dot(U.T.conj(),Gt[iAnt,:,:])
+        return G
 
     def SaveDicoMerged(self,FileOut):
 
@@ -87,9 +100,11 @@ class ClassMergeSols():
             print>>log, "Freq Channels: %s"%str(np.mean(self.ListDictSols[iSol]["FreqDomains"],axis=1).ravel().tolist())
             iFreq+=ThisNFreq
 
+        self.NormMatrices(SolsOut.G)
         DicoOut['FreqDomains']=FreqDomains
         DicoOut['Sols']=SolsOut
 
+        if not ".npz" in FileOut: FileOut+=".npz"
         print>>log,"  Saving interpolated solutions in: %s"%FileOut
         np.savez(FileOut,**DicoOut)
 
@@ -108,7 +123,7 @@ def main(options=None):
 
 
     SolsFiles=options.SolsFilesIn
-
+    
     if ".txt" in SolsFiles:
         f=open(SolsFiles)
         Ls=f.readlines()
@@ -122,10 +137,11 @@ def main(options=None):
     elif "*" in SolsFiles:
         ListSolsFile=sorted(glob.glob(SolsFiles))
 
-    print>>log, "Running Merge on the following MS:"
+    if options.SolFileOut is None:
+        raise RuntimeError("You have to specify In/Out solution file names")
+    print>>log, "Running Merge on the following SolsFile:"
     for SolsName in ListSolsFile:
         print>>log, "  %s"%SolsName
-
     CM=ClassMergeSols(ListSolsFile)
     DicoOut=CM.SaveDicoMerged(options.SolFileOut)
 
