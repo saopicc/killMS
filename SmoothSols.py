@@ -83,38 +83,49 @@ class ClassInterpol():
         # Multiprocessing.cleanupShm()
         APP.startWorkers()
         iJob=0
+#        for iAnt in [49]:#range(na):
+#            for iDir in [0]:#range(nd):
+
         for iAnt in range(na):
             for iDir in range(nd):
                 APP.runJob("FitThisTEC_%d"%iJob, self.FitThisTEC, args=(iAnt,iDir))#,serial=True)
                 iJob+=1
         workers_res=APP.awaitJobResults("FitThisTEC*", progress="Fit %s"%self.InterpMode)
+
         APP.terminate()
         APP.shutdown()
         Multiprocessing.cleanupShm()
-        NpShared.DelAll("%sGOut"%IdSharedMem)
         # ###########################
         # import pylab
         # op0=np.abs
         # op1=np.angle
-        # for iDir in range(nd):
+        # #for iDir in range(nd):
+        # for iAnt in [49]:#range(40,na):
         #     pylab.clf()
+        #     A=op0(self.Sols.G[:,:,iAnt,iDir,0,0])
+        #     v0,v1=0,A.max()
         #     pylab.subplot(2,3,1)
-        #     pylab.imshow(op0(self.Sols.G[:,:,iAnt,iDir,0,0]),interpolation="nearest",aspect="auto")
+        #     pylab.imshow(op0(self.Sols.G[:,:,iAnt,iDir,0,0]),interpolation="nearest",aspect="auto",vmin=v0,vmax=v1)
+        #     pylab.title("(iAnt, iDir) = (%i, %i)"%(iAnt,iDir))
         #     pylab.subplot(2,3,2)
-        #     pylab.imshow(op0(self.GOut[:,:,iAnt,iDir,0,0]),interpolation="nearest",aspect="auto")
+        #     pylab.imshow(op0(self.GOut[:,:,iAnt,iDir,0,0]),interpolation="nearest",aspect="auto",vmin=v0,vmax=v1)
         #     pylab.subplot(2,3,3)
-        #     pylab.imshow(op0(self.Sols.G[:,:,iAnt,iDir,0,0])-op0(self.GOut[:,:,iAnt,iDir,0,0]),interpolation="nearest",aspect="auto")
+        #     pylab.imshow(op0(self.Sols.G[:,:,iAnt,iDir,0,0])-op0(self.GOut[:,:,iAnt,iDir,0,0]),interpolation="nearest",
+        #                  aspect="auto",vmin=v0,vmax=v1)
+        #     pylab.colorbar()
+        #     A=op1(self.Sols.G[:,:,iAnt,iDir,0,0])
+        #     v0,v1=A.min(),A.max()
         #     pylab.subplot(2,3,4)
-        #     pylab.imshow(op1(self.Sols.G[:,:,iAnt,iDir,0,0]),interpolation="nearest",aspect="auto")
+        #     pylab.imshow(op1(self.Sols.G[:,:,iAnt,iDir,0,0]),interpolation="nearest",aspect="auto",vmin=v0,vmax=v1)
         #     pylab.subplot(2,3,5)
-        #     pylab.imshow(op1(self.GOut[:,:,iAnt,iDir,0,0]),interpolation="nearest",aspect="auto")
+        #     pylab.imshow(op1(self.GOut[:,:,iAnt,iDir,0,0]),interpolation="nearest",aspect="auto",vmin=v0,vmax=v1)
         #     pylab.subplot(2,3,6)
-        #     pylab.imshow(op1(self.Sols.G[:,:,iAnt,iDir,0,0])-op1(self.GOut[:,:,iAnt,iDir,0,0]),interpolation="nearest",aspect="auto")
+        #     pylab.imshow(op1(self.Sols.G[:,:,iAnt,iDir,0,0])-op1(self.GOut[:,:,iAnt,iDir,0,0]),interpolation="nearest",aspect="auto",vmin=v0,vmax=v1)
         #     pylab.draw()
-        #     pylab.show(False)
+        #     pylab.show()#False)
         #     pylab.pause(0.1)
-        #     stop
-
+        #     #stop
+            
 
     def FitThisTEC(self,iAnt,iDir):
         nt,nch,na,nd,_,_=self.Sols.G.shape
@@ -135,11 +146,32 @@ class ClassInterpol():
         Z=TECToZ(TECGrid.reshape((-1,1)),CPhase.reshape((-1,1)),self.CentralFreqs.reshape((1,-1)))
         W=np.ones(g0.shape,np.float32)
         W[g==1.]=0
-        R=(g0.reshape((1,-1))-Z)*W.reshape((1,-1))
-        Chi2=np.sum(np.abs(R)**2,axis=1)
-        iTec=np.argmin(Chi2)
-        
-        
+
+
+        for iTry in range(5):
+            R=(g0.reshape((1,-1))-Z)*W.reshape((1,-1))
+            Chi2=np.sum(np.abs(R)**2,axis=1)
+            iTec=np.argmin(Chi2)
+            rBest=R[iTec]
+            if np.max(np.abs(rBest))==0: break
+            Sig=np.sum(np.abs(rBest*W))/np.sum(W)
+            ind=np.where(np.abs(rBest)>5.*Sig)[0]
+            if ind.size==0: break
+            W[ind]=0
+
+            # gz=TECToZ(TECGrid.ravel()[iTec],CPhase.ravel()[iTec],self.CentralFreqs)
+            # import pylab
+            # pylab.clf()
+            # pylab.subplot(2,1,1)
+            # pylab.scatter(self.CentralFreqs,rBest)
+            # pylab.scatter(self.CentralFreqs[ind],rBest[ind],color="red")
+            # pylab.subplot(2,1,2)
+            # pylab.scatter(self.CentralFreqs,rBest)
+            # pylab.scatter(self.CentralFreqs[ind],rBest[ind],color="red")
+            # pylab.draw()
+            # pylab.show()
+
+
         gz=np.abs(g)*TECToZ(TECGrid.ravel()[iTec],CPhase.ravel()[iTec],self.CentralFreqs)
         
         GOut[it,:,iAnt,iDir,0,0]=gz
@@ -163,10 +195,22 @@ class ClassInterpol():
         g0=np.abs(g)
 
 
-        z = np.polyfit(self.CentralFreqs, g0, self.PolyOrder)
-        p = np.poly1d(z)
-        
-        gz=p(self.CentralFreqs)*g/np.abs(g)
+        W=np.ones(g0.shape,np.float32)
+        W[g0==1.]=0
+   
+
+        for iTry in range(5):
+            z = np.polyfit(self.CentralFreqs, g0, self.PolyOrder,w=W)
+            p = np.poly1d(z)
+            gz=p(self.CentralFreqs)*g/np.abs(g)
+            rBest=(g0-gz)
+            if np.max(np.abs(rBest))==0: break
+            Sig=np.sum(np.abs(rBest*W))/np.sum(W)
+            ind=np.where(np.abs(rBest)>5.*Sig)[0]
+            if ind.size==0: break
+            W[ind]=0
+
+
 
         GOut[it,:,iAnt,iDir,0,0]=gz
         GOut[it,:,iAnt,iDir,1,1]=gz
@@ -177,15 +221,16 @@ class ClassInterpol():
         print>>log,"  Saving interpolated solution file as: %s"%OutFile
         self.DicoFile["Sols"]["G"][...]=self.GOut[:]
         np.savez(OutFile,**(self.DicoFile))
+        NpShared.DelAll("%sGOut"%IdSharedMem)
 
 # ############################################        
 
 def test():
-    FileName="TestMerge.npz"
-    CI=ClassInterpol(FileName,"TestMergeOut")
+    FileName="L401839.killms_f_ap_deep.merged.npz"
+    OutFile="TestMerge.Interp.npz"
+    CI=ClassInterpol(FileName,OutFile)
     CI.InterpolParallel()
-    OutFile="TestMerge.Interpol.npz"
-    CI.Save(OutFile)
+    return CI.Save()
 
 def main(options=None):
     if options==None:
