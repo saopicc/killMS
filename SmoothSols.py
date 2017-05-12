@@ -15,6 +15,16 @@ from killMS2.Array import NpShared
 IdSharedMem=str(int(os.getpid()))+"."
 from DDFacet.Other import AsyncProcessPool
 
+# # ##############################
+# # Catch numpy warning
+# np.seterr(all='raise')
+# import warnings
+# #with warnings.catch_warnings():
+# #    warnings.filterwarnings('error')
+# warnings.catch_warnings()
+# warnings.filterwarnings('error')
+# # ##############################
+
 SaveName="last_InterPol.obj"
 
 def read_options():
@@ -100,27 +110,52 @@ class ClassInterpol():
         # op0=np.abs
         # op1=np.angle
         # #for iDir in range(nd):
-        # for iAnt in [49]:#range(40,na):
+        # for iAnt in range(40,na):
         #     pylab.clf()
         #     A=op0(self.Sols.G[:,:,iAnt,iDir,0,0])
         #     v0,v1=0,A.max()
         #     pylab.subplot(2,3,1)
         #     pylab.imshow(op0(self.Sols.G[:,:,iAnt,iDir,0,0]),interpolation="nearest",aspect="auto",vmin=v0,vmax=v1)
-        #     pylab.title("(iAnt, iDir) = (%i, %i)"%(iAnt,iDir))
+        #     pylab.title("Raw Solution (Amp)")
+        #     pylab.xlabel("Freq bin")
+        #     pylab.ylabel("Time bin")
+
         #     pylab.subplot(2,3,2)
         #     pylab.imshow(op0(self.GOut[:,:,iAnt,iDir,0,0]),interpolation="nearest",aspect="auto",vmin=v0,vmax=v1)
+        #     pylab.title("Smoothed Solution (Amp)")
+        #     pylab.xlabel("Freq bin")
+        #     pylab.ylabel("Time bin")
+
         #     pylab.subplot(2,3,3)
         #     pylab.imshow(op0(self.Sols.G[:,:,iAnt,iDir,0,0])-op0(self.GOut[:,:,iAnt,iDir,0,0]),interpolation="nearest",
         #                  aspect="auto",vmin=v0,vmax=v1)
-        #     pylab.colorbar()
+        #     pylab.xlabel("Freq bin")
+        #     pylab.ylabel("Time bin")
+        #     pylab.title("Residual (Amp)")
+        #     #pylab.colorbar()
         #     A=op1(self.Sols.G[:,:,iAnt,iDir,0,0])
         #     v0,v1=A.min(),A.max()
         #     pylab.subplot(2,3,4)
         #     pylab.imshow(op1(self.Sols.G[:,:,iAnt,iDir,0,0]),interpolation="nearest",aspect="auto",vmin=v0,vmax=v1)
+        #     pylab.title("Raw Solution (Phase)")
+        #     pylab.xlabel("Freq bin")
+        #     pylab.ylabel("Time bin")
+
         #     pylab.subplot(2,3,5)
         #     pylab.imshow(op1(self.GOut[:,:,iAnt,iDir,0,0]),interpolation="nearest",aspect="auto",vmin=v0,vmax=v1)
+        #     pylab.title("Smoothed Solution (Phase)")
+        #     pylab.xlabel("Freq bin")
+        #     pylab.ylabel("Time bin")
+
         #     pylab.subplot(2,3,6)
-        #     pylab.imshow(op1(self.Sols.G[:,:,iAnt,iDir,0,0])-op1(self.GOut[:,:,iAnt,iDir,0,0]),interpolation="nearest",aspect="auto",vmin=v0,vmax=v1)
+        #     pylab.imshow(op1(self.Sols.G[:,:,iAnt,iDir,0,0])-op1(self.GOut[:,:,iAnt,iDir,0,0]),
+        #                  interpolation="nearest",aspect="auto",vmin=v0,vmax=v1)
+        #     pylab.title("Residual (Phase)")
+        #     pylab.xlabel("Freq bin")
+        #     pylab.ylabel("Time bin")
+
+        #     pylab.suptitle("(iAnt, iDir) = (%i, %i)"%(iAnt,iDir))
+        #     pylab.tight_layout()
         #     pylab.draw()
         #     pylab.show()#False)
         #     pylab.pause(0.1)
@@ -155,7 +190,7 @@ class ClassInterpol():
             rBest=R[iTec]
             if np.max(np.abs(rBest))==0: break
             Sig=np.sum(np.abs(rBest*W))/np.sum(W)
-            ind=np.where(np.abs(rBest)>5.*Sig)[0]
+            ind=np.where(np.abs(rBest*W)>5.*Sig)[0]
             if ind.size==0: break
             W[ind]=0
 
@@ -197,16 +232,17 @@ class ClassInterpol():
 
         W=np.ones(g0.shape,np.float32)
         W[g0==1.]=0
-   
+        if np.count_nonzero(W)<self.PolyOrder*3: return
 
         for iTry in range(5):
+            if np.max(W)==0: return
             z = np.polyfit(self.CentralFreqs, g0, self.PolyOrder,w=W)
             p = np.poly1d(z)
             gz=p(self.CentralFreqs)*g/np.abs(g)
             rBest=(g0-gz)
             if np.max(np.abs(rBest))==0: break
             Sig=np.sum(np.abs(rBest*W))/np.sum(W)
-            ind=np.where(np.abs(rBest)>5.*Sig)[0]
+            ind=np.where(np.abs(rBest*W)>5.*Sig)[0]
             if ind.size==0: break
             W[ind]=0
 
