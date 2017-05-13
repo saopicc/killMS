@@ -14,7 +14,7 @@ from DDFacet.Other import Multiprocessing
 from killMS2.Array import NpShared
 IdSharedMem=str(int(os.getpid()))+"."
 from DDFacet.Other import AsyncProcessPool
-
+import scipy.ndimage.filters
 # # ##############################
 # # Catch numpy warning
 # np.seterr(all='raise')
@@ -33,15 +33,19 @@ def read_options():
     opt = optparse.OptionParser(usage='Usage: %prog --ms=somename.MS <options>',version='%prog version 1.0',description=desc)
 
     group = optparse.OptionGroup(opt, "* Data-related options", "Won't work if not specified.")
-    group.add_option('--SolsFileIn',help='Solfile [no default]',default=None)
-    group.add_option('--SolsFileOut',help='Solfile [no default]',default=None)
+    group.add_option('--SolsFileIn',help='SolfileIn [no default]',default=None)
+    group.add_option('--SolsFileOut',help='SolfileOut [no default]',default=None)
     group.add_option('--InterpMode',help='Interpolation mode TEC and/or Amp [default is %default]',type="str",default="TEC,Amp")
-    group.add_option('--PolyOrder',help='Order of the polynomial to do the amplitude',type="int",default=3)
+    
+    group.add_option('--Amp-SmoothType',help='Interpolation Type for the amplitude [default is %default]',type="str",default="Gauss")
+    group.add_option('--Amp-PolyOrder',help='Order of the polynomial to do the amplitude',type="int",default=3)
+    group.add_option('--Amp-GaussKernel',help='',type="str",default=(1,3))
     group.add_option('--NCPU',help='Number of CPU to use',type="int",default=0)
     opt.add_option_group(group)
 
 
     options, arguments = opt.parse_args()
+    exec("options.Amp_GaussKernel=%s"%options.Amp_GaussKernel)
     f = open(SaveName,"wb")
     pickle.dump(options,f)
 
@@ -54,7 +58,8 @@ def TECToZ(TEC,ConstPhase,freq):
     return np.exp(1j*(TECToPhase(TEC,freq)+ConstPhase))
 
 class ClassInterpol():
-    def __init__(self,InSolsName,OutSolsName,InterpMode="TEC",PolMode="Scalar",PolyOrder=3,NCPU=0):
+    def __init__(self,InSolsName,OutSolsName,InterpMode="TEC",PolMode="Scalar",Amp_PolyOrder=3,NCPU=0,
+                 Amp_GaussKernel=(0,5), Amp_SmoothType="Poly"):
 
         self.InSolsName=InSolsName
         self.OutSolsName=OutSolsName
@@ -63,14 +68,18 @@ class ClassInterpol():
         self.Sols=self.DicoFile["Sols"].view(np.recarray)
         self.CentralFreqs=np.mean(self.DicoFile["FreqDomains"],axis=1)
         self.InterpMode=InterpMode
-        self.PolyOrder=PolyOrder
+        self.Amp_PolyOrder=Amp_PolyOrder
         self.GOut=NpShared.ToShared("%sGOut"%IdSharedMem,self.Sols.G.copy())
         self.PolMode=PolMode
-
+        self.Amp_GaussKernel=Amp_GaussKernel
+        self.Amp_SmoothType=Amp_SmoothType
         if "TEC" in self.InterpMode:
             print>>log, "  Smooth phases using a TEC model"
         if "Amp" in self.InterpMode:
-            print>>log, "  Smooth amplitudes using polynomial model of order %i"%self.PolyOrder
+            if Amp_SmoothType=="Poly":
+                print>>log, "  Smooth amplitudes using polynomial model of order %i"%self.Amp_PolyOrder
+            if Amp_SmoothType=="Gauss":
+                print>>log, "  Smooth amplitudes using Gaussian kernel of %s (Time/Freq) bins"%str(Amp_GaussKernel)
 
         APP.registerJobHandlers(self)
         AsyncProcessPool.init(ncpu=NCPU,affinity=0)
@@ -164,11 +173,16 @@ class ClassInterpol():
 
     def FitThisTEC(self,iAnt,iDir):
         nt,nch,na,nd,_,_=self.Sols.G.shape
-        for it in range(nt):
-            if "TEC" in self.InterpMode:
+        if "TEC" in self.InterpMode:
+            for it in range(nt):
                 self.FitThisTECTime(it,iAnt,iDir)
-            if "Amp" in self.InterpMode:
-                self.FitThisAmpTime(it,iAnt,iDir)
+
+        if "Amp" in self.InterpMode:
+            if self.Amp_SmoothType=="Poly":
+                for it in range(nt):
+                    self.FitThisAmpTimePoly(it,iAnt,iDir)
+            elif self.Amp_SmoothType=="Gauss":
+                self.GaussSmoothAmp(iAnt,iDir)
 
     def FitThisTECTime(self,it,iAnt,iDir):
         GOut=NpShared.GiveArray("%sGOut"%IdSharedMem)
@@ -181,7 +195,6 @@ class ClassInterpol():
         Z=TECToZ(TECGrid.reshape((-1,1)),CPhase.reshape((-1,1)),self.CentralFreqs.reshape((1,-1)))
         W=np.ones(g0.shape,np.float32)
         W[g==1.]=0
-
 
         for iTry in range(5):
             R=(g0.reshape((1,-1))-Z)*W.reshape((1,-1))
@@ -224,19 +237,18 @@ class ClassInterpol():
         # pylab.show(False)
         # pylab.pause(0.1)
 
-    def FitThisAmpTime(self,it,iAnt,iDir):
+    def FitThisAmpTimePoly(self,it,iAnt,iDir):
         GOut=NpShared.GiveArray("%sGOut"%IdSharedMem)
         g=GOut[it,:,iAnt,iDir,0,0]
         g0=np.abs(g)
 
-
         W=np.ones(g0.shape,np.float32)
         W[g0==1.]=0
-        if np.count_nonzero(W)<self.PolyOrder*3: return
+        if np.count_nonzero(W)<self.Amp_PolyOrder*3: return
 
         for iTry in range(5):
             if np.max(W)==0: return
-            z = np.polyfit(self.CentralFreqs, g0, self.PolyOrder,w=W)
+            z = np.polyfit(self.CentralFreqs, g0, self.Amp_PolyOrder,w=W)
             p = np.poly1d(z)
             gz=p(self.CentralFreqs)*g/np.abs(g)
             rBest=(g0-gz)
@@ -246,10 +258,21 @@ class ClassInterpol():
             if ind.size==0: break
             W[ind]=0
 
-
-
         GOut[it,:,iAnt,iDir,0,0]=gz
         GOut[it,:,iAnt,iDir,1,1]=gz
+
+    def GaussSmoothAmp(self,iAnt,iDir):
+        GOut=NpShared.GiveArray("%sGOut"%IdSharedMem)
+        g=GOut[:,:,iAnt,iDir,0,0]
+        g0=np.abs(g)
+
+        
+        sg0=scipy.ndimage.filters.gaussian_filter(g0,self.Amp_GaussKernel)
+
+        gz=sg0*g/np.abs(g)
+
+        GOut[:,:,iAnt,iDir,0,0]=gz
+        GOut[:,:,iAnt,iDir,1,1]=gz
 
     def Save(self):
         OutFile=self.OutSolsName
@@ -275,13 +298,13 @@ def main(options=None):
     #FileName="killMS.KAFCA.sols.npz"
 
 
-
     if options.SolsFileIn is None or options.SolsFileOut is None:
         raise RuntimeError("You have to specify In/Out solution file names")
     CI=ClassInterpol(options.SolsFileIn,
                      options.SolsFileOut,
                      InterpMode=options.InterpMode,
-                     PolyOrder=options.PolyOrder,
+                     Amp_PolyOrder=options.Amp_PolyOrder,
+                     Amp_GaussKernel=options.Amp_GaussKernel, Amp_SmoothType=options.Amp_SmoothType,
                      NCPU=options.NCPU)
     CI.InterpolParallel()
     CI.Save()
@@ -291,6 +314,5 @@ if __name__=="__main__":
     read_options()
     f = open(SaveName,'rb')
     options = pickle.load(f)
-
-
+    
     main(options=options)
