@@ -263,6 +263,7 @@ def main(OP=None,MSName=None):
     WriteColName = options.OutCol
 
     DicoSelectOptions= {}
+    DicoSelectOptions["UVRangeKm"]=None
     if options.UVMinMax!=None:
         sUVmin,sUVmax=options.UVMinMax#.split(",")
         UVmin,UVmax=float(sUVmin),float(sUVmax)
