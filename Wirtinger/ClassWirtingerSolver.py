@@ -338,7 +338,7 @@ class ClassWirtingerSolver():
 
             Qa=Qa.reshape((nd*npolx*npoly,nd*npolx*npoly))
             #print np.diag(Qa)
-            Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iChanSol,iAnt]))**2*Qa*(self.VS.fracNVisPerAnt[iAnt]**2) for iAnt in range(na)])
+            Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iChanSol,iAnt]))**2*Qa*(self.VS.fracNVisPerAnt[iAnt]**4) for iAnt in range(na)])
             #print Q[0]
 
             QList.append(Q)
