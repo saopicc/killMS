@@ -86,7 +86,7 @@ class ClassMergeSols():
             FreqDomains[iFreq:iFreq+ThisNFreq,:]=self.ListDictSols[iSol]["FreqDomains"]
             print>>log, "Freq Channels: %s"%str(np.mean(self.ListDictSols[iSol]["FreqDomains"],axis=1).ravel().tolist())
             iFreq+=ThisNFreq
-
+            
         DicoOut['FreqDomains']=FreqDomains
         DicoOut['Sols']=SolsOut
 

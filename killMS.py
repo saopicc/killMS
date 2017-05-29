@@ -336,6 +336,7 @@ def main(OP=None,MSName=None):
 
         from DDFacet.Other import AsyncProcessPool
         from DDFacet.Other import Multiprocessing
+        AsyncProcessPool._init_default()
         APP=AsyncProcessPool.APP
         AsyncProcessPool.init(ncpu=NCPU, affinity=GDPredict["Parallel"]["Affinity"],
                               verbose=GDPredict["Debug"]["APPVerbose"])
@@ -769,8 +770,9 @@ def main(OP=None,MSName=None):
 
 
     if APP is not None:
-        #APP.terminate()
+        APP.terminate()
         APP.shutdown()
+        del(APP)
         NpShared.DelAll(IdSharedMem)
         Multiprocessing.cleanupShm()
     
@@ -939,12 +941,17 @@ if __name__=="__main__":
     else:
         lMS=[options.MSName]
 
-    
- 
+    BaseParset="BatchCurrentParset.parset"
+    OP.ToParset(BaseParset)    
+    import os
     try:
-
-        #print MSName
-        for MSName in lMS:
+        if len(lMS)>1:
+            #print MSName
+            for MSName in lMS:
+                ss="killMS.py %s --MSName=%s"%(BaseParset,MSName)
+                print>>log,"Running %s"%ss
+                os.system(ss)
+        else:
             main(OP=OP,MSName=MSName)
     except:
         NpShared.DelAll(IdSharedMem)
