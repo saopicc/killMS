@@ -383,6 +383,8 @@ class ClassVisServer():
 
         #DATA["UVW_dt"]=self.MS.Give_dUVW_dt(times,A0,A1)
         
+        if DATA["flags"].size==0:
+            return "AllFlaggedThisTime"
         fFlagged=np.count_nonzero(DATA["flags"])/float(DATA["flags"].size)
         #print fFlagged
         if fFlagged>0.9:
@@ -433,7 +435,35 @@ class ClassVisServer():
 
 
 
+    def giveDataSizeAntenna(self):
+        t=table(self.MS.MSName)
+        uvw=t.getcol("UVW")
+        flags=t.getcol("FLAG")
+        A0,A1=t.getcol("ANTENNA1"),t.getcol("ANTENNA2")
+        t.close()
+        NVisPerAnt=np.zeros(self.MS.na,np.float64)
+        Field="UVRangeKm"
+        self.fracNVisPerAnt=np.ones_like(NVisPerAnt)
+        if self.DicoSelectOptions[Field] is not None:
+            d0,d1=self.DicoSelectOptions[Field]
+            
+            d0*=1e3
+            d1*=1e3
+            u,v,w=uvw.T
+            duv=np.sqrt(u**2+v**2)
+            #ind=np.where((duv<d0)|(duv>d1))[0]
+            ind=np.where((duv>d0)&(duv<d1))[0]
+            
+            flags=flags[ind]
+            A0=A0[ind]
+            A1=A1[ind]
+            uvw=uvw[ind]
 
+            for iAnt in range(self.MS.na):
+                NVisPerAnt[iAnt]=np.where((A0==iAnt)|(A1==iAnt))[0].size
+
+            self.fracNVisPerAnt=NVisPerAnt/np.max(NVisPerAnt)
+            print>>log,"Fraction of data per antenna for covariance estimate: %s"%str(self.fracNVisPerAnt.tolist())
 
     def LoadNextVisChunk(self):
         if self.CurrentMemTimeChunk==self.NTChunk:

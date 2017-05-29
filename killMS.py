@@ -590,6 +590,13 @@ def main(OP=None,MSName=None):
                          FreqDomains=VS.SolsFreqDomains,
                          BeamTimes=VS.BeamTimes)
 
+                # RA,DEC=ClusterCat.ra,ClusterCat.dec
+                # from killMS2.Other.rad2hmsdms import rad2hmsdms
+                # for i in range(RA.size): 
+                #     ra,dec=RA[i],DEC[i]
+                #     print rad2hmsdms(ra,Type="ra").replace(" ",":"),rad2hmsdms(dec,Type="dec").replace(" ",".")
+
+
         else:
             DicoLoad=np.load(options.ExtSols)
             Sols=DicoLoad["Sols"]

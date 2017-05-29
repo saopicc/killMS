@@ -232,7 +232,9 @@ class ClassPredict():
 
         rmsAllAnts=rmsAllAnts[rmsAllAnts>0.]
         
-
+        if len(rmsAllAnts)==0:
+            W.fill(1)
+            return
         rms=np.min(rmsAllAnts)
         #print rmsAllAnts,rms
         S=Sigma[:,:,:,0]

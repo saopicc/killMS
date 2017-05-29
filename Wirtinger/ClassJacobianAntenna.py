@@ -375,7 +375,7 @@ class ClassJacobianAntenna():
         Ga=self.GiveSubVecGainAnt(Gains).copy()
 
         self.CalcJacobianAntenna(Gains)
-        self.PrepareJHJ_LM()
+        #self.PrepareJHJ_LM()
         zp=self.J_x(Ga)#self.DicoData["data_flat"]#
         DicoData=self.DicoData
 
