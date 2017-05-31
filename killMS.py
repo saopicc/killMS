@@ -185,6 +185,7 @@ def read_options():
     OP.add_option('InitLMdt',type="float",help='Time interval in minutes. Default is %default')
     OP.add_option('CovP',type="float",help='Initial prior Covariance in fraction of the initial gain amplitude. Default is %default') 
     OP.add_option('CovQ',type="float",help='Intrinsic process Covariance in fraction of the initial gain amplitude. Default is %default') 
+    OP.add_option('PowerSmooth',type="float",help='When an antenna has missing baselines (like when using UVcuts) underweight its Q matrix. Default is %default') 
     OP.add_option('evPStep',type="int",help='Start calculation evP every evP_Step after that step. Default is %default')
     OP.add_option('evPStepStart',type="int",help='Calcule (I-KJ) matrix every evP_Step steps. Default is %default')
     

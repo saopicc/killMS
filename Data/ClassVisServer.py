@@ -444,6 +444,7 @@ class ClassVisServer():
         NVisPerAnt=np.zeros(self.MS.na,np.float64)
         Field="UVRangeKm"
         self.fracNVisPerAnt=np.ones_like(NVisPerAnt)
+        NVis=flags[flags==0].size
         if self.DicoSelectOptions[Field] is not None:
             d0,d1=self.DicoSelectOptions[Field]
             
@@ -464,6 +465,10 @@ class ClassVisServer():
 
             self.fracNVisPerAnt=NVisPerAnt/np.max(NVisPerAnt)
             print>>log,"Fraction of data per antenna for covariance estimate: %s"%str(self.fracNVisPerAnt.tolist())
+
+            NVisSel=flags[flags==0].size
+            print>>log,"Total fraction of remaining data after uv-cut: %5.2f %%"%(100*NVisSel/float(NVis))
+
 
     def LoadNextVisChunk(self):
         if self.CurrentMemTimeChunk==self.NTChunk:
