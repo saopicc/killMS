@@ -157,7 +157,7 @@ def read_options():
 
     OP.OptionGroup("* Solution-related options","Solutions")
     OP.add_option('ExtSols',type="str",help='External solution file. If set, will not solve.')
-    #OP.add_option('ApplyMode',type="str",help='Substact selected sources. ')
+    OP.add_option('ApplyMode',type="str",help='Substact selected sources. ')
     OP.add_option('ClipMethod',type="str",help='Clip data in the IMAGING_WEIGHT column. Can be set to Resid, DDEResid or ResidAnt . Default is %default')
     OP.add_option('OutSolsName',type="str",help='If specified will save the estimated solutions in this file. Default is %default')
     OP.add_option('ApplyCal',type="int",help='Apply direction averaged gains to residual data in the mentioned direction. \
@@ -616,11 +616,6 @@ def main(OP=None,MSName=None):
             G=np.swapaxes(Sols.G,1,3).reshape((nt,nd,na,nch,2,2))
             G=np.require(G, dtype=np.complex64, requirements="C")
 
-            # if not("A" in options.ApplyMode):
-            #     gabs=np.abs(G)
-            #     gabs[gabs==0]=1.
-            #     G/=gabs
-
 
             Jones["Jones"]=G
             Jones["JonesH"]=ModLinAlg.BatchH(Jones["Jones"])
@@ -762,6 +757,15 @@ def main(OP=None,MSName=None):
 
             if DoApplyCal:
                 print>>log, ModColor.Str("Apply calibration in direction: %i"%options.ApplyCal,col="green")
+                G=JonesMerged["Jones"]
+                GH=JonesMerged["JonesH"]
+                if not("A" in options.ApplyMode):
+                    gabs=np.abs(G)
+                    gabs[gabs==0]=1.
+                    G/=gabs
+                    GH/=gabs
+
+
                 PM.ApplyCal(Solver.VS.ThisDataChunk,JonesMerged,options.ApplyCal)
 
             Solver.VS.MS.data=Solver.VS.ThisDataChunk["data"]
