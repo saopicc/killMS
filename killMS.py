@@ -117,6 +117,8 @@ def read_options():
     OP.add_option('MaskImage')
     OP.add_option('NodesFile')
     OP.add_option('MaxFacetSize')
+    OP.add_option('RemoveDDFCache')
+
 
     OP.OptionGroup("* Data Selection","DataSelection")
     OP.add_option('UVMinMax',help='Baseline length selection in km. For example UVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default')
@@ -782,9 +784,10 @@ def main(OP=None,MSName=None):
         APP.terminate()
         APP.shutdown()
         del(APP)
-        NpShared.DelAll(IdSharedMem)
         Multiprocessing.cleanupShm()
-    
+
+    NpShared.DelAll(IdSharedMem)
+
 def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2,ConfigJacobianAntenna,GD):
     print>>log, ModColor.Str("Initialising Kalman filter with Levenberg-Maquardt estimate")
     dtInit=float(options.InitLMdt)
@@ -960,6 +963,8 @@ if __name__=="__main__":
                 ss="killMS.py %s --MSName=%s"%(BaseParset,MSName)
                 print>>log,"Running %s"%ss
                 os.system(ss)
+                if options.RemoveDDFCache:
+                    os.system("rm -rf %s*ddfcache"%MSName)
         else:
             main(OP=OP,MSName=MSName)
     except:
