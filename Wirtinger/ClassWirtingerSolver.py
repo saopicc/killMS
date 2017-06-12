@@ -849,7 +849,7 @@ class ClassWirtingerSolver():
                 # Reset Data
                 NpShared.DelAll("%sDicoData"%self.IdSharedMem)
                 for LMIter in range(NIter):
-                    print LMIter
+                    
                     ThisG[:]=self.G[:]
                     if self.SolverType=="KAFCA":
                         ThisP[:]=self.P[:]

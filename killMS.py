@@ -118,6 +118,7 @@ def read_options():
     OP.add_option('NodesFile')
     OP.add_option('MaxFacetSize')
     OP.add_option('MinFacetSize')
+    OP.add_option('RemoveDDFCache')
 
     OP.OptionGroup("* Data Selection","DataSelection")
     OP.add_option('UVMinMax',help='Baseline length selection in km. For example UVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default')
@@ -158,7 +159,7 @@ def read_options():
 
     OP.OptionGroup("* Solution-related options","Solutions")
     OP.add_option('ExtSols',type="str",help='External solution file. If set, will not solve.')
-    #OP.add_option('ApplyMode',type="str",help='Substact selected sources. ')
+    OP.add_option('ApplyMode',type="str",help='Substact selected sources. ')
     OP.add_option('ClipMethod',type="str",help='Clip data in the IMAGING_WEIGHT column. Can be set to Resid, DDEResid or ResidAnt . Default is %default')
     OP.add_option('OutSolsName',type="str",help='If specified will save the estimated solutions in this file. Default is %default')
     OP.add_option('ApplyCal',type="int",help='Apply direction averaged gains to residual data in the mentioned direction. \
@@ -619,11 +620,6 @@ def main(OP=None,MSName=None):
             G=np.swapaxes(Sols.G,1,3).reshape((nt,nd,na,nch,2,2))
             G=np.require(G, dtype=np.complex64, requirements="C")
 
-            # if not("A" in options.ApplyMode):
-            #     gabs=np.abs(G)
-            #     gabs[gabs==0]=1.
-            #     G/=gabs
-
 
             Jones["Jones"]=G
             Jones["JonesH"]=ModLinAlg.BatchH(Jones["Jones"])
@@ -765,6 +761,15 @@ def main(OP=None,MSName=None):
 
             if DoApplyCal:
                 print>>log, ModColor.Str("Apply calibration in direction: %i"%options.ApplyCal,col="green")
+                G=JonesMerged["Jones"]
+                GH=JonesMerged["JonesH"]
+                if not("A" in options.ApplyMode):
+                    gabs=np.abs(G)
+                    gabs[gabs==0]=1.
+                    G/=gabs
+                    GH/=gabs
+
+
                 PM.ApplyCal(Solver.VS.ThisDataChunk,JonesMerged,options.ApplyCal)
 
             Solver.VS.MS.data=Solver.VS.ThisDataChunk["data"]
@@ -785,9 +790,10 @@ def main(OP=None,MSName=None):
         APP.terminate()
         APP.shutdown()
         del(APP)
-        NpShared.DelAll(IdSharedMem)
         Multiprocessing.cleanupShm()
-    
+
+    NpShared.DelAll(IdSharedMem)
+
 def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2,ConfigJacobianAntenna,GD):
     print>>log, ModColor.Str("Initialising Kalman filter with Levenberg-Maquardt estimate")
     dtInit=float(options.InitLMdt)
@@ -963,6 +969,8 @@ if __name__=="__main__":
                 ss="killMS.py %s --MSName=%s"%(BaseParset,MSName)
                 print>>log,"Running %s"%ss
                 os.system(ss)
+                if options.RemoveDDFCache:
+                    os.system("rm -rf %s*ddfcache"%MSName)
         else:
             main(OP=OP,MSName=MSName)
     except:
