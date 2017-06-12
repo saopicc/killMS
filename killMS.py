@@ -117,6 +117,7 @@ def read_options():
     OP.add_option('MaskImage')
     OP.add_option('NodesFile')
     OP.add_option('MaxFacetSize')
+    OP.add_option('MinFacetSize')
 
     OP.OptionGroup("* Data Selection","DataSelection")
     OP.add_option('UVMinMax',help='Baseline length selection in km. For example UVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default')
@@ -314,6 +315,8 @@ def main(OP=None,MSName=None):
         #GDPredict["Caching"]["ResetCache"]=1
         if options.MaxFacetSize:
             GDPredict["Facets"]["DiamMax"]=options.MaxFacetSize
+        if options.MinFacetSize:
+            GDPredict["Facets"]["DiamMin"]=options.MinFacetSize
 
         if options.Decorrelation is not None and options.Decorrelation is not "":
             print>>log,ModColor.Str("Overwriting DDF parset decorrelation mode [%s] with kMS option [%s]"\
