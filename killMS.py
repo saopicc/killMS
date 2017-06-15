@@ -297,8 +297,10 @@ def main(OP=None,MSName=None):
         #     ParsetName="%s.parset"%BaseImageName
         # print>>log,"Predict Mode: Image, with Parset: %s"%ParsetName
         # GDPredict=ReadCFG.Parset(ParsetName).DicoPars
-        
-        FileDicoModel="%s.DicoModel"%BaseImageName
+        if options.DicoModel!="":
+            FileDicoModel=options.DicoModel
+        else:
+            FileDicoModel="%s.DicoModel"%BaseImageName
         GDPredict=DDFacet.Other.MyPickle.Load(FileDicoModel)["GD"]
         GDPredict["Data"]["MS"]=options.MSName
 
