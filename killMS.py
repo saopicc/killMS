@@ -118,6 +118,7 @@ def read_options():
     OP.add_option('NodesFile')
     OP.add_option('MaxFacetSize')
     OP.add_option('MinFacetSize')
+    OP.add_option('DDFCacheDir')
     OP.add_option('RemoveDDFCache')
 
     OP.OptionGroup("* Data Selection","DataSelection")
@@ -305,6 +306,8 @@ def main(OP=None,MSName=None):
             FileDicoModel="%s.DicoModel"%BaseImageName
         GDPredict=DDFacet.Other.MyPickle.Load(FileDicoModel)["GD"]
         GDPredict["Data"]["MS"]=options.MSName
+        if options.DDFCacheDir!='':
+            GDPredict["Cache"]["Dir"]=options.DDFCacheDir
 
         if not("PSFFacets" in GDPredict["RIME"].keys()):
                GDPredict["RIME"]["PSFFacets"]=0
