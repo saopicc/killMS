@@ -118,6 +118,7 @@ def read_options():
     OP.add_option('NodesFile')
     OP.add_option('MaxFacetSize')
     OP.add_option('MinFacetSize')
+    OP.add_option('DDFCacheDir')
     OP.add_option('RemoveDDFCache')
 
     OP.OptionGroup("* Data Selection","DataSelection")
@@ -300,10 +301,14 @@ def main(OP=None,MSName=None):
         #     ParsetName="%s.parset"%BaseImageName
         # print>>log,"Predict Mode: Image, with Parset: %s"%ParsetName
         # GDPredict=ReadCFG.Parset(ParsetName).DicoPars
-        
-        FileDicoModel="%s.DicoModel"%BaseImageName
+        if options.DicoModel!="":
+            FileDicoModel=options.DicoModel
+        else:
+            FileDicoModel="%s.DicoModel"%BaseImageName
         GDPredict=DDFacet.Other.MyPickle.Load(FileDicoModel)["GD"]
         GDPredict["Data"]["MS"]=options.MSName
+        if options.DDFCacheDir!='':
+            GDPredict["Cache"]["Dir"]=options.DDFCacheDir
 
         if not("PSFFacets" in GDPredict["RIME"].keys()):
                GDPredict["RIME"]["PSFFacets"]=0
