@@ -35,13 +35,10 @@ MakeMask.py -h
 
 in a file .txt (here mslist.txt), put the path to your MSs, for example
 
-RotatedData/1098800328.ms
-RotatedData/1098800928.ms
-RotatedData/1098801528.ms
-RotatedData/1098802128.ms
-RotatedData/1098802728.ms
-RotatedData/1098803328.ms
-RotatedData/1098803928.ms
+/data/tasse/BootesObs/L374583/L374583_SB244_uv.dppp.pre-cal_127080C79t_121MHz.pre-cal.ms
+/data/tasse/BootesObs/L374583/L374583_SB254_uv.dppp.pre-cal_127080C79t_123MHz.pre-cal.ms
+/data/tasse/BootesObs/L374583/L374583_SB264_uv.dppp.pre-cal_127080C79t_125MHz.pre-cal.ms
+/data/tasse/BootesObs/L374583/L374583_SB274_uv.dppp.pre-cal_127080C79t_127MHz.pre-cal.ms
 
 *** Strategy
 
@@ -63,7 +60,7 @@ MakeModel.py --BaseImageName image_DI --NCluster 10
 
 *** From the model, calibrate all ms:
 
-killMS.py --MSName mslist.txt --SolverType KAFCA --PolMode Scalar --BaseImageName image_DI --dt 1 --NCPU 40 --OutSolsName testKAFCA --NChanSols 1 --InCol DATA --OutCol DATA --Weighting Natural --NodesFile image_DI.npy.ClusterCat.npy --MaxFacetSize 4
+killMS.py --MSName mslist.txt --SolverType KAFCA --PolMode Scalar --BaseImageName image_DI --dt 1 --NCPU 40 --OutSolsName testKAFCA --NChanSols 1 --InCol DATA --OutCol DATA --Weighting Natural --NodesFile image_DI.npy.ClusterCat.npy --MaxFacetSize 1.5
 
 --> creates solution files inside each <MS>/killMS.testKAFCA.sols.npz
 
