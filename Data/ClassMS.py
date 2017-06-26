@@ -10,7 +10,7 @@ import ephem
 from killMS2.Other import MyLogger
 log=MyLogger.getLogger("ClassMS")
 from killMS2.Other import ClassTimeIt
-from DDFacet.Other.progressbar import ProgressBar
+from killMS2.Other.progressbar import ProgressBar
 
 class ClassMS():
     def __init__(self,MSname,Col="DATA",zero_flag=True,ReOrder=False,EqualizeFlag=False,DoPrint=True,DoReadData=True,
@@ -141,7 +141,7 @@ class ClassMS():
         #     self.PutLOFARKeys()
         # t.close()
                
-        import lofar.stationresponse as lsr
+        from lofar.stationresponse import stationresponse
         # f=self.ChanFreq.flatten()
         # if f.shape[0]>1:
         #     t=table(self.MSName+"/SPECTRAL_WINDOW/",ack=False)
@@ -150,7 +150,7 @@ class ClassMS():
         #     t.putcol("CHAN_WIDTH",c)
         #     t.close()
 
-        self.SR = lsr.stationresponse(self.MSName,
+        self.SR = stationresponse(self.MSName,
                                       useElementResponse=useElementBeam,
                                       #useElementBeam=useElementBeam,
                                       useArrayFactor=useArrayFactor)#,useChanFreq=True)
@@ -908,7 +908,7 @@ class ClassMS():
                 t.putcol(Colout,t.getcol(Colin,row0,NRow),row0,NRow)
         t.close()
 
-    def AddCol(self,ColName,LikeCol="DATA",ColDesc=None):
+    def AddCol(self,ColName,LikeCol="DATA",ColDesc=None,ColDescDict=None):
         t=table(self.MSName,readonly=False,ack=False)
         if (ColName in t.colnames()):
             print>>log, "  Column %s already in %s"%(ColName,self.MSName)
@@ -919,15 +919,19 @@ class ClassMS():
             desc=t.getcoldesc(LikeCol)
             desc["name"]=ColName
             desc['comment']=desc['comment'].replace(" ","_")
+        # elif ColDescDict:
+        #     desc=ColDescDict
+        #     desc'shape': np.array([self.Nchan], dtype=int32)
         elif ColDesc=="IMAGING_WEIGHT":
             desc={'_c_order': True,
                   'comment': '',
+                  "name": ColName,
                   'dataManagerGroup': 'imagingweight',
                   'dataManagerType': 'TiledShapeStMan',
                   'maxlen': 0,
                   'ndim': 1,
                   'option': 4,
-                  'shape': array([self.Nchan], dtype=int32),
+                  'shape': np.array([self.Nchan], dtype=np.int32),
                   'valueType': 'float'}
         else:
             print "Not supported"

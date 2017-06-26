@@ -60,8 +60,8 @@ def main(options=None):
     CS=ClassSimul(ll[0],SMName)
     Sols=CS.GiveSols()
     for l in ll:
-        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
-        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
+        # CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
+        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
         CS.DoSimul()
 
 class ClassSimul():
@@ -204,16 +204,13 @@ class ClassSimul():
         # make scalar
         Sols.G[:,:,:,:,1,1]=Sols.G[:,:,:,:,0,0]
 
-        # # unity
-        # Sols.G.fill(0)
-        # Sols.G[:,:,:,:,0,0]=1.
-        # Sols.G[:,:,:,:,1,1]=1.
-
+        # unity
+        Sols.G.fill(0)
+        Sols.G[:,:,:,:,0,0]=1.
+        Sols.G[:,:,:,:,1,1]=1.
 
         # # Sols.G[:,:,:,1:,0,0]=0.01
         # # Sols.G[:,:,:,1:,1,1]=0.01
-
-
 
         return Sols
 
@@ -373,7 +370,7 @@ class ClassSimul():
 
     def DoSimul(self):
     
-        Noise=.0
+        Noise=.01
         MS=self.MS
         SM=self.SM
         VS=self.VS
@@ -398,8 +395,7 @@ class ClassSimul():
 
 
         PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones,Noise=Noise)
-        #PredictData=PM5.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones)
-
+        # PredictData=PM5.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones)
 
         # import pylab
         # ind=np.where((VS.ThisDataChunk["A0"]==7)&(VS.ThisDataChunk["A1"]==17))[0]
@@ -416,7 +412,6 @@ class ClassSimul():
         # pylab.plot(op1(PredictData[ind,0,0])-op1(PredictData5[ind,0,0]))
         # pylab.draw()
         # pylab.show(False)
-
         # stop
         # #PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM)
         
@@ -434,8 +429,8 @@ class ClassSimul():
         # t=table(self.MSName,readonly=False)
         # f=t.getcol("FLAG")
         # f.fill(0)
-        # # r=np.random.rand(*(f.shape[0:2]))
-        # # ff=(r>0.7)
+        # r=np.random.rand(*(f.shape[0:2]))
+        # ff=(r<0.3)
         # # indr,indf=np.where(ff)
         # # f[indr,indf,:]=True
         # # # MS.flag_all=f

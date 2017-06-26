@@ -31,6 +31,7 @@ class ClassVisServer():
                  AddNoiseJy=None,IdSharedMem="",
                  SM=None,NCPU=None,
                  Robust=2,Weighting="Natural",
+                 WeightUVMinMax=None, WTUV=1.0,
                  GD=None,GDImag=None):
 
         self.GD=GD
@@ -63,7 +64,8 @@ class ClassVisServer():
         self.dTimesVisMin=self.TVisSizeMin
         self.CurrentVisTimes_SinceStart_Sec=0.,0.
         self.iCurrentVisTime=0
-
+        self.WeightUVMinMax=WeightUVMinMax
+        self.WTUV=WTUV
         # self.LoadNextVisChunk()
 
         # self.TEST_TLIST=[]
@@ -177,7 +179,8 @@ class ClassVisServer():
         u,v,w=uvw.T
 
         freq=np.mean(self.MS.ChanFreq)
-        uvmax=np.max(np.sqrt(u**2+v**2))
+        uvdist=np.sqrt(u**2+v**2)
+        uvmax=np.max(uvdist)
         CellSizeRad=res=1./(uvmax*freq/3.e8)
         npix=(FOV*np.pi/180)/res
         
@@ -207,8 +210,19 @@ class ClassVisServer():
         VisWeights=WeightMachine.CalcWeights(uvw,VisWeights,flags,self.MS.ChanFreq,
                                              Robust=Robust,
                                              Weighting=self.Weighting)
+
+        if self.WeightUVMinMax is not None:
+            uvmin,uvmax=self.WeightUVMinMax
+            print >>log,'Giving full weight to data in range %f - %f km' % (uvmin, uvmax)
+            uvmin*=1000
+            uvmax*=1000
+            filter=(uvdist<uvmin) | (uvdist>uvmax)
+            print >>log,'Downweighting %i out of %i visibilities' % (np.sum(filter),len(uvdist))
+            VisWeights[filter]*=self.WTUV
+
         MeanW=np.mean(VisWeights[VisWeights!=0.])
         VisWeights/=MeanW
+        print >>log, 'Min weight is %f max is %f' % (np.min(VisWeights),np.max(VisWeights))
         #VisWeight[VisWeight==0.]=1.
         self.VisWeights=VisWeights
 
@@ -369,6 +383,8 @@ class ClassVisServer():
 
         #DATA["UVW_dt"]=self.MS.Give_dUVW_dt(times,A0,A1)
         
+        if DATA["flags"].size==0:
+            return "AllFlaggedThisTime"
         fFlagged=np.count_nonzero(DATA["flags"])/float(DATA["flags"].size)
         #print fFlagged
         if fFlagged>0.9:
@@ -419,6 +435,39 @@ class ClassVisServer():
 
 
 
+    def giveDataSizeAntenna(self):
+        t=table(self.MS.MSName)
+        uvw=t.getcol("UVW")
+        flags=t.getcol("FLAG")
+        A0,A1=t.getcol("ANTENNA1"),t.getcol("ANTENNA2")
+        t.close()
+        NVisPerAnt=np.zeros(self.MS.na,np.float64)
+        Field="UVRangeKm"
+        self.fracNVisPerAnt=np.ones_like(NVisPerAnt)
+        NVis=flags[flags==0].size
+        if self.DicoSelectOptions[Field] is not None:
+            d0,d1=self.DicoSelectOptions[Field]
+            
+            d0*=1e3
+            d1*=1e3
+            u,v,w=uvw.T
+            duv=np.sqrt(u**2+v**2)
+            #ind=np.where((duv<d0)|(duv>d1))[0]
+            ind=np.where((duv>d0)&(duv<d1))[0]
+            
+            flags=flags[ind]
+            A0=A0[ind]
+            A1=A1[ind]
+            uvw=uvw[ind]
+
+            for iAnt in range(self.MS.na):
+                NVisPerAnt[iAnt]=np.where((A0==iAnt)|(A1==iAnt))[0].size
+
+            self.fracNVisPerAnt=NVisPerAnt/np.max(NVisPerAnt)
+            print>>log,"Fraction of data per antenna for covariance estimate: %s"%str(self.fracNVisPerAnt.tolist())
+
+            NVisSel=flags[flags==0].size
+            print>>log,"Total fraction of remaining data after uv-cut: %5.2f %%"%(100*NVisSel/float(NVis))
 
 
     def LoadNextVisChunk(self):
@@ -490,7 +539,7 @@ class ClassVisServer():
 
         if self.SM.Type=="Image":
             u,v,w=uvw.T
-            wmax=self.GD["GDImage"]["ImagerCF"]["wmax"]
+            wmax=self.GD["GDImage"]["CF"]["wmax"]
             wmaxkm=wmax/1000.
             print>>log, "Flagging baselines with w > %f km"%(wmaxkm)
             C=299792458.

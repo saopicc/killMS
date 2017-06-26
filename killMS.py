@@ -80,7 +80,6 @@ Parset=ReadCFG.Parset("%s/killMS2/Parset/DefaultParset.cfg"%os.environ["KILLMS_D
 
 def read_options():
     D=Parset.DicoPars
-
     desc="""Questions and suggestions: cyril.tasse@obspm.fr"""
 
     OP=MyOptParse.MyOptParse(usage='Usage: %prog --MSName=somename.MS --SkyModel=SM.npy <options>',description=desc,
@@ -96,7 +95,8 @@ def read_options():
     #OP.add_option('PredictColName',type="str",help=' . Default is %default')
     OP.add_option('FreePredictColName',type="str",help=' . Default is %default')
     OP.add_option('FreePredictGainColName',type="str",help=' . Default is %default')
-
+    OP.add_option('Parallel',type="int",help=' . Default is %default')
+    
 
 
     OP.OptionGroup("* Sky catalog related options","SkyModel")
@@ -116,6 +116,9 @@ def read_options():
     OP.add_option('wmax')
     OP.add_option('MaskImage')
     OP.add_option('NodesFile')
+    OP.add_option('MaxFacetSize')
+    OP.add_option('MinFacetSize')
+    OP.add_option('RemoveDDFCache')
 
     OP.OptionGroup("* Data Selection","DataSelection")
     OP.add_option('UVMinMax',help='Baseline length selection in km. For example UVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default')
@@ -141,6 +144,8 @@ def read_options():
     OP.add_option('Resolution',type="float",help='Resolution in arcsec. Default is %default')
     OP.add_option('Weighting',type="str",help='Weighting scheme. Default is %default')
     OP.add_option('Robust',type="float",help='Briggs Robust parameter. Default is %default')
+    OP.add_option('WeightUVMinMax',help='Baseline length selection in km for full weight. For example WeightUVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default')
+    OP.add_option('WTUV',type="float",help='Scaling factor to apply to weights outside range of WeightUVMinMax. Default is %default')
     
     OP.OptionGroup("* Action options","Actions")
     OP.add_option('DoPlot',type="int",help='Plot the solutions, for debugging. Default is %default')
@@ -154,8 +159,8 @@ def read_options():
 
     OP.OptionGroup("* Solution-related options","Solutions")
     OP.add_option('ExtSols',type="str",help='External solution file. If set, will not solve.')
-    #OP.add_option('ApplyMode',type="str",help='Substact selected sources. ')
-    OP.add_option('ClipMethod',type="str",help='Clip data in the IMAGING_WEIGHT column. Can be set to Resid or DDEResid . Default is %default')
+    OP.add_option('ApplyMode',type="str",help='Substact selected sources. ')
+    OP.add_option('ClipMethod',type="str",help='Clip data in the IMAGING_WEIGHT column. Can be set to Resid, DDEResid or ResidAnt . Default is %default')
     OP.add_option('OutSolsName',type="str",help='If specified will save the estimated solutions in this file. Default is %default')
     OP.add_option('ApplyCal',type="int",help='Apply direction averaged gains to residual data in the mentioned direction. \
     If ApplyCal=-1 takes the mean gain over directions. -2 if off. Default is %default')
@@ -182,6 +187,7 @@ def read_options():
     OP.add_option('InitLMdt',type="float",help='Time interval in minutes. Default is %default')
     OP.add_option('CovP',type="float",help='Initial prior Covariance in fraction of the initial gain amplitude. Default is %default') 
     OP.add_option('CovQ',type="float",help='Intrinsic process Covariance in fraction of the initial gain amplitude. Default is %default') 
+    OP.add_option('PowerSmooth',type="float",help='When an antenna has missing baselines (like when using UVcuts) underweight its Q matrix. Default is %default') 
     OP.add_option('evPStep',type="int",help='Start calculation evP every evP_Step after that step. Default is %default')
     OP.add_option('evPStepStart',type="int",help='Calcule (I-KJ) matrix every evP_Step steps. Default is %default')
     
@@ -260,6 +266,7 @@ def main(OP=None,MSName=None):
     WriteColName = options.OutCol
 
     DicoSelectOptions= {}
+    DicoSelectOptions["UVRangeKm"]=None
     if options.UVMinMax!=None:
         sUVmin,sUVmax=options.UVMinMax#.split(",")
         UVmin,UVmax=float(sUVmin),float(sUVmax)
@@ -276,9 +283,10 @@ def main(OP=None,MSName=None):
         #if not(FileName[-4::]==".npz"): FileName+=".npz"
         SolsName=options.OutSolsName
 
+
     ParsetName="%skillMS.%s.sols.parset"%(reformat.reformat(options.MSName),SolsName)
     OP.ToParset(ParsetName)
-    
+    APP=None
     GD=OP.DicoConfig
     if GD["ImageSkyModel"]["BaseImageName"]=="":
         print>>log,"Predict Mode: Catalog"
@@ -295,25 +303,29 @@ def main(OP=None,MSName=None):
         
         FileDicoModel="%s.DicoModel"%BaseImageName
         GDPredict=DDFacet.Other.MyPickle.Load(FileDicoModel)["GD"]
-        GDPredict["VisData"]["MSName"]=options.MSName
+        GDPredict["Data"]["MS"]=options.MSName
 
-        if not("PSFFacets" in GDPredict["ImagerGlobal"].keys()):
-               GDPredict["ImagerGlobal"]["PSFFacets"]=0
-               GDPredict["ImagerGlobal"]["PSFOversize"]=1
+        if not("PSFFacets" in GDPredict["RIME"].keys()):
+               GDPredict["RIME"]["PSFFacets"]=0
+               GDPredict["RIME"]["PSFOversize"]=1
 
-        GDPredict["Beam"]["NChanBeamPerMS"]=options.NChanBeamPerMS
-        GDPredict["MultiFreqs"]["NChanDegridPerMS"]=options.NChanSols
+        GDPredict["Beam"]["NBand"]=options.NChanBeamPerMS
+        GDPredict["Freq"]["NDegridBand"]=options.NChanSols
         #GDPredict["Compression"]["CompDeGridMode"]=False
         #GDPredict["Compression"]["CompDeGridMode"]=True
-        GDPredict["ImagerGlobal"]["DeGriderType"]="Classic"
+        GDPredict["RIME"]["ForwardMode"]="Classic"
         #GDPredict["Caching"]["ResetCache"]=1
+        if options.MaxFacetSize:
+            GDPredict["Facets"]["DiamMax"]=options.MaxFacetSize
+        if options.MinFacetSize:
+            GDPredict["Facets"]["DiamMin"]=options.MinFacetSize
 
         if options.Decorrelation is not None and options.Decorrelation is not "":
             print>>log,ModColor.Str("Overwriting DDF parset decorrelation mode [%s] with kMS option [%s]"\
-                                    %(GDPredict["DDESolutions"]["DecorrMode"],options.Decorrelation))
-            GDPredict["DDESolutions"]["DecorrMode"]=options.Decorrelation
+                                    %(GDPredict["RIME"]["DecorrMode"],options.Decorrelation))
+            GDPredict["RIME"]["DecorrMode"]=options.Decorrelation
         else:
-            GD["SkyModel"]["Decorrelation"]=DoSmearing=options.Decorrelation=GDPredict["DDESolutions"]["DecorrMode"]
+            GD["SkyModel"]["Decorrelation"]=DoSmearing=options.Decorrelation=GDPredict["RIME"]["DecorrMode"]
             print>>log,ModColor.Str("Decorrelation mode will be [%s]" % DoSmearing)
 
         # if options.Decorrelation != GDPredict["DDESolutions"]["DecorrMode"]:
@@ -322,24 +334,31 @@ def main(OP=None,MSName=None):
         # GDPredict["DDESolutions"]["DecorrMode"]=options.Decorrelation
         
         if options.OverS is not None:
-            GDPredict["ImagerCF"]["OverS"]=options.OverS
+            GDPredict["CF"]["OverS"]=options.OverS
         if options.wmax is not None:
-            GDPredict["ImagerCF"]["wmax"]=options.wmax
+            GDPredict["CF"]["wmax"]=options.wmax
 
         GD["GDImage"]=GDPredict
         GDPredict["GDkMS"]=GD
+
+        from DDFacet.Other import AsyncProcessPool
+        from DDFacet.Other import Multiprocessing
+        AsyncProcessPool._init_default()
+        APP=AsyncProcessPool.APP
+        AsyncProcessPool.init(ncpu=NCPU, affinity=GDPredict["Parallel"]["Affinity"],
+                              verbose=GDPredict["Debug"]["APPVerbose"])
         VS_DDFacet=ClassVisServer_DDF.ClassVisServer(options.MSName,
-                                                     ColName=GDPredict["VisData"]["ColName"],
-                                                     TVisSizeMin=GDPredict["VisData"]["ChunkHours"]*60,
+                                                     ColName=GDPredict["Data"]["ColName"],
+                                                     #TVisSizeMin=GDPredict["Data"]["ChunkHours"]*60,
                                                      #DicoSelectOptions=DicoSelectOptions,
-                                                     TChunkSize=GDPredict["VisData"]["ChunkHours"],
-                                                     IdSharedMem=IdSharedMem,
-                                                     Robust=GDPredict["ImagerGlobal"]["Robust"],
-                                                     Weighting=GDPredict["ImagerGlobal"]["Weighting"],
-                                                     MFSWeighting=GDPredict["ImagerGlobal"]["MFSWeighting"],
-                                                     Super=GDPredict["ImagerGlobal"]["Super"],
-                                                     DicoSelectOptions=dict(GDPredict["DataSelection"]),
-                                                     NCPU=GDPredict["Parallel"]["NCPU"],
+                                                     TChunkSize=GDPredict["Data"]["ChunkHours"],
+                                                     #IdSharedMem=IdSharedMem,
+                                                     #Robust=GDPredict["Weight"]["Robust"],
+                                                     #Weighting=GDPredict["Weight"]["Type"],
+                                                     #MFSWeighting=GDPredict["Weight"]["MFSWeighting"],
+                                                     #Super=GDPredict["Weight"]["Super"],
+                                                     #DicoSelectOptions=dict(GDPredict["Selection"]),
+                                                     #NCPU=GDPredict["Parallel"]["NCPU"],
                                                      GD=GDPredict)
 
 
@@ -351,6 +370,8 @@ def main(OP=None,MSName=None):
                                      NCPU=NCPU,
                                      Weighting=options.Weighting,
                                      Robust=options.Robust,
+                                     WeightUVMinMax=options.WeightUVMinMax,
+                                     WTUV=options.WTUV,
                                      GD=GD)
 
     print VS.MS
@@ -373,7 +394,7 @@ def main(OP=None,MSName=None):
         from killMS2.Predict import ClassImageSM2 as ClassImageSM
         #from killMS2.Predict import ClassImageSM3 as ClassImageSM
         
-        PreparePredict=ClassImageSM.ClassPreparePredict(BaseImageName,VS_DDFacet,GD=GDPredict,IdSharedMem=IdSharedMem)
+        PreparePredict=ClassImageSM.ClassPreparePredict(BaseImageName,VS_DDFacet,IdSharedMem,GD=GDPredict)#,IdSharedMem=IdSharedMem)
         SM=PreparePredict.SM
         #VS.setGridProps(PreparePredict.FacetMachine.Cell,PreparePredict.FacetMachine.NpixPaddedFacet)
         VS.setGridProps(PreparePredict.FacetMachine.Cell,None)#PreparePredict.FacetMachine.NpixPaddedFacet)
@@ -483,9 +504,12 @@ def main(OP=None,MSName=None):
         if options.ExtSols=="":
             SaveSols=True
             if options.SubOnly==0:
-                Solver.doNextTimeSolve_Parallel()
-                #Solver.doNextTimeSolve_Parallel(SkipMode=True)
-                #Solver.doNextTimeSolve()#SkipMode=True)
+                if options.Parallel:
+                    #Solver.doNextTimeSolve_Parallel(Parallel=True)
+                    Solver.doNextTimeSolve_Parallel(Parallel=True)
+                else:
+                    #Solver.doNextTimeSolve_Parallel(SkipMode=True)
+                    Solver.doNextTimeSolve()#SkipMode=True)
             else:
                 DoSubstract=1
 
@@ -573,6 +597,13 @@ def main(OP=None,MSName=None):
                          FreqDomains=VS.SolsFreqDomains,
                          BeamTimes=VS.BeamTimes)
 
+                # RA,DEC=ClusterCat.ra,ClusterCat.dec
+                # from killMS2.Other.rad2hmsdms import rad2hmsdms
+                # for i in range(RA.size): 
+                #     ra,dec=RA[i],DEC[i]
+                #     print rad2hmsdms(ra,Type="ra").replace(" ",":"),rad2hmsdms(dec,Type="dec").replace(" ",".")
+
+
         else:
             DicoLoad=np.load(options.ExtSols)
             Sols=DicoLoad["Sols"]
@@ -589,11 +620,6 @@ def main(OP=None,MSName=None):
             nt,nch,na,nd,_,_=Sols.G.shape
             G=np.swapaxes(Sols.G,1,3).reshape((nt,nd,na,nch,2,2))
             G=np.require(G, dtype=np.complex64, requirements="C")
-
-            # if not("A" in options.ApplyMode):
-            #     gabs=np.abs(G)
-            #     gabs[gabs==0]=1.
-            #     G/=gabs
 
 
             Jones["Jones"]=G
@@ -624,8 +650,7 @@ def main(OP=None,MSName=None):
             DomainMachine.AddVisToJonesMapping(JonesMerged,times,freqs)
             JonesMerged["JonesH"]=ModLinAlg.BatchH(JonesMerged["Jones"])
 
-
-            if ("Resid" in options.ClipMethod)|("DDEResid" in options.ClipMethod):
+            if ("Resid" in options.ClipMethod) or ("DDEResid" in options.ClipMethod):
                 print>>log, ModColor.Str("Clipping bad solution-based data ... ",col="green")
                 
 
@@ -678,8 +703,10 @@ def main(OP=None,MSName=None):
                 # Weights=Weights.reshape((Weights.size,1))*np.ones((1,4))
                 # Solver.VS.MS.Weights[:]=Weights[:]
 
-                print>>log, "  Writting in IMAGING_WEIGHT column "
+                print>>log, "  Writing in IMAGING_WEIGHT column "
+
                 VS.MS.AddCol("IMAGING_WEIGHT",ColDesc="IMAGING_WEIGHT")
+
                 t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
                 t.putcol("IMAGING_WEIGHT",VS.MS.ToOrigFreqOrder(Weights),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
@@ -695,7 +722,7 @@ def main(OP=None,MSName=None):
 
                 Weights=Solver.VS.ThisDataChunk["W"]
                 Weights/=np.mean(Weights)
-                print>>log, "  Writting in IMAGING_WEIGHT column "
+                print>>log, "  Writing in IMAGING_WEIGHT column "
                 VS.MS.AddCol("IMAGING_WEIGHT",ColDesc="IMAGING_WEIGHT")
                 t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
                 t.putcol("IMAGING_WEIGHT",VS.MS.ToOrigFreqOrder(Weights),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
@@ -735,6 +762,15 @@ def main(OP=None,MSName=None):
 
             if DoApplyCal:
                 print>>log, ModColor.Str("Apply calibration in direction: %i"%options.ApplyCal,col="green")
+                G=JonesMerged["Jones"]
+                GH=JonesMerged["JonesH"]
+                if not("A" in options.ApplyMode):
+                    gabs=np.abs(G)
+                    gabs[gabs==0]=1.
+                    G/=gabs
+                    GH/=gabs
+
+
                 PM.ApplyCal(Solver.VS.ThisDataChunk,JonesMerged,options.ApplyCal)
 
             Solver.VS.MS.data=Solver.VS.ThisDataChunk["data"]
@@ -751,10 +787,14 @@ def main(OP=None,MSName=None):
                 
 
 
+    if APP is not None:
+        APP.terminate()
+        APP.shutdown()
+        del(APP)
+        Multiprocessing.cleanupShm()
 
     NpShared.DelAll(IdSharedMem)
 
-    
 def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2,ConfigJacobianAntenna,GD):
     print>>log, ModColor.Str("Initialising Kalman filter with Levenberg-Maquardt estimate")
     dtInit=float(options.InitLMdt)
@@ -893,13 +933,7 @@ if __name__=="__main__":
     import glob
     MSName=options.MSName
 
-    if type(MSName)==list:
-        lMS=MSName
-        print>>log, "In batch mode, running killMS on the following MS:"
-        for MS in lMS:
-            print>>log, "  %s"%MS
-        
-    elif ".txt" in MSName:
+    if ".txt" in MSName:
         f=open(MSName)
         Ls=f.readlines()
         f.close()
@@ -911,21 +945,21 @@ if __name__=="__main__":
         print>>log, "In batch mode, running killMS on the following MS:"
         for MS in lMS:
             print>>log, "  %s"%MS
-    elif "*" in options.MSName:
-        Patern=options.MSName
-        lMS=sorted(glob.glob(Patern))
-        print>>log, "In batch mode, running killMS on the following MS:"
-        for MS in lMS:
-            print>>log, "  %s"%MS
     else:
-        lMS=[options.MSName]
+        lMS=options.MSName
 
-    
- 
+    BaseParset="BatchCurrentParset.parset"
+    OP.ToParset(BaseParset)    
+    import os
     try:
-
-        #print MSName
-        for MSName in lMS:
+        if type(lMS)==list:
+            for MSName in lMS:
+                ss="killMS.py %s --MSName=%s"%(BaseParset,MSName)
+                print>>log,"Running %s"%ss
+                os.system(ss)
+                if options.RemoveDDFCache:
+                    os.system("rm -rf %s*ddfcache"%MSName)
+        else:
             main(OP=OP,MSName=MSName)
     except:
         NpShared.DelAll(IdSharedMem)
