@@ -283,6 +283,7 @@ def main(OP=None,MSName=None):
         #if not(FileName[-4::]==".npz"): FileName+=".npz"
         SolsName=options.OutSolsName
 
+
     ParsetName="%skillMS.%s.sols.parset"%(reformat.reformat(options.MSName),SolsName)
     OP.ToParset(ParsetName)
     APP=None
@@ -932,13 +933,7 @@ if __name__=="__main__":
     import glob
     MSName=options.MSName
 
-    if type(MSName)==list:
-        lMS=MSName
-        print>>log, "In batch mode, running killMS on the following MS:"
-        for MS in lMS:
-            print>>log, "  %s"%MS
-        
-    elif ".txt" in MSName:
+    if ".txt" in MSName:
         f=open(MSName)
         Ls=f.readlines()
         f.close()
@@ -950,21 +945,14 @@ if __name__=="__main__":
         print>>log, "In batch mode, running killMS on the following MS:"
         for MS in lMS:
             print>>log, "  %s"%MS
-    elif "*" in options.MSName:
-        Patern=options.MSName
-        lMS=sorted(glob.glob(Patern))
-        print>>log, "In batch mode, running killMS on the following MS:"
-        for MS in lMS:
-            print>>log, "  %s"%MS
     else:
-        lMS=[options.MSName]
+        lMS=options.MSName
 
     BaseParset="BatchCurrentParset.parset"
     OP.ToParset(BaseParset)    
     import os
     try:
-        if len(lMS)>1:
-            #print MSName
+        if type(lMS)==list:
             for MSName in lMS:
                 ss="killMS.py %s --MSName=%s"%(BaseParset,MSName)
                 print>>log,"Running %s"%ss
