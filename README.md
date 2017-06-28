@@ -1,3 +1,4 @@
+
 '''
 killMS, a package for calibration in radio interferometry.
 Copyright (C) 2013-2017  Cyril Tasse, l'Observatoire de Paris,
@@ -18,17 +19,25 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
 
-# Relevant papers
 
-https://arxiv.org/abs/1410.8706
+# Wirtinger DDE calibration
 
-https://arxiv.org/abs/1502.06974
+This package implements two algorigms for solving the Direction-Dependent calibration problem in radio interferometry. They are based on complex optimisation techniques. Fundational description of the Wirtinger Jacobian and properties as well as implemented algorithms are described in
 
-https://arxiv.org/abs/1403.6308
+Tasse 2014: https://arxiv.org/abs/1410.8706
+
+Smirnov & Tasse 2015: https://arxiv.org/abs/1502.06974
+
+The current status of the software and use cases (as well as connection with other softwares such as DDFacet) are summarised in
+
+http://www.astron.nl/lowfrequencyobserving2017/Documents/Wednesday/LFO2017_Tasse.pdf
+
+killMS also runs an extended Kalman filter that uses the Wirtinger (half) Jacobiab (to be published, a similar one is described in https://arxiv.org/abs/1403.6308)
+
+Preliminary documentation is given bellow.
 
 
-
-# KillMS
+# Installation KillMS
 
 To build from source:
 
