@@ -1,5 +1,5 @@
 '''
-DDFacet, a facet-based radio imaging package
+killMS, a complex-solver package for calibration in radio interferometry.
 Copyright (C) 2013-2017  Cyril Tasse, l'Observatoire de Paris,
 SKA South Africa, Rhodes University
 
@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
+
+
 
 
 
