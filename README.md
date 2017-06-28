@@ -1,3 +1,22 @@
+'''
+DDFacet, a facet-based radio imaging package
+Copyright (C) 2013-2017  Cyril Tasse, l'Observatoire de Paris,
+SKA South Africa, Rhodes University
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+'''
 
 
 
@@ -66,4 +85,4 @@ killMS.py --MSName mslist.txt --SolverType KAFCA --PolMode Scalar --BaseImageNam
 
 *** The image taking the DDE into account:
 
-DDF.py --Output-Name=image_DI --Data-MS mslist.txt --Deconv-PeakFactor 0.001000 --Data-ColName DATA --Parallel-NCPU=40 --Image-Mode=Clean --Deconv-CycleFactor=0 --Deconv-MaxMajorIter=3 --Deconv-Mode SSD --Weight-Robust -0.15 --Image-NPix=10000 --CF-wmax 100000 --CF-Nw 100 --Output-Also onNeds --Image-Cell 3 --Facets-NFacets=11 --SSDClean-NEnlargeData 0 --Freq-NDegridBand 1 --Beam-NBand 1 --Deconv-RMSFactor=3.000000 --Data-Sort 1 --Cache-Dir=. --Freq-NBand=2 --Mask-Auto=1 --Mask-SigTh=5.00 --Cache-Reset 0 --SSDClean-MinSizeInitHMP=10 --DDESolutions-DDSols testKAFCA --Predict-InitDicoModel image_DI.DicoModel --Facets-DiamMax 1.5 --Facets-DiamMin 0.1
+DDF.py --Output-Name=image_DD --Data-MS mslist.txt --Deconv-PeakFactor 0.001000 --Data-ColName DATA --Parallel-NCPU=40 --Image-Mode=Clean --Deconv-CycleFactor=0 --Deconv-MaxMajorIter=3 --Deconv-Mode SSD --Weight-Robust -0.15 --Image-NPix=10000 --CF-wmax 100000 --CF-Nw 100 --Output-Also onNeds --Image-Cell 3 --Facets-NFacets=11 --SSDClean-NEnlargeData 0 --Freq-NDegridBand 1 --Beam-NBand 1 --Deconv-RMSFactor=3.000000 --Data-Sort 1 --Cache-Dir=. --Freq-NBand=2 --Mask-Auto=1 --Mask-SigTh=5.00 --Cache-Reset 0 --SSDClean-MinSizeInitHMP=10 --DDESolutions-DDSols testKAFCA --Predict-InitDicoModel image_DI.DicoModel --Facets-DiamMax 1.5 --Facets-DiamMin 0.1
