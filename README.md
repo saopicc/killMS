@@ -18,7 +18,13 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
 
+# Relevant papers
 
+https://arxiv.org/abs/1410.8706
+
+https://arxiv.org/abs/1502.06974
+
+https://arxiv.org/abs/1403.6308
 
 
 
