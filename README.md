@@ -21,7 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # History
 
-The Direction Dependent calibration problem (also known as third generation calibration) naturally arises in the Radio Interferometry Measurement Equation (Hamaker et al. 1994), but only became problematic with the construction of the SKA precursors and pathfinder. Solving for the DDE calibration problems basically consists in inverting a number of non-linear equation, while often are subject to some degree of ill conditionning, while the size of the problem is big. killMS stupid name originates from the early LOFAR commissionning phases, when understanding the interferemetric data in a Measurement Set was a real challenge.
+The Direction Dependent calibration problem (also known as third generation calibration) naturally arises in the Radio Interferometry Measurement Equation (Hamaker et al. 1994), but only became overwhelmingly problematic with the construction of the SKA precursors and pathfinder. Solving for the DDE calibration problems basically consists in inverting a number of non-linear equation, while the system is often subject to ill conditionning, and its is very big. killMS stupid name originates from the early LOFAR commissionning phases, when understanding the interferemetric data in a Measurement Set was a real challenge.
 
 # Wirtinger DDE calibration
 
