@@ -21,7 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # History
 
-The Direction Dependent calibration problem (also known as third generation calibration) naturally arises in the Radio Interferometry Measurement Equation (Hamaker et al. 1994), but only became overwhelmingly problematic with the construction of the SKA precursors and pathfinder. Solving for the DDE calibration problems basically consists in inverting a number of non-linear equation, while the system is often subject to ill conditionning, and its is very big. killMS stupid name originates from the early LOFAR commissionning phases, when understanding the interferemetric data in a Measurement Set was a real challenge.
+The Direction Dependent calibration problem (also known as third generation calibration) naturally arises in the Radio Interferometry Measurement Equation (RIME, Hamaker et al. 1994), but only became overwhelmingly problematic with the construction of the SKA precursors and pathfinder. Solving for the DDE calibration problems basically consists in inverting a number of non-linear equation, while the system is often subject to ill conditionning, and its is very big. killMS stupid name originates from the early LOFAR commissionning phases, when understanding the interferemetric data in a Measurement Set was a real challenge.
 
 # Wirtinger DDE calibration
 
@@ -29,7 +29,7 @@ killMS implements two very effiscient algorithms for solving the Direction-Depen
 
 http://www.astron.nl/lowfrequencyobserving2017/Documents/Wednesday/LFO2017_Tasse.pdf
 
-The two algorithms (CohJones and Kafka) are based on complex optimisation techniques. The use the properties of the complex ("Wirtinger") Jacobian to exploit algorithmic shortcuts. The fundational description of the Wirtinger Jacobian and Hessians and properties as well as implemented algorithms are described in
+The two algorithms (CohJones and Kafka) are based on complex optimisation techniques. The use the properties of the complex ("Wirtinger") Jacobian to exploit algorithmic shortcuts. The fundational description of the Wirtinger Jacobian and Hessians for the RIME, as well as the related implemented algorithms are described in
 
 Tasse 2014: https://arxiv.org/abs/1410.8706
 
