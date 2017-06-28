@@ -1,5 +1,5 @@
 '''
-killMS, a complex-solver package for calibration in radio interferometry.
+killMS, a package for calibration in radio interferometry.
 Copyright (C) 2013-2017  Cyril Tasse, l'Observatoire de Paris,
 SKA South Africa, Rhodes University
 
