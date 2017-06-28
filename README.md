@@ -19,18 +19,21 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
 
+# History
+
+The Direction Dependent calibration problem (also known as third generation calibration) naturally arises in the Radio Interferometry Measurement Equation (Hamaker et al. 1994), but only became problematic with the construction of the SKA precursors and pathfinder. Solving for the DDE calibration problems basically consists in inverting a number of non-linear equation, while often are subject to some degree of ill conditionning, while the size of the problem is big. killMS stupid name originates from the early LOFAR commissionning phases, when understanding the interferemetric data in a Measurement Set was a real challenge.
 
 # Wirtinger DDE calibration
 
-This package implements two algorigms for solving the Direction-Dependent calibration problem in radio interferometry. They are based on complex optimisation techniques. Fundational description of the Wirtinger Jacobian and properties as well as implemented algorithms are described in
+killMS implements two very effiscient algorithms for solving the Direction-Dependent calibration problem. The current status of the software and use cases (as well as connection with other softwares such as DDFacet) are summarised in
+
+http://www.astron.nl/lowfrequencyobserving2017/Documents/Wednesday/LFO2017_Tasse.pdf
+
+The two algorithms (CohJones and Kafka) are based on complex optimisation techniques. The use the properties of the complex ("Wirtinger") Jacobian to exploit algorithmic shortcuts. The fundational description of the Wirtinger Jacobian and Hessians and properties as well as implemented algorithms are described in
 
 Tasse 2014: https://arxiv.org/abs/1410.8706
 
 Smirnov & Tasse 2015: https://arxiv.org/abs/1502.06974
-
-The current status of the software and use cases (as well as connection with other softwares such as DDFacet) are summarised in
-
-http://www.astron.nl/lowfrequencyobserving2017/Documents/Wednesday/LFO2017_Tasse.pdf
 
 killMS also runs an extended Kalman filter that uses the Wirtinger (half) Jacobiab (to be published, a similar one is described in https://arxiv.org/abs/1403.6308)
 
