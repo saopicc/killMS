@@ -1,22 +1,22 @@
 # What's this package about?
 
-The Direction Dependent calibration problem (also known as third generation calibration) naturally arises in the Radio Interferometry Measurement Equation (RIME, Hamaker et al. 1994), but only became overwhelmingly problematic with the construction of the SKA precursors and pathfinder. Solving for the DDE calibration problems basically consists in inverting a number of non-linear equation, while the system is (i) very large and (ii) often subject to ill conditionning. killMS's name originates from the early LOFAR commissionning phases, when understanding the interferemetric data in a Measurement Set was a real challenge.
+The Direction Dependent calibration problem (also known as third generation calibration) naturally arises in the Radio Interferometry Measurement Equation (RIME, Hamaker et al. 1994), but only became overwhelmingly problematic with the construction of the SKA precursors and pathfinders. Solving for the DDE calibration problems basically consists in inverting a number of non-linear equation, while the system is (i) very large and (ii) often subject to ill conditioning. killMS's name originates from the early LOFAR commissioning phases, when understanding the interferometric data in a Measurement Set was a real challenge.
 
 # Wirtinger DDE calibration
 
-killMS implements two very effiscient algorithms for solving the Direction-Dependent calibration problem. The current status of the software and use cases (as well as connection with other softwares such as DDFacet) are summarised in
+killMS implements two very efficient algorithms for solving the Direction-Dependent calibration problem. The current status of the software and use cases (as well as connection with other softwares such as DDFacet) are summarised in
 
 http://www.astron.nl/lowfrequencyobserving2017/Documents/Wednesday/LFO2017_Tasse.pdf
 
-The two algorithms (CohJones and Kafka) are based on complex optimisation techniques. They use the properties of the complex ("Wirtinger") Jacobian to exploit algorithmic shortcuts. The fundational description of the Wirtinger Jacobian and Hessians for the RIME, as well as the related implemented algorithms are described in
+The two algorithms (CohJones and Kafka) are based on complex optimisation techniques. They use the properties of the complex ("Wirtinger") Jacobian to exploit algorithmic shortcuts. The basics of the application of the Wirtinger Jacobian and Hessians to the RIME, as well as the related implemented algorithms are described in
 
 Tasse 2014: https://arxiv.org/abs/1410.8706
 
 Smirnov & Tasse 2015: https://arxiv.org/abs/1502.06974
 
-killMS also runs an extended Kalman filter that uses the Wirtinger (half) Jacobiab (to be published, a similar one is described in https://arxiv.org/abs/1403.6308)
+killMS also runs an extended Kalman filter that uses the Wirtinger (half) Jacobian (to be published, a similar approach is described in https://arxiv.org/abs/1403.6308)
 
-Preliminary documentation is given bellow.
+Preliminary documentation is given below.
 
 
 # Installation KillMS
@@ -28,7 +28,7 @@ cd Predict
 make
 cd ../Array/Dot
 make
-cd ../Gridder
+cd ../../Gridder
 make
 ```
 
