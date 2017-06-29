@@ -8,7 +8,7 @@ killMS implements two very effiscient algorithms for solving the Direction-Depen
 
 http://www.astron.nl/lowfrequencyobserving2017/Documents/Wednesday/LFO2017_Tasse.pdf
 
-The two algorithms (CohJones and Kafka) are based on complex optimisation techniques. The use the properties of the complex ("Wirtinger") Jacobian to exploit algorithmic shortcuts. The fundational description of the Wirtinger Jacobian and Hessians for the RIME, as well as the related implemented algorithms are described in
+The two algorithms (CohJones and Kafka) are based on complex optimisation techniques. They use the properties of the complex ("Wirtinger") Jacobian to exploit algorithmic shortcuts. The fundational description of the Wirtinger Jacobian and Hessians for the RIME, as well as the related implemented algorithms are described in
 
 Tasse 2014: https://arxiv.org/abs/1410.8706
 
