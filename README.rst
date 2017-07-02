@@ -1,6 +1,6 @@
 killMS
 ###################################
-A direction-dependent radio interferometric calibration pasckage
+A direction-dependent radio interferometric calibration package
 
 Copyright (C) 2013-2017  Cyril Tasse, l'Observatoire de Paris,
 SKA South Africa, Rhodes University
