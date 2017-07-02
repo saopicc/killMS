@@ -740,7 +740,8 @@ def main(OP=None,MSName=None):
                 PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones,SM,Mode="ResidAntCovariance")
 
                 Weights=Solver.VS.ThisDataChunk["W"]
-                #Weights/=np.mean(Weights)
+                Weights/=np.mean(Weights)
+                
                 print>>log, "  Writing in IMAGING_WEIGHT column "
                 VS.MS.AddCol("IMAGING_WEIGHT",ColDesc="IMAGING_WEIGHT")
                 t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
