@@ -1,3 +1,22 @@
+killMS
+###################################
+A direction-dependent radio interferometric calibration pasckage
+
+Copyright (C) 2013-2017  Cyril Tasse, l'Observatoire de Paris,
+SKA South Africa, Rhodes University
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+
+
 # What's this package about?
 
 The Direction Dependent calibration problem (also known as third generation calibration) naturally arises in the Radio Interferometry Measurement Equation (RIME, Hamaker et al. 1994), but only became overwhelmingly problematic with the construction of the SKA precursors and pathfinders. Solving for the DDE calibration problems basically consists in inverting a number of non-linear equation, while the system is (i) very large and (ii) often subject to ill conditioning. killMS's name originates from the early LOFAR commissioning phases, when understanding the interferometric data in a Measurement Set was a real challenge.
