@@ -51,6 +51,9 @@ cd ../../Gridder
 make
 ```
 
+Then make sure the killMS main directory is on your PYTHONPATH and the
+Scripts directory is on your PATH.
+
 # Main programs you'll need for DDE calibration and imaging
 
 * killMS.py -> Does DDE calibration using the LM (CohJones) or the Kalman filter (KAFCA)
