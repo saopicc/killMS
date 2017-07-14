@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 import numpy as np
-from killMS2.Array import NpShared
+from killMS.Array import NpShared
 
 class ClassModelEvolution():
     def __init__(self,iAnt,iChanSol,WeightType="exp",WeigthScale=1,order=1,StepStart=5,BufferNPoints=10,sigQ=0.01,DoEvolve=True,IdSharedMem=""):

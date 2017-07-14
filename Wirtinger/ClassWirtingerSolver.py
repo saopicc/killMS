@@ -19,27 +19,27 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 import numpy as np
-from killMS2.Array import NpShared
+from killMS.Array import NpShared
 
-from killMS2.Data import ClassVisServer
+from killMS.Data import ClassVisServer
 #from Sky import ClassSM
-from killMS2.Array import ModLinAlg
+from killMS.Array import ModLinAlg
 #import matplotlib.pyplot as pylab
 
-from killMS2.Other import MyLogger
+from killMS.Other import MyLogger
 log=MyLogger.getLogger("ClassWirtingerSolver")
-from killMS2.Other import ModColor
+from killMS.Other import ModColor
 
-from killMS2.Other.progressbar import ProgressBar
+from killMS.Other.progressbar import ProgressBar
             
 #from Sky.PredictGaussPoints_NumExpr import ClassPredict
-from killMS2.Other import ClassTimeIt
-from killMS2.Other import Counter
+from killMS.Other import ClassTimeIt
+from killMS.Other import Counter
 from ClassEvolve import ClassModelEvolution
 import time
 from itertools import product as ItP
-from killMS2.Wirtinger import ClassSolverLM
-from killMS2.Wirtinger import ClassSolverEKF
+from killMS.Wirtinger import ClassSolverLM
+from killMS.Wirtinger import ClassSolverEKF
 def test():
 
 
@@ -385,7 +385,7 @@ class ClassWirtingerSolver():
         else:
             nd=self.SM.ClusterCat.SumI.size
             self.SM.ApparentSumI=np.zeros((nd,),np.float32)
-            from killMS2.Data import ClassBeam
+            from killMS.Data import ClassBeam
             BeamMachine=ClassBeam.ClassBeam(self.VS.MSName,self.GD,self.SM)
             AbsMeanBeam=BeamMachine.GiveMeanBeam()
             AbsMeanBeamAnt=np.mean(AbsMeanBeam[:,:,0,0,0],axis=1)
@@ -1107,7 +1107,7 @@ class ClassWirtingerSolver():
 
 #======================================
 import multiprocessing
-from killMS2.Predict.PredictGaussPoints_NumExpr5 import ClassPredict
+from killMS.Predict.PredictGaussPoints_NumExpr5 import ClassPredict
 class WorkerAntennaLM(multiprocessing.Process):
     def __init__(self,
                  work_queue,

@@ -23,9 +23,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import numpy as np
 import ClassMS
 from pyrap.tables import table
-from killMS2.Other import MyLogger
+from killMS.Other import MyLogger
 log=MyLogger.getLogger("ClassBeam")
-from killMS2.Array import ModLinAlg
+from killMS.Array import ModLinAlg
 
 class ClassBeam():
     def __init__(self,MSName,GD,SM):

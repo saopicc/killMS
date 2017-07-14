@@ -21,18 +21,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #!/usr/bin/env python
 import optparse
 import sys
-from killMS2.Other import MyPickle
-from killMS2.Other import logo
-from killMS2.Other import ModColor
-from killMS2.Other import MyLogger
+from killMS.Other import MyPickle
+from killMS.Other import logo
+from killMS.Other import ModColor
+from killMS.Other import MyLogger
 log=MyLogger.getLogger("killMS")
 MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
-from killMS2.Other import ClassTimeIt
-from killMS2.Data import ClassVisServer
-from killMS2.Predict.PredictGaussPoints_NumExpr import ClassPredict
-from killMS2.Predict.PredictGaussPoints_NumExpr5 import ClassPredict as ClassPredict5
-from killMS2.Array import ModLinAlg
-from killMS2.Array import NpShared
+from killMS.Other import ClassTimeIt
+from killMS.Data import ClassVisServer
+from killMS.Predict.PredictGaussPoints_NumExpr import ClassPredict
+from killMS.Predict.PredictGaussPoints_NumExpr5 import ClassPredict as ClassPredict5
+from killMS.Array import ModLinAlg
+from killMS.Array import NpShared
 import time
 import os
 import numpy as np

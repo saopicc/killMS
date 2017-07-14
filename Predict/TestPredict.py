@@ -34,8 +34,8 @@ import Sky.PredictGaussPoints_NumExpr2
 import Sky.PredictGaussPoints_NumExpr
 
 def test():
-    MSName="/media/tasse/data/killMS2/TEST/Simul/0000.MS"
-    SMName="/media/tasse/data/killMS2/TEST/Simul/ModelRandom00.txt.npy"
+    MSName="/media/tasse/data/killMS/TEST/Simul/0000.MS"
+    SMName="/media/tasse/data/killMS/TEST/Simul/ModelRandom00.txt.npy"
     ReadColName="DATA"
     WriteColName="DATA"
     NCPU=6

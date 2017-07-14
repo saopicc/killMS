@@ -21,11 +21,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import numpy as np
 from SkyModel.Sky import ClassSM
-from killMS2.Other import rad2hmsdms
+from killMS.Other import rad2hmsdms
 import os
-from killMS2.Data import ClassMS
+from killMS.Data import ClassMS
 import ephem
-from killMS2.Other import ModParsetType
+from killMS.Other import ModParsetType
 from pyrap.tables import table
 
 MSTemplate="/media/6B5E-87D0/MS/SimulTec/L102479_SB144_uv.dppp.MS.dppp.tsel_fixed"

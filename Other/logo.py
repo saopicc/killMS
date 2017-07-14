@@ -20,13 +20,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 import getpass
 import os
-from killMS2.Other import ModColor
+from killMS.Other import ModColor
 
 import subprocess
 
 def report_version():
     cwd=os.getcwd()
-    KILLMS_DIR="%s/killMS2"%os.environ["KILLMS_DIR"]
+    KILLMS_DIR="%s/killMS"%os.environ["KILLMS_DIR"]
     os.chdir(KILLMS_DIR)
     version = subprocess.check_output(["git", "describe"])
     os.chdir(cwd)

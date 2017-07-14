@@ -20,11 +20,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 #import sharedarray.SharedArray as SharedArray
 import SharedArray
-from killMS2.Other import ModColor
+from killMS.Other import ModColor
 import numpy as np
-from killMS2.Other import MyLogger
+from killMS.Other import MyLogger
 log=MyLogger.getLogger("NpShared")
-from killMS2.Other import ClassTimeIt
+from killMS.Other import ClassTimeIt
 
 
 def zeros(*args,**kwargs):

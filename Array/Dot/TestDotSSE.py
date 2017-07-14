@@ -21,7 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import numpy as np
 import dotSSE
-from killMS2.Other import ClassTimeIt
+from killMS.Other import ClassTimeIt
 import NpDotSSE
 
 def test():

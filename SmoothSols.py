@@ -31,7 +31,7 @@ log=MyLogger.getLogger("ClassInterpol")
 from DDFacet.Other.AsyncProcessPool import APP
 from DDFacet.Other import Multiprocessing
 #from DDFacet.Array import shared_dict
-from killMS2.Array import NpShared
+from killMS.Array import NpShared
 IdSharedMem=str(int(os.getpid()))+"."
 from DDFacet.Other import AsyncProcessPool
 import scipy.ndimage.filters

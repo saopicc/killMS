@@ -24,8 +24,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import matplotlib.pyplot as pylab
 from pyrap.tables import table
-from killMS2.Data import ClassWeighting
-from killMS2.Other import MyLogger
+from killMS.Data import ClassWeighting
+from killMS.Other import MyLogger
 log=MyLogger.getLogger("ClassVisServer")
 import numpy as np
 

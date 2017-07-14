@@ -22,11 +22,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import numpy as np
 from DDFacet.Imager.ClassDeconvMachine import ClassImagerDeconv
 from pyrap.images import image
-from killMS2.Array import NpShared
+from killMS.Array import NpShared
 
-from killMS2.Other import MyLogger
+from killMS.Other import MyLogger
 log=MyLogger.getLogger("ClassImageSM")
-from killMS2.Other.progressbar import ProgressBar
+from killMS.Other.progressbar import ProgressBar
 from DDFacet.ToolsDir.GiveEdges import GiveEdges
 
 class ClassImageSM():
@@ -201,7 +201,7 @@ class ClassPreparePredict(ClassImagerDeconv):
 from DDFacet.Imager.ClassImToGrid import ClassImToGrid
  
 import multiprocessing
-from killMS2.Predict.PredictGaussPoints_NumExpr5 import ClassPredict
+from killMS.Predict.PredictGaussPoints_NumExpr5 import ClassPredict
 class Worker(multiprocessing.Process):
     def __init__(self,
                  work_queue,

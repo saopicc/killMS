@@ -25,7 +25,7 @@ import PrintOptParse
 import ReadCFG
 
 import ClassPrint
-from killMS2.Other import ModColor
+from killMS.Other import ModColor
 #global Parset
 #Parset=ReadCFG.Parset("/media/tasse/data/DDFacet/Parset/DefaultParset.cfg")
 #D=Parset.DicoPars 

@@ -23,8 +23,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import optparse
 import sys
 
-from killMS2.Other import MyLogger
-from killMS2.Array import NpShared
+from killMS.Other import MyLogger
+from killMS.Array import NpShared
 log=MyLogger.getLogger("ClearSHM")
 
 def read_options():

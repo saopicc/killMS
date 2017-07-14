@@ -22,13 +22,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #turtles
 import optparse
 import sys
-from killMS2.Other import MyPickle
-from killMS2.Other import logo
-from killMS2.Other import ModColor
-from killMS2.Other import MyLogger
-from killMS2.Other import MyPickle
-from killMS2.Other import PrintOptParse
-from killMS2.Parset import MyOptParse
+from killMS.Other import MyPickle
+from killMS.Other import logo
+from killMS.Other import ModColor
+from killMS.Other import MyLogger
+from killMS.Other import MyPickle
+from killMS.Other import PrintOptParse
+from killMS.Parset import MyOptParse
 import numpy as np
 import DDFacet.Other.MyPickle
 
@@ -60,17 +60,17 @@ if "nox" in sys.argv:
     
 
 
-#from killMS2.Data import MergeJones
-from killMS2.Data import ClassJonesDomains
+#from killMS.Data import MergeJones
+from killMS.Data import ClassJonesDomains
 import time
 import os
 import numpy as np
 import pickle
 from SkyModel.Sky import ClassSM
-from killMS2.Wirtinger.ClassWirtingerSolver import ClassWirtingerSolver
+from killMS.Wirtinger.ClassWirtingerSolver import ClassWirtingerSolver
 
-from killMS2.Other import ClassTimeIt
-from killMS2.Data import ClassVisServer
+from killMS.Other import ClassTimeIt
+from killMS.Data import ClassVisServer
 from DDFacet.Data import ClassVisServer as ClassVisServer_DDF
 
 from Predict.PredictGaussPoints_NumExpr5 import ClassPredictParallel as ClassPredict 
@@ -85,17 +85,17 @@ from Predict.PredictGaussPoints_NumExpr5 import ClassPredictParallel as ClassPre
 #from Sky.PredictGaussPoints_NumExpr3 import ClassPredict as ClassPredict 
 #from Sky.PredictGaussPoints_NumExpr2 import ClassPredict as ClassPredict_orig 
 
-from killMS2.Array import ModLinAlg
-from killMS2.Array import NpShared
-from killMS2.Other import reformat
+from killMS.Array import ModLinAlg
+from killMS.Array import NpShared
+from killMS.Other import reformat
 
 import multiprocessing
 NCPU_default=str(int(0.75*multiprocessing.cpu_count()))
 
-from killMS2.Parset import ReadCFG
+from killMS.Parset import ReadCFG
 
 global Parset
-Parset=ReadCFG.Parset("%s/killMS2/Parset/DefaultParset.cfg"%os.environ["KILLMS_DIR"])
+Parset=ReadCFG.Parset("%s/killMS/Parset/DefaultParset.cfg"%os.environ["KILLMS_DIR"])
 
 
 def read_options():
@@ -416,8 +416,8 @@ def main(OP=None,MSName=None):
         Alpha[np.isnan(Alpha)]=0
 
     else:
-        from killMS2.Predict import ClassImageSM2 as ClassImageSM
-        #from killMS2.Predict import ClassImageSM3 as ClassImageSM
+        from killMS.Predict import ClassImageSM2 as ClassImageSM
+        #from killMS.Predict import ClassImageSM3 as ClassImageSM
         
         PreparePredict=ClassImageSM.ClassPreparePredict(BaseImageName,VS_DDFacet,IdSharedMem,GD=GDPredict)#,IdSharedMem=IdSharedMem)
         SM=PreparePredict.SM
@@ -623,7 +623,7 @@ def main(OP=None,MSName=None):
                          BeamTimes=VS.BeamTimes)
 
                 # RA,DEC=ClusterCat.ra,ClusterCat.dec
-                # from killMS2.Other.rad2hmsdms import rad2hmsdms
+                # from killMS.Other.rad2hmsdms import rad2hmsdms
                 # for i in range(RA.size): 
                 #     ra,dec=RA[i],DEC[i]
                 #     print rad2hmsdms(ra,Type="ra").replace(" ",":"),rad2hmsdms(dec,Type="dec").replace(" ",".")

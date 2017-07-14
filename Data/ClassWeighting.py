@@ -19,18 +19,18 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 import numpy as np
-from killMS2.Gridder import _pyGridder
-from killMS2.Other import MyLogger
-from killMS2.Other import ModColor
+from killMS.Gridder import _pyGridder
+from killMS.Other import MyLogger
+from killMS.Other import ModColor
 log=MyLogger.getLogger("ClassWeighting")
 
 
 #import ImagingWeights
-from killMS2.Data import ClassMS
+from killMS.Data import ClassMS
 from pyrap.tables import table
 
 def test():
-    MS=ClassMS.ClassMS("/media/6B5E-87D0/killMS2/TEST/Simul/0000.MS")
+    MS=ClassMS.ClassMS("/media/6B5E-87D0/killMS/TEST/Simul/0000.MS")
     t=table(MS.MSName,ack=False)
     WEIGHT=t.getcol("WEIGHT")
     t.close()

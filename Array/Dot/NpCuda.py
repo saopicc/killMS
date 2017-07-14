@@ -23,7 +23,7 @@ import pycuda.gpuarray as gpuarray
 import numpy as np
 import scikits.cuda.linalg as culinalg
 culinalg.init()
-from killMS2.Other import ClassTimeIt
+from killMS.Other import ClassTimeIt
 import time
 import numpy as np
 import cudamat as cm
