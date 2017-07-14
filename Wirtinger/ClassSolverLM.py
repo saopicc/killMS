@@ -19,15 +19,15 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 import numpy as np
-from killMS2.Array import NpShared
-from killMS2.Predict.PredictGaussPoints_NumExpr5 import ClassPredict
+from killMS.Array import NpShared
+from killMS.Predict.PredictGaussPoints_NumExpr5 import ClassPredict
 import os
-from killMS2.Data import ClassVisServer
+from killMS.Data import ClassVisServer
 #from Sky import ClassSM
-from killMS2.Array import ModLinAlg
-from killMS2.Other import ClassTimeIt
-from killMS2.Array.Dot import NpDotSSE
-from killMS2.Wirtinger.ClassJacobianAntenna import ClassJacobianAntenna
+from killMS.Array import ModLinAlg
+from killMS.Other import ClassTimeIt
+from killMS.Array.Dot import NpDotSSE
+from killMS.Wirtinger.ClassJacobianAntenna import ClassJacobianAntenna
 
 class ClassSolverLM(ClassJacobianAntenna):
     def __init__(self, *args, **kwargs):

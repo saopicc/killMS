@@ -20,21 +20,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 import numpy as np
 from pyrap.tables import table
-from killMS2.Data.ClassMS import ClassMS
+from killMS.Data.ClassMS import ClassMS
 #from Sky.ClassSM import ClassSM
-from killMS2.Other.ClassTimeIt import ClassTimeIt
+from killMS.Other.ClassTimeIt import ClassTimeIt
 import numexpr as ne
 #import ModNumExpr
-from killMS2.Other.progressbar import ProgressBar
+from killMS.Other.progressbar import ProgressBar
 import multiprocessing
-from killMS2.Array import ModLinAlg
-from killMS2.Array import NpShared
+from killMS.Array import ModLinAlg
+from killMS.Array import NpShared
 #ne.evaluate=lambda sin: ("return %s"%sin)
 import time
-from killMS2.Predict import predict 
-from killMS2.Predict import predict_np19 
-from killMS2.Other import findrms
-from killMS2.Other.ModChanEquidistant import IsChanEquidistant
+from killMS.Predict import predict 
+from killMS.Predict import predict_np19 
+from killMS.Other import findrms
+from killMS.Other.ModChanEquidistant import IsChanEquidistant
 
 def SolsToDicoJones(Sols,nf):
     Jones={}

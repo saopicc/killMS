@@ -20,17 +20,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 import numpy as np
 from pyrap.tables import table
-from killMS2.Other.rad2hmsdms import rad2hmsdms
-from killMS2.Other import ModColor
-from killMS2.Other import reformat
+from killMS.Other.rad2hmsdms import rad2hmsdms
+from killMS.Other import ModColor
+from killMS.Other import reformat
 import os
 import pyrap.quanta as qa
 import pyrap.measures as pm
 import ephem
-from killMS2.Other import MyLogger
+from killMS.Other import MyLogger
 log=MyLogger.getLogger("ClassMS")
-from killMS2.Other import ClassTimeIt
-from killMS2.Other.progressbar import ProgressBar
+from killMS.Other import ClassTimeIt
+from killMS.Other.progressbar import ProgressBar
 
 class ClassMS():
     def __init__(self,MSname,Col="DATA",zero_flag=True,ReOrder=False,EqualizeFlag=False,DoPrint=True,DoReadData=True,

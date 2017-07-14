@@ -21,23 +21,23 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import numpy as np
 import ClassMS
 from pyrap.tables import table
-from killMS2.Other import MyLogger
+from killMS.Other import MyLogger
 log=MyLogger.getLogger("ClassVisServer")
 # import MyPickle
-from killMS2.Array import NpShared
-from killMS2.Other import ClassTimeIt
-from killMS2.Other import ModColor
-from killMS2.Array import ModLinAlg
+from killMS.Array import NpShared
+from killMS.Other import ClassTimeIt
+from killMS.Other import ModColor
+from killMS.Array import ModLinAlg
 MyLogger.setSilent(["NpShared"])
 #from Sky.PredictGaussPoints_NumExpr3 import ClassPredictParallel as ClassPredict 
 #from Sky.PredictGaussPoints_NumExpr3 import ClassPredict as ClassPredict 
 import ClassWeighting
-from killMS2.Other import reformat
+from killMS.Other import reformat
 import os
-from killMS2.Other.ModChanEquidistant import IsChanEquidistant
-from killMS2.Data import ClassJones
+from killMS.Other.ModChanEquidistant import IsChanEquidistant
+from killMS.Data import ClassJones
 #import MergeJones
-from killMS2.Data import ClassJonesDomains
+from killMS.Data import ClassJonesDomains
 #from DDFacet.Imager import ClassWeighting as ClassWeightingDDF
 
 
@@ -825,7 +825,7 @@ class ClassVisServer():
                     # T1s=MS.F_times+MS.dt/2.
                     # Tm=MS.F_times
 
-                    # from killMS2.Other.rad2hmsdms import rad2hmsdms
+                    # from killMS.Other.rad2hmsdms import rad2hmsdms
                     # for i in range(RA.size): 
                     #     ra,dec=RA[i],DEC[i]
                     #     print rad2hmsdms(ra,Type="ra").replace(" ",":"),rad2hmsdms(dec,Type="dec").replace(" ",".")

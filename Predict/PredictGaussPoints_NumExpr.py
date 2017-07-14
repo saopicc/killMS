@@ -20,14 +20,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 import numpy as np
 from pyrap.tables import table
-from killMS2.Data.ClassMS import ClassMS
+from killMS.Data.ClassMS import ClassMS
 from SkyModel.Sky.ClassSM import ClassSM
-from killMS2.Other.ClassTimeIt import ClassTimeIt
+from killMS.Other.ClassTimeIt import ClassTimeIt
 import numexpr as ne
 #import ModNumExpr
-from killMS2.Other.progressbar import ProgressBar
+from killMS.Other.progressbar import ProgressBar
 import multiprocessing
-from killMS2.Array import ModLinAlg
+from killMS.Array import ModLinAlg
 
 #ne.evaluate=lambda sin: ("return %s"%sin)
 
