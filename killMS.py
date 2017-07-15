@@ -22,6 +22,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #turtles
 import optparse
 import sys
+import os
+# hack to allow 'from killMS... import...'
+sys.path.remove(os.path.dirname(os.path.abspath(__file__)))
 from killMS.Other import MyPickle
 from killMS.Other import logo
 from killMS.Other import ModColor
@@ -38,7 +41,7 @@ import DDFacet.Other.MyPickle
 log=MyLogger.getLogger("killMS")
 MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
 
-sys.path=[name for name in sys.path if not(("pyrap" in name)&("/usr/local/lib/" in name))]
+#sys.path=[name for name in sys.path if not(("pyrap" in name)&("/usr/local/lib/" in name))]
 from pyrap.tables import table
 # test
 SaveFile="last_killMS.obj"
@@ -63,7 +66,6 @@ if "nox" in sys.argv:
 #from killMS.Data import MergeJones
 from killMS.Data import ClassJonesDomains
 import time
-import os
 import numpy as np
 import pickle
 from SkyModel.Sky import ClassSM
@@ -73,7 +75,7 @@ from killMS.Other import ClassTimeIt
 from killMS.Data import ClassVisServer
 from DDFacet.Data import ClassVisServer as ClassVisServer_DDF
 
-from Predict.PredictGaussPoints_NumExpr5 import ClassPredictParallel as ClassPredict 
+from killMS.Predict.PredictGaussPoints_NumExpr5 import ClassPredictParallel as ClassPredict 
 #from Predict.PredictGaussPoints_NumExpr5 import ClassPredict as ClassPredict 
 
 #from Predict.PredictGaussPoints_NumExpr2 import ClassPredictParallel as ClassPredict_orig
@@ -170,7 +172,7 @@ def read_options():
     
     OP.OptionGroup("* Action options","Actions")
     OP.add_option('DoPlot',type="int",help='Plot the solutions, for debugging. Default is %default')
-    OP.add_option('SubOnly',type="int",help='Substact selected sources. Default is %default')
+    OP.add_option('SubOnly',type="int",help='Subtract selected sources. Default is %default')
     OP.add_option('DoBar',help=' Draw progressbar. Default is %default',default="1")
     OP.add_option('NCPU',type="int",help='Number of cores to use. Default is %default ')
 
@@ -180,7 +182,7 @@ def read_options():
 
     OP.OptionGroup("* Solution-related options","Solutions")
     OP.add_option('ExtSols',type="str",help='External solution file. If set, will not solve.')
-    OP.add_option('ApplyMode',type="str",help='Substact selected sources. ')
+    OP.add_option('ApplyMode',type="str",help='Subtract selected sources. ')
     OP.add_option('ClipMethod',type="str",help='Clip data in the IMAGING_WEIGHT column. Can be set to Resid, DDEResid or ResidAnt . Default is %default')
     OP.add_option('OutSolsName',type="str",help='If specified will save the estimated solutions in this file. Default is %default')
     OP.add_option('ApplyCal',type="int",help='Apply direction averaged gains to residual data in the mentioned direction. \
@@ -210,7 +212,7 @@ def read_options():
     OP.add_option('CovQ',type="float",help='Intrinsic process Covariance in fraction of the initial gain amplitude. Default is %default') 
     OP.add_option('PowerSmooth',type="float",help='When an antenna has missing baselines (like when using UVcuts) underweight its Q matrix. Default is %default') 
     OP.add_option('evPStep',type="int",help='Start calculation evP every evP_Step after that step. Default is %default')
-    OP.add_option('evPStepStart',type="int",help='Calcule (I-KJ) matrix every evP_Step steps. Default is %default')
+    OP.add_option('evPStepStart',type="int",help='Calculate (I-KJ) matrix every evP_Step steps. Default is %default')
     
 
     OP.Finalise()
@@ -561,7 +563,7 @@ def main(OP=None,MSName=None):
                 SavePredict(ArrayName,FullPredictColName)
 
             if GD["SkyModel"]["FreeFullSub"]:
-                print>>log, "Substracting free predict from data"
+                print>>log, "Subtracting free predict from data"
                 PredictData=NpShared.GiveArray("%s%s"%(IdSharedMem,"PredictedDataGains"))
                 Solver.VS.ThisDataChunk["data"]-=PredictData
                 print>>log, "  save visibilities in %s column"%WriteColName
@@ -748,7 +750,7 @@ def main(OP=None,MSName=None):
                 t.close()
 
             if DoSubstract:
-                print>>log, ModColor.Str("Substract sources ... ",col="green")
+                print>>log, ModColor.Str("Subtract sources ... ",col="green")
                 if options.SubOnly==0:
                     SM.SelectSubCat(SM.SourceCat.kill==1)
 
