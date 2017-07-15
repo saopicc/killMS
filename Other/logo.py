@@ -28,7 +28,7 @@ def report_version():
     cwd=os.getcwd()
     KILLMS_DIR="%s/killMS"%os.environ["KILLMS_DIR"]
     os.chdir(KILLMS_DIR)
-    version = subprocess.check_output(["git", "describe"])
+    version = subprocess.check_output(["git", "describe", "--tags"])
     os.chdir(cwd)
     return version.rstrip()
 
