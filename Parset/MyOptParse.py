@@ -26,12 +26,13 @@ import ReadCFG
 
 import ClassPrint
 from killMS.Other import ModColor
+from killMS.Other.logo import report_version
 #global Parset
 #Parset=ReadCFG.Parset("/media/tasse/data/DDFacet/Parset/DefaultParset.cfg")
 #D=Parset.DicoPars 
 
 class MyOptParse():
-    def __init__(self,usage='Usage: %prog --ms=somename.MS <options>',version='%prog version 1.0',
+    def __init__(self,usage='Usage: %prog --ms=somename.MS <options>',version=report_version(),
                  description="""Questions and suggestions: cyril.tasse@obspm.fr""",
                  DefaultDict=None):
         self.opt = OptParse.OptionParser(usage=usage,version=version,description=description)
