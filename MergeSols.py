@@ -160,6 +160,10 @@ def main(options=None):
 
     if options.SolFileOut is None:
         raise RuntimeError("You have to specify In/Out solution file names")
+    if len(ListSolsFile)==0:
+        raise RuntimeError("No files found")
+
+
     print>>log, "Running Merge on the following SolsFile:"
     for SolsName in ListSolsFile:
         print>>log, "  %s"%SolsName

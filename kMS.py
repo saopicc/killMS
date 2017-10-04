@@ -24,7 +24,7 @@ import optparse
 import sys
 import os
 # hack to allow 'from killMS... import...'
-sys.path.remove(os.path.dirname(os.path.abspath(__file__)))
+#sys.path.remove(os.path.dirname(os.path.abspath(__file__)))
 from killMS.Other import MyPickle
 from killMS.Other import logo
 from killMS.Other import ModColor
@@ -976,7 +976,7 @@ if __name__=="__main__":
     try:
         if type(lMS)==list:
             for MSName in lMS:
-                ss="killMS.py %s --MSName=%s"%(BaseParset,MSName)
+                ss="kMS.py %s --MSName=%s"%(BaseParset,MSName)
                 print>>log,"Running %s"%ss
                 os.system(ss)
                 if options.RemoveDDFCache:

@@ -26,6 +26,7 @@ from killMS.Other import MyPickle
 from killMS.Other import logo
 from killMS.Other import ModColor
 from killMS.Other import MyLogger
+import matplotlib.gridspec as gridspec
 log=MyLogger.getLogger("killMS")
 MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
 
@@ -127,25 +128,14 @@ def main(options=None):
             t0=tm[0]
         tm-=t0
         Sols.t0=tm
-        nt,na,nd,_,_=Sols.G.shape
-        nx,ny=GiveNXNYPanels(na)
         LSols.append(Sols)
         StationNames=SolsDico["StationNames"]
 
         # LSols=[LSols[0]]
         # nSol=1
 
-    # diag terms
-    Lls=["-","--",":"]
-    Lcol0=["black","black","blue"]
-    Lcol1=["gray","gray","red"]
-    Lalpha0=[1,1,1]
-    Lalpha1=[0.5,0.5,0.5]
-    # off-diag terms
-    Lls_off=["-","--",":"]
-    Lcol0_off=["black","black","blue"]
-    Lcol1_off=["gray","gray","red"]
     
+    nt,nch,na,nd,_,_=LSols[0].G.shape
     if options.DoResid!=-1:
         Sresid=LSols[1].copy()
         LSols.append(Sresid)
@@ -156,13 +146,12 @@ def main(options=None):
     else:
         DirList=range(nd)
 
-    pylab.figure(0,figsize=(13,8))
-    iAnt=0
-    for iDir in DirList:
-        for iSol in range(nSol):
-            Sols=LSols[iSol]
-            G=Sols.G[:,:,iDir,:,:]
-            Sols.G[:,:,iDir,:,:]=NormMatrices(G)
+    #fig.subplots_adjust(wspace=0, hspace=0)
+    # for iDir in DirList:
+    #     for iSol in range(nSol):
+    #         Sols=LSols[iSol]
+    #         G=Sols.G[:,:,iDir,:,:]
+    #         Sols.G[:,:,iDir,:,:]=NormMatrices(G)
         
     ampMax=1.5*np.max(np.median(np.abs(LSols[0].G),axis=1))
     if options.PlotMode==0:
@@ -175,33 +164,65 @@ def main(options=None):
     # if options.DoResid!=-1:
     #     LSols[-1].G[:,:,iDir,:,:]=LSols[1].G[:,:,iDir,:,:]-LSols[0].G[:,:,iDir,:,:]
     #     nSol+=1
-            
+
+
+    
+    for iDir in DirList:
+        Plot(LSols,iDir)
+
+def Plot(LSols,iDir=0):
+
+    op0=np.abs
+    op1=np.angle
+    op0=np.real
+    op1=np.imag
+    
+    nt,nch,na,nd,_,_=LSols[0].G.shape
+    nx,ny=GiveNXNYPanels(na)
+    fig=pylab.figure(0,figsize=(13,8))
+    gs1 = gridspec.GridSpec(2*nx, ny)
+    gs1.update(wspace=0.05, hspace=0.05, left=0.05, right=0.95, bottom=0.05, top=0.95)
 
     pylab.clf()
 
+    if len(LSols)==1:
+        Sols=LSols[0]
+        ADir=Sols.G[:,:,:,iDir,0,0]
+    if len(LSols)==2:
+        Sols=LSols[0]
+        ADir=Sols.G[:,:,:,iDir,0,0]
+        ADir-=LSols[1].G[:,:,:,iDir,0,0]
+
+
+    iAnt=0
+    vmin,vmax=op0(ADir).min(),op0(ADir).max()
     for i in range(nx):
         for j in range(ny):
             if iAnt>=na:continue
-            if iAnt>=1:
-                ax=pylab.subplot(nx,ny,iAnt+1,sharex=axRef,sharey=axRef)
-            else:
-                axRef=pylab.subplot(nx,ny,iAnt+1)
-                ax=axRef
-            ax2 = ax.twinx()
-            pylab.title(StationNames[iAnt], fontsize=9)
-            for iSol in [0]:
-                Sols=LSols[iSol]
+            #pylab.title(StationNames[iAnt], fontsize=9)
 
-                ax.imshow(op0(Sols.G[:,iAnt,:,0,0]).T,vmin=0,vmax=2,interpolation="nearest",aspect='auto')
-                nt,na,nd,_,_=Sols.G.shape
-                ax.set_xticks([])
-                ax.set_yticks([])
-                ax.set_ylim(ylim0)
-                ax.set_xlim(0,nt)
+            A=ADir[:,:,iAnt]
+            ax = pylab.subplot(gs1[2*i,j])
+            #ax2 = ax.twinx()
+            ax.imshow(op0(A).T,vmin=vmin,vmax=vmax,interpolation="nearest",aspect='auto',cmap="gray")
+            nt,nch,na,nd,_,_=Sols.G.shape
+            ax.set_xticks([])
+            ax.set_yticks([])
+            
+            ax = pylab.subplot(gs1[2*i+1,j])
+            #ax2 = ax.twinx()
+            A=Sols.G[:,:,iAnt,iDir,0,0]
+            ax.imshow(op1(A).T,vmin=-np.pi,vmax=np.pi,interpolation="nearest",aspect='auto')
+            nt,nch,na,nd,_,_=Sols.G.shape
+            ax.set_xticks([])
+            ax.set_yticks([])
 
+
+
+                
             iAnt+=1
-    pylab.suptitle('Direction %i'%iDir)
-    pylab.tight_layout(pad=3., w_pad=0.5, h_pad=2.0)
+    pylab.suptitle('Direction %i (op0[%5.2f, %5.2f])'%(iDir,vmin,vmax))
+    #pylab.tight_layout(pad=3., w_pad=0.5, h_pad=2.0)
     pylab.draw()
     pylab.show()
     #pylab.pause(0.1)

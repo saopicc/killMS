@@ -273,6 +273,7 @@ class ClassWirtingerSolver():
         self.SolsArray_G=np.zeros((NSols,nChan,na,nd,npolx,npoly),dtype=np.complex64)
         self.SolsArray_Stats=np.zeros((NSols,nChan,na,4),dtype=np.float32)
 
+        self.Power0=np.zeros((nChan,na),np.float32)
         self.SolsArray_t0=NpShared.ToShared("%sSolsArray_t0"%self.IdSharedMem,self.SolsArray_t0)
         self.SolsArray_t1=NpShared.ToShared("%sSolsArray_t1"%self.IdSharedMem,self.SolsArray_t1)
         self.SolsArray_tm=NpShared.ToShared("%sSolsArray_tm"%self.IdSharedMem,self.SolsArray_tm)
@@ -335,7 +336,7 @@ class ClassWirtingerSolver():
             ns=ra.size
             
             d=np.sqrt((ra.reshape((ns,1))-ra.reshape((1,ns)))**2+(dec.reshape((ns,1))-dec.reshape((1,ns)))**2)
-            d0=1e-7*np.pi/180
+            d0=1.*np.pi/180
             QQ=(1./(1.+d/d0))**2
             Qa=np.zeros((nd,npolx,npoly,nd,npolx,npoly),self.DType)
             for ipol in range(npolx):
@@ -356,9 +357,23 @@ class ClassWirtingerSolver():
                 #Qa[idir,:,:,idir,:,:]=1
                 Qa[idir,:,:,idir,:,:]=ApFluxes[idir]
 
+
+            # for idir in range(nd):
+            #     for jdir in range(nd):
+            #         Qa[idir,:,:,jdir,:,:]=np.sqrt(ApFluxes[idir]*ApFluxes[jdir])*QQ[idir,jdir]
+
+            # import pylab
+            # pylab.clf()
+            # pylab.imshow(QQ,interpolation="nearest")
+            # pylab.draw()
+            # pylab.show()
+
+            
             Qa=Qa.reshape((nd*npolx*npoly,nd*npolx*npoly))
             #print np.diag(Qa)
             Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iChanSol,iAnt]))**2*(Qa*(self.VS.fracNVisPerAnt[iAnt]**4))**(self.GD["KAFCA"]["PowerSmooth"]) for iAnt in range(na)])
+            #print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+            #Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iChanSol,iAnt]))**2*Qa for iAnt in range(na)])
             #print Q[0]
 
             QList.append(Q)
@@ -866,7 +881,19 @@ class ClassWirtingerSolver():
             #NpShared.ToShared("%sSharedPPrevious"%self.IdSharedMem,self.P.copy())
             Dico_SharedDicoDescriptors={}
             for iChanSol in range(self.VS.NChanJones):
-                # Reset Data
+                # # Reset Data
+                # # _,na,_,_,_=self.G.shape
+                # g=self.G[iChanSol,:,:,0,0]
+                # P=np.mean(np.abs(g)**2,1)
+                # if self.iCurrentSol!=0:
+                #     fact=self.Power0[iChanSol]/P
+                #     self.G[iChanSol]*=fact.reshape((na,1,1,1))
+                #     print fact,self.Power0[iChanSol],P
+                # else:
+                #     self.Power0[iChanSol]=P
+                #     print self.Power0[iChanSol]
+
+                    
                 NpShared.DelAll("%sDicoData"%self.IdSharedMem)
                 for LMIter in range(NIter):
                     
@@ -1000,6 +1027,7 @@ class ClassWirtingerSolver():
     
                     if self.DoPlot==1:
                         import pylab
+                        pylab.figure(1)
                         AntPlot=np.arange(self.VS.MS.na)#np.array(ListAntSolve)
                         pylab.clf()
                         pylab.plot(np.abs(ThisG[iChanSol,AntPlot].flatten()))
@@ -1024,7 +1052,7 @@ class ClassWirtingerSolver():
                         pylab.draw()
                         pylab.show(False)
                         pylab.pause(0.1)
-    
+                        
     
                     T.timeit("[%i] Plot"%LMIter)
 

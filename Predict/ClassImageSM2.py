@@ -116,13 +116,14 @@ class ClassPreparePredict(ClassImagerDeconv):
 
         # # From ModelImage
         # print "im!!!!!!!!!!!!!!!!!!!!!!!"
-        # im=image("ModelImage.fits")
+        # im=image("Model.fits")
         # data=im.getdata()
         # nch,npol,nx,_=data.shape
         # for ch in range(nch):
         #     for pol in range(npol):
         #         data[ch,pol]=data[ch,pol].T[::-1]
-        # self.ModelImage=data
+        # self.ModelImage=ModelImage=data
+        # # ###############################
         self.FacetMachine.ToCasaImage(ModelImage,ImageName="Model_kMS",Fits=True)
         # #stop
 

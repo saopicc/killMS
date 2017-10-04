@@ -114,7 +114,7 @@ class ClassModelEvolution():
             F[iPar]=1.#ratio#/np.sqrt(2.)
 
             diff=ThisG-g_t[-1]#np.sum(w*(ThisG-g_t))/np.sum(w)
-            PaOut[iPar,iPar]=np.abs(diff)**2+Pa[iPar,iPar]+Q[iPar,iPar]
+            #PaOut[iPar,iPar]=np.abs(diff)**2+Pa[iPar,iPar]+Q[iPar,iPar]
             PaOut[iPar,iPar]=np.abs(diff)**2+Pa[iPar,iPar]+Q[iPar,iPar]
 
         # Q=np.diag(np.ones((PaOut.shape[0],)))*(self.sigQ**2)
