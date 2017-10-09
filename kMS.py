@@ -213,6 +213,8 @@ def read_options():
     OP.add_option('PowerSmooth',type="float",help='When an antenna has missing baselines (like when using UVcuts) underweight its Q matrix. Default is %default') 
     OP.add_option('evPStep',type="int",help='Start calculation evP every evP_Step after that step. Default is %default')
     OP.add_option('evPStepStart',type="int",help='Calculate (I-KJ) matrix every evP_Step steps. Default is %default')
+    OP.add_option('EvolutionSolFile',type="str",help='Evolution solution file. Default is %default',default="")
+    
     
 
     OP.Finalise()

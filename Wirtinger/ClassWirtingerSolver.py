@@ -156,6 +156,10 @@ class ClassWirtingerSolver():
 
         self.NJacobBlocks_X,self.NJacobBlocks_Y=npolx,npoly
 
+        if self.GD["KAFCA"]["EvolutionSolFile"]!="":
+            self.SolPredictMachine=ClassSolPredictMachine.ClassSolPredictMachine(GD)
+            
+        
         self.G=None
         self.NIter=NIter
         #self.SolsList=[]
@@ -300,6 +304,10 @@ class ClassWirtingerSolver():
         self.G0Iter=NpShared.ToShared("%sSharedGains0Iter"%self.IdSharedMem,self.G.copy())
         #self.InitCovariance()
 
+
+
+
+        
     def InitCovariance(self,FromG=False,sigP=0.1,sigQ=0.01):
         if self.SolverType!="KAFCA": return
         if self.Q!=None: return
@@ -880,6 +888,15 @@ class ClassWirtingerSolver():
             #NpShared.ToShared("%sSharedGainsPrevious"%self.IdSharedMem,self.G.copy())
             #NpShared.ToShared("%sSharedPPrevious"%self.IdSharedMem,self.P.copy())
             Dico_SharedDicoDescriptors={}
+
+            if self.SolPredictMachine is not None:
+                t0_ms,t1_ms=self.VS.CurrentVisTimes_MS_Sec
+                tm_ms=(t0_ms+t1_ms)/2.
+                xPredict=SolPredictMachine.GiveClosestSol(tm_ms,
+                                                          self.VS.SolsFreqDomains,
+                                                          self.SM.ClusterCat.ra,self.SM.ClusterCat.dec)
+                
+                
             for iChanSol in range(self.VS.NChanJones):
                 # # Reset Data
                 # # _,na,_,_,_=self.G.shape
@@ -893,11 +910,13 @@ class ClassWirtingerSolver():
                 #     self.Power0[iChanSol]=P
                 #     print self.Power0[iChanSol]
 
-                    
                 NpShared.DelAll("%sDicoData"%self.IdSharedMem)
                 for LMIter in range(NIter):
-                    
-                    ThisG[:]=self.G[:]
+                    if self.SolPredictMachine is not None:
+                        ThisG[:]=xPredict[:]
+                    else:
+                        ThisG[:]=self.G[:]
+
                     if self.SolverType=="KAFCA":
                         ThisP[:]=self.P[:]
                         ThisQ[:]=self.Q[:]
