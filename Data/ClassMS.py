@@ -1051,6 +1051,7 @@ class ClassMS():
                 C0=((A0==ant0)&(A1==ant1))
                 C1=((A1==ant0)&(A0==ant1))
                 ind=np.where(C0|C1)[0]
+                if len(ind)==0: continue # e.g. if antenna missing
                 UVWs=UVW[ind]
                 timess=times[ind]
                 dtimess=timess[1::]-timess[0:-1]
@@ -1061,7 +1062,7 @@ class ClassMS():
             pBAR.render(intPercent, '%4i/%i' % (ant0+1, na))
                     
     
-        print>>log,"Writting in column UVWDT"
+        print>>log,"Writing in column UVWDT"
         t.putcol("UVWDT",UVW_dt)
         t.close()
     

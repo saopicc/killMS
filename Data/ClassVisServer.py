@@ -627,7 +627,11 @@ class ClassVisServer():
                 ind=np.where((MS.A0==A)|(MS.A1==A))[0]
                 fA=fA_all[ind].ravel()
                 nf=np.count_nonzero(fA)
-                Frac=nf/float(fA.size)
+                if fA.size>0:
+                    Frac=nf/float(fA.size)
+                else:
+                    print>>log, 'Size is zero for antenna #%2.2i[%s]' % (A,MS.StationNames[A])
+                    Frac=1.0
                 if Frac>self.ThresholdFlag:
                     print>>log, "Taking antenna #%2.2i[%s] out of the solve (~%4.1f%% of out-grid data, more than %4.1f%%)"%\
                         (A,MS.StationNames[A],Frac*100,self.ThresholdFlag*100)
