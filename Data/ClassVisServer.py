@@ -456,7 +456,7 @@ class ClassVisServer():
 
 
     def giveDataSizeAntenna(self):
-        t=table(self.MS.MSName)
+        t=table(self.MS.MSName,ack=False)
         uvw=t.getcol("UVW")
         flags=t.getcol("FLAG")
         A0,A1=t.getcol("ANTENNA1"),t.getcol("ANTENNA2")

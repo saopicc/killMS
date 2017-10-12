@@ -40,6 +40,8 @@ import time
 from itertools import product as ItP
 from killMS.Wirtinger import ClassSolverLM
 from killMS.Wirtinger import ClassSolverEKF
+from killMS.Wirtinger import ClassSolPredictMachine
+
 def test():
 
 
@@ -156,6 +158,7 @@ class ClassWirtingerSolver():
 
         self.NJacobBlocks_X,self.NJacobBlocks_Y=npolx,npoly
 
+        self.SolPredictMachine=None
         if self.GD["KAFCA"]["EvolutionSolFile"]!="":
             self.SolPredictMachine=ClassSolPredictMachine.ClassSolPredictMachine(GD)
             
@@ -892,11 +895,20 @@ class ClassWirtingerSolver():
             if self.SolPredictMachine is not None:
                 t0_ms,t1_ms=self.VS.CurrentVisTimes_MS_Sec
                 tm_ms=(t0_ms+t1_ms)/2.
-                xPredict=SolPredictMachine.GiveClosestSol(tm_ms,
-                                                          self.VS.SolsFreqDomains,
-                                                          self.SM.ClusterCat.ra,self.SM.ClusterCat.dec)
+                xPredict=self.SolPredictMachine.GiveClosestSol(tm_ms,
+                                                               self.VS.SolsFreqDomains,np.arange(self.VS.MS.na),
+                                                               self.SM.ClusterCat.ra,self.SM.ClusterCat.dec)
                 
-                
+                # nChan,na,nd,2,2
+                if self.PolMode=="Scalar":
+                    self.G[:,:,:,0,0]=xPredict[:,:,:,0,0]
+                elif self.PolMode=="IDiag":
+                    self.G[:,:,:,0,0]=xPredict[:,:,:,0,0]
+                    self.G[:,:,:,1,0]=xPredict[:,:,:,1,1]
+                else:
+                    self.G[:]=xPredict[:]
+
+
             for iChanSol in range(self.VS.NChanJones):
                 # # Reset Data
                 # # _,na,_,_,_=self.G.shape
@@ -912,14 +924,13 @@ class ClassWirtingerSolver():
 
                 NpShared.DelAll("%sDicoData"%self.IdSharedMem)
                 for LMIter in range(NIter):
-                    if self.SolPredictMachine is not None:
-                        ThisG[:]=xPredict[:]
-                    else:
-                        ThisG[:]=self.G[:]
+
+                    ThisG[:]=self.G[:]
 
                     if self.SolverType=="KAFCA":
                         ThisP[:]=self.P[:]
                         ThisQ[:]=self.Q[:]
+
                     #print
                     # for EKF
     
