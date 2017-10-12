@@ -60,7 +60,7 @@ def read_options():
     
     group.add_option('--Amp-SmoothType',help='Interpolation Type for the amplitude [default is %default]',type="str",default="Gauss")
     group.add_option('--Amp-PolyOrder',help='Order of the polynomial to do the amplitude',type="int",default=3)
-    group.add_option('--Amp-GaussKernel',help='',type="str",default=(1,3))
+    group.add_option('--Amp-GaussKernel',help='',type="str",default="1,3")
     group.add_option('--NCPU',help='Number of CPU to use',type="int",default=0)
     opt.add_option_group(group)
 
