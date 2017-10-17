@@ -156,7 +156,7 @@ class ClassInterpol():
         print self.InterpMode
         if "CrossTEC" in self.InterpMode:
             for it in range(nt):
-                APP.runJob("FitThisCrossTEC_%d"%iJob, self.FitThisCrossTEC, args=(it,),serial=True)
+                APP.runJob("FitThisCrossTEC_%d"%iJob, self.FitThisCrossTEC, args=(it,))#,serial=True)
                 iJob+=1
             workers_res=APP.awaitJobResults("FitThisCrossTEC*", progress="Fit %s"%self.InterpMode)
 
@@ -274,7 +274,7 @@ class ClassInterpol():
             #return np.angle((ggmeas-gg_pred).ravel())
             #print np.mean(np.abs(r))
             iIter+=1
-            print iIter[0]
+            #print iIter[0]
             return r
         #print _f_resid(TEC0CPhase0,A0,A1,ggmeas)
 
