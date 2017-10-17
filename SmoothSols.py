@@ -156,7 +156,7 @@ class ClassInterpol():
         print self.InterpMode
         if "CrossTEC" in self.InterpMode:
             for it in range(nt):
-                APP.runJob("FitThisCrossTEC_%d"%iJob, self.FitThisCrossTEC, args=(it,))#,serial=True)
+                APP.runJob("FitThisCrossTEC_%d"%iJob, self.FitThisCrossTEC, args=(it,),serial=True)
                 iJob+=1
             workers_res=APP.awaitJobResults("FitThisCrossTEC*", progress="Fit %s"%self.InterpMode)
 
