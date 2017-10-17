@@ -161,7 +161,7 @@ class ClassInterpol():
 
         for iAnt in range(na):
             for iDir in range(nd):
-                APP.runJob("FitThisAmpPhase_%d"%iJob, self.FitThisAmpPhase, args=(iAnt,iDir))#,serial=True)
+                APP.runJob("FitThisAmpPhase_%d"%iJob, self.FitThisAmpPhase, args=(iAnt,iDir),serial=True)
                 iJob+=1
         workers_res=APP.awaitJobResults("FitThisAmpPhase*", progress="Fit %s"%self.InterpMode)
 
@@ -262,8 +262,8 @@ class ClassInterpol():
         #     pylab.draw()
         #     pylab.show(False)
         #     pylab.pause(0.1)
-        
-        def _f_resid(TecConst,A0,A1,ggmeas):
+        iIter=np.array([0])
+        def _f_resid(TecConst,A0,A1,ggmeas,iIter):
             TEC,CPhase=TecConst.reshape((2,na))
             GThis=TECToZ(TEC.reshape((-1,1)),CPhase.reshape((-1,1)),self.CentralFreqs.reshape((1,-1)))
             gg_pred=GThis[A0.ravel(),:]*GThis[A1.ravel(),:].conj()
@@ -271,11 +271,13 @@ class ClassInterpol():
             r=(ggmeas-gg_pred_reim).ravel()
             #return np.angle((ggmeas-gg_pred).ravel())
             #print np.mean(np.abs(r))
+            iIter+=1
+            print iIter[0]
             return r
         #print _f_resid(TEC0CPhase0,A0,A1,ggmeas)
 
         print "start"
-        Sol=least_squares(_f_resid, TEC0CPhase0.ravel(), args=(A0,A1,gg_meas_reim),ftol=1e-2,gtol=1e-2,xtol=1e-2)
+        Sol=least_squares(_f_resid, TEC0CPhase0.ravel(), args=(A0,A1,gg_meas_reim,iIter),ftol=1e-2,gtol=1e-2,xtol=1e-2)
         print "ok",it,iDir
         TEC,CPhase=Sol.x.reshape((2,na))
 
