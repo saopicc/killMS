@@ -19,7 +19,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 #!/usr/bin/env python
-from scipy.optimize import least_squares
 
 import optparse
 import pickle
@@ -45,6 +44,9 @@ import scipy.ndimage.filters
 # warnings.catch_warnings()
 # warnings.filterwarnings('error')
 # # ##############################
+
+from killMS.Other.least_squares import least_squares
+
 
 SaveName="last_InterPol.obj"
 
@@ -278,6 +280,7 @@ class ClassInterpol():
 
         print "start"
         Sol=least_squares(_f_resid, TEC0CPhase0.ravel(), args=(A0,A1,gg_meas_reim,iIter),ftol=1e-2,gtol=1e-2,xtol=1e-2)
+        #Sol=leastsq(_f_resid, TEC0CPhase0.ravel(), args=(A0,A1,gg_meas_reim,iIter),ftol=1e-2,gtol=1e-2,xtol=1e-2)
         print "ok",it,iDir
         TEC,CPhase=Sol.x.reshape((2,na))
 
