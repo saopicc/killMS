@@ -274,7 +274,7 @@ class ClassInterpol():
             #return np.angle((ggmeas-gg_pred).ravel())
             #print np.mean(np.abs(r))
             iIter+=1
-            #print iIter[0]
+            print iIter[0]
             return r
         #print _f_resid(TEC0CPhase0,A0,A1,ggmeas)
 
