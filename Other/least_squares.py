@@ -11,8 +11,7 @@ from scipy.optimize import _minpack, OptimizeResult
 from scipy.optimize._numdiff import approx_derivative, group_columns
 from scipy._lib.six import string_types
 
-#from scipy.optimize._lsq.trf import trf
-from killMS.Other.trf import trf
+from scipy.optimize._lsq.trf import trf
 
 from scipy.optimize._lsq.dogbox import dogbox
 from scipy.optimize._lsq.common import EPS, in_bounds, make_strictly_feasible
