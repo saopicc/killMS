@@ -274,8 +274,9 @@ class ClassInterpol():
             return r
         #print _f_resid(TEC0CPhase0,A0,A1,ggmeas)
 
+        print "start"
         Sol=least_squares(_f_resid, TEC0CPhase0.ravel(), args=(A0,A1,gg_meas_reim),ftol=1e-2,gtol=1e-2,xtol=1e-2)
-        #print "ok",it,iDir
+        print "ok",it,iDir
         TEC,CPhase=Sol.x.reshape((2,na))
 
         TEC-=TEC[0]
