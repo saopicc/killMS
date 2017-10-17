@@ -274,14 +274,17 @@ class ClassInterpol():
             #return np.angle((ggmeas-gg_pred).ravel())
             #print np.mean(np.abs(r))
             iIter+=1
-            print iIter[0]
+            #print iIter[0]
             return r
         #print _f_resid(TEC0CPhase0,A0,A1,ggmeas)
 
-        print "start"
-        Sol=least_squares(_f_resid, TEC0CPhase0.ravel(), args=(A0,A1,gg_meas_reim,iIter),ftol=1e-2,gtol=1e-2,xtol=1e-2)
+        #print "start"
+        Sol=least_squares(_f_resid,
+                          TEC0CPhase0.ravel(),
+                          method="lm",
+                          args=(A0,A1,gg_meas_reim,iIter),ftol=1e-2,gtol=1e-2,xtol=1e-2)
         #Sol=leastsq(_f_resid, TEC0CPhase0.ravel(), args=(A0,A1,gg_meas_reim,iIter),ftol=1e-2,gtol=1e-2,xtol=1e-2)
-        print "ok",it,iDir
+        #print "ok",it,iDir
         TEC,CPhase=Sol.x.reshape((2,na))
 
         TEC-=TEC[0]
