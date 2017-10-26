@@ -759,7 +759,7 @@ class ClassVisServer():
         IndicesGains=np.arange(PredictedDataGains.size).reshape(PredictedDataGains.shape)
         NpShared.ToShared("%sPredictedDataGains"%self.IdSharedMem,PredictedDataGains)
         NpShared.ToShared("%sIndicesDataGains"%self.IdSharedMem,IndicesGains)
-        #stop
+        
         
         
         #NpShared.PackListArray("%sUVW_Ants"%self.IdSharedMem,Luvw)

@@ -119,7 +119,10 @@ class ClassWirtingerSolver():
                  evP_StepStart=0, evP_Step=1,
                  DoPlot=False,
                  DoPBar=True,GD=None,
-                 ConfigJacobianAntenna={},TypeRMS="GlobalData"):
+                 ConfigJacobianAntenna={},
+                 TypeRMS="GlobalData",
+                 VS_PredictCol=None):
+        self.VS_PredictCol=VS_PredictCol
         self.DType=np.complex128
         self.TypeRMS=TypeRMS
         self.IdSharedMem=IdSharedMem
@@ -467,6 +470,8 @@ class ClassWirtingerSolver():
         
     def setNextData(self):
         DATA=self.VS.GiveNextVis()
+        if self.VS_PredictCol is not None:
+            self.VS_PredictCol.GiveNextVis()
 
         NDone,nt=self.pBarProgress
         intPercent=int(100*  NDone / float(nt))
@@ -1206,7 +1211,7 @@ class WorkerAntennaLM(multiprocessing.Process):
         self.PM=ClassPredict(Precision="S",DoSmearing=self.GD["SkyModel"]["Decorrelation"],IdMemShared=self.IdSharedMem,
                              LExp=LExp,LSinc=LSinc)
 
-        if self.GD["ImageSkyModel"]["BaseImageName"]!="":
+        if self.GD["ImageSkyModel"]["BaseImageName"]!="" and self.GD["SkyModel"]["SkyModelCol"] is None:
             self.PM.InitGM(self.SM)
 
     def shutdown(self):

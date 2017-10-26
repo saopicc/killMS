@@ -128,6 +128,7 @@ def read_options():
     OP.add_option('invert',help='Invert the selected sources to kill')
     OP.add_option('Decorrelation',type="str",help=' . Default is %default')
     OP.add_option('FreeFullSub',type="int",help=' . Default is %default')
+    OP.add_option('SkyModelCol',type="str",help=' . Default is %default')
 
 
     OP.OptionGroup("* Sky image related options","ImageSkyModel")
@@ -315,9 +316,13 @@ def main(OP=None,MSName=None):
     APP=None
     GD=OP.DicoConfig
     if GD["ImageSkyModel"]["BaseImageName"]=="":
-        print>>log,"Predict Mode: Catalog"
+        print>>log,ModColor.Str("Predict Mode: Catalog")
         PredictMode="Catalog"
+    elif GD["SkyModel"]["SkyModelCol"] is not None:
+        print>>log,ModColor.Str("Predict Mode: using culumn %s"%options.SkyModelCol)
+        PredictMode="Column"
     else:
+        print>>log,ModColor.Str("Predict Mode: Image")
         PredictMode="Image"
         BaseImageName=GD["ImageSkyModel"]["BaseImageName"]
 
@@ -398,6 +403,9 @@ def main(OP=None,MSName=None):
                                                      GD=GDPredict)
 
 
+        
+
+
     #SM.SourceCat.I*=1000**2
     VS=ClassVisServer.ClassVisServer(options.MSName,ColName=ReadColName,
                                      TVisSizeMin=dt,
@@ -418,6 +426,7 @@ def main(OP=None,MSName=None):
         print>>log, "Column %s not in MS "%ReadColName
         exit()
 
+    VS_PredictCol=None
     if PredictMode=="Catalog":
         SM=ClassSM.ClassSM(options.SkyModel,
                            killdirs=kills,
@@ -425,8 +434,7 @@ def main(OP=None,MSName=None):
         SM.Type="Catalog"
         Alpha=SM.SourceCat.alpha
         Alpha[np.isnan(Alpha)]=0
-
-    else:
+    elif PredictMode=="Image":
         from killMS.Predict import ClassImageSM2 as ClassImageSM
         #from killMS.Predict import ClassImageSM3 as ClassImageSM
         
@@ -436,6 +444,29 @@ def main(OP=None,MSName=None):
         VS.setGridProps(PreparePredict.FacetMachine.Cell,None)#PreparePredict.FacetMachine.NpixPaddedFacet)
         FacetMachine=PreparePredict.FacetMachine
         VS.setFOV(FacetMachine.OutImShape,FacetMachine.PaddedGridShape,FacetMachine.FacetShape,FacetMachine.CellSizeRad)
+    elif PredictMode=="Column":
+        VS_PredictCol=ClassVisServer.ClassVisServer(options.MSName,ColName=GD["SkyModel"]["SkyModelCol"],
+                                                    TVisSizeMin=dt,
+                                                    DicoSelectOptions=DicoSelectOptions,
+                                                    TChunkSize=TChunk,IdSharedMem=IdSharedMem+"ColPredict.",
+                                                    NCPU=NCPU,
+                                                    Weighting=options.Weighting,
+                                                    Robust=options.Robust,
+                                                    WeightUVMinMax=options.WeightUVMinMax,
+                                                    WTUV=options.WTUV,
+                                                    GD=GD)
+        class cSM:
+            def __init__(self, **kwargs):
+                self.__dict__.update(kwargs)
+        ClusterCat=np.zeros((1,),dtype=[('Name', 'S200'), ('ra', '<f8'), ('dec', '<f8'), ('SumI', '<f8'), ('Cluster', '<i8')]).view(np.recarray)
+        ClusterCat.ra=VS.MS.rac
+        ClusterCat.dec=VS.MS.decc
+        ClusterCat.SumI=1.
+        ClusterCat.Cluster=0
+        SM=cSM(Type="Column",NDir=1,ClusterCat=ClusterCat)
+        VS_PredictCol.setSM(SM)
+        VS_PredictCol.CalcWeigths()
+
     VS.setSM(SM)
     VS.CalcWeigths()
         
@@ -472,6 +503,7 @@ def main(OP=None,MSName=None):
                                 DoPBar=options.DoBar,
                                 IdSharedMem=IdSharedMem,
                                 ConfigJacobianAntenna=ConfigJacobianAntenna,
+                                VS_PredictCol=VS_PredictCol,
                                 GD=GD)
     
     
@@ -533,6 +565,8 @@ def main(OP=None,MSName=None):
     while True:
 
         Load=VS.LoadNextVisChunk()
+        if SM.Type=="Column":
+            VS_PredictCol.LoadNextVisChunk()
         if Load=="EndOfObservation":
             break
 
@@ -818,7 +852,10 @@ def main(OP=None,MSName=None):
             if (DoSubstract|DoApplyCal):
                 print>>log, "Save visibilities in %s column"%WriteColName
                 t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
-                t.putcol(WriteColName,VS.MS.ToOrigFreqOrder(Solver.VS.ThisDataChunk["data"]),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                nrow_ThisChunk=Solver.VS.MS.ROW1-Solver.VS.MS.ROW0
+                d=np.zeros((nrow_ThisChunk,VS.MS.NChanOrig,4),Solver.VS.ThisDataChunk["data"].dtype)
+                d[:,VS.MS.ChanSlice,:]=VS.MS.ToOrigFreqOrder(Solver.VS.ThisDataChunk["data"])
+                t.putcol(WriteColName,d,Solver.VS.MS.ROW0,nrow_ThisChunk)
                 #t.putcol("FLAG",VS.MS.ToOrigFreqOrder(Solver.VS.MS.flags_all),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
