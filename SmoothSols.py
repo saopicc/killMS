@@ -281,7 +281,8 @@ class ClassInterpol():
         #print "start"
         Sol=least_squares(_f_resid,
                           TEC0CPhase0.ravel(),
-                          method="lm",
+                          method="trf",
+                          #method="lm",
                           args=(A0,A1,gg_meas_reim,iIter),ftol=1e-2,gtol=1e-2,xtol=1e-2)
         #Sol=leastsq(_f_resid, TEC0CPhase0.ravel(), args=(A0,A1,gg_meas_reim,iIter),ftol=1e-2,gtol=1e-2,xtol=1e-2)
         #print "ok",it,iDir

@@ -35,7 +35,7 @@ from killMS.Other.progressbar import ProgressBar
 class ClassMS():
     def __init__(self,MSname,Col="DATA",zero_flag=True,ReOrder=False,EqualizeFlag=False,DoPrint=True,DoReadData=True,
                  TimeChunkSize=None,GetBeam=False,RejectAutoCorr=False,SelectSPW=None,DelStationList=None,Field=0,DDID=0,
-                 ReadUVWDT=False):
+                 ReadUVWDT=False,ChanSlice=None):
 
 
         if MSname=="": exit()
@@ -54,8 +54,15 @@ class ClassMS():
         self.Field=Field
         self.DDID=DDID
         self.TaQL = "FIELD_ID==%d && DATA_DESC_ID==%d" % (Field, DDID)
+
+        self.ChanSlice=slice(None)
+        if ChanSlice is not None:
+            C=[int(c) if c!=-1 else None for c in ChanSlice]
+            self.ChanSlice=slice(*C)
+
         self.ReadMSInfo(MSname,DoPrint=DoPrint)
         self.LFlaggedStations=[]
+
 
         self.CurrentChunkTimeRange_SinceT0_sec=None
         try:
@@ -412,7 +419,8 @@ class ClassMS():
         time_slots_all=np.array(sorted(list(set(time_all))))
         ntimes=time_all.shape[0]/self.nbl
 
-        flag_all=table_all.getcol("FLAG",row0,nRowRead)[SPW==self.ListSPW[0]]
+        flag_all=table_all.getcol("FLAG",row0,nRowRead)[SPW==self.ListSPW[0]][:,self.ChanSlice,:]
+        
         self.HasWeights=False
         if ReadWeight==True:
             self.Weights=table_all.getcol("WEIGHT",row0,nRowRead)
@@ -432,7 +440,7 @@ class ClassMS():
         self.TimeInterVal=table_all.getcol("INTERVAL")
 
         if self.ReOrder:
-            vis_all=table_all.getcol(self.ColName,row0,nRowRead)
+            vis_all=table_all.getcol(self.ColName,row0,nRowRead)[:,self.ChanSlice,:]
             if self.zero_flag: vis_all[flag_all==1]=0.
             if self.zero_flag: 
                 noise=(np.random.randn(vis_all.shape[0],vis_all.shape[1],vis_all.shape[2])\
@@ -445,7 +453,6 @@ class ClassMS():
             flag_all=np.concatenate(listFlagSPW)#np.swapaxes(np.concatenate(listDataSPW),0,1)
             self.uvw=uvw
             self.swapped=True
-            
 
         else:
             self.uvw=uvw
@@ -453,16 +460,20 @@ class ClassMS():
                 self.data=[]
                 for colin in self.ColName:
                     print "... read %s"%colin
-                    vis_all=table_all.getcol(colin,row0,nRowRead)[SPW==self.ListSPW[0]]
+                    vis_all=table_all.getcol(colin,row0,nRowRead)[SPW==self.ListSPW[0]][:,self.ChanSlice,:]
                     print " shape: %s"%str(vis_all.shape)
                     if self.zero_flag: vis_all[flag_all==1]=0.
                     vis_all[np.isnan(vis_all)]=0.
                     self.data.append(vis_all)
             else:
-                vis_all=table_all.getcol(self.ColName,row0,nRowRead)
+                vis_all=table_all.getcol(self.ColName,row0,nRowRead)[:,self.ChanSlice,:]
                 #if self.zero_flag: vis_all[flag_all==1]=0.
                 #vis_all[np.isnan(vis_all)]=0.
                 self.data=vis_all
+
+        # import pylab
+        # pylab.plot(time_all[::111],vis[::111,512,0].real)
+        # pylab.show()
 
 
         self.flag_all=flag_all
@@ -630,14 +641,16 @@ class ClassMS():
         ta_spectral=table(table_all.getkeyword('SPECTRAL_WINDOW'),ack=False)
         reffreq=ta_spectral.getcol('REF_FREQUENCY')
         chan_freq=ta_spectral.getcol('CHAN_FREQ')
-        self.dFreq=ta_spectral.getcol("CHAN_WIDTH").flatten()
-        self.ChanWidth=ta_spectral.getcol('CHAN_WIDTH')
+        self.NChanOrig=chan_freq.size
+        chan_freq=chan_freq[:,self.ChanSlice]
+        self.dFreq=ta_spectral.getcol("CHAN_WIDTH").flatten()[self.ChanSlice]
+        self.ChanWidth=ta_spectral.getcol('CHAN_WIDTH')[:,self.ChanSlice]
         if chan_freq.shape[0]>len(self.ListSPW):
             print ModColor.Str("  ====================== >> More SPW in headers, modifying that error....")
             chan_freq=chan_freq[np.array(self.ListSPW),:]
             reffreq=reffreq[np.array(self.ListSPW)]
             
-
+        
         T.timeit()
 
         wavelength=299792456./reffreq

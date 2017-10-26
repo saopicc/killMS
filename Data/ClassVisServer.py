@@ -117,6 +117,7 @@ class ClassVisServer():
         ReadUVWDT=False
         if self.GD!=None:
             kwargs["Field"]=self.GD["DataSelection"]["FieldID"]
+            kwargs["ChanSlice"]=self.GD["DataSelection"]["ChanSlice"]
             kwargs["DDID"]=self.GD["DataSelection"]["DDID"]
             DecorrMode=self.GD["SkyModel"]["Decorrelation"]
             ReadUVWDT=(("T" in DecorrMode) or ("F" in DecorrMode))
@@ -147,8 +148,11 @@ class ClassVisServer():
         FreqDomains=np.array(FreqDomains)
         self.SolsFreqDomains=FreqDomains
         self.NChanJones=NChanJones
+        
+
 
         MeanFreqJonesChan=(FreqDomains[:,0]+FreqDomains[:,1])/2.
+        print>>log,"Center of frequency domains [MHz]: %s"%str((MeanFreqJonesChan/1e6).tolist())
         DFreq=np.abs(self.MS.ChanFreq.reshape((self.MS.NSPWChan,1))-MeanFreqJonesChan.reshape((1,NChanJones)))
         self.VisToSolsChanMapping=np.argmin(DFreq,axis=1)
         print>>log,("VisToSolsChanMapping %s"%str(self.VisToSolsChanMapping))
@@ -755,7 +759,7 @@ class ClassVisServer():
         IndicesGains=np.arange(PredictedDataGains.size).reshape(PredictedDataGains.shape)
         NpShared.ToShared("%sPredictedDataGains"%self.IdSharedMem,PredictedDataGains)
         NpShared.ToShared("%sIndicesDataGains"%self.IdSharedMem,IndicesGains)
-        
+        #stop
         
         
         #NpShared.PackListArray("%sUVW_Ants"%self.IdSharedMem,Luvw)

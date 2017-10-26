@@ -145,6 +145,7 @@ def read_options():
 
     OP.OptionGroup("* Data Selection","DataSelection")
     OP.add_option('UVMinMax',help='Baseline length selection in km. For example UVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default')
+    OP.add_option('ChanSlice',type="str",help='Channel selection option. Default is %default')
     OP.add_option('FlagAnts',type="str",help='FlagAntenna patern. Default is %default')
     OP.add_option('DistMaxToCore',type="float",help='Maximum distance to core in km. Default is %default')
     OP.add_option('FillFactor',type="float")
@@ -343,6 +344,12 @@ def main(OP=None,MSName=None):
         #GDPredict["Compression"]["CompDeGridMode"]=False
         #GDPredict["Compression"]["CompDeGridMode"]=True
         GDPredict["RIME"]["ForwardMode"]="Classic"
+
+        if options.ChanSlice is not None:
+            GDPredict["Selection"]["ChanStart"]=int(options.ChanSlice[0])
+            GDPredict["Selection"]["ChanEnd"]=int(options.ChanSlice[1])
+            GDPredict["Selection"]["ChanStep"]=int(options.ChanSlice[2])
+
         #GDPredict["Caching"]["ResetCache"]=1
         if options.MaxFacetSize:
             GDPredict["Facets"]["DiamMax"]=options.MaxFacetSize
@@ -548,7 +555,10 @@ def main(OP=None,MSName=None):
                 VS.MS.AddCol(FullPredictColName)
                 PredictData=NpShared.GiveArray("%s%s"%(IdSharedMem,ArrayName))
                 t=VS.MS.GiveMainTable(readonly=False)#table(VS.MS.MSName,readonly=False,ack=False)
-                t.putcol(FullPredictColName,VS.MS.ToOrigFreqOrder(PredictData),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                nrow_ThisChunk=Solver.VS.MS.ROW1-Solver.VS.MS.ROW0
+                d=np.zeros((nrow_ThisChunk,VS.MS.NChanOrig,4),PredictData.dtype)
+                d[:,VS.MS.ChanSlice,:]=VS.MS.ToOrigFreqOrder(PredictData)
+                t.putcol(FullPredictColName,d,Solver.VS.MS.ROW0,nrow_ThisChunk)
                 t.close()
 
 
@@ -731,7 +741,9 @@ def main(OP=None,MSName=None):
                 print>>log, "  Writing in IMAGING_WEIGHT column "
                 VS.MS.AddCol("IMAGING_WEIGHT",ColDesc="IMAGING_WEIGHT")
                 t=Solver.VS.MS.GiveMainTable(readonly=False) # table(Solver.VS.MS.MSName,readonly=False,ack=False)
-                t.putcol("IMAGING_WEIGHT",VS.MS.ToOrigFreqOrder(Weights),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                WAllChans=t.getcol("IMAGING_WEIGHT",Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                WAllChans[:,Solver.VS.MS.ChanSlice]=VS.MS.ToOrigFreqOrder(Weights)
+                t.putcol("IMAGING_WEIGHT",WAllChans,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
 
@@ -749,7 +761,9 @@ def main(OP=None,MSName=None):
                 print>>log, "  Writing in IMAGING_WEIGHT column "
                 VS.MS.AddCol("IMAGING_WEIGHT",ColDesc="IMAGING_WEIGHT")
                 t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
-                t.putcol("IMAGING_WEIGHT",VS.MS.ToOrigFreqOrder(Weights),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                WAllChans=t.getcol("IMAGING_WEIGHT",Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                WAllChans[:,Solver.VS.MS.ChanSlice]=VS.MS.ToOrigFreqOrder(Weights)
+                t.putcol("IMAGING_WEIGHT",WAllChans,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
             if DoSubstract:
