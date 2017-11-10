@@ -469,6 +469,10 @@ class ClassVisServer():
         Field="UVRangeKm"
         self.fracNVisPerAnt=np.ones_like(NVisPerAnt)
         NVis=flags[flags==0].size
+        if NVis==0:
+            print>>log, ModColor.Str("Hummm - All the data is flagged!!!")
+            return
+        
         if self.DicoSelectOptions[Field] is not None:
             d0,d1=self.DicoSelectOptions[Field]
             
