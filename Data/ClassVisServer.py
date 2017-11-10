@@ -919,13 +919,16 @@ class ClassVisServer():
                     else:
                         SolFileLoad=SolFile
 
-                    Sols=np.load(SolFileLoad)["Sols"]
-                    nt,na,nd,_,_=Sols["G"].shape
+                    S=np.load(SolFileLoad)
+                    Sols=S["Sols"]
+                    nt,nch,na,nd,_,_=Sols["G"].shape
+                    
                     DicoSols={}
                     DicoSols["t0"]=Sols["t0"]
                     DicoSols["t1"]=Sols["t1"]
                     DicoSols["tm"]=(Sols["t0"]+Sols["t1"])/2.
-                    DicoSols["Jones"]=np.swapaxes(Sols["G"],1,2).reshape((nt,nd,na,1,2,2))
+                    DicoSols["Jones"]=np.swapaxes(Sols["G"],1,3).reshape((nt,nd,na,nch,2,2))
+                    DicoSols["FreqDomain"]=S["FreqDomains"]
                     if not("A" in Mode):
                         ind=(DicoSols["Jones"]!=0.)
                         DicoSols["Jones"][ind]/=np.abs(DicoSols["Jones"][ind])

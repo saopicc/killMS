@@ -331,10 +331,11 @@ def main(OP=None,MSName=None):
         #     ParsetName="%s.parset"%BaseImageName
         # print>>log,"Predict Mode: Image, with Parset: %s"%ParsetName
         # GDPredict=ReadCFG.Parset(ParsetName).DicoPars
-        if options.DicoModel!="":
+        if options.DicoModel!="" and options.DicoModel is not None:
             FileDicoModel=options.DicoModel
         else:
             FileDicoModel="%s.DicoModel"%BaseImageName
+        print>>log,"Reading model file %s"%FileDicoModel
         GDPredict=DDFacet.Other.MyPickle.Load(FileDicoModel)["GD"]
         GDPredict["Data"]["MS"]=options.MSName
         if options.DDFCacheDir!='':

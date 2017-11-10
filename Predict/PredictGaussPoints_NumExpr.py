@@ -52,7 +52,7 @@ class ClassPredict():
         A0=DicoData["A0"]
         A1=DicoData["A1"]
         times=DicoData["times"]
-        na=DicoData["infos"][0]
+        na=int(DicoData["infos"][0])
 
         # nt,nd,nd,nchan,_,_=Beam.shape
         # med=np.median(np.abs(Beam))
@@ -104,7 +104,7 @@ class ClassPredict():
         freq=DicoData["freqs"]
         times=DicoData["times"]
         nf=freq.size
-        na=DicoData["infos"][0]
+        na=int(DicoData["infos"][0])
         
         nrows=DicoData["A0"].size
         DataOut=np.zeros((nrows,nf,4),self.CType)
@@ -131,10 +131,10 @@ class ClassPredict():
         for iCluster in ListDirection:
             ColOutDir=self.PredictDirSPW(iCluster)
             T.timeit("2")
-            if ColOutDir==None: continue
+            if ColOutDir is None: continue
 
 
-            if Noise!=None:
+            if Noise is not None:
                 ColOutDir+=(Noise/np.sqrt(len(ListDirection)))*(np.random.randn(*ColOutDir.shape)+1j*np.random.randn(*ColOutDir.shape))
 
             # print iCluster,ListDirection
@@ -258,7 +258,7 @@ class ClassPredict():
         Ll=self.FType(SourceCat.l)
         Lm=self.FType(SourceCat.m)
         
-        print Ll, Lm
+        print Ssel,Ll, Lm
 
         l=Ll.reshape(NSource,1,1,1)
         m=Lm.reshape(NSource,1,1,1)
