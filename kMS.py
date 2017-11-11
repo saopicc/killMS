@@ -143,6 +143,7 @@ def read_options():
     OP.add_option('MinFacetSize')
     OP.add_option('DDFCacheDir')
     OP.add_option('RemoveDDFCache')
+    OP.add_option('FilterNegComp')
 
     OP.OptionGroup("* Data Selection","DataSelection")
     OP.add_option('UVMinMax',help='Baseline length selection in km. For example UVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default')
@@ -337,6 +338,12 @@ def main(OP=None,MSName=None):
             FileDicoModel="%s.DicoModel"%BaseImageName
         print>>log,"Reading model file %s"%FileDicoModel
         GDPredict=DDFacet.Other.MyPickle.Load(FileDicoModel)["GD"]
+        
+        if not "StokesResidues" in GDPredict["Output"].keys():
+            print>>log,ModColor.Str("Seems like the DicoModel was build by an older version of DDF")
+            print>>log,ModColor.Str("   ... updating keywords")
+            GDPredict["Output"]["StokesResidues"]="I"
+
         GDPredict["Data"]["MS"]=options.MSName
         if options.DDFCacheDir!='':
             GDPredict["Cache"]["Dir"]=options.DDFCacheDir
