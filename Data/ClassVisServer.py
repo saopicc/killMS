@@ -35,7 +35,7 @@ import ClassWeighting
 from killMS.Other import reformat
 import os
 from killMS.Other.ModChanEquidistant import IsChanEquidistant
-from killMS.Data import ClassJones
+from killMS.Data import ClassReCluster
 #import MergeJones
 from killMS.Data import ClassJonesDomains
 #from DDFacet.Imager import ClassWeighting as ClassWeightingDDF
@@ -98,7 +98,7 @@ class ClassVisServer():
 
             if self.GD!=None:
                 if self.GD["PreApply"]["PreApplySols"][0]!="":
-                    CJ=ClassJones.ClassJones(self.GD)
+                    CJ=ClassReCluster.ClassReCluster(self.GD)
                     CJ.ReClusterSkyModel(self.SM,self.MS.MSName)
             
 
