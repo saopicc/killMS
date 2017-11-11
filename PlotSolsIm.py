@@ -195,7 +195,7 @@ def Plot(LSols,iDir=0):
 
 
     iAnt=0
-    vmin,vmax=op0(ADir).min(),op0(ADir).max()
+    vmin,vmax=0,2#op0(ADir).min(),op0(ADir).max()
     for i in range(nx):
         for j in range(ny):
             if iAnt>=na:continue
