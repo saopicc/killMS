@@ -871,9 +871,6 @@ def main(OP=None,MSName=None):
                 t.close()
 
                 
-    Terminate()
-
-def Terminate():
     if APP is not None:
         APP.terminate()
         APP.shutdown()
