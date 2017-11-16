@@ -160,6 +160,10 @@ def read_options():
     OP.add_option('DtBeamMin',type="float",help='Estimate the beam every this interval [in minutes]. Default is %default')
     OP.add_option('CenterNorm',type="str",help='Normalise the beam at the field center. Default is %default')
     OP.add_option('NChanBeamPerMS',type="int",help='Number of channel in the Beam Jones matrix. Default is %default')
+    OP.add_option('FITSParAngleIncDeg',type="float",help='Estimate the beam every this PA change [in deg]. Default is %default')
+    OP.add_option('FITSFile',type="str",help='FITS beam mode filename template. Default is %default')
+    OP.add_option('FITSLAxis',type="str",help='L axis of FITS beam. Default is %default')
+    OP.add_option('FITSMAxis',type="str",help='L axis of FITS beam. Default is %default')
 
     OP.OptionGroup("* PreApply killMS Solutions","PreApply")
     OP.add_option('PreApplySols',type="str",help='Pre-apply killMS solutions in the predict step. Has to be a list. Default is %default')
