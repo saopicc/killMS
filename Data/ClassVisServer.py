@@ -904,8 +904,80 @@ class ClassVisServer():
 
                     DoPreApplyJones=True
                     print>>log, "       .... done Update LOFAR beam "
+                elif self.GD["Beam"]["BeamModel"] == "FITS":
+                    RA, DEC = self.SM.ClusterCat.ra, self.SM.ClusterCat.dec
+                    NDir = RA.size
+                    self.DtBeamMin = self.GD["Beam"]["DtBeamMin"]
 
-        
+                    from DDFacet.Data.ClassFITSBeam import ClassFITSBeam
+                    # make fake opts dict (DDFacet clss expects slightly different option names)
+                    opts = dict(
+                        FITSFile = self.GD["Beam"]["FITSFile"],
+                        FITSParAngleIncDeg = self.GD["Beam"]["FITSParAngleIncDeg"],
+                        DtBeamMin = self.DtBeamMin,
+                        NBand = self.GD["Beam"]["NChanBeamPerMS"]
+                    )
+                    fitsbeam = ClassFITSBeam(self.MS, opts)
+
+                    TimesBeam = fitsbeam.getBeamSampleTimes(times)
+                    FreqDomains = fitsbeam.getFreqDomains()
+                    nfreq_dom = FreqDomains.shape[0]
+
+                    print>> log, "Update FITS beam in %i dirs, %i times, %i freqs ... " % (
+                        NDir, len(TimesBeam), nfreq_dom)
+
+                    T0s = TimesBeam[:-1]
+                    T1s = TimesBeam[1:]
+                    Tm = (T0s + T1s) / 2.
+
+                    self.BeamTimes = TimesBeam
+
+                    Beam = np.zeros((Tm.size, NDir, self.MS.na, FreqDomains.shape[0], 2, 2), np.complex64)
+                    for itime, tm in enumerate(Tm):
+                        Beam[itime] = fitsbeam.evaluateBeam(tm, RA, DEC)
+
+                    DicoBeam = {}
+                    DicoBeam["t0"] = T0s
+                    DicoBeam["t1"] = T1s
+                    DicoBeam["tm"] = Tm
+                    DicoBeam["Jones"] = Beam
+                    DicoBeam["FreqDomain"] = FreqDomains
+
+                    ###### Normalise
+                    rac, decc = self.MS.radec
+                    if self.GD["Beam"]["CenterNorm"] == 1:
+
+                        Beam = DicoBeam["Jones"]
+                        Beam0 = np.zeros((Tm.size, 1, self.MS.na, nfreq_dom, 2, 2), np.complex64)
+                        for itime, tm in enumerate(Tm):
+                            Beam0[itime] = self.MS.GiveBeam(tm, np.array([rac]), np.array([decc]))
+
+                        DicoBeamCenter = {}
+                        DicoBeamCenter["t0"] = T0s
+                        DicoBeamCenter["t1"] = T1s
+                        DicoBeamCenter["tm"] = Tm
+                        DicoBeamCenter["Jones"] = Beam0
+                        DicoBeamCenter["FreqDomain"] = FreqDomains
+                        Beam0inv = ModLinAlg.BatchInverse(Beam0)
+                        nt, nd, _, _, _, _ = Beam.shape
+                        Ones = np.ones((nt, nd, 1, 1, 1, 1), np.float32)
+                        Beam0inv = Beam0inv * Ones
+                        DicoBeam["Jones"] = ModLinAlg.BatchDot(Beam0inv, Beam)
+
+                    ######
+
+
+
+
+                    # nt,nd,na,nch,_,_= Beam.shape
+                    # Beam=np.mean(Beam,axis=3).reshape((nt,nd,na,1,2,2))
+
+                    # DicoBeam["ChanMap"]=np.zeros((nch))
+                    ListDicoPreApply.append(DicoBeam)
+
+                    DoPreApplyJones = True
+                    print>> log, "       .... done Update LOFAR beam "
+
             if self.GD["PreApply"]["PreApplySols"][0]!="":
                 ModeList=self.GD["PreApply"]["PreApplyMode"]
                 if ModeList==[""]: ModeList=["AP"]*len(self.GD["PreApply"]["PreApplySols"])
