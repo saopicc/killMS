@@ -911,12 +911,8 @@ class ClassVisServer():
 
                     from DDFacet.Data.ClassFITSBeam import ClassFITSBeam
                     # make fake opts dict (DDFacet clss expects slightly different option names)
-                    opts = dict(
-                        FITSFile = self.GD["Beam"]["FITSFile"],
-                        FITSParAngleIncDeg = self.GD["Beam"]["FITSParAngleIncDeg"],
-                        DtBeamMin = self.DtBeamMin,
-                        NBand = self.GD["Beam"]["NChanBeamPerMS"]
-                    )
+                    opts = self.GD["Beam"]
+                    opts["NBand"] = opts["NChanBeamPerMS"]
                     fitsbeam = ClassFITSBeam(self.MS, opts)
 
                     TimesBeam = fitsbeam.getBeamSampleTimes(times)
