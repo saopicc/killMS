@@ -331,7 +331,8 @@ def main(OP=None,MSName=None):
         #     ParsetName="%s.parset"%BaseImageName
         # print>>log,"Predict Mode: Image, with Parset: %s"%ParsetName
         # GDPredict=ReadCFG.Parset(ParsetName).DicoPars
-        if options.DicoModel!="":
+
+        if options.DicoModel!="" and options.DicoModel is not None:
             FileDicoModel=options.DicoModel
         else:
             FileDicoModel="%s.DicoModel"%BaseImageName
@@ -421,7 +422,8 @@ def main(OP=None,MSName=None):
     print VS.MS
     if not(WriteColName in VS.MS.ColNames):
         print>>log, "Column %s not in MS "%WriteColName
-        exit()
+        VS.MS.AddCol(WriteColName,LikeCol="DATA")
+        #exit()
     if not(ReadColName in VS.MS.ColNames):
         print>>log, "Column %s not in MS "%ReadColName
         exit()

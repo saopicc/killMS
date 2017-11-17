@@ -84,8 +84,8 @@ def GiveNXNYPanels(Ns,ratio=800/500):
 from killMS.Array import ModLinAlg
 
 def NormMatrices(G):
-    print "no norm"
-    return G
+    #print "no norm"
+    #return G
     nt,nch,na,_,_=G.shape
 
     for iChan,it in ItP(range(nch),range(nt)):
@@ -258,11 +258,11 @@ def main(options=None):
                     Sols=LSols[iSol]
                     G=Sols.G[:,iChan,:,iDir,:,:]
                     J=G[:,iAnt,:,:]
-                    ax.plot(Sols.t0,op0(J[:,0,0]),color=Lcol0[iSol],alpha=Lalpha0[iSol],ls=Lls[iSol],marker=marker)
-                    ax.plot(Sols.t0,op0(J[:,1,1]),color=Lcol0_off[iSol],alpha=Lalpha0[iSol],ls=Lls_off[iSol],marker=marker)
+                    ax.plot(Sols.t0,op0(J[:,0,0]),color=Lcol0[iSol],alpha=Lalpha0[iSol],ls=Lls[iSol])#,marker=marker)
+                    ax.plot(Sols.t0,op0(J[:,1,1]),color=Lcol0_off[iSol],alpha=Lalpha0[iSol],ls=Lls_off[iSol])#,marker=marker)
                     if PlotDiag[0]:
-                        ax.plot(Sols.t0,op0(J[:,1,0]),color=Lcol0[iSol],alpha=Lalpha0[iSol],ls=Lls[iSol],marker=marker)
-                        ax.plot(Sols.t0,op0(J[:,0,1]),color=Lcol0_off[iSol],alpha=Lalpha0[iSol],ls=Lls_off[iSol],marker=marker)
+                        ax.plot(Sols.t0,op0(J[:,1,0]),color=Lcol0[iSol],alpha=Lalpha0[iSol],ls=Lls[iSol])#,marker=marker)
+                        ax.plot(Sols.t0,op0(J[:,0,1]),color=Lcol0_off[iSol],alpha=Lalpha0[iSol],ls=Lls_off[iSol])#,marker=marker)
                     if options.PlotMode=="P":
                         ax.set_ylim(ylim0)
                     else:
@@ -274,11 +274,11 @@ def main(options=None):
                     if op1!=None:
                         # ax.plot(tm,op1(J[:,0,1]),color="blue")
                         # ax.plot(tm,op1(J[:,1,0]),color="blue")
-                        ax2.plot(Sols.t0,op1(J[:,1,1]),color=Lcol1[iSol],alpha=Lalpha1[iSol],ls=Lls[iSol],marker=marker)
-                        ax2.plot(Sols.t0,op1(J[:,0,0]),color=Lcol1[iSol],alpha=Lalpha1[iSol],ls=Lls[iSol],marker=marker)
+                        ax2.plot(Sols.t0,op1(J[:,1,1]),color=Lcol1[iSol],alpha=Lalpha1[iSol],ls=Lls[iSol])#,marker=marker)
+                        ax2.plot(Sols.t0,op1(J[:,0,0]),color=Lcol1[iSol],alpha=Lalpha1[iSol],ls=Lls[iSol])#,marker=marker)
                         if PlotDiag[1]:
-                            ax2.plot(Sols.t0,op1(J[:,0,1]),color=Lcol1_off[iSol],alpha=Lalpha1[iSol],ls=Lls_off[iSol],marker=marker)
-                            ax2.plot(Sols.t0,op1(J[:,1,0]),color=Lcol1_off[iSol],alpha=Lalpha1[iSol],ls=Lls_off[iSol],marker=marker)
+                            ax2.plot(Sols.t0,op1(J[:,0,1]),color=Lcol1_off[iSol],alpha=Lalpha1[iSol],ls=Lls_off[iSol])#,marker=marker)
+                            ax2.plot(Sols.t0,op1(J[:,1,0]),color=Lcol1_off[iSol],alpha=Lalpha1[iSol],ls=Lls_off[iSol])#,marker=marker)
                         ax2.set_ylim(ylim1)
                         ax2.set_xticks([])
                         ax2.set_yticks([])
