@@ -119,7 +119,10 @@ class ClassPreparePredict(ClassImagerDeconv):
         ModConstructor = ClassModModelMachine(self.GD)
         self.MM=ModConstructor.GiveInitialisedMMFromFile(self.FileDicoModel)
         #ModelImage0=self.MM.GiveModelImage(np.mean(self.VS.MS.ChanFreq))
-        #self.MM.CleanNegComponants(box=15,sig=1)
+
+        if self.GD["GDkMS"]["ImageSkyModel"]["FilterNegComp"]:
+            self.MM.FilterNegComponants(box=15,sig=1)
+
         if self.GD["GDkMS"]["ImageSkyModel"]["MaskImage"]!=None:
             self.MM.CleanMaskedComponants(self.GD["GDkMS"]["ImageSkyModel"]["MaskImage"])
         #self.ModelImage=self.MM.GiveModelImage(np.mean(self.VS.MS.ChanFreq))

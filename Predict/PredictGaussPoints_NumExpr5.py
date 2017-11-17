@@ -303,7 +303,7 @@ class ClassPredict():
             sig1=ThisStats[A1sel]
 
             fact=1.
-            w=1./(1e-2+sig0**(2*fact)+sig1**(2*fact))
+            w=1./(1e-2+sig0**(2*fact)+sig1**(2*fact)+sig0*sig1)
             for ich in range(nch):
                 W[ind,ich]=w[:]
 

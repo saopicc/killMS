@@ -20,17 +20,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 import numpy as np
 from killMS.Other import MyLogger
-log=MyLogger.getLogger("ClassJones")
+log=MyLogger.getLogger("ClassReCluster")
 from killMS.Other import ModColor
 from killMS.Other import reformat
 import os
 
-class ClassJones():
+class ClassReCluster():
     def __init__(self,GD):
         self.GD=GD
 
     def ReClusterSkyModel(self,SM,MSName):
-
         SolRefFile=self.GD["PreApply"]["PreApplySols"][0]
 
         if (SolRefFile!="")&(not(".npz" in SolRefFile)):

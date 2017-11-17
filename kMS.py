@@ -143,6 +143,7 @@ def read_options():
     OP.add_option('MinFacetSize')
     OP.add_option('DDFCacheDir')
     OP.add_option('RemoveDDFCache')
+    OP.add_option('FilterNegComp')
 
     OP.OptionGroup("* Data Selection","DataSelection")
     OP.add_option('UVMinMax',help='Baseline length selection in km. For example UVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default')
@@ -189,7 +190,10 @@ def read_options():
     OP.add_option('OutSolsName',type="str",help='If specified will save the estimated solutions in this file. Default is %default')
     OP.add_option('ApplyCal',type="int",help='Apply direction averaged gains to residual data in the mentioned direction. \
     If ApplyCal=-1 takes the mean gain over directions. -2 if off. Default is %default')
+    OP.add_option('SkipExistingSols',type="int",help='Skipping existing solutions if they exist. Default is %default')
     
+
+
     OP.OptionGroup("* Solver options","Solvers")
     OP.add_option('SolverType',help='Name of the solver to use (CohJones/KAFCA)')
     OP.add_option('PrecisionDot',help='Dot product Precision (S/D). Default is %default.',type="str")
@@ -245,6 +249,7 @@ def main(OP=None,MSName=None):
 
         
     options=OP.GiveOptionObject()
+
 
     #IdSharedMem=str(int(np.random.rand(1)[0]*100000))+"."
     global IdSharedMem
@@ -310,7 +315,6 @@ def main(OP=None,MSName=None):
         #if not(FileName[-4::]==".npz"): FileName+=".npz"
         SolsName=options.OutSolsName
 
-
     ParsetName="%skillMS.%s.sols.parset"%(reformat.reformat(options.MSName),SolsName)
     OP.ToParset(ParsetName)
     APP=None
@@ -336,7 +340,14 @@ def main(OP=None,MSName=None):
             FileDicoModel=options.DicoModel
         else:
             FileDicoModel="%s.DicoModel"%BaseImageName
+        print>>log,"Reading model file %s"%FileDicoModel
         GDPredict=DDFacet.Other.MyPickle.Load(FileDicoModel)["GD"]
+        
+        if not "StokesResidues" in GDPredict["Output"].keys():
+            print>>log,ModColor.Str("Seems like the DicoModel was build by an older version of DDF")
+            print>>log,ModColor.Str("   ... updating keywords")
+            GDPredict["Output"]["StokesResidues"]="I"
+
         GDPredict["Data"]["MS"]=options.MSName
         if options.DDFCacheDir!='':
             GDPredict["Cache"]["Dir"]=options.DDFCacheDir
@@ -862,8 +873,6 @@ def main(OP=None,MSName=None):
                 t.close()
 
                 
-
-
     if APP is not None:
         APP.terminate()
         APP.shutdown()
@@ -1031,6 +1040,17 @@ if __name__=="__main__":
     try:
         if type(lMS)==list:
             for MSName in lMS:
+
+                if options.SkipExistingSols:
+                    SolsName=options.SolverType
+                    if options.OutSolsName!="":
+                        SolsName=options.OutSolsName
+                    FileName="%skillMS.%s.sols.npz"%(reformat.reformat(MSName),SolsName)
+                    if os.path.isfile(FileName):
+                        print>>log,ModColor.Str("Solution file %s exist"%FileName)
+                        print>>log,ModColor.Str("   SKIPPING")
+                        continue
+
                 ss="kMS.py %s --MSName=%s"%(BaseParset,MSName)
                 print>>log,"Running %s"%ss
                 os.system(ss)
