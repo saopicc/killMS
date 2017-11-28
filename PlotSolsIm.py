@@ -147,11 +147,11 @@ def main(options=None):
         DirList=range(nd)
 
     #fig.subplots_adjust(wspace=0, hspace=0)
-    # for iDir in DirList:
-    #     for iSol in range(nSol):
-    #         Sols=LSols[iSol]
-    #         G=Sols.G[:,:,iDir,:,:]
-    #         Sols.G[:,:,iDir,:,:]=NormMatrices(G)
+    for iDir in DirList:
+        for iSol in range(nSol):
+            Sols=LSols[iSol]
+            G=Sols.G[:,:,iDir,:,:]
+            Sols.G[:,:,iDir,:,:]=NormMatrices(G)
         
     ampMax=1.5*np.max(np.median(np.abs(LSols[0].G),axis=1))
     if options.PlotMode==0:
