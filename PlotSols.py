@@ -84,8 +84,8 @@ def GiveNXNYPanels(Ns,ratio=800/500):
 from killMS.Array import ModLinAlg
 
 def NormMatrices(G):
-    print "no norm"
-    return G
+    # print "no norm"
+    # return G
     nt,nch,na,_,_=G.shape
 
     for iChan,it in ItP(range(nch),range(nt)):
