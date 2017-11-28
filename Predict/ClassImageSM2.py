@@ -40,6 +40,7 @@ import os
 from DDFacet.Data import ClassVisServer
 import pprint
 from DDFacet.Imager.ModModelMachine import ClassModModelMachine
+from pyrap.tables import table
 
 class ClassImageSM():
     def __init__(self):
@@ -61,6 +62,16 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.ModelImageName="%s.model.fits"%self.BaseImageName
 
         self.VS=VS
+
+        if self.GD["CF"]["wmax"]==0:
+            print>>log,"Computing wmax from UVW column"
+            t=table(self.VS.ListMS[0].MSName,ack=False)
+            u,v,w=t.getcol("UVW").T
+            t.close()
+            self.GD["CF"]["wmax"]=np.max(np.abs(w))
+            print>>log,"  found a wmax=%f meters"%self.GD["CF"]["wmax"]
+            
+
 
         # DC=self.GD
         # MSName=DC["VisData"]["MSName"]
@@ -191,6 +202,7 @@ class ClassPreparePredict(ClassImagerDeconv):
             lFacet[iFacet]=l
             mFacet[iFacet]=m
 
+
         NDir=ClusterCat.l.size
         d=np.sqrt((ClusterCat.l.reshape((NDir,1))-lFacet.reshape((1,NFacets)))**2+
                   (ClusterCat.m.reshape((NDir,1))-mFacet.reshape((1,NFacets)))**2)
@@ -198,12 +210,13 @@ class ClassPreparePredict(ClassImagerDeconv):
         for iFacet in range(NFacets):
             self.FacetMachine.DicoImager[iFacet]["iDirJones"]=idDir[iFacet]
 
-
             
         from DDFacet.Other.AsyncProcessPool import APP
         APP.startWorkers()
+        #self.VS.CalcWeightsBackground()
         self.FacetMachine.initCFInBackground()
         self.FacetMachine.awaitInitCompletion()
+
 
         # for iFacet in range(NFacets):
             

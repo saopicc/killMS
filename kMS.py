@@ -190,7 +190,10 @@ def read_options():
     OP.add_option('OutSolsName',type="str",help='If specified will save the estimated solutions in this file. Default is %default')
     OP.add_option('ApplyCal',type="int",help='Apply direction averaged gains to residual data in the mentioned direction. \
     If ApplyCal=-1 takes the mean gain over directions. -2 if off. Default is %default')
+    OP.add_option('SkipExistingSols',type="int",help='Skipping existing solutions if they exist. Default is %default')
     
+
+
     OP.OptionGroup("* Solver options","Solvers")
     OP.add_option('SolverType',help='Name of the solver to use (CohJones/KAFCA)')
     OP.add_option('PrecisionDot',help='Dot product Precision (S/D). Default is %default.',type="str")
@@ -246,6 +249,7 @@ def main(OP=None,MSName=None):
 
         
     options=OP.GiveOptionObject()
+
 
     #IdSharedMem=str(int(np.random.rand(1)[0]*100000))+"."
     global IdSharedMem
@@ -311,7 +315,6 @@ def main(OP=None,MSName=None):
         #if not(FileName[-4::]==".npz"): FileName+=".npz"
         SolsName=options.OutSolsName
 
-
     ParsetName="%skillMS.%s.sols.parset"%(reformat.reformat(options.MSName),SolsName)
     OP.ToParset(ParsetName)
     APP=None
@@ -332,6 +335,7 @@ def main(OP=None,MSName=None):
         #     ParsetName="%s.parset"%BaseImageName
         # print>>log,"Predict Mode: Image, with Parset: %s"%ParsetName
         # GDPredict=ReadCFG.Parset(ParsetName).DicoPars
+
         if options.DicoModel!="" and options.DicoModel is not None:
             FileDicoModel=options.DicoModel
         else:
@@ -429,7 +433,8 @@ def main(OP=None,MSName=None):
     print VS.MS
     if not(WriteColName in VS.MS.ColNames):
         print>>log, "Column %s not in MS "%WriteColName
-        exit()
+        VS.MS.AddCol(WriteColName,LikeCol="DATA")
+        #exit()
     if not(ReadColName in VS.MS.ColNames):
         print>>log, "Column %s not in MS "%ReadColName
         exit()
@@ -868,8 +873,6 @@ def main(OP=None,MSName=None):
                 t.close()
 
                 
-
-
     if APP is not None:
         APP.terminate()
         APP.shutdown()
@@ -1037,6 +1040,17 @@ if __name__=="__main__":
     try:
         if type(lMS)==list:
             for MSName in lMS:
+
+                if options.SkipExistingSols:
+                    SolsName=options.SolverType
+                    if options.OutSolsName!="":
+                        SolsName=options.OutSolsName
+                    FileName="%skillMS.%s.sols.npz"%(reformat.reformat(MSName),SolsName)
+                    if os.path.isfile(FileName):
+                        print>>log,ModColor.Str("Solution file %s exist"%FileName)
+                        print>>log,ModColor.Str("   SKIPPING")
+                        continue
+
                 ss="kMS.py %s --MSName=%s"%(BaseParset,MSName)
                 print>>log,"Running %s"%ss
                 os.system(ss)
