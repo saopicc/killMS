@@ -29,6 +29,7 @@ from killMS.Other import MyLogger
 import matplotlib.gridspec as gridspec
 log=MyLogger.getLogger("killMS")
 MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
+from itertools import product as ItP
 
 sys.path=[name for name in sys.path if not(("pyrap" in name)&("/usr/local/lib/" in name))]
 
@@ -84,10 +85,12 @@ def GiveNXNYPanels(Ns,ratio=800/500):
 from killMS.Array import ModLinAlg
 
 def NormMatrices(G):
-    nt,na,_,_=G.shape
+    print "no norm"
+    return G
+    nt,nch,na,_,_=G.shape
 
-    for it in range(nt):
-        Gt=G[it,:,:,:]
+    for iChan,it in ItP(range(nch),range(nt)):
+        Gt=G[it,iChan,:,:]
         u,s,v=np.linalg.svd(Gt[0])
         # #J0/=np.linalg.det(J0)
         # J0=Gt[0]
@@ -101,6 +104,25 @@ def NormMatrices(G):
             #Gt[iAnt,:,:]=np.dot(np.dot(u,Gt[iAnt,:,:]),v.T.conj())
             #Gt[iAnt,:,:]=np.dot(Gt[iAnt,:,:],J0)
     return G
+
+# def NormMatrices(G):
+#     nt,na,_,_=G.shape
+#     nt,nch,na,nd,_,_=LSols[0].G.shape
+#     for it in range(nt):
+#         Gt=G[it,:,:,:]
+#         u,s,v=np.linalg.svd(Gt[0])
+#         # #J0/=np.linalg.det(J0)
+#         # J0=Gt[0]
+#         # JJ=np.dot(J0.T.conj(),J0)
+#         # sqJJ=ModLinAlg.sqrtSVD(JJ)
+#         # sqJJinv=ModLinAlg.invSVD(JJ)
+#         # U=np.dot(J0,sqJJinv)
+#         U=np.dot(u,v)
+#         for iAnt in range(0,na):
+#             Gt[iAnt,:,:]=np.dot(U.T.conj(),Gt[iAnt,:,:])
+#             #Gt[iAnt,:,:]=np.dot(np.dot(u,Gt[iAnt,:,:]),v.T.conj())
+#             #Gt[iAnt,:,:]=np.dot(Gt[iAnt,:,:],J0)
+#     return G
 
 
 def main(options=None):
@@ -147,11 +169,11 @@ def main(options=None):
         DirList=range(nd)
 
     #fig.subplots_adjust(wspace=0, hspace=0)
-    # for iDir in DirList:
-    #     for iSol in range(nSol):
-    #         Sols=LSols[iSol]
-    #         G=Sols.G[:,:,iDir,:,:]
-    #         Sols.G[:,:,iDir,:,:]=NormMatrices(G)
+    for iDir in DirList:
+        for iSol in range(nSol):
+            Sols=LSols[iSol]
+            G=Sols.G[:,:,iDir,:,:]
+            Sols.G[:,:,iDir,:,:]=NormMatrices(G)
         
     ampMax=1.5*np.max(np.median(np.abs(LSols[0].G),axis=1))
     if options.PlotMode==0:
@@ -165,17 +187,15 @@ def main(options=None):
     #     LSols[-1].G[:,:,iDir,:,:]=LSols[1].G[:,:,iDir,:,:]-LSols[0].G[:,:,iDir,:,:]
     #     nSol+=1
 
-
-    
     for iDir in DirList:
         Plot(LSols,iDir)
 
 def Plot(LSols,iDir=0):
-
+    print iDir
     op0=np.abs
     op1=np.angle
-    op0=np.real
-    op1=np.imag
+    #op0=np.real
+    #op1=np.imag
     
     nt,nch,na,nd,_,_=LSols[0].G.shape
     nx,ny=GiveNXNYPanels(na)

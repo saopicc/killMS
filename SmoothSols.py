@@ -44,7 +44,7 @@ import scipy.ndimage.filters
 # warnings.catch_warnings()
 # warnings.filterwarnings('error')
 # # ##############################
-
+from killMS.Other.ClassTimeIt import ClassTimeIt
 from killMS.Other.least_squares import least_squares
 
 
@@ -91,10 +91,13 @@ class ClassInterpol():
         print>>log,"Loading %s"%self.InSolsName
         self.DicoFile=dict(np.load(self.InSolsName))
         self.Sols=self.DicoFile["Sols"].view(np.recarray)
-        self.CentralFreqs=np.mean(self.DicoFile["FreqDomains"],axis=1)
+        #self.Sols=self.Sols[0:100]
 
+
+        self.CentralFreqs=np.mean(self.DicoFile["FreqDomains"],axis=1)
+        self.incrCross=11
         NTEC=101
-        NConstPhase=11
+        NConstPhase=51
         TECGridAmp=0.1
         TECGrid,CPhase=np.mgrid[-TECGridAmp:TECGridAmp:NTEC*1j,-np.pi:np.pi:NConstPhase*1j]
         Z=TECToZ(TECGrid.reshape((-1,1)),CPhase.reshape((-1,1)),self.CentralFreqs.reshape((1,-1)))
@@ -103,9 +106,14 @@ class ClassInterpol():
 
         self.InterpMode=InterpMode
         self.Amp_PolyOrder=Amp_PolyOrder
+
+
+
         self.GOut=NpShared.ToShared("%sGOut"%IdSharedMem,self.Sols.G.copy())
         self.PolMode=PolMode
         self.Amp_GaussKernel=Amp_GaussKernel
+        if len(self.Amp_GaussKernel)!=2:
+            raise ValueError("GaussKernel should be of size 2")
         self.Amp_SmoothType=Amp_SmoothType
         self.CalcFreqAmpSystematics()
         self.Sols.G-=self.G0
@@ -145,6 +153,12 @@ class ClassInterpol():
     def InterpolParallel(self):
         Sols0=self.Sols
         nt,nch,na,nd,_,_=Sols0.G.shape
+        print>>log," #Times:      %i"%nt
+        print>>log," #Channels:   %i"%nch
+        print>>log," #Antennas:   %i"%na
+        print>>log," #Directions: %i"%nd
+        
+
         # APP.terminate()
         # APP.shutdown()
         # Multiprocessing.cleanupShm()
@@ -153,19 +167,19 @@ class ClassInterpol():
         #        for iAnt in [49]:#range(na):
         #            for iDir in [0]:#range(nd):
 
-        print self.InterpMode
-        if "CrossTEC" in self.InterpMode:
+        if "TEC" in self.InterpMode:
             for it in range(nt):
-                APP.runJob("FitThisCrossTEC_%d"%iJob, self.FitThisCrossTEC, args=(it,))#,serial=True)
+                APP.runJob("FitThisTEC_%d"%iJob, self.FitThisTEC, args=(it,))#,serial=True)
                 iJob+=1
-            workers_res=APP.awaitJobResults("FitThisCrossTEC*", progress="Fit %s"%self.InterpMode)
+            workers_res=APP.awaitJobResults("FitThisTEC*", progress="Fit TEC")
 
 
-        for iAnt in range(na):
-            for iDir in range(nd):
-                APP.runJob("FitThisAmpPhase_%d"%iJob, self.FitThisAmpPhase, args=(iAnt,iDir),serial=True)
-                iJob+=1
-        workers_res=APP.awaitJobResults("FitThisAmpPhase*", progress="Fit %s"%self.InterpMode)
+        if "Amp" in self.InterpMode:
+            for iAnt in range(na):
+                for iDir in range(nd):
+                    APP.runJob("FitThisAmp_%d"%iJob, self.FitThisAmp, args=(iAnt,iDir))#,serial=True)
+                    iJob+=1
+        workers_res=APP.awaitJobResults("FitThisAmp*", progress="Smooth Amp")
 
 
         APP.terminate()
@@ -229,29 +243,39 @@ class ClassInterpol():
 
     
 
-    def FitThisCrossTEC(self,it):
+    def FitThisTEC(self,it):
         nt,nch,na,nd,_,_=self.Sols.G.shape
         for iDir in range(nd):
-            gz,TEC,CPhase=self.FitThisCrossTECTime(it,iDir)
+            gz,TEC,CPhase=self.FitThisTECTime(it,iDir)
             GOut=NpShared.GiveArray("%sGOut"%IdSharedMem)
             GOut[it,:,:,iDir,0,0]=gz
             GOut[it,:,:,iDir,1,1]=gz
 
         
-    def FitThisCrossTECTime(self,it,iDir):
+    def FitThisTECTime(self,it,iDir,CrossMode=False):
         GOut=NpShared.GiveArray("%sGOut"%IdSharedMem)
         nt,nch,na,nd,_,_=self.Sols.G.shape
-
+        T=ClassTimeIt("CrossFit")
+        T.disable()
         TEC0CPhase0=np.zeros((2,na),np.float32)
         for iAnt in range(na):
-            _,t0,c0=self.FitThisTECTime(it,iAnt,iDir)
+            _,t0,c0=self.EstimateThisTECTime(it,iAnt,iDir)
             TEC0CPhase0[0,iAnt]=t0
             TEC0CPhase0[1,iAnt::]=c0
         
         G=GOut[it,:,:,iDir,0,0].T.copy()
-        A0,A1=np.mgrid[0:na,0:na]
-        gg_meas=G[A0.ravel(),:]*G[A1.ravel(),:].conj()
-        gg_meas_reim=np.array([gg_meas.real,gg_meas.imag]).ravel()[::11]
+        if CrossMode:
+            A0,A1=np.mgrid[0:na,0:na]
+            gg_meas=G[A0.ravel(),:]*G[A1.ravel(),:].conj()
+            gg_meas_reim=np.array([gg_meas.real,gg_meas.imag]).ravel()[::self.incrCross]
+        else:
+            self.incrCross=1
+            A0,A1=np.mgrid[0:na],None
+            gg_meas=G[A0.ravel(),:]
+            gg_meas_reim=np.array([gg_meas.real,gg_meas.imag]).ravel()[::self.incrCross]
+
+
+
         # for ibl in range(gg_meas.shape[0])[::-1]:
         #     import pylab
         #     pylab.clf()
@@ -265,32 +289,51 @@ class ClassInterpol():
         #     pylab.show(False)
         #     pylab.pause(0.1)
         iIter=np.array([0])
-        def _f_resid(TecConst,A0,A1,ggmeas,iIter):
+        tIter=np.array([0],np.float64)
+        def _f_resid(TecConst,A0,A1,ggmeas,iIter,tIter):
+            T2=ClassTimeIt("resid")
+            T2.disable()
             TEC,CPhase=TecConst.reshape((2,na))
             GThis=TECToZ(TEC.reshape((-1,1)),CPhase.reshape((-1,1)),self.CentralFreqs.reshape((1,-1)))
-            gg_pred=GThis[A0.ravel(),:]*GThis[A1.ravel(),:].conj()
-            gg_pred_reim=np.array([gg_pred.real,gg_pred.imag]).ravel()[::11]
+            #T2.timeit("1")
+            if CrossMode:
+                gg_pred=GThis[A0.ravel(),:]*GThis[A1.ravel(),:].conj()
+            else:
+                gg_pred=GThis[A0.ravel(),:]
+
+            #T2.timeit("2")
+            gg_pred_reim=np.array([gg_pred.real,gg_pred.imag]).ravel()[::self.incrCross]
+            #T2.timeit("3")
             r=(ggmeas-gg_pred_reim).ravel()
+            #print r.shape
+            #T2.timeit("4")
             #return np.angle((ggmeas-gg_pred).ravel())
             #print np.mean(np.abs(r))
             iIter+=1
+            #tIter+=T2.timeit("all")
             #print iIter[0]
             return r
+
         #print _f_resid(TEC0CPhase0,A0,A1,ggmeas)
 
-        #print "start"
+        T.timeit("Init")
         Sol=least_squares(_f_resid,
                           TEC0CPhase0.ravel(),
-                          method="trf",
-                          #method="lm",
-                          args=(A0,A1,gg_meas_reim,iIter),ftol=1e-2,gtol=1e-2,xtol=1e-2)
+                          #method="trf",
+                          method="lm",
+                          args=(A0,A1,gg_meas_reim,iIter,tIter),
+                          ftol=1e-2,gtol=1e-2,xtol=1e-2)#,ftol=1,gtol=1,xtol=1,max_nfev=1)
         #Sol=leastsq(_f_resid, TEC0CPhase0.ravel(), args=(A0,A1,gg_meas_reim,iIter),ftol=1e-2,gtol=1e-2,xtol=1e-2)
-        #print "ok",it,iDir
+        T.timeit("Done %3i %3i %5i"%(it,iDir,iIter[0]))
+        #print "total time f=%f"%tIter[0]
         TEC,CPhase=Sol.x.reshape((2,na))
+
 
         TEC-=TEC[0]
         CPhase-=CPhase[0]
         GThis=np.abs(GOut[it,:,:,iDir,0,0]).T*TECToZ(TEC.reshape((-1,1)),CPhase.reshape((-1,1)),self.CentralFreqs.reshape((1,-1)))
+
+        T.timeit("Rest")
 
         return GThis.T,TEC,CPhase
         # # ###########################
@@ -322,24 +365,23 @@ class ClassInterpol():
         # # ###############################
         
 
-        
-    def FitThisAmpPhase(self,iAnt,iDir):
+       
+    def FitThisAmp(self,iAnt,iDir):
         nt,nch,na,nd,_,_=self.Sols.G.shape
-        if "TEC" in self.InterpMode:
+        # if "TEC" in self.InterpMode:
+        #     for it in range(nt):
+        #         gz,t0,c0=self.FitThisTECTime(it,iAnt,iDir)
+        #         GOut=NpShared.GiveArray("%sGOut"%IdSharedMem)
+        #         GOut[it,:,iAnt,iDir,0,0]=gz
+        #         GOut[it,:,iAnt,iDir,1,1]=gz
+
+        if self.Amp_SmoothType=="Poly":
             for it in range(nt):
-                gz,t0,c0=self.FitThisTECTime(it,iAnt,iDir)
-                GOut=NpShared.GiveArray("%sGOut"%IdSharedMem)
-                GOut[it,:,iAnt,iDir,0,0]=gz
-                GOut[it,:,iAnt,iDir,1,1]=gz
+                self.FitThisAmpTimePoly(it,iAnt,iDir)
+        elif self.Amp_SmoothType=="Gauss":
+            self.GaussSmoothAmp(iAnt,iDir)
 
-        if "Amp" in self.InterpMode:
-            if self.Amp_SmoothType=="Poly":
-                for it in range(nt):
-                    self.FitThisAmpTimePoly(it,iAnt,iDir)
-            elif self.Amp_SmoothType=="Gauss":
-                self.GaussSmoothAmp(iAnt,iDir)
-
-    def FitThisTECTime(self,it,iAnt,iDir):
+    def EstimateThisTECTime(self,it,iAnt,iDir):
         GOut=NpShared.GiveArray("%sGOut"%IdSharedMem)
         g=GOut[it,:,iAnt,iDir,0,0]
         g0=g/np.abs(g)
@@ -426,6 +468,7 @@ class ClassInterpol():
         GOut[it,:,iAnt,iDir,1,1]=gz
 
     def GaussSmoothAmp(self,iAnt,iDir):
+        #print iAnt,iDir
         GOut=NpShared.GiveArray("%sGOut"%IdSharedMem)
         g=GOut[:,:,iAnt,iDir,0,0]
         g0=np.abs(g)
@@ -434,16 +477,38 @@ class ClassInterpol():
         sg0=scipy.ndimage.filters.gaussian_filter(g0,self.Amp_GaussKernel)
 
         gz=sg0*g/np.abs(g)
+        #print iAnt,iDir,GOut.shape,gz.shape
 
-        GOut[:,:,iAnt,iDir,0,0]=gz
-        GOut[:,:,iAnt,iDir,1,1]=gz
+        GOut[:,:,iAnt,iDir,0,0]=gz[:,:]
+        GOut[:,:,iAnt,iDir,1,1]=gz[:,:]
+        #print np.max(GOut[:,:,iAnt,iDir,0,0]-gz[:,:])
 
     def Save(self):
         OutFile=self.OutSolsName
         if not ".npz" in OutFile: OutFile+=".npz"
         print>>log,"  Saving interpolated solution file as: %s"%OutFile
-        self.DicoFile["Sols"]["G"][...]=self.GOut[:]
+        self.DicoFile["Sols"]["G"][:]=self.GOut[:]
         np.savez(OutFile,**(self.DicoFile))
+
+        # import PlotSolsIm
+        # G=self.DicoFile["Sols"]["G"].view(np.recarray)
+        # iAnt,iDir=10,0
+        # import pylab
+        # pylab.clf()
+        # A=self.GOut[:,:,iAnt,iDir,0,0]
+        # B=G[:,:,iAnt,iDir,0,0]
+        # Gs=np.load(OutFile)["Sols"]["G"].view(np.recarray)
+        # C=Gs[:,:,iAnt,iDir,0,0]
+        # pylab.subplot(1,3,1)
+        # pylab.imshow(np.abs(A).T,interpolation="nearest",aspect="auto")
+        # pylab.subplot(1,3,2)
+        # pylab.imshow(np.abs(B).T,interpolation="nearest",aspect="auto")
+        # pylab.subplot(1,3,3)
+        # pylab.imshow(np.abs(C).T,interpolation="nearest",aspect="auto")
+        # pylab.draw()
+        # pylab.show()
+        # PlotSolsIm.Plot([self.DicoFile["Sols"].view(np.recarray)])
+
         NpShared.DelAll("%sGOut"%IdSharedMem)
 
 # ############################################        

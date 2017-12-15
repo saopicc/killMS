@@ -64,7 +64,8 @@ def read_options():
     group.add_option('--SolsFile',help='Input Solutions list [no default]',default='')
     group.add_option('--DoResid',type="int",help='No [no default]',default=-1)
     group.add_option('--PlotMode',type='str',help=' [no default]',default="AP")
-    group.add_option('--DirList',help=' [no default]',default="")
+    group.add_option('--DirList',type="str",help=' [no default]',default="")
+    group.add_option('--ChanList',help=' [no default]',default="")
     opt.add_option_group(group)
     
     options, arguments = opt.parse_args()
@@ -199,6 +200,12 @@ def main(options=None):
     else:
         DirList=range(nd)
 
+    if options.ChanList!="":
+        ChanList=options.ChanList.split(',')
+        ChanList=[int(i) for i in ChanList]
+    else:
+        ChanList=range(nch)
+
     #DirList=[np.where(ClusterCat["SumI"]==np.max(ClusterCat["SumI"]))[0][0]]
     #print DirList
 
@@ -254,7 +261,7 @@ def main(options=None):
                 if op1!=None: ax2 = ax.twinx()
 
                 pylab.title(StationNames[iAnt], fontsize=9)
-                for iChan,iSol in ItP(range(nch),range(nSol)):
+                for iChan,iSol in ItP(ChanList,range(nSol)):
                     Sols=LSols[iSol]
                     G=Sols.G[:,iChan,:,iDir,:,:]
                     J=G[:,iAnt,:,:]
