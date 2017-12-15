@@ -15,6 +15,8 @@ class ClassSolPredictMachine():
     def __init__(self,GD):
         self.GD=GD
         FileName=self.GD["KAFCA"]["EvolutionSolFile"]
+        if not ".npz" in FileName:
+            FileName="%s/killMS.%s.sols.npz"%(self.GD["VisData"]["MSName"],FileName)
         print>>log, "Reading solution file %s"%FileName
         self.DicoSols=np.load(FileName)
         self.Sols=self.DicoSols["Sols"]
