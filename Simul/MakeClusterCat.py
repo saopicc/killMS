@@ -66,7 +66,6 @@ def test():
                           "finfo":(40e6,60e6,2),
                           "Mode":"Grid"}
 
-
     # DicoPropPointings[0]={"offset":(0,0),
     #                       "Ns":,
     #                       "Nc":0,
