@@ -27,6 +27,7 @@ import numpy as np
 import pylab
 import os
 from DDFacet.Other import MyLogger
+from DDFacet.Other import ModColor
 log=MyLogger.getLogger("ClassInterpol")
 from DDFacet.Other.AsyncProcessPool import APP
 from DDFacet.Other import Multiprocessing
@@ -34,6 +35,7 @@ from DDFacet.Other import Multiprocessing
 from killMS.Array import NpShared
 IdSharedMem=str(int(os.getpid()))+"."
 from DDFacet.Other import AsyncProcessPool
+from killMS.Other import ClassFitTEC
 import scipy.ndimage.filters
 # # ##############################
 # # Catch numpy warning
@@ -59,6 +61,8 @@ def read_options():
     group.add_option('--SolsFileIn',help='SolfileIn [no default]',default=None)
     group.add_option('--SolsFileOut',help='SolfileOut [no default]',default=None)
     group.add_option('--InterpMode',help='Interpolation mode TEC and/or Amp [default is %default]',type="str",default="TEC,Amp")
+    group.add_option('--CrossMode',help='Use cross gains maode for TEC [default is %default]',type=int,default=1)
+    group.add_option('--RemoveAmpBias',help='Remove amplitude bias before smoothing [default is %default]',type=int,default=0)
     
     group.add_option('--Amp-SmoothType',help='Interpolation Type for the amplitude [default is %default]',type="str",default="Gauss")
     group.add_option('--Amp-PolyOrder',help='Order of the polynomial to do the amplitude',type="int",default=3)
@@ -83,8 +87,11 @@ def TECToZ(TEC,ConstPhase,freq):
 
 
 class ClassInterpol():
-    def __init__(self,InSolsName,OutSolsName,InterpMode="TEC",PolMode="Scalar",Amp_PolyOrder=3,NCPU=0,
-                 Amp_GaussKernel=(0,5), Amp_SmoothType="Poly"):
+    def __init__(self,InSolsName,OutSolsName,
+                 InterpMode="TEC",PolMode="Scalar",Amp_PolyOrder=3,NCPU=0,
+                 Amp_GaussKernel=(0,5), Amp_SmoothType="Poly",
+                 CrossMode=1,
+                 RemoveAmpBias=0):
 
         self.InSolsName=InSolsName
         self.OutSolsName=OutSolsName
@@ -92,10 +99,10 @@ class ClassInterpol():
         self.DicoFile=dict(np.load(self.InSolsName))
         self.Sols=self.DicoFile["Sols"].view(np.recarray)
         #self.Sols=self.Sols[0:100]
-
-
+        self.CrossMode=CrossMode
         self.CentralFreqs=np.mean(self.DicoFile["FreqDomains"],axis=1)
         self.incrCross=11
+        iii=0
         NTEC=101
         NConstPhase=51
         TECGridAmp=0.1
@@ -107,7 +114,10 @@ class ClassInterpol():
         self.InterpMode=InterpMode
         self.Amp_PolyOrder=Amp_PolyOrder
 
-
+        self.RemoveAmpBias=RemoveAmpBias
+        if self.RemoveAmpBias:
+            self.CalcFreqAmpSystematics()
+            self.Sols.G/=self.G0
 
         self.GOut=NpShared.ToShared("%sGOut"%IdSharedMem,self.Sols.G.copy())
         self.PolMode=PolMode
@@ -115,15 +125,20 @@ class ClassInterpol():
         if len(self.Amp_GaussKernel)!=2:
             raise ValueError("GaussKernel should be of size 2")
         self.Amp_SmoothType=Amp_SmoothType
-        self.CalcFreqAmpSystematics()
-        self.Sols.G-=self.G0
-        if "TEC" in self.InterpMode:
+
+        if "TEC" in self.InterpMode or "TEC" in self.InterpMode:
             print>>log, "  Smooth phases using a TEC model"
+            if self.CrossMode: 
+                print>>log,ModColor.Str("Using CrossMode")
+
         if "Amp" in self.InterpMode:
             if Amp_SmoothType=="Poly":
                 print>>log, "  Smooth amplitudes using polynomial model of order %i"%self.Amp_PolyOrder
             if Amp_SmoothType=="Gauss":
                 print>>log, "  Smooth amplitudes using Gaussian kernel of %s (Time/Freq) bins"%str(Amp_GaussKernel)
+
+        if self.RemoveAmpBias:
+            self.GOut*=self.G0
 
         APP.registerJobHandlers(self)
         AsyncProcessPool.init(ncpu=NCPU,affinity=0)
@@ -141,13 +156,13 @@ class ClassInterpol():
         print>>log, "  Calculating amplitude systematics..."
         Sols0=self.Sols
         nt,nch,na,nd,_,_=Sols0.G.shape
-        self.G0=np.zeros((1,nch,na,nd,2,2),np.float32)
+        self.G0=np.zeros((1,nch,na,nd,1,1),np.float32)
         
         for iAnt in range(na):
             for iDir in range(nd):
-                G=Sols0.G[:,:,iAnt,iDir,:,:]
+                G=Sols0.G[:,:,iAnt,iDir,0,0]
                 G0=np.mean(np.abs(G),axis=0)
-                self.G0[0,:,iAnt,iDir,:,:]=G0.reshape((nch,2,2))
+                self.G0[0,:,iAnt,iDir,:,:]=G0.reshape((nch,1,1))
                 
 
     def InterpolParallel(self):
@@ -252,7 +267,7 @@ class ClassInterpol():
             GOut[it,:,:,iDir,1,1]=gz
 
         
-    def FitThisTECTime(self,it,iDir,CrossMode=False):
+    def FitThisTECTime(self,it,iDir):
         GOut=NpShared.GiveArray("%sGOut"%IdSharedMem)
         nt,nch,na,nd,_,_=self.Sols.G.shape
         T=ClassTimeIt("CrossFit")
@@ -262,9 +277,24 @@ class ClassInterpol():
             _,t0,c0=self.EstimateThisTECTime(it,iAnt,iDir)
             TEC0CPhase0[0,iAnt]=t0
             TEC0CPhase0[1,iAnt::]=c0
-        
+        T.timeit("init")
+        # ######################################
+        # Changing method
+        #print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        #print it,iDir
+        TECMachine=ClassFitTEC.ClassFitTEC(self.Sols.G[it,:,:,iDir,0,0],self.CentralFreqs,Tol=5.e-2)
+        TECMachine.setX0(TEC0CPhase0.ravel())
+        X=TECMachine.doFit()
+        TEC,CPhase=X.reshape((2,na))
+        TEC-=TEC[0]
+        CPhase-=CPhase[0]
+        GThis=np.abs(GOut[it,:,:,iDir,0,0]).T*TECToZ(TEC.reshape((-1,1)),CPhase.reshape((-1,1)),self.CentralFreqs.reshape((1,-1)))
+        T.timeit("done")
+        return GThis.T,TEC,CPhase
+        # ######################################
+
         G=GOut[it,:,:,iDir,0,0].T.copy()
-        if CrossMode:
+        if self.CrossMode:
             A0,A1=np.mgrid[0:na,0:na]
             gg_meas=G[A0.ravel(),:]*G[A1.ravel(),:].conj()
             gg_meas_reim=np.array([gg_meas.real,gg_meas.imag]).ravel()[::self.incrCross]
@@ -273,7 +303,6 @@ class ClassInterpol():
             A0,A1=np.mgrid[0:na],None
             gg_meas=G[A0.ravel(),:]
             gg_meas_reim=np.array([gg_meas.real,gg_meas.imag]).ravel()[::self.incrCross]
-
 
 
         # for ibl in range(gg_meas.shape[0])[::-1]:
@@ -296,7 +325,7 @@ class ClassInterpol():
             TEC,CPhase=TecConst.reshape((2,na))
             GThis=TECToZ(TEC.reshape((-1,1)),CPhase.reshape((-1,1)),self.CentralFreqs.reshape((1,-1)))
             #T2.timeit("1")
-            if CrossMode:
+            if self.CrossMode:
                 gg_pred=GThis[A0.ravel(),:]*GThis[A1.ravel(),:].conj()
             else:
                 gg_pred=GThis[A0.ravel(),:]
@@ -316,7 +345,6 @@ class ClassInterpol():
 
         #print _f_resid(TEC0CPhase0,A0,A1,ggmeas)
 
-        T.timeit("Init")
         Sol=least_squares(_f_resid,
                           TEC0CPhase0.ravel(),
                           #method="trf",
@@ -324,7 +352,7 @@ class ClassInterpol():
                           args=(A0,A1,gg_meas_reim,iIter,tIter),
                           ftol=1e-2,gtol=1e-2,xtol=1e-2)#,ftol=1,gtol=1,xtol=1,max_nfev=1)
         #Sol=leastsq(_f_resid, TEC0CPhase0.ravel(), args=(A0,A1,gg_meas_reim,iIter),ftol=1e-2,gtol=1e-2,xtol=1e-2)
-        T.timeit("Done %3i %3i %5i"%(it,iDir,iIter[0]))
+        #T.timeit("Done %3i %3i %5i"%(it,iDir,iIter[0]))
         #print "total time f=%f"%tIter[0]
         TEC,CPhase=Sol.x.reshape((2,na))
 
@@ -333,8 +361,9 @@ class ClassInterpol():
         CPhase-=CPhase[0]
         GThis=np.abs(GOut[it,:,:,iDir,0,0]).T*TECToZ(TEC.reshape((-1,1)),CPhase.reshape((-1,1)),self.CentralFreqs.reshape((1,-1)))
 
-        T.timeit("Rest")
+        
 
+        T.timeit("done")
         return GThis.T,TEC,CPhase
         # # ###########################
         # TEC0,CPhase0=TEC0CPhase0
@@ -534,9 +563,8 @@ def main(options=None):
                      InterpMode=options.InterpMode,
                      Amp_PolyOrder=options.Amp_PolyOrder,
                      Amp_GaussKernel=options.Amp_GaussKernel, Amp_SmoothType=options.Amp_SmoothType,
-                     NCPU=options.NCPU)
+                     NCPU=options.NCPU,CrossMode=options.CrossMode)
     CI.InterpolParallel()
-    CI.Sols.G+=CI.G0
 
     CI.Save()
 
