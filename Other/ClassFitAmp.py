@@ -3,11 +3,11 @@ from DDFacet.Other import MyLogger
 log=MyLogger.getLogger("ClassFitAmp")
 import killMS.Array.ModLinAlg
 from DDFacet.Other import ClassTimeIt
-from skimage.restoration import (denoise_tv_chambolle, denoise_bilateral,
-                                 denoise_wavelet, estimate_sigma)
+#from skimage.restoration import (denoise_tv_chambolle, denoise_bilateral,
+#                                 denoise_wavelet, estimate_sigma)
 
 MyLogger.setSilent(["ClassFitAmp"])
-from tvd import TotalVariationDenoising
+#from tvd import TotalVariationDenoising
 
 def Dot(*args):
     P=1.
