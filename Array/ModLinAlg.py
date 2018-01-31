@@ -213,10 +213,11 @@ def PlotMatSVD(A,s,Ainv):
 
 
 def invSVD(A):
-    u,s,v=np.linalg.svd(A)#+np.random.randn(*A.shape)*(1e-6*A.max()))
+    u,s,v=np.linalg.svd(np.complex128(A))#+np.random.randn(*A.shape)*(1e-6*A.max()))
     #s[s<0.]=1.e-6
     s0=s.copy()
-    s[s<1.e-6*s.max()]=1.e-6*s.max()
+    Th=1e-10
+    s[s<Th*s.max()]=Th*s.max()
     ssq=(1./s)
     #Asq=np.conj(np.dot(np.dot(v.T,ssq),u.T))
     v0=v.T*ssq.reshape(1,ssq.size)

@@ -494,6 +494,19 @@ class ClassVisServer():
             self.fracNVisPerAnt=NVisPerAnt/np.max(NVisPerAnt)
             print>>log,"Fraction of data per antenna for covariance estimate: %s"%str(self.fracNVisPerAnt.tolist())
 
+
+            u,v,w=uvw.T
+            d=np.sqrt(u**2+v**2)
+            Compactness=np.zeros((self.MS.na,),np.float32)
+            for iAnt in range(self.MS.na):
+                ind=np.where((A0==iAnt)|(A1==iAnt))[0]
+                Compactness[iAnt]=np.mean(d[ind])
+            self.Compactness=Compactness/np.max(Compactness)
+            print>>log,"Compactness: %s"%str(self.Compactness.tolist())
+
+
+
+            
             NVisSel=flags[flags==0].size
             print>>log,"Total fraction of remaining data after uv-cut: %5.2f %%"%(100*NVisSel/float(NVis))
 
@@ -507,7 +520,7 @@ class ClassVisServer():
         iT0,iT1=self.CurrentMemTimeChunk,self.CurrentMemTimeChunk+1
         self.CurrentMemTimeChunk+=1
 
-        print>>log, "Reading next data chunk in [%5.2f, %5.2f] hours"%(self.TimesInt[iT0],self.TimesInt[iT1])
+        print>>log, "Reading next data chunk in [%5.2f, %5.2f] hours (column %s)"%(self.TimesInt[iT0],self.TimesInt[iT1],MS.ColName)
         self.DATA_CHUNK=MS.ReadData(t0=self.TimesInt[iT0],t1=self.TimesInt[iT1],ReadWeight=True)
 
 

@@ -207,32 +207,39 @@ def Plot(LSols,iDir=0):
 
     if len(LSols)==1:
         Sols=LSols[0]
-        ADir=Sols.G[:,:,:,iDir,0,0]
+        ADir_0=op0(Sols.G[:,:,:,iDir,0,0])
+        ADir_1=op1(Sols.G[:,:,:,iDir,0,0])
+        vmin,vmax=0,2
+        
     if len(LSols)==2:
         Sols=LSols[0]
-        ADir=Sols.G[:,:,:,iDir,0,0]
-        ADir-=LSols[1].G[:,:,:,iDir,0,0]
+        ADir_0=op0(Sols.G[:,:,:,iDir,0,0])-op0(LSols[1].G[:,:,:,iDir,0,0])
+        ADir_1=op1(Sols.G[:,:,:,iDir,0,0]*LSols[1].G[:,:,:,iDir,0,0].conj())
 
+    Mean=np.mean(ADir_0)
+    MAD=np.sqrt(np.median((ADir_0-Mean)**2))
+    vmin,vmax=Mean-10*MAD,Mean+10*MAD
 
+    
     iAnt=0
-    vmin,vmax=0,2#op0(ADir).min(),op0(ADir).max()
     for i in range(nx):
         for j in range(ny):
             if iAnt>=na:continue
             #pylab.title(StationNames[iAnt], fontsize=9)
 
-            A=ADir[:,:,iAnt]
+            A_0=ADir_0[:,:,iAnt]
+            A_1=ADir_1[:,:,iAnt]
             ax = pylab.subplot(gs1[2*i,j])
             #ax2 = ax.twinx()
-            ax.imshow(op0(A).T,vmin=vmin,vmax=vmax,interpolation="nearest",aspect='auto',cmap="gray")
+            ax.imshow(A_0.T,vmin=vmin,vmax=vmax,interpolation="nearest",aspect='auto',cmap="gray")
             nt,nch,na,nd,_,_=Sols.G.shape
             ax.set_xticks([])
             ax.set_yticks([])
             
             ax = pylab.subplot(gs1[2*i+1,j])
             #ax2 = ax.twinx()
-            A=Sols.G[:,:,iAnt,iDir,0,0]
-            ax.imshow(op1(A).T,vmin=-np.pi,vmax=np.pi,interpolation="nearest",aspect='auto')
+            #A=Sols.G[:,:,iAnt,iDir,0,0]
+            ax.imshow(A_1.T,vmin=-np.pi,vmax=np.pi,interpolation="nearest",aspect='auto')
             nt,nch,na,nd,_,_=Sols.G.shape
             ax.set_xticks([])
             ax.set_yticks([])

@@ -319,7 +319,7 @@ def main(OP=None,MSName=None):
     OP.ToParset(ParsetName)
     APP=None
     GD=OP.DicoConfig
-    if GD["ImageSkyModel"]["BaseImageName"]=="":
+    if GD["SkyModel"]["SkyModel"]!="":
         print>>log,ModColor.Str("Predict Mode: Catalog")
         PredictMode="Catalog"
     elif GD["SkyModel"]["SkyModelCol"] is not None:

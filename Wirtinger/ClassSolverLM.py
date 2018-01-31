@@ -162,18 +162,26 @@ class ClassSolverLM(ClassJacobianAntenna):
 
         
         
-        
-        # if self.iAnt==5:
+        # #print self.iAnt
+        # if self.iAnt==57:
         #     f=(self.DicoData["flags_flat"]==0)
-        #     pylab.figure(2)
+        #     import pylab
+        #     pylab.figure(1)
         #     pylab.clf()
-        #     pylab.plot((z[f])[::1])#[::11])
-        #     pylab.plot((Jx[f])[::1])#[::11])
+        #     pylab.subplot(1,3,1)
+        #     pylab.plot(np.abs(z[f])[::1]**2)#[::11])
+        #     pylab.ylim(0,800)
+        #     pylab.subplot(1,3,2)
+        #     pylab.plot(np.abs(Jx[f])[::1]**2)#[::11])
+        #     pylab.ylim(0,800)
+        #     pylab.subplot(1,3,3)
         #     pylab.plot(zr[f][::1])#[::11])
+        #     pylab.ylim(-30,30)
         #     pylab.draw()
         #     pylab.show(False)
         #     pylab.pause(0.1)
-        #     stop
+        #     #stop
+
 
         # # pylab.figure(2)
         # # pylab.clf()

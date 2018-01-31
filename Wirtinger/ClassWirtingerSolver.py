@@ -386,6 +386,7 @@ class ClassWirtingerSolver():
             Qa=Qa.reshape((nd*npolx*npoly,nd*npolx*npoly))
             #print np.diag(Qa)
             Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iChanSol,iAnt]))**2*(Qa*(self.VS.fracNVisPerAnt[iAnt]**4))**(self.GD["KAFCA"]["PowerSmooth"]) for iAnt in range(na)])
+            #Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iChanSol,iAnt]))**2*(Qa*(self.VS.Compactness[iAnt]**2*self.VS.fracNVisPerAnt[iAnt]**4))**(self.GD["KAFCA"]["PowerSmooth"]) for iAnt in range(na)])
             #print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
             #Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iChanSol,iAnt]))**2*Qa for iAnt in range(na)])
             #print Q[0]
@@ -1093,9 +1094,18 @@ class ClassWirtingerSolver():
 
                     self.G[:]=ThisG[:]
                     if self.SolverType=="KAFCA":
-                       self.P[:]=ThisP[:]
-                       self.Q[:]=ThisQ[:]
-
+                        self.P[:]=ThisP[:]
+                        self.Q[:]=ThisQ[:]
+                        nf,na,nd,nd=self.Q.shape
+                        P=np.zeros_like(self.P)
+                        Q=np.zeros_like(self.Q)
+                        for iChan in range(nf):
+                            for iAnt in range(na):
+                                P[iChan,iAnt,:,:]=np.diag(np.diag(self.P[iChan,iAnt,:,:]))
+                                Q[iChan,iAnt,:,:]=np.diag(np.diag(self.Q[iChan,iAnt,:,:]))
+                        self.P[:]=P[:]
+                        self.Q[:]=Q[:]
+                        
 
                 # self.G[:]=ThisG[:]
                 # #self.G[:]=G[:]
@@ -1318,6 +1328,17 @@ class WorkerAntennaLM(multiprocessing.Process):
                 # if Ga!=None:
                 #     G[iAnt]=Ga
                 #     P[iAnt]=Pa
+
+                # ThisP=P[iChanSol].copy()
+                # ThisP.fill(0)
+                # # print
+                # # print ThisP.shape
+                # # print
+                # na,nd,_=ThisP.shape
+                # for iAnt in range(na):
+                #     for iDir in range(nd):
+                #         ThisP[iAnt,iDir,iDir]=P[iChanSol][iAnt,iDir,iDir]
+                # x,Pout,InfoNoise=JM.doEKFStep(G[iChanSol],ThisP,evP[iChanSol],rms,Gains0Iter=G0Iter)
 
                 x,Pout,InfoNoise=JM.doEKFStep(G[iChanSol],P[iChanSol],evP[iChanSol],rms,Gains0Iter=G0Iter)
                 T.timeit("EKFStep")

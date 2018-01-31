@@ -36,6 +36,7 @@ from killMS.Array import NpShared
 IdSharedMem=str(int(os.getpid()))+"."
 from DDFacet.Other import AsyncProcessPool
 from killMS.Other import ClassFitTEC
+from killMS.Other import ClassFitAmp
 import scipy.ndimage.filters
 # # ##############################
 # # Catch numpy warning
@@ -93,8 +94,13 @@ class ClassInterpol():
                  CrossMode=1,
                  RemoveAmpBias=0):
 
+        if type(InterpMode)==str:
+            InterpMode=InterpMode.split(",")#[InterpMode]
+
         self.InSolsName=InSolsName
         self.OutSolsName=OutSolsName
+        
+
         print>>log,"Loading %s"%self.InSolsName
         self.DicoFile=dict(np.load(self.InSolsName))
         self.Sols=self.DicoFile["Sols"].view(np.recarray)
@@ -126,7 +132,7 @@ class ClassInterpol():
             raise ValueError("GaussKernel should be of size 2")
         self.Amp_SmoothType=Amp_SmoothType
 
-        if "TEC" in self.InterpMode or "TEC" in self.InterpMode:
+        if "TEC" in self.InterpMode:
             print>>log, "  Smooth phases using a TEC model"
             if self.CrossMode: 
                 print>>log,ModColor.Str("Using CrossMode")
@@ -183,6 +189,7 @@ class ClassInterpol():
         #            for iDir in [0]:#range(nd):
 
         if "TEC" in self.InterpMode:
+            #APP.runJob("FitThisTEC_%d"%iJob, self.FitThisTEC, args=(208,)); iJob+=1
             for it in range(nt):
                 APP.runJob("FitThisTEC_%d"%iJob, self.FitThisTEC, args=(it,))#,serial=True)
                 iJob+=1
@@ -194,7 +201,13 @@ class ClassInterpol():
                 for iDir in range(nd):
                     APP.runJob("FitThisAmp_%d"%iJob, self.FitThisAmp, args=(iAnt,iDir))#,serial=True)
                     iJob+=1
-        workers_res=APP.awaitJobResults("FitThisAmp*", progress="Smooth Amp")
+            workers_res=APP.awaitJobResults("FitThisAmp*", progress="Smooth Amp")
+
+        if "PolyAmp" in self.InterpMode:
+            for iDir in range(nd):
+                APP.runJob("FitThisPolyAmp_%d"%iJob, self.FitThisPolyAmp, args=(iDir,))#,serial=True)
+                iJob+=1
+            workers_res=APP.awaitJobResults("FitThisPolyAmp*", progress="Smooth Amp")
 
 
         APP.terminate()
@@ -395,6 +408,19 @@ class ClassInterpol():
         
 
        
+
+    def FitThisPolyAmp(self,iDir):
+        nt,nch,na,nd,_,_=self.Sols.G.shape
+        GOut=NpShared.GiveArray("%sGOut"%IdSharedMem)
+        g=GOut[:,:,:,iDir,0,0]
+
+        AmpMachine=ClassFitAmp.ClassFitAmp(self.Sols.G[:,:,:,iDir,0,0],self.CentralFreqs)
+        gf=AmpMachine.doSmooth()
+        gf=gf*g/np.abs(g)
+        GOut[:,:,:,iDir,0,0]=gf[:,:,:]
+        GOut[:,:,:,iDir,1,1]=gf[:,:,:]
+
+        
     def FitThisAmp(self,iAnt,iDir):
         nt,nch,na,nd,_,_=self.Sols.G.shape
         # if "TEC" in self.InterpMode:

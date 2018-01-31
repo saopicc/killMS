@@ -22,7 +22,7 @@ def Dot(*args):
         P=np.dot(P,M)
     return P
 
-# it=0; iDir=0; S=np.load("killms_f_ap1_merged.npz"); G=S["Sols"]["G"][it,:,:,iDir,0,0]; f=S["FreqDomains"].mean(axis=1)
+# it=208; iDir=14; S=np.load("L229509_merged.npz"); G=S["Sols"]["G"][it,:,:,iDir,0,0]; f=S["FreqDomains"].mean(axis=1)
 
 def Norm(G,iRef=0):
     nf,na=G.shape
@@ -40,22 +40,23 @@ def test(G,f):
 
     TECMachine=ClassFitTEC(G,f)
     #TECMachine.DoFit()
+    TECMachine.findX0()
     TECMachine.doFit()
 
 
 class ClassFitTEC():
-    def __init__(self,gains,nu,Tol=5e-2,Incr=5):
+    def __init__(self,gains,nu,Tol=5e-2,Incr=1):
         self.nf,self.na=gains.shape
         self.G=gains.copy()
         Norm(self.G)
         self.Tol=Tol
             
         self.G/=np.abs(self.G)
-        self.nu=nu
+        self.CentralFreqs=self.nu=nu
         self.NFreq=nu.size
         na=self.na
         self.nbl=(na**2-na)/2
-
+        self.CurrentX=None
         print>>log,"Number of Antennas: %i"%self.na
         print>>log,"Number of Freqs:    %i"%nu.size
         print>>log,"Number of Points:   %i"%(nu.size*self.na**2)
@@ -84,7 +85,7 @@ class ClassFitTEC():
 
 
     def doFit(self,NIter=100):
-        if self.x0 is None:
+        if self.x0 is None and self.CurrentX is None:
             self.CurrentX=np.zeros((2*self.na,),np.float32)+1e-10
             #self.CurrentX=np.random.randn(2*self.na)
 
@@ -94,7 +95,7 @@ class ClassFitTEC():
             if self.Diff<self.Tol:
                 print>>log,"Convergence in %i steps"%(iIter+1)
                 break
-        
+            
         return self.CurrentX
 
     def GiveGPredict(self,X):
@@ -121,7 +122,10 @@ class ClassFitTEC():
         T.timeit("inv")
         
         X = self.CurrentX + np.real(np.dot(Hinv,v.reshape((-1,1))).ravel())
-        self.Diff=np.max(np.abs((X-self.CurrentX)/self.CurrentX))
+        #print self.CurrentX
+        xx=self.CurrentX.copy()
+        xx[xx==0]=1e-6
+        self.Diff=np.max(np.abs((X-xx)/xx))
         self.CurrentX=X
 
         return 
@@ -138,6 +142,37 @@ class ClassFitTEC():
     def setX0(self,x0):
         self.CurrentX=x0
 
+    def findX0(self):
+        NTEC=101
+        NConstPhase=51
+        TECGridAmp=0.1
+        TECGrid,CPhase=np.mgrid[-TECGridAmp:TECGridAmp:NTEC*1j,-np.pi:np.pi:NConstPhase*1j]
+        Z=TECToZ(TECGrid.reshape((-1,1)),CPhase.reshape((-1,1)),self.CentralFreqs.reshape((1,-1)))
+        self.Z=Z
+        self.TECGrid,self.CPhase=TECGrid,CPhase
+
+        self.CurrentX=np.zeros((2,self.na),np.float32)
+
+        for iAnt in range(self.na):
+            g=self.G[:,iAnt]
+            g0=g/np.abs(g)
+            W=np.ones(g0.shape,np.float32)
+            W[g==1.]=0
+            Z=self.Z
+            for iTry in range(5):
+                R=(g0.reshape((1,-1))-Z)*W.reshape((1,-1))
+                Chi2=np.sum(np.abs(R)**2,axis=1)
+                iTec=np.argmin(Chi2)
+                rBest=R[iTec]
+                if np.max(np.abs(rBest))==0: break
+                Sig=np.sum(np.abs(rBest*W))/np.sum(W)
+                ind=np.where(np.abs(rBest*W)>5.*Sig)[0]
+                if ind.size==0: break
+                W[ind]=0
+            self.CurrentX[0,iAnt]=self.TECGrid.ravel()[iTec]
+            self.CurrentX[1,iAnt]=self.TECGrid.ravel()[iTec]
+        self.CurrentX=self.CurrentX.ravel()
+        
     def Plot(self):
         z=self.GiveGPredict(self.CurrentX)
         Norm(z)

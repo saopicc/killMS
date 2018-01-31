@@ -134,6 +134,7 @@ def main(options=None):
             ClusterCat=SolsDico["ClusterCat"]
             Sols=Sols.view(np.recarray)
             nt,nch,na,nd,_,_=Sols.G.shape
+
         elif "h5" in FileName:
             import tables
             H5=tables.openFile(FileName)
