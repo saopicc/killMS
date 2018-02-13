@@ -38,6 +38,7 @@ from DDFacet.Other import AsyncProcessPool
 from killMS.Other import ClassFitTEC
 from killMS.Other import ClassFitAmp
 import scipy.ndimage.filters
+from pyrap.tables import table
 # # ##############################
 # # Catch numpy warning
 # np.seterr(all='raise')
@@ -64,6 +65,7 @@ def read_options():
     group.add_option('--InterpMode',help='Interpolation mode TEC and/or Amp [default is %default]',type="str",default="TEC,Amp")
     group.add_option('--CrossMode',help='Use cross gains maode for TEC [default is %default]',type=int,default=1)
     group.add_option('--RemoveAmpBias',help='Remove amplitude bias before smoothing [default is %default]',type=int,default=0)
+    group.add_option('--MSOutFreq',help='The mslist.txt of the ms where frequency needs to be extrapotaler',type=str,default="")
     
     group.add_option('--Amp-SmoothType',help='Interpolation Type for the amplitude [default is %default]',type="str",default="Gauss")
     group.add_option('--Amp-PolyOrder',help='Order of the polynomial to do the amplitude',type="int",default=3)
@@ -92,15 +94,28 @@ class ClassInterpol():
                  InterpMode="TEC",PolMode="Scalar",Amp_PolyOrder=3,NCPU=0,
                  Amp_GaussKernel=(0,5), Amp_SmoothType="Poly",
                  CrossMode=1,
-                 RemoveAmpBias=0):
+                 RemoveAmpBias=0,MSOutFreq=""):
 
         if type(InterpMode)==str:
             InterpMode=InterpMode.split(",")#[InterpMode]
 
         self.InSolsName=InSolsName
         self.OutSolsName=OutSolsName
-        
 
+        self.OutFreqDomains=None
+        if MSOutFreq!="":
+            LMS = [ l.strip() for l in open(MSOutFreq).readlines() ]
+            self.OutFreqDomains=np.zeros((len(LSM),2),np.float64)
+            for iMS,MS in enumerate(LSM):
+                t=table("%s::SPECTRAL_WINDOW",ack=False)
+                df=t.getcol("CHAN_WIDTH").flat[0]
+                fs=t.getcol("CHAN_FREQ").ravel()
+                f0,f1=fs[0]-df/2.,fs[-1]+df/2.
+                self.OutFreqDomains[iMS,0]=f0
+                self.OutFreqDomains[iMS,1]=f1
+                
+
+                
         print>>log,"Loading %s"%self.InSolsName
         self.DicoFile=dict(np.load(self.InSolsName))
         self.Sols=self.DicoFile["Sols"].view(np.recarray)
@@ -190,6 +205,8 @@ class ClassInterpol():
 
         if "TEC" in self.InterpMode:
             #APP.runJob("FitThisTEC_%d"%iJob, self.FitThisTEC, args=(208,)); iJob+=1
+            self.TECArray=NpShared.ToShared("%sTECArray"%IdSharedMem,np.zeros((nt,nd,na),np.float32))
+            self.CPhaseArray=NpShared.ToShared("%sCPhaseArray"%IdSharedMem,np.zeros((nt,nd,na),np.float32))
             for it in range(nt):
                 APP.runJob("FitThisTEC_%d"%iJob, self.FitThisTEC, args=(it,))#,serial=True)
                 iJob+=1
@@ -275,10 +292,17 @@ class ClassInterpol():
         nt,nch,na,nd,_,_=self.Sols.G.shape
         for iDir in range(nd):
             gz,TEC,CPhase=self.FitThisTECTime(it,iDir)
+
             GOut=NpShared.GiveArray("%sGOut"%IdSharedMem)
             GOut[it,:,:,iDir,0,0]=gz
             GOut[it,:,:,iDir,1,1]=gz
 
+            TECArray=NpShared.GiveArray("%sTECArray"%IdSharedMem)
+            TECArray[it,iDir,:]=TEC
+            CPhaseArray=NpShared.GiveArray("%sCPhaseArray"%IdSharedMem)
+            CPhaseArray[it,iDir,:]=CPhase
+            
+            
         
     def FitThisTECTime(self,it,iDir):
         GOut=NpShared.GiveArray("%sGOut"%IdSharedMem)
@@ -588,8 +612,10 @@ def main(options=None):
                      options.SolsFileOut,
                      InterpMode=options.InterpMode,
                      Amp_PolyOrder=options.Amp_PolyOrder,
-                     Amp_GaussKernel=options.Amp_GaussKernel, Amp_SmoothType=options.Amp_SmoothType,
-                     NCPU=options.NCPU,CrossMode=options.CrossMode)
+                     Amp_GaussKernel=options.Amp_GaussKernel,
+                     Amp_SmoothType=options.Amp_SmoothType,
+                     NCPU=options.NCPU,CrossMode=options.CrossMode,
+                     MSOutFreq=options.MSOutFreq)
     CI.InterpolParallel()
 
     CI.Save()
