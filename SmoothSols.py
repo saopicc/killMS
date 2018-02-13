@@ -24,7 +24,7 @@ import optparse
 import pickle
 import numpy as np
 import numpy as np
-import pylab
+#import pylab
 import os
 from DDFacet.Other import MyLogger
 from DDFacet.Other import ModColor
@@ -114,12 +114,10 @@ class ClassInterpol():
                 self.OutFreqDomains[iMS,0]=f0
                 self.OutFreqDomains[iMS,1]=f1
                 
-
-                
         print>>log,"Loading %s"%self.InSolsName
         self.DicoFile=dict(np.load(self.InSolsName))
         self.Sols=self.DicoFile["Sols"].view(np.recarray)
-        #self.Sols=self.Sols[0:100]
+        #self.Sols=self.Sols[0:10].copy()
         self.CrossMode=CrossMode
         self.CentralFreqs=np.mean(self.DicoFile["FreqDomains"],axis=1)
         self.incrCross=11
@@ -565,6 +563,16 @@ class ClassInterpol():
     def Save(self):
         OutFile=self.OutSolsName
         if not ".npz" in OutFile: OutFile+=".npz"
+
+        if "TEC" in self.InterpMode:
+            # OutFileTEC="%s.TEC_CPhase.npz"%OutFile
+            # print>>log,"  Saving TEC/CPhase solution file as: %s"%OutFileTEC
+            # np.savez(OutFileTEC,
+            #          TEC=self.TECArray,
+            #          CPhase=self.CPhaseArray)
+            self.DicoFile["SolsTEC"]=self.TECArray
+            self.DicoFile["SolsCPhase"]=self.CPhaseArray
+        
         print>>log,"  Saving interpolated solution file as: %s"%OutFile
         self.DicoFile["Sols"]["G"][:]=self.GOut[:]
         np.savez(OutFile,**(self.DicoFile))
@@ -588,7 +596,7 @@ class ClassInterpol():
         # pylab.show()
         # PlotSolsIm.Plot([self.DicoFile["Sols"].view(np.recarray)])
 
-        NpShared.DelAll("%sGOut"%IdSharedMem)
+        NpShared.DelAll("%s"%IdSharedMem)
 
 # ############################################        
 
