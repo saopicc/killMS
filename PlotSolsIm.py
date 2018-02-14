@@ -66,6 +66,7 @@ def read_options():
     group.add_option('--DoResid',type="int",help='No [no default]',default=-1)
     group.add_option('--PlotMode',type='int',help=' [no default]',default=0)
     group.add_option('--DirList',help=' [no default]',default="")
+    group.add_option('--FlagStations',type=str,help=' [no default]',default="")
     opt.add_option_group(group)
     
     options, arguments = opt.parse_args()
@@ -126,141 +127,172 @@ def NormMatrices(G):
 
 
 def main(options=None):
-    
-
-    if options==None:
+    if options is None:
         f = open(NameSave,'rb')
         options = pickle.load(f)
-
-
-
-    FilesList=options.SolsFile.split(",")
-    LSols=[]
-    nSol=len(FilesList)
-    t0=None
-    for FileName in FilesList:
-        SolsDico=np.load(FileName)
-        Sols=SolsDico["Sols"]
-        Sols=Sols.view(np.recarray)
-        
-        ind=np.where(Sols.t1!=0)[0]
-        Sols=Sols[ind]
-        tm=(Sols.t1+Sols.t0)/2.
-        if t0==None:
-            t0=tm[0]
-        tm-=t0
-        Sols.t0=tm
-        LSols.append(Sols)
-        StationNames=SolsDico["StationNames"]
-
-        # LSols=[LSols[0]]
-        # nSol=1
-
-
+    PM=PlotMachine(options)
+    PM.PlotAll()
     
-    nt,nch,na,nd,_,_=LSols[0].G.shape
-    if options.DoResid!=-1:
-        Sresid=LSols[1].copy()
-        LSols.append(Sresid)
-
-    if options.DirList!="":
-        DirList=options.DirList.split(',')
-        DirList=[int(i) for i in DirList]
-    else:
-        DirList=range(nd)
-
-    #fig.subplots_adjust(wspace=0, hspace=0)
-    for iDir in DirList:
-        for iSol in range(nSol):
-            Sols=LSols[iSol]
-            G=Sols.G[:,:,iDir,:,:]
-            Sols.G[:,:,iDir,:,:]=NormMatrices(G)
+class PlotMachine():
+    def __init__(self,options):
+        FilesList=options.SolsFile.split(",")
+        LSols=[]
+        nSol=len(FilesList)
+        t0=None
+        for FileName in FilesList:
+            SolsDico=dict(np.load(FileName))
+            Sols=SolsDico["Sols"]
+            Sols=Sols.view(np.recarray)
             
-    if 'MaskedSols' in SolsDico.keys():
-        print>>log,"Some solutions are masked"
-        Sols.G[SolsDico['MaskedSols']]=np.nan
+            ind=np.where(Sols.t1!=0)[0]
+            Sols=Sols[ind]
+            tm=(Sols.t1+Sols.t0)/2.
+            if t0==None:
+                t0=tm[0]
+            tm-=t0
+            Sols.t0=tm
+            LSols.append(Sols)
+            StationNames=SolsDico["StationNames"]
 
-    ampMax=1.5*np.max(np.median(np.abs(LSols[0].G),axis=1))
-    if options.PlotMode==0:
-        op0=np.abs
-    else:
-        op0=np.angle
-
-    ylim0=0,len(DirList)
-        
-    # if options.DoResid!=-1:
-    #     LSols[-1].G[:,:,iDir,:,:]=LSols[1].G[:,:,iDir,:,:]-LSols[0].G[:,:,iDir,:,:]
-    #     nSol+=1
-
-    for iDir in DirList:
-        Plot(LSols,iDir)
-
-def Plot(LSols,iDir=0):
-    print iDir
-    op0=np.abs
-    op1=np.angle
-    #op0=np.real
-    #op1=np.imag
-    
-    nt,nch,na,nd,_,_=LSols[0].G.shape
-    nx,ny=GiveNXNYPanels(na)
-    fig=pylab.figure(0,figsize=(13,8))
-    gs1 = gridspec.GridSpec(2*nx, ny)
-    gs1.update(wspace=0.05, hspace=0.05, left=0.05, right=0.95, bottom=0.05, top=0.95)
-
-    pylab.clf()
-
-    if len(LSols)==1:
-        Sols=LSols[0]
-        ADir_0=op0(Sols.G[:,:,:,iDir,0,0])
-        ADir_1=op1(Sols.G[:,:,:,iDir,0,0])
-        vmin,vmax=0,2
-        
-    if len(LSols)==2:
-        Sols=LSols[0]
-        ADir_0=op0(Sols.G[:,:,:,iDir,0,0])-op0(LSols[1].G[:,:,:,iDir,0,0])
-        ADir_1=op1(Sols.G[:,:,:,iDir,0,0]*LSols[1].G[:,:,:,iDir,0,0].conj())
-
-    Mean=np.mean(ADir_0)
-    MAD=np.sqrt(np.median((ADir_0-Mean)**2))
-    vmin,vmax=Mean-10*MAD,Mean+10*MAD
-
-    
-    iAnt=0
-    for i in range(nx):
-        for j in range(ny):
-            if iAnt>=na:continue
-            #pylab.title(StationNames[iAnt], fontsize=9)
-
-            A_0=ADir_0[:,:,iAnt]
-            A_1=ADir_1[:,:,iAnt]
-            ax = pylab.subplot(gs1[2*i,j])
-            #ax2 = ax.twinx()
-            ax.imshow(A_0.T,vmin=vmin,vmax=vmax,interpolation="nearest",aspect='auto',cmap="gray")
-            nt,nch,na,nd,_,_=Sols.G.shape
-            ax.set_xticks([])
-            ax.set_yticks([])
-            
-            ax = pylab.subplot(gs1[2*i+1,j])
-            #ax2 = ax.twinx()
-            #A=Sols.G[:,:,iAnt,iDir,0,0]
-            #ax.imshow(A_1.T,vmin=-np.pi,vmax=np.pi,interpolation="nearest",aspect='auto')
-            ax.imshow(A_1.T,interpolation="nearest",aspect='auto')
-            print iAnt,np.max(np.abs(A_1))
-            nt,nch,na,nd,_,_=Sols.G.shape
-            ax.set_xticks([])
-            ax.set_yticks([])
-
-
+            if options.FlagStations!="":
+                indStations=np.arange(len(StationNames))
+                StationNamesSel=[]
+                for iAnt,Name in enumerate(StationNames):
+                    if options.FlagStations in Name:
+                        indStations[iAnt]=-1
+                        print>>log,"Flagging station %s"%Name
+                    else:
+                        StationNamesSel.append(Name)
+                indStations=indStations[indStations!=-1]
+                nas=indStations.size
+                nt,nch,na,nd,_,_=LSols[0].G.shape
+                SolsOut=np.zeros((nt,),dtype=[("t0",np.float64),("t1",np.float64),
+                                              ("G",np.complex64,(nch,nas,nd,2,2)),
+                                              ("Stats",np.float32,(nch,nas,4))])
+                SolsOut=SolsOut.view(np.recarray)
+                SolsOut.t0=Sols.t0
+                SolsOut.t1=Sols.t1
+                SolsOut.G=Sols.G[:,:,indStations,:,:,:]
+                LSols[-1]=SolsOut
+                SolsDico["StationNames"]=StationNamesSel
+                StationNames=SolsDico["StationNames"]
+                if 'MaskedSols' in SolsDico.keys():
+                    SolsDico['MaskedSols']=SolsDico['MaskedSols'][:,:,indStations,:,:,:]
 
                 
-            iAnt+=1
-    pylab.suptitle('Direction %i (op0[%5.2f, %5.2f])'%(iDir,vmin,vmax))
-    #pylab.tight_layout(pad=3., w_pad=0.5, h_pad=2.0)
-    pylab.draw()
-    pylab.show()
-    #pylab.pause(0.1)
-    #time.sleep(1)
+        nt,nch,na,nd,_,_=LSols[0].G.shape
+        if options.DoResid!=-1:
+            Sresid=LSols[1].copy()
+            LSols.append(Sresid)
+    
+        if options.DirList!="":
+            DirList=options.DirList.split(',')
+            DirList=[int(i) for i in DirList]
+        else:
+            DirList=range(nd)
+    
+        #fig.subplots_adjust(wspace=0, hspace=0)
+        for iDir in DirList:
+            for iSol in range(nSol):
+                Sols=LSols[iSol]
+                G=Sols.G[:,:,iDir,:,:]
+                Sols.G[:,:,iDir,:,:]=NormMatrices(G)
+
+        self.Mask=None
+        if 'MaskedSols' in SolsDico.keys():
+            print>>log,"Some solutions are masked"
+            M=SolsDico['MaskedSols']
+            #Sols.G[M==1]=np.nan
+            self.Mask=M
+    
+        ampMax=1.5*np.max(np.median(np.abs(LSols[0].G),axis=1))
+        if options.PlotMode==0:
+            op0=np.abs
+        else:
+            op0=np.angle
+    
+        ylim0=0,len(DirList)
+            
+        # if options.DoResid!=-1:
+        #     LSols[-1].G[:,:,iDir,:,:]=LSols[1].G[:,:,iDir,:,:]-LSols[0].G[:,:,iDir,:,:]
+        #     nSol+=1
+        self.DirList=DirList
+        self.LSols=LSols
+
+    def PlotAll(self):
+        for iDir in self.DirList:
+            self.Plot(self.LSols,iDir)
+    
+    def Plot(self,LSols,iDir=0):
+        print iDir
+        op0=np.abs
+        op1=np.angle
+        #op0=np.real
+        #op1=np.imag
+        
+        nt,nch,na,nd,_,_=LSols[0].G.shape
+        nx,ny=GiveNXNYPanels(na)
+        fig=pylab.figure(0,figsize=(13,8))
+        gs1 = gridspec.GridSpec(2*nx, ny)
+        gs1.update(wspace=0.05, hspace=0.05, left=0.05, right=0.95, bottom=0.05, top=0.95)
+    
+        pylab.clf()
+    
+        if len(LSols)==1:
+            Sols=LSols[0]
+            ADir_0=op0(Sols.G[:,:,:,iDir,0,0])
+            ADir_1=op1(Sols.G[:,:,:,iDir,0,0])
+            vmin,vmax=0,2
+            
+        if len(LSols)==2:
+            Sols=LSols[0]
+            ADir_0=op0(Sols.G[:,:,:,iDir,0,0])-op0(LSols[1].G[:,:,:,iDir,0,0])
+            ADir_1=op1(Sols.G[:,:,:,iDir,0,0]*LSols[1].G[:,:,:,iDir,0,0].conj())
+    
+        Mean=np.mean(ADir_0)
+        MAD=np.sqrt(np.median((ADir_0-Mean)**2))
+        vmin,vmax=Mean-10*MAD,Mean+10*MAD
+    
+        if self.Mask is not None:
+            M=self.Mask[:,:,:,iDir,0,0]
+            ADir_0[M==1]=np.nan
+            ADir_1[M==1]=np.nan
+        
+        iAnt=0
+        for i in range(nx):
+            for j in range(ny):
+                if iAnt>=na:continue
+                #pylab.title(StationNames[iAnt], fontsize=9)
+    
+                A_0=ADir_0[:,:,iAnt]
+                A_1=ADir_1[:,:,iAnt]
+                ax = pylab.subplot(gs1[2*i,j])
+                #ax2 = ax.twinx()
+                ax.imshow(A_0.T,vmin=vmin,vmax=vmax,interpolation="nearest",aspect='auto',cmap="gray")
+                nt,nch,na,nd,_,_=Sols.G.shape
+                ax.set_xticks([])
+                ax.set_yticks([])
+                
+                ax = pylab.subplot(gs1[2*i+1,j])
+                #ax2 = ax.twinx()
+                #A=Sols.G[:,:,iAnt,iDir,0,0]
+                #ax.imshow(A_1.T,vmin=-np.pi,vmax=np.pi,interpolation="nearest",aspect='auto')
+                ax.imshow(A_1.T,interpolation="nearest",aspect='auto')
+                #print iAnt,np.max(np.abs(A_1))
+                nt,nch,na,nd,_,_=Sols.G.shape
+                ax.set_xticks([])
+                ax.set_yticks([])
+    
+    
+    
+                    
+                iAnt+=1
+        pylab.suptitle('Direction %i (op0[%5.2f, %5.2f])'%(iDir,vmin,vmax))
+        #pylab.tight_layout(pad=3., w_pad=0.5, h_pad=2.0)
+        pylab.draw()
+        pylab.show()
+        #pylab.pause(0.1)
+        #time.sleep(1)
 
 
 if __name__=="__main__":
@@ -268,4 +300,5 @@ if __name__=="__main__":
     f = open(NameSave,'rb')
     options = pickle.load(f)
 
-    main(options=options)
+    PM=PlotMachine(options=options)
+    PM.PlotAll()
