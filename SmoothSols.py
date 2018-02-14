@@ -65,7 +65,6 @@ def read_options():
     group.add_option('--InterpMode',help='Interpolation mode TEC and/or Amp [default is %default]',type="str",default="TEC,Amp")
     group.add_option('--CrossMode',help='Use cross gains maode for TEC [default is %default]',type=int,default=1)
     group.add_option('--RemoveAmpBias',help='Remove amplitude bias before smoothing [default is %default]',type=int,default=0)
-    group.add_option('--MSOutFreq',help='The mslist.txt of the ms where frequency needs to be extrapotaler',type=str,default="")
     
     group.add_option('--Amp-SmoothType',help='Interpolation Type for the amplitude [default is %default]',type="str",default="Gauss")
     group.add_option('--Amp-PolyOrder',help='Order of the polynomial to do the amplitude',type="int",default=3)
@@ -94,25 +93,12 @@ class ClassInterpol():
                  InterpMode="TEC",PolMode="Scalar",Amp_PolyOrder=3,NCPU=0,
                  Amp_GaussKernel=(0,5), Amp_SmoothType="Poly",
                  CrossMode=1,
-                 RemoveAmpBias=0,MSOutFreq=""):
+                 RemoveAmpBias=0):
 
         if type(InterpMode)==str:
             InterpMode=InterpMode.split(",")#[InterpMode]
-
         self.InSolsName=InSolsName
         self.OutSolsName=OutSolsName
-
-        self.OutFreqDomains=None
-        if MSOutFreq!="":
-            LMS = [ l.strip() for l in open(MSOutFreq).readlines() ]
-            self.OutFreqDomains=np.zeros((len(LSM),2),np.float64)
-            for iMS,MS in enumerate(LSM):
-                t=table("%s::SPECTRAL_WINDOW",ack=False)
-                df=t.getcol("CHAN_WIDTH").flat[0]
-                fs=t.getcol("CHAN_FREQ").ravel()
-                f0,f1=fs[0]-df/2.,fs[-1]+df/2.
-                self.OutFreqDomains[iMS,0]=f0
-                self.OutFreqDomains[iMS,1]=f1
                 
         print>>log,"Loading %s"%self.InSolsName
         self.DicoFile=dict(np.load(self.InSolsName))
@@ -574,6 +560,7 @@ class ClassInterpol():
             self.DicoFile["SolsCPhase"]=self.CPhaseArray
         
         print>>log,"  Saving interpolated solution file as: %s"%OutFile
+        self.DicoFile["SmoothMode"]=self.InterpMode
         self.DicoFile["Sols"]["G"][:]=self.GOut[:]
         np.savez(OutFile,**(self.DicoFile))
 
@@ -622,8 +609,7 @@ def main(options=None):
                      Amp_PolyOrder=options.Amp_PolyOrder,
                      Amp_GaussKernel=options.Amp_GaussKernel,
                      Amp_SmoothType=options.Amp_SmoothType,
-                     NCPU=options.NCPU,CrossMode=options.CrossMode,
-                     MSOutFreq=options.MSOutFreq)
+                     NCPU=options.NCPU,CrossMode=options.CrossMode)
     CI.InterpolParallel()
 
     CI.Save()
