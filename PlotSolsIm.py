@@ -142,7 +142,7 @@ def main(options=None):
         SolsDico=np.load(FileName)
         Sols=SolsDico["Sols"]
         Sols=Sols.view(np.recarray)
-
+        
         ind=np.where(Sols.t1!=0)[0]
         Sols=Sols[ind]
         tm=(Sols.t1+Sols.t0)/2.
@@ -155,6 +155,7 @@ def main(options=None):
 
         # LSols=[LSols[0]]
         # nSol=1
+
 
     
     nt,nch,na,nd,_,_=LSols[0].G.shape
@@ -174,7 +175,11 @@ def main(options=None):
             Sols=LSols[iSol]
             G=Sols.G[:,:,iDir,:,:]
             Sols.G[:,:,iDir,:,:]=NormMatrices(G)
-        
+            
+    if 'MaskedSols' in SolsDico.keys():
+        print>>log,"Some solutions are masked"
+        Sols.G[SolsDico['MaskedSols']]=np.nan
+
     ampMax=1.5*np.max(np.median(np.abs(LSols[0].G),axis=1))
     if options.PlotMode==0:
         op0=np.abs

@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import optparse
 import pickle
 import numpy as np
-import pylab
+#import pylab
 import os
 import glob
 from DDFacet.Other import MyLogger
@@ -70,6 +70,22 @@ class ClassMergeSols():
         indSort=np.argsort(ListCentralFreqs)
         self.ListDictSols=[self.ListDictSols[iSort] for iSort in indSort]
         self.ListJonesSols=[self.ListJonesSols[iSort] for iSort in indSort]
+        DFs=np.array([DicoSols["FreqDomains"][:,1]-DicoSols["FreqDomains"][:,0] for DicoSols in self.ListDictSols])
+        f0s=np.array([DicoSols["FreqDomains"][:,0] for DicoSols in self.ListDictSols])
+        f1s=np.array([DicoSols["FreqDomains"][:,1] for DicoSols in self.ListDictSols])
+        if np.max(np.abs(DFs[1::]-DFs[0:-1]))>1e-5:
+            raise RuntimeError("Solutions don't have the same width")
+        self.df=DFs.ravel()[0]
+        print>>log,"  Solution channel width is %f MHz for each solution file"%(self.df/1e6)
+        f0=f0s.min()
+        f1=f1s.max()
+        NFreqsOut=(f1-f0)/self.df
+        if NFreqsOut%1!=0:
+            raise RuntimeError("Solutions have got to be equally spaced in frequency")
+        self.NFreqsOut=int(NFreqsOut)
+        self.FreqDomainsOut=np.zeros((self.NFreqsOut,2),np.float64)
+        self.FreqDomainsOut[:,0]=f0+np.arange(self.NFreqsOut)*self.df
+        self.FreqDomainsOut[:,1]=f0+self.df+np.arange(self.NFreqsOut)*self.df
 
     def NormMatrices(self,G):
         print>>log,"  Normalising Jones matrices (to antenna 0)"
@@ -90,7 +106,6 @@ class ClassMergeSols():
         print>>log,"  Merging solutions in frequency"
         NTimes=self.ListJonesSols[0].t0.size
         ListNFreqs=[DictSols["FreqDomains"].shape[0] for DictSols in self.ListDictSols]
-        NFreqsOut=sum(ListNFreqs)
 
         #'ModelName', 'StationNames', 'BeamTimes', 'SourceCatSub', 'ClusterCat', 'Sols', 'SkyModel', 'FreqDomains', 
 
@@ -104,25 +119,30 @@ class ClassMergeSols():
         DicoOut['SourceCatSub']=Dico0['SourceCatSub']
         DicoOut['ClusterCat']=Dico0['ClusterCat']
         DicoOut['SkyModel']=Dico0['SkyModel']
-
+        NFreqsOut=self.NFreqsOut
         nt,_,na,nd,_,_=Sols0.G.shape
         SolsOut=np.zeros((nt,),dtype=[("t0",np.float64),("t1",np.float64),("G",np.complex64,(NFreqsOut,na,nd,2,2)),("Stats",np.float32,(NFreqsOut,na,4))])
         SolsOut=SolsOut.view(np.recarray)
         SolsOut.t0=Sols0.t0
         SolsOut.t1=Sols0.t1
-        iFreq=0
-        FreqDomains=np.zeros((NFreqsOut,2),np.float64)
+        Mask=np.ones(SolsOut.G.shape,np.int16)
         for iSol in range(self.NSolsFile):
             ThisG=self.ListJonesSols[iSol].G
             ThisNFreq=ThisG.shape[1]
+            fmean_sol0=np.mean(self.ListDictSols[iSol]["FreqDomains"][0,:])
+            iFreq=np.where((fmean_sol0>self.FreqDomainsOut[:,0])&(fmean_sol0<self.FreqDomainsOut[:,1]))[0]
+            if iFreq.size!=1:
+                raise RuntimeError("That's a bug")
+            iFreq=iFreq.ravel()[0]
             SolsOut.G[:,iFreq:iFreq+ThisNFreq,:,:,:,:]=ThisG
-            FreqDomains[iFreq:iFreq+ThisNFreq,:]=self.ListDictSols[iSol]["FreqDomains"]
+            Mask[:,iFreq:iFreq+ThisNFreq]=0
+
             print>>log, "Freq Channels: %s"%str(np.mean(self.ListDictSols[iSol]["FreqDomains"],axis=1).ravel().tolist())
-            iFreq+=ThisNFreq
 
         self.NormMatrices(SolsOut.G)
 
-        DicoOut['FreqDomains']=FreqDomains
+        DicoOut['FreqDomains']=self.FreqDomainsOut
+        DicoOut['MaskedSols']=Mask
         DicoOut['Sols']=SolsOut
 
         if not ".npz" in FileOut: FileOut+=".npz"
