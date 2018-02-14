@@ -244,7 +244,9 @@ def Plot(LSols,iDir=0):
             ax = pylab.subplot(gs1[2*i+1,j])
             #ax2 = ax.twinx()
             #A=Sols.G[:,:,iAnt,iDir,0,0]
-            ax.imshow(A_1.T,vmin=-np.pi,vmax=np.pi,interpolation="nearest",aspect='auto')
+            #ax.imshow(A_1.T,vmin=-np.pi,vmax=np.pi,interpolation="nearest",aspect='auto')
+            ax.imshow(A_1.T,interpolation="nearest",aspect='auto')
+            print iAnt,np.max(np.abs(A_1))
             nt,nch,na,nd,_,_=Sols.G.shape
             ax.set_xticks([])
             ax.set_yticks([])
