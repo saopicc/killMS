@@ -24,7 +24,7 @@ import optparse
 import pickle
 import numpy as np
 import numpy as np
-import pylab
+#import pylab
 import os
 from DDFacet.Other import MyLogger
 from DDFacet.Other import ModColor
@@ -38,6 +38,7 @@ from DDFacet.Other import AsyncProcessPool
 from killMS.Other import ClassFitTEC
 from killMS.Other import ClassFitAmp
 import scipy.ndimage.filters
+from pyrap.tables import table
 # # ##############################
 # # Catch numpy warning
 # np.seterr(all='raise')
@@ -96,15 +97,13 @@ class ClassInterpol():
 
         if type(InterpMode)==str:
             InterpMode=InterpMode.split(",")#[InterpMode]
-
         self.InSolsName=InSolsName
         self.OutSolsName=OutSolsName
-        
-
+                
         print>>log,"Loading %s"%self.InSolsName
         self.DicoFile=dict(np.load(self.InSolsName))
         self.Sols=self.DicoFile["Sols"].view(np.recarray)
-        #self.Sols=self.Sols[0:100]
+        #self.Sols=self.Sols[0:10].copy()
         self.CrossMode=CrossMode
         self.CentralFreqs=np.mean(self.DicoFile["FreqDomains"],axis=1)
         self.incrCross=11
@@ -190,6 +189,8 @@ class ClassInterpol():
 
         if "TEC" in self.InterpMode:
             #APP.runJob("FitThisTEC_%d"%iJob, self.FitThisTEC, args=(208,)); iJob+=1
+            self.TECArray=NpShared.ToShared("%sTECArray"%IdSharedMem,np.zeros((nt,nd,na),np.float32))
+            self.CPhaseArray=NpShared.ToShared("%sCPhaseArray"%IdSharedMem,np.zeros((nt,nd,na),np.float32))
             for it in range(nt):
                 APP.runJob("FitThisTEC_%d"%iJob, self.FitThisTEC, args=(it,))#,serial=True)
                 iJob+=1
@@ -275,10 +276,17 @@ class ClassInterpol():
         nt,nch,na,nd,_,_=self.Sols.G.shape
         for iDir in range(nd):
             gz,TEC,CPhase=self.FitThisTECTime(it,iDir)
+
             GOut=NpShared.GiveArray("%sGOut"%IdSharedMem)
             GOut[it,:,:,iDir,0,0]=gz
             GOut[it,:,:,iDir,1,1]=gz
 
+            TECArray=NpShared.GiveArray("%sTECArray"%IdSharedMem)
+            TECArray[it,iDir,:]=TEC
+            CPhaseArray=NpShared.GiveArray("%sCPhaseArray"%IdSharedMem)
+            CPhaseArray[it,iDir,:]=CPhase
+            
+            
         
     def FitThisTECTime(self,it,iDir):
         GOut=NpShared.GiveArray("%sGOut"%IdSharedMem)
@@ -541,7 +549,18 @@ class ClassInterpol():
     def Save(self):
         OutFile=self.OutSolsName
         if not ".npz" in OutFile: OutFile+=".npz"
+
+        if "TEC" in self.InterpMode:
+            # OutFileTEC="%s.TEC_CPhase.npz"%OutFile
+            # print>>log,"  Saving TEC/CPhase solution file as: %s"%OutFileTEC
+            # np.savez(OutFileTEC,
+            #          TEC=self.TECArray,
+            #          CPhase=self.CPhaseArray)
+            self.DicoFile["SolsTEC"]=self.TECArray
+            self.DicoFile["SolsCPhase"]=self.CPhaseArray
+        
         print>>log,"  Saving interpolated solution file as: %s"%OutFile
+        self.DicoFile["SmoothMode"]=self.InterpMode
         self.DicoFile["Sols"]["G"][:]=self.GOut[:]
         np.savez(OutFile,**(self.DicoFile))
 
@@ -564,7 +583,7 @@ class ClassInterpol():
         # pylab.show()
         # PlotSolsIm.Plot([self.DicoFile["Sols"].view(np.recarray)])
 
-        NpShared.DelAll("%sGOut"%IdSharedMem)
+        NpShared.DelAll("%s"%IdSharedMem)
 
 # ############################################        
 
@@ -588,7 +607,8 @@ def main(options=None):
                      options.SolsFileOut,
                      InterpMode=options.InterpMode,
                      Amp_PolyOrder=options.Amp_PolyOrder,
-                     Amp_GaussKernel=options.Amp_GaussKernel, Amp_SmoothType=options.Amp_SmoothType,
+                     Amp_GaussKernel=options.Amp_GaussKernel,
+                     Amp_SmoothType=options.Amp_SmoothType,
                      NCPU=options.NCPU,CrossMode=options.CrossMode)
     CI.InterpolParallel()
 
