@@ -103,6 +103,23 @@ class ClassInterpol():
         print>>log,"Loading %s"%self.InSolsName
         self.DicoFile=dict(np.load(self.InSolsName))
         self.Sols=self.DicoFile["Sols"].view(np.recarray)
+        if "MaskedSols" in self.DicoFile.keys():
+            MaskFreq=np.logical_not(np.all(np.all(np.all(self.DicoFile["MaskedSols"][...,0,0],axis=0),axis=1),axis=1))
+            nt,_,na,nd,_,_=self.Sols.G.shape
+
+            self.DicoFile["FreqDomains"]=self.DicoFile["FreqDomains"][MaskFreq]
+            NFreqsOut=np.count_nonzero(MaskFreq)
+            print>>log,"There are %i non-zero freq channels"%NFreqsOut
+            SolsOut=np.zeros((nt,),dtype=[("t0",np.float64),("t1",np.float64),
+                                          ("G",np.complex64,(NFreqsOut,na,nd,2,2)),
+                                          ("Stats",np.float32,(NFreqsOut,na,4))])
+            SolsOut=SolsOut.view(np.recarray)
+            SolsOut.G=self.Sols.G[:,MaskFreq,...]
+            SolsOut.t0=self.Sols.t0
+            SolsOut.t1=self.Sols.t1
+            self.Sols=self.DicoFile["Sols"]=SolsOut
+            del(self.DicoFile["MaskedSols"])
+            
         #self.Sols=self.Sols[0:10].copy()
         self.CrossMode=CrossMode
         self.CentralFreqs=np.mean(self.DicoFile["FreqDomains"],axis=1)
@@ -124,6 +141,7 @@ class ClassInterpol():
             self.CalcFreqAmpSystematics()
             self.Sols.G/=self.G0
 
+            
         self.GOut=NpShared.ToShared("%sGOut"%IdSharedMem,self.Sols.G.copy())
         self.PolMode=PolMode
         self.Amp_GaussKernel=Amp_GaussKernel
@@ -448,6 +466,7 @@ class ClassInterpol():
         GOut=NpShared.GiveArray("%sGOut"%IdSharedMem)
         g=GOut[it,:,iAnt,iDir,0,0]
         g0=g/np.abs(g)
+
         W=np.ones(g0.shape,np.float32)
         W[g==1.]=0
         Z=self.Z
