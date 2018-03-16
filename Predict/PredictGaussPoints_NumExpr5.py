@@ -676,10 +676,17 @@ class ClassPredict():
             T.timeit("2: Predict")
             # get() is substracting
 
+            if ApplyTimeJones is not None and self.GD["Beam"]["BeamAt"]=="Facet":
+                ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
+                ParamJonesList=ParamJonesList+[iFacet]
+                predict.ApplyJones(DataOut,ParamJonesList)
+                
+                
+
             DataOut-=ColOutDir
             ColOutDir.fill(0)
             
-        if ApplyTimeJones!=None:
+        if ApplyTimeJones is not None and self.GD["Beam"]["BeamAt"]=="Tessel":
             #print "apply in direction %i"%iDirection
             ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
             ParamJonesList=ParamJonesList+[iDirection]
