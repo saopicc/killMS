@@ -81,7 +81,7 @@ def main(options=None):
     Sols=CS.GiveSols()
     for l in ll:
         CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
-        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
+        # CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
         CS.DoSimul()
 
 class ClassSimul():
@@ -212,22 +212,24 @@ class ClassSimul():
 
 
 
-        # Equalise in time
-        for itime in range(NSols):
-            Sols.G[itime,:,:,:,0,0]=Sols.G[0,:,:,:,0,0]
-            Sols.G[itime,:,:,:,1,1]=Sols.G[0,:,:,:,1,1]
+        # # Equalise in time
+        # for itime in range(NSols):
+        #     Sols.G[itime,:,:,:,0,0]=Sols.G[0,:,:,:,0,0]
+        #     Sols.G[itime,:,:,:,1,1]=Sols.G[0,:,:,:,1,1]
 
         # equalise in freq
         for ich in range(1,nch):
             Sols.G[:,ich,:,:,:,:]=Sols.G[:,0,:,:,:,:]
 
+
         # make scalar
         Sols.G[:,:,:,:,1,1]=Sols.G[:,:,:,:,0,0]
 
-        # unity
-        Sols.G.fill(0)
-        Sols.G[:,:,:,:,0,0]=1.
-        Sols.G[:,:,:,:,1,1]=1.
+        # # unity
+        # Sols.G.fill(0)
+        # Sols.G[:,:,:,:,0,0]=1.
+        # Sols.G[:,:,:,:,1,1]=1.
+
 
         # # Sols.G[:,:,:,1:,0,0]=0.01
         # # Sols.G[:,:,:,1:,1,1]=0.01
@@ -235,7 +237,7 @@ class ClassSimul():
         return Sols
 
     def GiveJones(self):
-        if self.Sols==None:
+        if self.Sols is None:
             Sols=self.GiveSols()
         else:
             Sols=self.Sols
@@ -347,7 +349,7 @@ class ClassSimul():
     
         Jones["Beam"]=G
         Jones["BeamH"]=ModLinAlg.BatchH(G)
-        if self.ChanMap==None:
+        if self.ChanMap is None:
             self.ChanMap=np.zeros((VS.MS.NSPWChan,),np.int32).tolist()
         
         Jones["ChanMap"]=self.ChanMap
