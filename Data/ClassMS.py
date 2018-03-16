@@ -370,7 +370,8 @@ class ClassMS():
         if DoPrint==True:
             print "   ... Reading MS"
 
-
+        # TODO: read this from MS properly, as in DDFacet
+        self.CorrelationNames = "xx", "xy", "yx", "yy"
 
         row0=0
         row1=self.F_nrows
