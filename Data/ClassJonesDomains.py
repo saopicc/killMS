@@ -183,8 +183,10 @@ class ClassJonesDomains():
         iG0_t=np.argmin(np.abs(DicoOut["tm"].reshape((nt,1))-DicoJ0["tm"].reshape((1,nt0))),axis=1)
         iG1_t=np.argmin(np.abs(DicoOut["tm"].reshape((nt,1))-DicoJ1["tm"].reshape((1,nt1))),axis=1)
         
+#        print>>log,fmOut,DicoJ0["FreqDomain"],DicoJ1["FreqDomain"]
         for ich in range(nchOut):
 
+#            print>>log,fmOut[ich]
             indChG0=np.where((fmOut[ich]>=DicoJ0["FreqDomain"][:,0]) & (fmOut[ich]<DicoJ0["FreqDomain"][:,1]))[0][0]
             indChG1=np.where((fmOut[ich]>=DicoJ1["FreqDomain"][:,0]) & (fmOut[ich]<DicoJ1["FreqDomain"][:,1]))[0][0]
  
