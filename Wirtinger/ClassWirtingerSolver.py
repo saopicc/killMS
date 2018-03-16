@@ -407,7 +407,7 @@ class ClassWirtingerSolver():
     def InitMeanBeam(self):
         self.NormFluxes=self.SM.ClusterCat.SumI.copy()
         self.NormFluxes/=self.NormFluxes.max()
-        if self.GD["Beam"]["BeamModel"] is None:
+        if self.GD["Beam"]["BeamModel"] != "LOFAR":
             self.SM.ApparentSumI=self.NormFluxes
             self.SM.AbsMeanBeamAnt=np.ones_like(self.SM.ApparentSumI)
             self.AbsMeanBeamAnt=self.SM.AbsMeanBeamAnt

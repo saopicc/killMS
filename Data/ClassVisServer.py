@@ -915,7 +915,7 @@ class ClassVisServer():
                     opts["NBand"] = opts["NChanBeamPerMS"]
                     fitsbeam = ClassFITSBeam(self.MS, opts)
 
-                    TimesBeam = fitsbeam.getBeamSampleTimes(times)
+                    TimesBeam = np.array(fitsbeam.getBeamSampleTimes(times))
                     FreqDomains = fitsbeam.getFreqDomains()
                     nfreq_dom = FreqDomains.shape[0]
 
@@ -946,7 +946,7 @@ class ClassVisServer():
                         Beam = DicoBeam["Jones"]
                         Beam0 = np.zeros((Tm.size, 1, self.MS.na, nfreq_dom, 2, 2), np.complex64)
                         for itime, tm in enumerate(Tm):
-                            Beam0[itime] = self.MS.GiveBeam(tm, np.array([rac]), np.array([decc]))
+                            Beam0[itime] = fitsbeam.evaluateBeam(tm, np.array([rac]), np.array([decc]))
 
                         DicoBeamCenter = {}
                         DicoBeamCenter["t0"] = T0s

@@ -164,6 +164,8 @@ def read_options():
     OP.add_option('FITSFile',type="str",help='FITS beam mode filename template. Default is %default')
     OP.add_option('FITSLAxis',type="str",help='L axis of FITS beam. Default is %default')
     OP.add_option('FITSMAxis',type="str",help='L axis of FITS beam. Default is %default')
+    OP.add_option('FITSFeed',type="str",help='FITS feed. xy or rl or None to take from MS. Default is %default')
+    OP.add_option('FITSVerbosity',type="int",help='Verbosity of debug messages. Default is %default')
 
     OP.OptionGroup("* PreApply killMS Solutions","PreApply")
     OP.add_option('PreApplySols',type="str",help='Pre-apply killMS solutions in the predict step. Has to be a list. Default is %default')
@@ -994,10 +996,28 @@ def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2,ConfigJacobianAnte
     return rms,SolverInit.G
 
 
+def _exc_handler(type, value, tb):
+    if hasattr(sys, 'ps1') or not sys.stderr.isatty() or type is SyntaxError:
+    # we are in interactive mode or we don't have a tty-like
+    # device, so we call the default hook
+        sys.__excepthook__(type, value, tb)
+    else:
+        import traceback, pdb
+        # we are NOT in interactive mode, print the exception...
+        traceback.print_exception(type, value, tb)
+        print
+        # ...then start the debugger in post-mortem mode.
+        # pdb.pm() # deprecated
+        pdb.post_mortem(tb) # more "modern"
+
+
+    sys.excepthook = _exc_handler
+
 
 if __name__=="__main__":
     #os.system('clear')
     logo.print_logo()
+    sys.excepthook = _exc_handler
 
 
     ParsetFile=sys.argv[1]
@@ -1060,6 +1080,7 @@ if __name__=="__main__":
                     os.system("rm -rf %s*ddfcache"%MSName)
         else:
             main(OP=OP,MSName=MSName)
+                
     except:
         NpShared.DelAll(IdSharedMem)
         raise
