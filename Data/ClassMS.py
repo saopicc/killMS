@@ -180,7 +180,7 @@ class ClassMS():
         self.SR = stationresponse(self.MSName,
                                       useElementResponse=useElementBeam,
                                       #useElementBeam=useElementBeam,
-                                      useArrayFactor=useArrayFactor)#,useChanFreq=True)
+                                      useArrayFactor=useArrayFactor,useChanFreq=True)
         self.SR.setDirection(self.rarad,self.decrad)
         
     def CopyNonSPWDependent(self,MSnodata):
