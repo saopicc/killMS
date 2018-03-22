@@ -20,6 +20,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 #!/usr/bin/env python
 #turtles
+
+import sys,os
+if "PYTHONPATH_FIRST" in os.environ.keys() and int(os.environ["PYTHONPATH_FIRST"]):
+    sys.path = os.environ["PYTHONPATH"].split(":") + sys.path
+
 import optparse
 import sys
 import os
@@ -41,7 +46,7 @@ import DDFacet.Other.MyPickle
 log=MyLogger.getLogger("killMS")
 MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
 
-#sys.path=[name for name in sys.path if not(("pyrap" in name)&("/usr/local/lib/" in name))]
+
 from pyrap.tables import table
 # test
 SaveFile="last_killMS.obj"
@@ -875,7 +880,7 @@ def main(OP=None,MSName=None):
 
                 
     if APP is not None:
-        APP.terminate()
+        #APP.terminate()
         APP.shutdown()
         del(APP)
         Multiprocessing.cleanupShm()
