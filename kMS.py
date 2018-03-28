@@ -553,9 +553,9 @@ def main(OP=None,MSName=None):
     PM2=None#ClassPredict_orig(NCPU=NCPU,IdMemShared=IdSharedMem)
 
 
-    Solver.InitMeanBeam()
     if (options.SolverType=="KAFCA"):
 
+        Solver.InitMeanBeam()
         if (options.InitLM):
             rms,SolverInit_G=GiveNoise(options,
                                        DicoSelectOptions,
@@ -682,7 +682,7 @@ def main(OP=None,MSName=None):
                     FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.MSName),SolsName)
                 else:
                     _MSName=reformat.reformat(options.MSName).split("/")[-2]
-                    DirName="%s%s"%(reformat.reformat(options.SolsDir),_MSName)
+                    DirName=os.path.abspath("%s%s"%(reformat.reformat(options.SolsDir),_MSName))
                     if not os.path.isdir(DirName):
                         os.makedirs(DirName)
                     FileName="%s/killMS.%s.sols.npz"%(DirName,SolsName)

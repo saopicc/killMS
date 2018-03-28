@@ -406,6 +406,7 @@ class ClassWirtingerSolver():
         nbuff=10
 
     def InitMeanBeam(self):
+
         self.NormFluxes=self.SM.ClusterCat.SumI.copy()
         self.NormFluxes/=self.NormFluxes.max()
         if self.GD["Beam"]["BeamModel"] is None:
