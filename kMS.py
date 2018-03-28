@@ -658,7 +658,9 @@ def main(OP=None,MSName=None):
             SolsFreqDomain=VS.SolsFreqDomains
             if SaveSols:
 
-                FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.MSName),SolsName)
+
+                if options.SolsDir is None:
+                    FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.MSName),SolsName)
 
                 print>>log, "Save Solutions in file: %s"%FileName
                 Sols=Solver.GiveSols()
