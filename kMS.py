@@ -322,8 +322,21 @@ def main(OP=None,MSName=None):
         #if not(FileName[-4::]==".npz"): FileName+=".npz"
         SolsName=options.OutSolsName
 
-    ParsetName="%skillMS.%s.sols.parset"%(reformat.reformat(options.MSName),SolsName)
+
+    if options.SolsDir is None:
+        ParsetName="%skillMS.%s.sols.parset"%(reformat.reformat(options.MSName),SolsName)
+    else:
+        _MSName=reformat.reformat(options.MSName).split("/")[-2]
+        DirName="%s%s"%(reformat.reformat(options.SolsDir),_MSName)
+        if not os.path.isdir(DirName):
+            os.makedirs(DirName)
+        ParsetName="%s/killMS.%s.sols.parset"%(DirName,SolsName)
     OP.ToParset(ParsetName)
+
+
+
+
+
     APP=None
     GD=OP.DicoConfig
     if GD["SkyModel"]["SkyModel"]!="":
@@ -662,7 +675,6 @@ def main(OP=None,MSName=None):
                 if options.SolsDir is None:
                     FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.MSName),SolsName)
                 else:
-                    
                     _MSName=reformat.reformat(options.MSName).split("/")[-2]
                     DirName="%s%s"%(reformat.reformat(options.SolsDir),_MSName)
                     if not os.path.isdir(DirName):
@@ -872,8 +884,6 @@ def main(OP=None,MSName=None):
                     gabs[gabs==0]=1.
                     G/=gabs
                     GH/=gabs
-
-
                 PM.ApplyCal(Solver.VS.ThisDataChunk,JonesMerged,options.ApplyToDir)
 
             Solver.VS.MS.data=Solver.VS.ThisDataChunk["data"]
