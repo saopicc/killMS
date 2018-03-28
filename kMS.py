@@ -464,7 +464,7 @@ def main(OP=None,MSName=None):
         #VS.setGridProps(PreparePredict.FacetMachine.Cell,PreparePredict.FacetMachine.NpixPaddedFacet)
         VS.setGridProps(PreparePredict.FacetMachine.Cell,None)#PreparePredict.FacetMachine.NpixPaddedFacet)
         FacetMachine=PreparePredict.FacetMachine
-        #VS.setFOV(FacetMachine.OutImShape,FacetMachine.PaddedGridShape,FacetMachine.FacetShape,FacetMachine.CellSizeRad)
+        VS.setFOV(FacetMachine.OutImShape,FacetMachine.PaddedGridShape,FacetMachine.FacetShape,FacetMachine.CellSizeRad)
     elif PredictMode=="Column":
         VS_PredictCol=ClassVisServer.ClassVisServer(options.MSName,ColName=GD["SkyModel"]["SkyModelCol"],
                                                     TVisSizeMin=dt,
