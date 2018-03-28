@@ -70,6 +70,9 @@ class ClassClipMachine():
 
         print>>log,"Writting %s in %s"%(self.WeightCol,self.MSName)
         t=table(self.MSName,readonly=False,ack=False)
+        if self.WeightCol=="FLAG":
+            Wf=W*np.ones((1,1,4))
+            W=Wf.astype(self.flag.dtype)
         t.putcol(self.WeightCol,W)
         t.close()
 
@@ -82,6 +85,7 @@ def read_options():
     group.add_option('--MSName',help='Input MS to draw [no default]',default='')
     group.add_option('--Th',help='Level above which clip (in sigma. Default is <MSName>.%default.',type=float,default=20.)
     group.add_option('--ColName',help='Input column. Default is %default',default='CORRECTED_DATA')
+    group.add_option('--WeightCol',help='Input column. Default is %default',default='IMAGING_WEIGHT')
     opt.add_option_group(group)
     options, arguments = opt.parse_args()
     f = open(SaveFile,"wb")
@@ -106,7 +110,7 @@ def main(options=None):
         ColName=options.ColName
         
     for MSName in LMSName:
-        CM=ClassClipMachine(MSName,options.Th,ColName,SubCol=SubCol,WeightCol="IMAGING_WEIGHT")
+        CM=ClassClipMachine(MSName,options.Th,ColName,SubCol=SubCol,WeightCol=options.WeightCol)
         CM.ClipWeights()
         if len(LMSName)>1:
             print>>log,"=========================================="

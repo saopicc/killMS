@@ -20,6 +20,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 #!/usr/bin/env python
 #turtles
+
+import sys,os
+if "PYTHONPATH_FIRST" in os.environ.keys() and int(os.environ["PYTHONPATH_FIRST"]):
+    sys.path = os.environ["PYTHONPATH"].split(":") + sys.path
+
 import optparse
 import sys
 import os
@@ -41,7 +46,7 @@ import DDFacet.Other.MyPickle
 log=MyLogger.getLogger("killMS")
 MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
 
-#sys.path=[name for name in sys.path if not(("pyrap" in name)&("/usr/local/lib/" in name))]
+
 from pyrap.tables import table
 # test
 SaveFile="last_killMS.obj"
@@ -194,8 +199,9 @@ def read_options():
     OP.add_option('ApplyMode',type="str",help='Subtract selected sources. ')
     OP.add_option('ClipMethod',type="str",help='Clip data in the IMAGING_WEIGHT column. Can be set to Resid, DDEResid or ResidAnt . Default is %default')
     OP.add_option('OutSolsName',type="str",help='If specified will save the estimated solutions in this file. Default is %default')
-    OP.add_option('ApplyCal',type="int",help='Apply direction averaged gains to residual data in the mentioned direction. \
+    OP.add_option('ApplyToDir',type="int",help='Apply direction averaged gains to residual data in the mentioned direction. \
     If ApplyCal=-1 takes the mean gain over directions. -2 if off. Default is %default')
+    OP.add_option('MergeBeamToAppliedSol',type="int",help='Use the beam in applied solution. Default is %default')
     OP.add_option('SkipExistingSols',type="int",help='Skipping existing solutions if they exist. Default is %default')
     OP.add_option('SolsDir',type="str",help='Directory in which to save the solutions. Default is %default')
     
@@ -261,7 +267,7 @@ def main(OP=None,MSName=None):
     #IdSharedMem=str(int(np.random.rand(1)[0]*100000))+"."
     global IdSharedMem
     IdSharedMem=str(int(os.getpid()))+"."
-    DoApplyCal=(options.ApplyCal!=-2)
+    DoApplyCal=(options.ApplyToDir!=-2)
     if type(options.ClipMethod)!=list: stop
 
     ReWeight=(len(options.ClipMethod)>0)
@@ -477,7 +483,7 @@ def main(OP=None,MSName=None):
         #VS.setGridProps(PreparePredict.FacetMachine.Cell,PreparePredict.FacetMachine.NpixPaddedFacet)
         VS.setGridProps(PreparePredict.FacetMachine.Cell,None)#PreparePredict.FacetMachine.NpixPaddedFacet)
         FacetMachine=PreparePredict.FacetMachine
-        #VS.setFOV(FacetMachine.OutImShape,FacetMachine.PaddedGridShape,FacetMachine.FacetShape,FacetMachine.CellSizeRad)
+        VS.setFOV(FacetMachine.OutImShape,FacetMachine.PaddedGridShape,FacetMachine.FacetShape,FacetMachine.CellSizeRad)
     elif PredictMode=="Column":
         VS_PredictCol=ClassVisServer.ClassVisServer(options.MSName,ColName=GD["SkyModel"]["SkyModelCol"],
                                                     TVisSizeMin=dt,
@@ -751,7 +757,10 @@ def main(OP=None,MSName=None):
             freqs=Solver.VS.ThisDataChunk["freqs"]
             DomainMachine=ClassJonesDomains.ClassJonesDomains()
 
-            if options.BeamModel==None:
+
+            JonesMerged=Jones
+
+            if options.BeamModel==None or not options.MergeBeamToAppliedSol:
                 JonesMerged=Jones
             else:
                 Jones["tm"]=(Jones["t0"]+Jones["t1"])/2.
@@ -759,7 +768,6 @@ def main(OP=None,MSName=None):
                 PreApplyJones["tm"]=(PreApplyJones["t0"]+PreApplyJones["t1"])/2.
                 DomainsMachine=ClassJonesDomains.ClassJonesDomains()
                 JonesMerged=DomainsMachine.MergeJones(Jones,PreApplyJones)
-                
                 DicoJonesMatrices=JonesMerged
 
 
@@ -876,7 +884,7 @@ def main(OP=None,MSName=None):
                 SM.RestoreCat()
 
             if DoApplyCal:
-                print>>log, ModColor.Str("Apply calibration in direction: %i"%options.ApplyCal,col="green")
+                print>>log, ModColor.Str("Apply calibration in direction: %i"%options.ApplyToDir,col="green")
                 G=JonesMerged["Jones"]
                 GH=JonesMerged["JonesH"]
                 if not("A" in options.ApplyMode):
@@ -902,7 +910,7 @@ def main(OP=None,MSName=None):
 
                 
     if APP is not None:
-        APP.terminate()
+        #APP.terminate()
         APP.shutdown()
         del(APP)
         Multiprocessing.cleanupShm()
