@@ -365,7 +365,7 @@ class ClassJacobianAntenna():
         return z
 
     def PredictOrigFormat(self,GainsIn):
-        if self.GD["VisData"]["FreePredictGainColName"]!=None:
+        if self.GD["VisData"]["FreePredictGainColName"]!=None or self.GD["SkyModel"]["FreeFullSub"]:
             self.PredictOrigFormat_Type(GainsIn,Type="Gains")
         if self.GD["VisData"]["FreePredictColName"]!=None:
             self.PredictOrigFormat_Type(GainsIn,Type="NoGains")
