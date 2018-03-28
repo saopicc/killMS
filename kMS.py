@@ -661,6 +661,14 @@ def main(OP=None,MSName=None):
 
                 if options.SolsDir is None:
                     FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.MSName),SolsName)
+                else:
+                    
+                    _MSName=reformat.reformat(options.MSName).split("/")[-2]
+                    DirName="%s%s"%(reformat.reformat(options.SolsDir),_MSName)
+                    if not os.path.isdir(DirName):
+                        os.makedirs(DirName)
+                    FileName="%s/killMS.%s.sols.npz"%(DirName,SolsName)
+                    
 
                 print>>log, "Save Solutions in file: %s"%FileName
                 Sols=Solver.GiveSols()
@@ -866,7 +874,7 @@ def main(OP=None,MSName=None):
                     GH/=gabs
 
 
-                PM.ApplyCal(Solver.VS.ThisDataChunk,JonesMerged,options.ApplyCal)
+                PM.ApplyCal(Solver.VS.ThisDataChunk,JonesMerged,options.ApplyToDir)
 
             Solver.VS.MS.data=Solver.VS.ThisDataChunk["data"]
             Solver.VS.MS.flags_all=Solver.VS.ThisDataChunk["flags"]
