@@ -197,6 +197,7 @@ def read_options():
     OP.add_option('ApplyCal',type="int",help='Apply direction averaged gains to residual data in the mentioned direction. \
     If ApplyCal=-1 takes the mean gain over directions. -2 if off. Default is %default')
     OP.add_option('SkipExistingSols',type="int",help='Skipping existing solutions if they exist. Default is %default')
+    OP.add_option('SolsDir',type="str",help='Directory in which to save the solutions. Default is %default')
     
 
 
