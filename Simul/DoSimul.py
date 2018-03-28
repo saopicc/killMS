@@ -80,8 +80,8 @@ def main(options=None):
     CS=ClassSimul(ll[0],SMName)
     Sols=CS.GiveSols()
     for l in ll:
-        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
-        # CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
+        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
+        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
         CS.DoSimul()
 
 class ClassSimul():
@@ -225,10 +225,10 @@ class ClassSimul():
         # make scalar
         Sols.G[:,:,:,:,1,1]=Sols.G[:,:,:,:,0,0]
 
-        # # unity
-        # Sols.G.fill(0)
-        # Sols.G[:,:,:,:,0,0]=1.
-        # Sols.G[:,:,:,:,1,1]=1.
+        # unity
+        Sols.G.fill(0)
+        Sols.G[:,:,:,:,0,0]=1.
+        Sols.G[:,:,:,:,1,1]=1.
 
 
         # # Sols.G[:,:,:,1:,0,0]=0.01
@@ -446,7 +446,8 @@ class ClassSimul():
     
         #VS.MS.SaveVis(Col="DATA")
         #VS.MS.SaveVis(Col="CORRECTED_DATA")
-        VS.MS.SaveVis(Col="CORRECTED_DATA_BACKUP")
+        #VS.MS.SaveVis(Col="CORRECTED_DATA_BACKUP")
+        VS.MS.SaveVis(Col="CORRECTED_DATA")
 
         # t=table(self.MSName,readonly=False)
         # f=t.getcol("FLAG")
