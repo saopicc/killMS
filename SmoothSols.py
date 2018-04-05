@@ -50,7 +50,7 @@ from pyrap.tables import table
 # # ##############################
 from killMS.Other.ClassTimeIt import ClassTimeIt
 from killMS.Other.least_squares import least_squares
-
+import copy
 
 SaveName="last_InterPol.obj"
 
@@ -64,7 +64,8 @@ def read_options():
     group.add_option('--SolsFileOut',help='SolfileOut [no default]',default=None)
     group.add_option('--InterpMode',help='Interpolation mode TEC and/or Amp [default is %default]',type="str",default="TEC,Amp")
     group.add_option('--CrossMode',help='Use cross gains maode for TEC [default is %default]',type=int,default=1)
-    group.add_option('--RemoveAmpBias',help='Remove amplitude bias before smoothing [default is %default]',type=int,default=0)
+    group.add_option('--RemoveAmpBias',help='Remove amplitude bias (along time) before smoothing [default is %default]',type=int,default=0)
+    group.add_option('--RemoveMedianAmp',help='Remove median amplitude (along freq) after fitting [default is %default]',type=int,default=1)
     
     group.add_option('--Amp-SmoothType',help='Interpolation Type for the amplitude [default is %default]',type="str",default="Gauss")
     group.add_option('--Amp-PolyOrder',help='Order of the polynomial to do the amplitude',type="int",default=3)
@@ -93,13 +94,16 @@ class ClassInterpol():
                  InterpMode="TEC",PolMode="Scalar",Amp_PolyOrder=3,NCPU=0,
                  Amp_GaussKernel=(0,5), Amp_SmoothType="Poly",
                  CrossMode=1,
-                 RemoveAmpBias=0):
+                 RemoveAmpBias=0,
+                 RemoveMedianAmp=True):
 
+        
         if type(InterpMode)==str:
             InterpMode=InterpMode.split(",")#[InterpMode]
         self.InSolsName=InSolsName
         self.OutSolsName=OutSolsName
-                
+        self.RemoveMedianAmp=RemoveMedianAmp
+        
         print>>log,"Loading %s"%self.InSolsName
         self.DicoFile=dict(np.load(self.InSolsName))
         self.Sols=self.DicoFile["Sols"].view(np.recarray)
@@ -440,7 +444,7 @@ class ClassInterpol():
         GOut=NpShared.GiveArray("%sGOut"%IdSharedMem)
         g=GOut[:,:,:,iDir,0,0]
 
-        AmpMachine=ClassFitAmp.ClassFitAmp(self.Sols.G[:,:,:,iDir,0,0],self.CentralFreqs)
+        AmpMachine=ClassFitAmp.ClassFitAmp(self.Sols.G[:,:,:,iDir,0,0],self.CentralFreqs,RemoveMedianAmp=self.RemoveMedianAmp)
         gf=AmpMachine.doSmooth()
         gf=gf*g/np.abs(g)
         GOut[:,:,:,iDir,0,0]=gf[:,:,:]
@@ -580,9 +584,14 @@ class ClassInterpol():
         
         print>>log,"  Saving interpolated solution file as: %s"%OutFile
         self.DicoFile["SmoothMode"]=self.InterpMode
+        self.DicoFile["SolsOrig"]=copy.deepcopy(self.DicoFile["Sols"])
+        self.DicoFile["SolsOrig"]["G"][:]=self.DicoFile["Sols"]["G"][:]
         self.DicoFile["Sols"]["G"][:]=self.GOut[:]
         np.savez(OutFile,**(self.DicoFile))
 
+        self.GOut
+
+        
         # import PlotSolsIm
         # G=self.DicoFile["Sols"]["G"].view(np.recarray)
         # iAnt,iDir=10,0
@@ -628,7 +637,7 @@ def main(options=None):
                      Amp_PolyOrder=options.Amp_PolyOrder,
                      Amp_GaussKernel=options.Amp_GaussKernel,
                      Amp_SmoothType=options.Amp_SmoothType,
-                     NCPU=options.NCPU,CrossMode=options.CrossMode)
+                     NCPU=options.NCPU,CrossMode=options.CrossMode,RemoveMedianAmp=options.RemoveMedianAmp)
     CI.InterpolParallel()
 
     CI.Save()
