@@ -83,9 +83,9 @@ class ClassFitAmp():
                 p = np.poly1d(z)
                 self.GOut[ind,iChan,iAnt]=p(x[ind])
 
-                if self.RemoveMedianAmp:
-                    off=np.median(self.G[:,:,iAnt]-self.GOut[:,:,iAnt],axis=1)
-                    self.GOut[:,:,iAnt]=self.GOut[:,:,iAnt]+off.reshape((-1,1))
+            if self.RemoveMedianAmp:
+                off=np.median(self.G[:,:,iAnt]-self.GOut[:,:,iAnt],axis=1)
+                self.GOut[:,:,iAnt]=self.GOut[:,:,iAnt]+off.reshape((-1,1))
             
             
                 #self.Plot(iAnt)
