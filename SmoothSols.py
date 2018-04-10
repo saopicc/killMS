@@ -233,7 +233,7 @@ class ClassInterpol():
             workers_res=APP.awaitJobResults("FitThisPolyAmp*", progress="Smooth Amp")
 
 
-        APP.terminate()
+        #APP.terminate()
         APP.shutdown()
         Multiprocessing.cleanupShm()
         # ###########################
