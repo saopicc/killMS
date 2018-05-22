@@ -12,7 +12,8 @@ SaveFile="ClipCal.last"
 import pickle
 
 class ClassClipMachine():
-    def __init__(self,MSName,Th=20.,ColName="CORRECTED_DATA",SubCol=None,WeightCol="IMAGING_WEIGHT"):
+    def __init__(self,MSName,Th=20.,ColName="CORRECTED_DATA",SubCol=None,WeightCol="IMAGING_WEIGHT",
+                 ReinitWeights=False):
         self.MSName=MSName
         t=self.t=table(MSName,ack=False)
         print>>log,"Reading visibility column %s from %s"%(ColName,MSName)
@@ -31,6 +32,10 @@ class ClassClipMachine():
         print>>log,"  Reading weights column %s"%WeightCol
         W=t.getcol(WeightCol)
         t.close()
+        if ReinitWeights:
+            print>>log,"  Initialise weights to one"
+            W.fill(1)
+            
 
         self.vis=vis
         self.flag=flag
@@ -86,6 +91,7 @@ def read_options():
     group.add_option('--Th',help='Level above which clip (in sigma. Default is <MSName>.%default.',type=float,default=20.)
     group.add_option('--ColName',help='Input column. Default is %default',default='CORRECTED_DATA')
     group.add_option('--WeightCol',help='Input column. Default is %default',default='IMAGING_WEIGHT')
+    group.add_option('--ReinitWeights',help='Input column. Default is %default',type=int,default=0)
     opt.add_option_group(group)
     options, arguments = opt.parse_args()
     f = open(SaveFile,"wb")
@@ -110,7 +116,8 @@ def main(options=None):
         ColName=options.ColName
         
     for MSName in LMSName:
-        CM=ClassClipMachine(MSName,options.Th,ColName,SubCol=SubCol,WeightCol=options.WeightCol)
+        CM=ClassClipMachine(MSName,options.Th,ColName,SubCol=SubCol,WeightCol=options.WeightCol,
+                            ReinitWeights=options.ReinitWeights)
         CM.ClipWeights()
         if len(LMSName)>1:
             print>>log,"=========================================="
