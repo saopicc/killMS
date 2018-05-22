@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import sys,os
 if "PYTHONPATH_FIRST" in os.environ.keys() and int(os.environ["PYTHONPATH_FIRST"]):
     sys.path = os.environ["PYTHONPATH"].split(":") + sys.path
+import traceback
 
 import optparse
 import sys
@@ -1099,7 +1100,18 @@ if __name__=="__main__":
                     SolsName=options.SolverType
                     if options.OutSolsName!="":
                         SolsName=options.OutSolsName
-                    FileName="%skillMS.%s.sols.npz"%(reformat.reformat(MSName),SolsName)
+                    # FileName="%skillMS.%s.sols.npz"%(reformat.reformat(MSName),SolsName)
+
+                    if options.SolsDir is None:
+                        FileName="%skillMS.%s.sols.npz"%(reformat.reformat(MSName),SolsName)
+                    else:
+                        _MSName=reformat.reformat(MSName).split("/")[-2]
+                        DirName=os.path.abspath("%s%s"%(reformat.reformat(options.SolsDir),_MSName))
+                        if not os.path.isdir(DirName):
+                            os.makedirs(DirName)
+                        FileName="%s/killMS.%s.sols.npz"%(DirName,SolsName)
+
+                    print>>log,"Checking %s"%FileName
                     if os.path.isfile(FileName):
                         print>>log,ModColor.Str("Solution file %s exist"%FileName)
                         print>>log,ModColor.Str("   SKIPPING")
@@ -1114,5 +1126,6 @@ if __name__=="__main__":
             main(OP=OP,MSName=MSName)
                 
     except:
+        print>>log, traceback.format_exc()
         NpShared.DelAll(IdSharedMem)
         raise
