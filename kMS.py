@@ -388,7 +388,7 @@ def main(OP=None,MSName=None):
         #GDPredict["Compression"]["CompDeGridMode"]=False
         #GDPredict["Compression"]["CompDeGridMode"]=True
         GDPredict["RIME"]["ForwardMode"]="Classic"
-        GDPredict["Cache"]["CacheCF"]=False
+        GDPredict["Cache"]["CF"]=False
 
         if options.ChanSlice is not None:
             GDPredict["Selection"]["ChanStart"]=int(options.ChanSlice[0])
