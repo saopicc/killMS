@@ -433,6 +433,13 @@ class ClassMS():
                 for pol in range(4):
                     flag_all[:,i,pol]=fcol
 
+        if "IMAGING_WEIGHT" in t.colnames():
+            print>>log,"Flagging the zeros-weighted visibilities"
+            fw=table_all.getcol("IMAGING_WEIGHT",row0,nRowRead)[SPW==self.ListSPW[0]][:,self.ChanSlice]
+            fw=fw*np.ones((1,1,4))
+            MedW=np.median(fw)
+            flag_all[fw<MedW*1e-6]=1
+
         self.multidata=(type(self.ColName)==list)
         self.ReverseAntOrder=(np.where((A0==0)&(A1==1))[0]).shape[0]>0
         self.swapped=False
