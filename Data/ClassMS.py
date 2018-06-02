@@ -433,10 +433,11 @@ class ClassMS():
                 for pol in range(4):
                     flag_all[:,i,pol]=fcol
 
-        if "IMAGING_WEIGHT" in t.colnames():
+        if "IMAGING_WEIGHT" in table_all.colnames():
             print>>log,"Flagging the zeros-weighted visibilities"
             fw=table_all.getcol("IMAGING_WEIGHT",row0,nRowRead)[SPW==self.ListSPW[0]][:,self.ChanSlice]
-            fw=fw*np.ones((1,1,4))
+            nrr,nchr=fw.shape
+            fw=fw.reshape((nrr,nchr,1))*np.ones((1,1,4))
             MedW=np.median(fw)
             flag_all[fw<MedW*1e-6]=1
 
@@ -489,14 +490,17 @@ class ClassMS():
 
 
         if self.ReadUVWDT:
-            print>>log,"Adding uvw speed info to main table: %s"%self.MSName
-            tu=table(self.MSName,readonly=False,ack=False)
-            if 'UVWDT' not in tu.colnames():
-                self.AddUVW_dt()
+
+            tu=table(self.MSName,ack=False)
+            ColNames=tu.colnames()
             tu.close()
             del(tu)
+            
+            if 'UVWDT' not in ColNames:
+                self.AddUVW_dt()
+
             print>>log,"Reading uvw_dt column"
-            tu=table(self.MSName,readonly=False,ack=False)
+            tu=table(self.MSName,ack=False)
             self.uvw_dt=np.float64(tu.getcol('UVWDT', row0, nRowRead))
             tu.close()
 
@@ -1039,6 +1043,7 @@ class ClassMS():
         #self.PutNewCol("MODEL_DATA")
 
     def AddUVW_dt(self):
+        print>>log,"Adding uvw speed info to main table: %s"%self.MSName
         print>>log,"Compute UVW speed column"
         MSName=self.MSName
         MS=self
