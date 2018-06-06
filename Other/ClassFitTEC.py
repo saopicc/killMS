@@ -84,14 +84,16 @@ class ClassFitTEC():
 
 
 
-    def doFit(self,NIter=100):
+    def doFit(self,NIter=20):
         if self.x0 is None and self.CurrentX is None:
             self.CurrentX=np.zeros((2*self.na,),np.float32)+1e-10
             #self.CurrentX=np.random.randn(2*self.na)
 
+        self.Current_iIter=0
         for iIter in range(NIter):
             self.doLMIter()
             #self.Plot()
+            self.Current_iIter=iIter
             if self.Diff<self.Tol:
                 print>>log,"Convergence in %i steps"%(iIter+1)
                 break
@@ -126,8 +128,17 @@ class ClassFitTEC():
         xx=self.CurrentX.copy()
         xx[xx==0]=1e-6
         self.Diff=np.max(np.abs((X-xx)/xx))
-        self.CurrentX=X
 
+
+
+        z0=self.GiveGPredict(self.CurrentX)
+        Norm(z0)
+        self.CurrentX=X
+        z=self.GiveGPredict(self.CurrentX)
+        Norm(z)
+        self.Diff=np.max(np.abs(np.angle(z*z0.conj())))
+        #print self.Diff
+        
         return 
 
         # HinvJH=np.dot(scipy.sparse.coo_matrix(Hinv),J.T.conj())

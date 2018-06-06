@@ -210,12 +210,12 @@ class PlotMachine():
         else:
             DirList=range(nd)
     
-        #fig.subplots_adjust(wspace=0, hspace=0)
-        for iDir in DirList:
-            for iSol in range(nSol):
-                Sols=LSols[iSol]
-                G=Sols.G[:,:,iDir,:,:]
-                Sols.G[:,:,iDir,:,:]=NormMatrices(G)
+        # #fig.subplots_adjust(wspace=0, hspace=0)
+        # for iDir in DirList:
+        #     for iSol in range(nSol):
+        #         Sols=LSols[iSol]
+        #         G=Sols.G[:,:,iDir,:,:]
+        #         Sols.G[:,:,iDir,:,:]=NormMatrices(G)
 
         self.Mask=None
         if 'MaskedSols' in SolsDico.keys():

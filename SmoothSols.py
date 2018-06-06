@@ -214,7 +214,8 @@ class ClassInterpol():
             self.TECArray=NpShared.ToShared("%sTECArray"%IdSharedMem,np.zeros((nt,nd,na),np.float32))
             self.CPhaseArray=NpShared.ToShared("%sCPhaseArray"%IdSharedMem,np.zeros((nt,nd,na),np.float32))
             for it in range(nt):
-                APP.runJob("FitThisTEC_%d"%iJob, self.FitThisTEC, args=(it,))#,serial=True)
+#            for iDir in range(nd):
+                APP.runJob("FitThisTEC_%d"%iJob, self.FitThisTEC, args=(it,)) #,serial=True)
                 iJob+=1
             workers_res=APP.awaitJobResults("FitThisTEC*", progress="Fit TEC")
 
@@ -296,30 +297,46 @@ class ClassInterpol():
 
     def FitThisTEC(self,it):
         nt,nch,na,nd,_,_=self.Sols.G.shape
+        TECArray=NpShared.GiveArray("%sTECArray"%IdSharedMem)
+        CPhaseArray=NpShared.GiveArray("%sCPhaseArray"%IdSharedMem)
         for iDir in range(nd):
-            gz,TEC,CPhase=self.FitThisTECTime(it,iDir)
+#        for it in range(nt):
+            Est=None
+            if it>0:
+                E_TEC=TECArray[it-1,iDir,:]
+                E_CPhase=CPhaseArray[it-1,iDir,:]
+                Est=(E_TEC,E_CPhase)
+            gz,TEC,CPhase=self.FitThisTECTime(it,iDir,Est=Est)
 
             GOut=NpShared.GiveArray("%sGOut"%IdSharedMem)
             GOut[it,:,:,iDir,0,0]=gz
             GOut[it,:,:,iDir,1,1]=gz
 
-            TECArray=NpShared.GiveArray("%sTECArray"%IdSharedMem)
             TECArray[it,iDir,:]=TEC
-            CPhaseArray=NpShared.GiveArray("%sCPhaseArray"%IdSharedMem)
             CPhaseArray[it,iDir,:]=CPhase
             
             
         
-    def FitThisTECTime(self,it,iDir):
+    def FitThisTECTime(self,it,iDir,Est=None):
         GOut=NpShared.GiveArray("%sGOut"%IdSharedMem)
         nt,nch,na,nd,_,_=self.Sols.G.shape
         T=ClassTimeIt("CrossFit")
         T.disable()
         TEC0CPhase0=np.zeros((2,na),np.float32)
         for iAnt in range(na):
+            # if Est is None:
+            #     _,t0,c0=self.EstimateThisTECTime(it,iAnt,iDir)
+            #     TEC0CPhase0[0,iAnt]=t0
+            #     TEC0CPhase0[1,iAnt]=c0
+            # else:
+            #     t0,c0=Est
+            #     TEC0CPhase0[0,iAnt]=t0[iAnt]
+            #     TEC0CPhase0[1,iAnt]=c0[iAnt]
             _,t0,c0=self.EstimateThisTECTime(it,iAnt,iDir)
             TEC0CPhase0[0,iAnt]=t0
-            TEC0CPhase0[1,iAnt::]=c0
+            TEC0CPhase0[1,iAnt]=c0
+
+                
         T.timeit("init")
         # ######################################
         # Changing method
@@ -332,7 +349,7 @@ class ClassInterpol():
         TEC-=TEC[0]
         CPhase-=CPhase[0]
         GThis=np.abs(GOut[it,:,:,iDir,0,0]).T*TECToZ(TEC.reshape((-1,1)),CPhase.reshape((-1,1)),self.CentralFreqs.reshape((1,-1)))
-        T.timeit("done")
+        T.timeit("done %i %i %i"%(it,iDir,TECMachine.Current_iIter))
         return GThis.T,TEC,CPhase
         # ######################################
 
@@ -569,6 +586,11 @@ class ClassInterpol():
         GOut[:,:,iAnt,iDir,1,1]=gz[:,:]
         #print np.max(GOut[:,:,iAnt,iDir,0,0]-gz[:,:])
 
+    # def smoothGPR(self):
+    #     nt,nch,na,nd,_,_=self.GOut.shape
+        
+        
+        
     def Save(self):
         OutFile=self.OutSolsName
         if not ".npz" in OutFile: OutFile+=".npz"
@@ -581,7 +603,9 @@ class ClassInterpol():
             #          CPhase=self.CPhaseArray)
             self.DicoFile["SolsTEC"]=self.TECArray
             self.DicoFile["SolsCPhase"]=self.CPhaseArray
-        
+            
+
+            
         print>>log,"  Saving interpolated solution file as: %s"%OutFile
         self.DicoFile["SmoothMode"]=self.InterpMode
         self.DicoFile["SolsOrig"]=copy.deepcopy(self.DicoFile["Sols"])

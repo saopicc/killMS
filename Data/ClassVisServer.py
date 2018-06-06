@@ -121,9 +121,9 @@ class ClassVisServer():
             kwargs["DDID"]=self.GD["DataSelection"]["DDID"]
             DecorrMode=self.GD["SkyModel"]["Decorrelation"]
             ReadUVWDT=(("T" in DecorrMode) or ("F" in DecorrMode))
-
+            
         self.ReadUVWDT=ReadUVWDT
-        MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False,ReadUVWDT=ReadUVWDT,**kwargs)
+        MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False,ReadUVWDT=ReadUVWDT,GD=self.GD,**kwargs)
 
         TimesInt=np.arange(0,MS.DTh,self.TMemChunkSize).tolist()
         if not(MS.DTh+1./3600 in TimesInt): TimesInt.append(MS.DTh+1./3600)

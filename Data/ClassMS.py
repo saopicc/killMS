@@ -35,10 +35,11 @@ from killMS.Other.progressbar import ProgressBar
 class ClassMS():
     def __init__(self,MSname,Col="DATA",zero_flag=True,ReOrder=False,EqualizeFlag=False,DoPrint=True,DoReadData=True,
                  TimeChunkSize=None,GetBeam=False,RejectAutoCorr=False,SelectSPW=None,DelStationList=None,Field=0,DDID=0,
-                 ReadUVWDT=False,ChanSlice=None):
+                 ReadUVWDT=False,ChanSlice=None,GD=None):
 
 
         if MSname=="": exit()
+        self.GD=GD
         self.ReadUVWDT=ReadUVWDT
         MSname=reformat.reformat(os.path.abspath(MSname),LastSlash=False)
         self.MSName=MSname
@@ -439,8 +440,14 @@ class ClassMS():
             nrr,nchr=fw.shape
             fw=fw.reshape((nrr,nchr,1))*np.ones((1,1,4))
             MedW=np.median(fw)
+            fflagged0=np.count_nonzero(flag_all)
             flag_all[fw<MedW*1e-6]=1
+            fflagged1=np.count_nonzero(flag_all)
+            if fflagged1>0:
+                print>>log,"  Increase in flag fraction: %f"%(fflagged1/float(fflagged0)-1)
 
+                
+            
         self.multidata=(type(self.ColName)==list)
         self.ReverseAntOrder=(np.where((A0==0)&(A1==1))[0]).shape[0]>0
         self.swapped=False
