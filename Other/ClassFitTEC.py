@@ -84,7 +84,7 @@ class ClassFitTEC():
 
 
 
-    def doFit(self,NIter=20):
+    def doFit(self,NIter=100):
         if self.x0 is None and self.CurrentX is None:
             self.CurrentX=np.zeros((2*self.na,),np.float32)+1e-10
             #self.CurrentX=np.random.randn(2*self.na)
