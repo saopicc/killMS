@@ -463,6 +463,7 @@ class ClassInterpol():
 
         AmpMachine=ClassFitAmp.ClassFitAmp(self.Sols.G[:,:,:,iDir,0,0],self.CentralFreqs,RemoveMedianAmp=self.RemoveMedianAmp)
         gf=AmpMachine.doSmooth()
+        #print "Done %i"%iDir
         gf=gf*g/np.abs(g)
         GOut[:,:,:,iDir,0,0]=gf[:,:,:]
         GOut[:,:,:,iDir,1,1]=gf[:,:,:]

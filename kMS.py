@@ -728,7 +728,19 @@ def main(OP=None,MSName=None):
 
 
         else:
-            DicoLoad=np.load(options.ExtSols)
+
+            ExtSolsName=options.ExtSols
+            if options.SolsDir is None:
+                FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.MSName),ExtSolsName)
+            else:
+                _MSName=reformat.reformat(options.MSName).split("/")[-2]
+                DirName=os.path.abspath("%s%s"%(reformat.reformat(options.SolsDir),_MSName))
+                if not os.path.isdir(DirName):
+                    os.makedirs(DirName)
+                FileName="%s/killMS.%s.sols.npz"%(DirName,ExtSolsName)
+
+            print>>log,"Loading external solution file: %s"%FileName
+            DicoLoad=np.load(FileName)
             Sols=DicoLoad["Sols"]
             Sols=Sols.view(np.recarray)
             SolsFreqDomain=DicoLoad["FreqDomains"]
@@ -849,6 +861,12 @@ def main(OP=None,MSName=None):
                 t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
                 WAllChans=t.getcol("IMAGING_WEIGHT",Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 WAllChans[:,Solver.VS.MS.ChanSlice]=VS.MS.ToOrigFreqOrder(Weights)
+
+                Med=np.median(WAllChans)
+                Sig=1.4826*np.median(np.abs(WAllChans-Med))
+                Cut=Med+5*Sig
+                WAllChans[WAllChans>Cut]=Cut
+                
                 t.putcol("IMAGING_WEIGHT",WAllChans,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 

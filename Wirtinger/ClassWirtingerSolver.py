@@ -408,6 +408,10 @@ class ClassWirtingerSolver():
     def InitMeanBeam(self):
 
         self.NormFluxes=self.SM.ClusterCat.SumI.copy()
+        # print np.sort(self.NormFluxes)
+        # FCut=5.
+        # self.NormFluxes[self.NormFluxes>FCut]=FCut
+        
         self.NormFluxes/=self.NormFluxes.max()
         if self.GD["Beam"]["BeamModel"] is None:
             self.SM.ApparentSumI=self.NormFluxes
