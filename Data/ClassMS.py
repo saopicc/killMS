@@ -249,7 +249,7 @@ class ClassMS():
                 Beam[i]=self.SR.evaluate(time)
             #Beam=np.swapaxes(Beam,1,2)
         elif self.GD["Beam"]["BeamModel"] == "FITS":
-            Beam[...] = fitsbeam.evaluateBeam(time, ra, dec)
+            Beam[...] = self.fitsbeam.evaluateBeam(time, ra, dec)
         return Beam
 
 
