@@ -185,7 +185,7 @@ class ClassInterpol():
             iJob+=1
         workers_res=APP.awaitJobResults("InterpolAmpTime*", progress="Interpol Amp")
 
-        APP.terminate()
+        # APP.terminate()
         APP.shutdown()
         Multiprocessing.cleanupShm()
 

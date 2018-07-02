@@ -165,7 +165,7 @@ class PlotMachine():
                         StationNamesSel.append(Name)
                 indStations=indStations[indStations!=-1]
                 nas=indStations.size
-                nt,nch,na,nd,_,_=LSols[0].G.shape
+                nt,nch,na,nd,_,_=LSols[-1].G.shape
                 SolsOut=np.zeros((nt,),dtype=[("t0",np.float64),("t1",np.float64),
                                               ("G",np.complex64,(nch,nas,nd,2,2)),
                                               ("Stats",np.float32,(nch,nas,4))])
@@ -179,6 +179,25 @@ class PlotMachine():
                 if 'MaskedSols' in SolsDico.keys():
                     SolsDico['MaskedSols']=SolsDico['MaskedSols'][:,:,indStations,:,:,:]
 
+            SolsOut=LSols[-1]
+            if 'MaskedSols' in SolsDico.keys():
+                M=SolsDico['MaskedSols'][:,:,:,0,0,0]
+                Mfreq=(np.sum(np.sum(M,axis=0),axis=1)==0)
+                Sols=LSols[-1]
+                nt,nch,nas,nd,_,_=LSols[-1].G.shape
+                nch=np.count_nonzero(Mfreq)
+                SolsOut=np.zeros((nt,),dtype=[("t0",np.float64),("t1",np.float64),
+                                              ("G",np.complex64,(nch,nas,nd,2,2)),
+                                              ("Stats",np.float32,(nch,nas,4))])
+                SolsOut=SolsOut.view(np.recarray)
+                SolsOut.t0=Sols.t0
+                SolsOut.t1=Sols.t1
+                SolsOut.G=Sols.G[:,Mfreq,:,:,:,:]
+                LSols[-1]=SolsOut
+
+
+                
+                print SolsOut.G.shape
                 
         nt,nch,na,nd,_,_=LSols[0].G.shape
         if options.DoResid!=-1:
@@ -191,18 +210,18 @@ class PlotMachine():
         else:
             DirList=range(nd)
     
-        #fig.subplots_adjust(wspace=0, hspace=0)
-        for iDir in DirList:
-            for iSol in range(nSol):
-                Sols=LSols[iSol]
-                G=Sols.G[:,:,iDir,:,:]
-                Sols.G[:,:,iDir,:,:]=NormMatrices(G)
+        # #fig.subplots_adjust(wspace=0, hspace=0)
+        # for iDir in DirList:
+        #     for iSol in range(nSol):
+        #         Sols=LSols[iSol]
+        #         G=Sols.G[:,:,iDir,:,:]
+        #         Sols.G[:,:,iDir,:,:]=NormMatrices(G)
 
         self.Mask=None
         if 'MaskedSols' in SolsDico.keys():
             print>>log,"Some solutions are masked"
             M=SolsDico['MaskedSols']
-            #Sols.G[M==1]=np.nan
+            # Sols.G[M==1]=np.nan
             self.Mask=M
     
         ampMax=1.5*np.max(np.median(np.abs(LSols[0].G),axis=1))
@@ -253,11 +272,13 @@ class PlotMachine():
         MAD=np.sqrt(np.median((ADir_0-Mean)**2))
         vmin,vmax=Mean-10*MAD,Mean+10*MAD
     
-        if self.Mask is not None:
-            M=self.Mask[:,:,:,iDir,0,0]
-            ADir_0[M==1]=np.nan
-            ADir_1[M==1]=np.nan
-        
+        # if self.Mask is not None:
+        #     M=self.Mask[:,:,:,iDir,0,0]
+        #     ADir_0[M==1]=np.nan
+        #     ADir_1[M==1]=np.nan
+
+
+            
         iAnt=0
         for i in range(nx):
             for j in range(ny):
@@ -276,8 +297,8 @@ class PlotMachine():
                 ax = pylab.subplot(gs1[2*i+1,j])
                 #ax2 = ax.twinx()
                 #A=Sols.G[:,:,iAnt,iDir,0,0]
-                #ax.imshow(A_1.T,vmin=-np.pi,vmax=np.pi,interpolation="nearest",aspect='auto')
-                ax.imshow(A_1.T,interpolation="nearest",aspect='auto')
+                ax.imshow(A_1.T,vmin=-np.pi,vmax=np.pi,interpolation="nearest",aspect='auto')
+                #ax.imshow(A_1.T,interpolation="nearest",aspect='auto')
                 #print iAnt,np.max(np.abs(A_1))
                 nt,nch,na,nd,_,_=Sols.G.shape
                 ax.set_xticks([])
