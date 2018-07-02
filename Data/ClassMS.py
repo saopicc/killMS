@@ -235,13 +235,23 @@ class ClassMS():
         
         
     def GiveBeam(self,time,ra,dec):
-        #self.LoadSR()
-        Beam=np.zeros((ra.shape[0],self.na,self.NSPWChan,2,2),dtype=np.complex)
-        for i in range(ra.shape[0]):
-            self.SR.setDirection(ra[i],dec[i])
-            Beam[i]=self.SR.evaluate(time)
-        #Beam=np.swapaxes(Beam,1,2)
-        return Beam
+        if self.GD["Beam"]["BeamModel"] != None:
+            Beam = np.zeros((ra.shape[0], self.na, self.NSPWChan, 2, 2), dtype=np.complex)
+            if self.GD["Beam"]["BeamModel"] == "LOFAR":
+                #self.LoadSR()
+                for i in range(ra.shape[0]):
+                    self.SR.setDirection(ra[i],dec[i])
+                    Beam[i]=self.SR.evaluate(time)
+                #Beam=np.swapaxes(Beam,1,2)
+            else:
+                from DDFacet.Data.ClassFITSBeam import ClassFITSBeam
+                # make fake opts dict (DDFacet clss expects slightly different option names)
+                opts = self.GD["Beam"]
+                opts["NBand"] = self.NSPWChan
+                fitsbeam = ClassFITSBeam(self, opts)
+                for i in range(ra.shape[0]):
+                    Beam[i] = fitsbeam.evaluateBeam(time, ra[i], dec[i])
+            return Beam
 
 
     def GiveMappingAnt(self,ListStrSel,(row0,row1)=(None,None),FlagAutoCorr=True,WriteAttribute=True):
