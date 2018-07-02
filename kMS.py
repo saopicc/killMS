@@ -551,7 +551,7 @@ def main(OP=None,MSName=None):
     
     Solver.InitSol(TestMode=False)
 
-    PM=ClassPredict(NCPU=NCPU,IdMemShared=IdSharedMem,DoSmearing=DoSmearing)
+    PM=ClassPredict(NCPU=NCPU,IdMemShared=IdSharedMem,DoSmearing=DoSmearing,BeamAtFacet=self.GD["Beam"]["BeamAt"] == "Facet")
     PM2=None#ClassPredict_orig(NCPU=NCPU,IdMemShared=IdSharedMem)
 
 
