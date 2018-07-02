@@ -365,7 +365,7 @@ class ClassJacobianAntenna():
         return z
 
     def PredictOrigFormat(self,GainsIn):
-        if self.GD["VisData"]["FreePredictGainColName"]!=None:
+        if self.GD["VisData"]["FreePredictGainColName"]!=None or self.GD["SkyModel"]["FreeFullSub"]:
             self.PredictOrigFormat_Type(GainsIn,Type="Gains")
         if self.GD["VisData"]["FreePredictColName"]!=None:
             self.PredictOrigFormat_Type(GainsIn,Type="NoGains")
@@ -949,7 +949,7 @@ class ClassJacobianAntenna():
                 R=rms**2*V
                 
                 Rinv=1./R
-                Weights=W.reshape((W_nrows,W_nch,1))
+                Weights=W.reshape((W_nrows,W_nch,1))*np.ones((1,1,self.npolData))
                 
                 self.R_flat=np.rollaxis(R,2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
                 self.Rinv_flat=np.rollaxis(Rinv,2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)

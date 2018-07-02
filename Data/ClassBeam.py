@@ -41,7 +41,8 @@ class ClassBeam():
         t=table(self.MSName,ack=False)
         times=t.getcol("TIME")
         t.close()
-        DicoBeam=self.GiveLOFARBeam(times)
+        
+        DicoBeam=self.GiveBeam(times)
         J=DicoBeam["Jones"]
         AbsMean=np.mean(np.abs(J),axis=0)
         return AbsMean
@@ -54,10 +55,11 @@ class ClassBeam():
     #     self.ApplyBeam=True
         
         
-    def GiveLOFARBeam(self,times):
-        useArrayFactor=("A" in self.GD["Beam"]["LOFARBeamMode"])
-        useElementBeam=("E" in self.GD["Beam"]["LOFARBeamMode"])
-        self.MS.LoadSR(useElementBeam=useElementBeam,useArrayFactor=useArrayFactor)
+    def GiveBeam(self,times):
+        if self.GD["Beam"]["BeamModel"]=="LOFAR":
+            useArrayFactor=("A" in self.GD["Beam"]["LOFARBeamMode"])
+            useElementBeam=("E" in self.GD["Beam"]["LOFARBeamMode"])
+            self.MS.LoadSR(useElementBeam=useElementBeam,useArrayFactor=useArrayFactor)
 
         #print>>log, "  Update beam [Dt = %3.1f min] ... "%self.DtBeamMin
         DtBeamSec=self.DtBeamMin*60

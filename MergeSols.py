@@ -125,6 +125,8 @@ class ClassMergeSols():
         SolsOut=SolsOut.view(np.recarray)
         SolsOut.t0=Sols0.t0
         SolsOut.t1=Sols0.t1
+        print>>log,"Output Solution shape: %s"%(str(SolsOut.G.shape))
+        
         Mask=np.ones(SolsOut.G.shape,np.int16)
         for iSol in range(self.NSolsFile):
             ThisG=self.ListJonesSols[iSol].G

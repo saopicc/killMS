@@ -2,6 +2,8 @@ import numpy as np
 from killMS.Other import MyLogger
 log=MyLogger.getLogger("ClassSolPredictMachine")
 from killMS.Other import ModColor
+import os
+from killMS.Other import reformat
 
 def D(a0,a1,b0=None,b1=None):
     if b0 is not None:
@@ -14,9 +16,26 @@ def D(a0,a1,b0=None,b1=None):
 class ClassSolPredictMachine():
     def __init__(self,GD):
         self.GD=GD
-        FileName=self.GD["KAFCA"]["EvolutionSolFile"]
-        if not ".npz" in FileName:
-            FileName="%s/killMS.%s.sols.npz"%(self.GD["VisData"]["MSName"],FileName)
+        # FileName=self.GD["KAFCA"]["EvolutionSolFile"]
+        # if not ".npz" in FileName:
+        #     FileName="%s/killMS.%s.sols.npz"%(self.GD["VisData"]["MSName"],FileName)
+
+
+        SolsDir=GD["Solutions"]["SolsDir"]
+        SolsName=self.GD["KAFCA"]["EvolutionSolFile"]
+        MSName=os.path.abspath(self.GD["VisData"]["MSName"])
+        if SolsDir is None:
+            FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.MSName),SolsName)
+        else:
+            _MSName=reformat.reformat(MSName).split("/")[-2]
+            DirName=os.path.abspath("%s%s"%(reformat.reformat(SolsDir),_MSName))
+            if not os.path.isdir(DirName):
+                os.makedirs(DirName)
+            FileName="%s/killMS.%s.sols.npz"%(DirName,SolsName)
+
+
+
+
         print>>log, "Reading solution file %s"%FileName
         self.DicoSols=np.load(FileName)
         self.Sols=self.DicoSols["Sols"]

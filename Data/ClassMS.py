@@ -35,10 +35,11 @@ from killMS.Other.progressbar import ProgressBar
 class ClassMS():
     def __init__(self,MSname,Col="DATA",zero_flag=True,ReOrder=False,EqualizeFlag=False,DoPrint=True,DoReadData=True,
                  TimeChunkSize=None,GetBeam=False,RejectAutoCorr=False,SelectSPW=None,DelStationList=None,Field=0,DDID=0,
-                 ReadUVWDT=False,ChanSlice=None):
+                 ReadUVWDT=False,ChanSlice=None,GD=None):
 
 
         if MSname=="": exit()
+        self.GD=GD
         self.ReadUVWDT=ReadUVWDT
         MSname=reformat.reformat(os.path.abspath(MSname),LastSlash=False)
         self.MSName=MSname
@@ -433,6 +434,20 @@ class ClassMS():
                 for pol in range(4):
                     flag_all[:,i,pol]=fcol
 
+        if "IMAGING_WEIGHT" in table_all.colnames():
+            print>>log,"Flagging the zeros-weighted visibilities"
+            fw=table_all.getcol("IMAGING_WEIGHT",row0,nRowRead)[SPW==self.ListSPW[0]][:,self.ChanSlice]
+            nrr,nchr=fw.shape
+            fw=fw.reshape((nrr,nchr,1))*np.ones((1,1,4))
+            MedW=np.median(fw)
+            fflagged0=np.count_nonzero(flag_all)
+            flag_all[fw<MedW*1e-6]=1
+            fflagged1=np.count_nonzero(flag_all)
+            if fflagged1>0:
+                print>>log,"  Increase in flag fraction: %f"%(fflagged1/float(fflagged0)-1)
+
+                
+            
         self.multidata=(type(self.ColName)==list)
         self.ReverseAntOrder=(np.where((A0==0)&(A1==1))[0]).shape[0]>0
         self.swapped=False
@@ -482,14 +497,17 @@ class ClassMS():
 
 
         if self.ReadUVWDT:
-            print>>log,"Adding uvw speed info to main table: %s"%self.MSName
-            tu=table(self.MSName,readonly=False,ack=False)
-            if 'UVWDT' not in tu.colnames():
-                self.AddUVW_dt()
+
+            tu=table(self.MSName,ack=False)
+            ColNames=tu.colnames()
             tu.close()
             del(tu)
+            
+            if 'UVWDT' not in ColNames:
+                self.AddUVW_dt()
+
             print>>log,"Reading uvw_dt column"
-            tu=table(self.MSName,readonly=False,ack=False)
+            tu=table(self.MSName,ack=False)
             self.uvw_dt=np.float64(tu.getcol('UVWDT', row0, nRowRead))
             tu.close()
 
@@ -1032,6 +1050,7 @@ class ClassMS():
         #self.PutNewCol("MODEL_DATA")
 
     def AddUVW_dt(self):
+        print>>log,"Adding uvw speed info to main table: %s"%self.MSName
         print>>log,"Compute UVW speed column"
         MSName=self.MSName
         MS=self

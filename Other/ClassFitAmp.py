@@ -38,8 +38,9 @@ def test(G,f):
 
 
 class ClassFitAmp():
-    def __init__(self,gains,nu,Tol=5e-2,Incr=1):
+    def __init__(self,gains,nu,Tol=5e-2,Incr=1,RemoveMedianAmp=True):
         self.nt,self.nf,self.na=gains.shape
+        self.RemoveMedianAmp=RemoveMedianAmp
         self.G=gains.copy()
 
         self.G=np.abs(self.G)
@@ -68,24 +69,63 @@ class ClassFitAmp():
     #         self.GOut[iTime,iFreq,iAnt]=np.sqrt(np.sum(self.W*Y[iAnt]))
 
     def doSmooth(self):
+        vmax=2.
+        vmin=.3
         for iAnt in range(self.na):#[::-1]:
             for iChan in range(self.nf):
-                self.GOut[:,iChan,iAnt]=1.
-                x=np.arange(self.nt)
-                y=self.G[:,iChan,iAnt]
-                m0=( np.abs(y[1::]-y[0:-1])>1e-6 )
-                m=np.ones_like(y)
-                m[1::]=m0[:]
-                ind=np.where(m!=0)[0]
-                if ind.size<2: continue
-                z=np.polyfit(x[ind], y[ind], 10)
-                p = np.poly1d(z)
-                self.GOut[ind,iChan,iAnt]=p(x[ind])
-            off=np.median(self.G[:,:,iAnt]-self.GOut[:,:,iAnt],axis=1)
-            self.GOut[:,:,iAnt]=self.GOut[:,:,iAnt]+off.reshape((-1,1))
+                # print
+                # print "ichan %i %i (%i,%i)"%(iChan,iAnt,self.nf,self.na)
+                mout=np.zeros((self.nt,),np.float32)
+                ii=0
+                while True:
+                    self.GOut[:,iChan,iAnt]=1.
+                    x=np.arange(self.nt)
+                    y=self.G[:,iChan,iAnt].copy()
+                    m0=( np.abs(y[1::]-y[0:-1])>1e-6 )
+                    m=np.ones_like(y)
+                    m[1::]=m0[:]
+                    ind=np.where((m!=0) & (mout==0))[0]
+                    # print np.count_nonzero(ind)
+                    yc=np.ones_like(y)
+                    if ind.size<2:
+                        break
+                    yc[ind]=y[ind]
+                    xc=x[ind]
+                    z=np.polyfit(x[ind], y[ind], 10)
+                    p = np.poly1d(z)
+                    px=np.abs(p(x))
+                    pp=px/np.mean(px)*np.median(y[ind])
+                    self.GOut[:,iChan,iAnt]=pp
+
+                    # import pylab
+                    # pylab.clf()
+                    # pylab.plot()
+                    
+                    # ##########################
+                    resid=y-pp
+                    rabs=np.abs(resid-np.median(np.abs(resid)))
+                    sig=1.48*np.median(rabs)
+                    s_mout0=np.count_nonzero(mout)
+                    mout[rabs>5.*sig]=1.
+                    s_mout1=np.count_nonzero(mout)
+                    if s_mout0==s_mout1:
+                        self.GOut[:,iChan,iAnt]=np.abs(p(x))
+                        # print iChan,ii,s_mout0
+                        break
+                    ii+=1
+                    ## print ii
+                Ag=np.abs(self.GOut[:,iChan,iAnt])
+                #if Ag.max()/Ag.min()>2: self.GOut[:,iChan,iAnt].fill(np.median(self.G[:,:,iAnt]))
+                if ind.size<2:
+                    continue
+                    
+            if self.RemoveMedianAmp:
+                off=np.median(self.G[:,:,iAnt]-self.GOut[:,:,iAnt],axis=1)
+                self.GOut[:,:,iAnt]=self.GOut[:,:,iAnt]+off.reshape((-1,1))
+            self.GOut[self.GOut>vmax]=vmax
+            self.GOut[self.GOut<vmin]=vmin
             
-            
-                #self.Plot(iAnt)
+            #self.Plot(iAnt)
         return self.GOut
 
     def indUnique(self,a):
@@ -121,7 +161,7 @@ class ClassFitAmp():
         pylab.draw()
         pylab.show(False)
         pylab.pause(0.1)
-        
+        stop
         
     
     def doSmoothDeNoise(self):
