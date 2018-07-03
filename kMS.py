@@ -844,17 +844,6 @@ def main(OP=None,MSName=None):
                 t.putcol("IMAGING_WEIGHT",WAllChans,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
-                ID=Solver.VS.MS.ROW0
-                if options.SolsDir is None:
-                    FileName="%skillMS.%s.Weights.%i.npy"%(reformat.reformat(options.MSName),SolsName,ID)
-                else:
-                    _MSName=reformat.reformat(options.MSName).split("/")[-2]
-                    DirName=os.path.abspath("%s%s"%(reformat.reformat(options.SolsDir),_MSName))
-                    if not os.path.isdir(DirName):
-                        os.makedirs(DirName)
-                    FileName="%s/killMS.%s.Weights.%i.npy"%(DirName,SolsName,ID)
-                print>>log, "  Saving weights in file %s"%FileName
-                np.save(FileName,WAllChans)
                 
 
 
@@ -882,6 +871,18 @@ def main(OP=None,MSName=None):
                 t.putcol("IMAGING_WEIGHT",WAllChans,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
+                ID=Solver.VS.MS.ROW0
+                if options.SolsDir is None:
+                    FileName="%skillMS.%s.Weights.%i.npy"%(reformat.reformat(options.MSName),SolsName,ID)
+                else:
+                    _MSName=reformat.reformat(options.MSName).split("/")[-2]
+                    DirName=os.path.abspath("%s%s"%(reformat.reformat(options.SolsDir),_MSName))
+                    if not os.path.isdir(DirName):
+                        os.makedirs(DirName)
+                    FileName="%s/killMS.%s.Weights.%i.npy"%(DirName,SolsName,ID)
+                print>>log, "  Saving weights in file %s"%FileName
+                np.save(FileName,WAllChans)
+                
             if DoSubstract:
                 print>>log, ModColor.Str("Subtract sources ... ",col="green")
                 if options.SubOnly==0:
