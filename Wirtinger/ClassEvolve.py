@@ -119,7 +119,6 @@ class ClassModelEvolution():
 
         # Q=np.diag(np.ones((PaOut.shape[0],)))*(self.sigQ**2)
 
-
         PaOut=F.reshape((NPars,1))*Pa*F.reshape((1,NPars)).conj()+Q
         # print F
         # print Q
