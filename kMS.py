@@ -41,6 +41,14 @@ from killMS.Parset import MyOptParse
 import numpy as np
 import DDFacet.Other.MyPickle
 
+# # ##############################
+# # Catch numpy warning
+# np.seterr(all='raise')
+# import warnings
+# warnings.filterwarnings('error')
+# #with warnings.catch_warnings():
+# #    warnings.filterwarnings('error')
+# # ##############################
 
 
 # log
