@@ -120,6 +120,7 @@ class ClassFitTEC():
         v=self.JHy(r)
         H=self.DiagJHJ()
         T.timeit("diff")
+
         Hinv=killMS.Array.ModLinAlg.invSVD(H)
         T.timeit("inv")
         
