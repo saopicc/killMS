@@ -997,6 +997,10 @@ class ClassVisServer():
                         Method=SolFile
                         ThisMSName=reformat.reformat(os.path.abspath(self.MS.MSName),LastSlash=False)
                         SolFileLoad="%s/killMS.%s.sols.npz"%(ThisMSName,Method)
+                        if self.GD["Solutions"]["SolsDir"]:
+                            _MSName=reformat.reformat(self.MSName).split("/")[-2]
+                            DirName="%s%s"%(reformat.reformat(self.GD["Solutions"]["SolsDir"]),_MSName)
+                            SolFileLoad="%s/killMS.%s.sols.npz"%(DirName,SolFile)
                     else:
                         SolFileLoad=SolFile
 

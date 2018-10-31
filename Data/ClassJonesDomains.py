@@ -109,12 +109,20 @@ class ClassJonesDomains():
             MaskSkip[ind]=1
             LF.append(ff[iFreq])
 
+
+        fmin=np.max([FreqDomain0.min(),FreqDomain1.min()])
+        fmax=np.min([FreqDomain0.max(),FreqDomain1.max()])
+            
         ff=np.array(LF)
         nf=ff.size
         FreqDomainOut=np.zeros((nf-1,2),np.float64)
         FreqDomainOut[:,0]=ff[0:-1]
         FreqDomainOut[:,1]=ff[1::]
-        
+
+
+        fm=np.mean(FreqDomainOut,axis=1)
+        ind=np.where((fm>=fmin)&(fm<fmax))[0]
+        FreqDomainOut=FreqDomainOut[ind]
 
         print>>log, "  There are %i channels in the merged Jones array"%FreqDomainOut.shape[0]
         return FreqDomainOut

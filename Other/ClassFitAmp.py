@@ -38,12 +38,17 @@ def test(G,f):
 
 
 class ClassFitAmp():
-    def __init__(self,gains,nu,Tol=5e-2,Incr=1,RemoveMedianAmp=True):
+    def __init__(self,gains,nu,Tol=5e-2,Incr=1,RemoveMedianAmp=True,LogMode=False):
         self.nt,self.nf,self.na=gains.shape
         self.RemoveMedianAmp=RemoveMedianAmp
         self.G=gains.copy()
-
+        self.LogMode=LogMode
         self.G=np.abs(self.G)
+
+        if self.LogMode:
+            self.G[self.G==0]=1e-6
+            self.G=np.log(self.G)
+            
         self.GOut=np.zeros_like(self.G)
         self.CentralFreqs=self.nu=nu
         self.NFreq=nu.size
@@ -122,10 +127,14 @@ class ClassFitAmp():
             if self.RemoveMedianAmp:
                 off=np.median(self.G[:,:,iAnt]-self.GOut[:,:,iAnt],axis=1)
                 self.GOut[:,:,iAnt]=self.GOut[:,:,iAnt]+off.reshape((-1,1))
-            self.GOut[self.GOut>vmax]=vmax
-            self.GOut[self.GOut<vmin]=vmin
+            if not self.LogMode:
+                self.GOut[self.GOut>vmax]=vmax
+                self.GOut[self.GOut<vmin]=vmin
             
             #self.Plot(iAnt)
+
+        if self.LogMode:
+            self.GOut=np.exp(self.GOut)
         return self.GOut
 
     def indUnique(self,a):
