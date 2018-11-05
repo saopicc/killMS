@@ -443,7 +443,7 @@ class ClassMS():
             fflagged0=np.count_nonzero(flag_all)
             flag_all[fw<MedW*1e-6]=1
             fflagged1=np.count_nonzero(flag_all)
-            if fflagged1>0:
+            if fflagged1>0 and fflagged0!=0:
                 print>>log,"  Increase in flag fraction: %f"%(fflagged1/float(fflagged0)-1)
 
                 

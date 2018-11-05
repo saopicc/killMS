@@ -28,8 +28,8 @@ import ephem
 from killMS.Other import ModParsetType
 from pyrap.tables import table
 
-MSTemplate="/media/6B5E-87D0/MS/SimulTec/L102479_SB144_uv.dppp.MS.dppp.tsel_fixed"
-WorkingDir="/media/6B5E-87D0/MS/SimulTec/"
+MSTemplate="/media/tasse/data/MS/0000.MS"
+WorkingDir="/media/tasse/data/MS/"
 #ProgTables="/home/tasse/sources/LOFAR/build/gnu_opt/LCS/MSLofar/src/makebeamtables"
 ProgTables="makebeamtables"
 
@@ -254,7 +254,7 @@ class MakeMultipleObs():
             #ss="%s antennafielddir=/home/tasse/sources/StaticMetaData antennaset=LBA_INNER antennasetfile=/home/tasse/sources/AntennaSets.conf ihbadeltadir=/home/tasse/sources/StaticMetaData ms=%s overwrite=1"%(ProgTables,D["dirMS0Name"])
 
 
-            ss="%s antennafielddir=/home/tasse/sources/StaticMetaData antennaset=LBA_INNER antennasetfile=/home/tasse/sources/AntennaSets.conf ihbadeltadir=/home/tasse/sources/StaticMetaData ms=%s overwrite=1"%(ProgTables,D["dirMS0Name"])
+            ss="%s antennaset=LBA_INNER ms=%s overwrite=1"%(ProgTables,D["dirMS0Name"])
 
 #            ss="%s antennafielddir=/home/cyril.tasse/source/LOFARBeamData/AntennaFields antennaset=LBA_INNER antennasetfile=/home/cyril.tasse/source/LOFARBeamData/AntennaSets.conf ihbadeltadir=/home/cyril.tasse/source/LOFARBeamData/iHBADeltas ms=%s overwrite=1"%(ProgTables,D["dirMS0Name"])
             print ss
@@ -296,7 +296,7 @@ class MakeMultipleObs():
         D["StartFreq"]={"id":0,"val":np.min(self.MSTemplate.ChanFreq.flatten())-np.abs(self.MSTemplate.dFreq[0])/2.}
         D["StartTime"]={"id":0,"val":DateTime}
 
-        D["StepTime"]={"id":0,"val":self.MSTemplate.dt*5}#MS.dt}
+        D["StepTime"]={"id":0,"val":30*5}#self.MSTemplate.dt}#MS.dt}
         D["NTimes"]={"id":0,"val":300}#int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
         #D["NTimes"]={"id":0,"val":int((np.max(self.MSTemplate.F_times)-np.min(self.MSTemplate.F_times))/self.MSTemplate.dt)}
         

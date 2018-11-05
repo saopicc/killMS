@@ -157,6 +157,7 @@ class ClassMergeSols():
         print>>log,"Output Solution shape: %s"%(str(SolsOut.G.shape))
         
         Mask=np.ones(SolsOut.G.shape,np.int16)
+        ArrayMSNames=np.zeros((NFreqsOut,),"|S200")
         for iSol in range(self.NSolsFile):
             ThisG=self.ListJonesSols[iSol].G
             ThisNFreq=ThisG.shape[1]
@@ -170,11 +171,16 @@ class ClassMergeSols():
 
             print>>log, "Freq Channels: %s"%str(np.mean(self.ListDictSols[iSol]["FreqDomains"],axis=1).ravel().tolist())
 
+            if "MSName" in self.ListDictSols[iSol].keys():
+                ArrayMSNames[iFreq]=self.ListDictSols[iSol]["MSName"]
+
         self.NormMatrices(SolsOut.G)
 
         DicoOut['FreqDomains']=self.FreqDomainsOut
         DicoOut['MaskedSols']=Mask
         DicoOut['Sols']=SolsOut
+        DicoOut['MSName']=ArrayMSNames
+        
         self.DicoOut=DicoOut
 
     def Save(self,FileOut):
