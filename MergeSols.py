@@ -170,7 +170,7 @@ class ClassMergeSols():
 
             print>>log, "Freq Channels: %s"%str(np.mean(self.ListDictSols[iSol]["FreqDomains"],axis=1).ravel().tolist())
 
-        #self.NormMatrices(SolsOut.G)
+        self.NormMatrices(SolsOut.G)
 
         DicoOut['FreqDomains']=self.FreqDomainsOut
         DicoOut['MaskedSols']=Mask
