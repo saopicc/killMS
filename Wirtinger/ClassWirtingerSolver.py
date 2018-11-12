@@ -854,7 +854,7 @@ class ClassWirtingerSolver():
             if SkipMode:
                 print iiCount
                 iiCount+=1
-                if iiCount<240: continue
+                if iiCount<10: continue
 
 
             t0,t1=self.VS.CurrentVisTimes_MS_Sec
