@@ -42,6 +42,14 @@ import numpy as np
 import DDFacet.Other.MyPickle
 
 
+# # ##############################
+# # Catch numpy warning
+# np.seterr(all='raise')
+# import warnings
+# warnings.filterwarnings('error')
+# #with warnings.catch_warnings():
+# #    warnings.filterwarnings('error')
+# # ##############################
 
 # log
 log=MyLogger.getLogger("killMS")
@@ -616,8 +624,9 @@ def main(OP=None,MSName=None):
             SaveSols=True
             if options.SubOnly==0:
                 if options.Parallel:
-                    #Solver.doNextTimeSolve_Parallel(Parallel=True)
                     Solver.doNextTimeSolve_Parallel(Parallel=True)
+                    # Solver.doNextTimeSolve_Parallel(Parallel=True,
+                    #                                 SkipMode=True)
                 else:
                     #Solver.doNextTimeSolve_Parallel(SkipMode=True)
                     Solver.doNextTimeSolve()#SkipMode=True)
