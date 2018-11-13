@@ -105,6 +105,7 @@ class ClassSolverLM(ClassJacobianAntenna):
         # if self.iAnt==56:
         #     print ind.size/float(f.size),np.abs(Gains[self.iAnt,0,0,0])
 
+        
         if self.DataAllFlagged:
             return Ga.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),None,{"std":-1.,"max":-1.,"kapa":None}
 

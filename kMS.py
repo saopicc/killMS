@@ -709,9 +709,11 @@ def main(OP=None,MSName=None):
                     ClusterCat=PreparePredict.ClusterCatOrig
 
                 StationNames=np.array(Solver.VS.MS.StationNames)
+
                 
                 np.savez(FileName,
                          MSName=os.path.abspath(VS.MS.MSName),
+                         MSNameTime0=VS.MS.Time0,
                          Sols=SolsSave,
                          StationNames=StationNames,
                          SkyModel=ClusterCat,

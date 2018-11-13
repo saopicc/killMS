@@ -417,6 +417,7 @@ class ClassMS():
         A1=table_all.getcol('ANTENNA2',row0,nRowRead)[SPW==self.ListSPW[0]]
         #print self.ListSPW[0]
         time_all=table_all.getcol("TIME",row0,nRowRead)[SPW==self.ListSPW[0]]
+        self.Time0=table_all.getcol("TIME",0,1)[0]
         #print np.max(time_all)-np.min(time_all)
         time_slots_all=np.array(sorted(list(set(time_all))))
         ntimes=time_all.shape[0]/self.nbl

@@ -58,6 +58,7 @@ class ClassMergeSols():
         self.NSolsFile=len(self.ListDictSols)
         self.CheckConformity()
 
+
     def CheckConformity(self):
         print>>log,"  Checking solution conformity"
         for iSol in range(1,self.NSolsFile):
