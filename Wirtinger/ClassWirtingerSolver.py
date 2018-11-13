@@ -1291,7 +1291,7 @@ class WorkerAntennaLM(multiprocessing.Process):
                     Gc0[iChanSol,iAnt][:]=x[:]
                     Gc=Gc0.copy()
 
-                    # #Gc0.fill(1.)
+                    # # Gc0.fill(1.)
                     # NoZeroD=5
                     # Gc.fill(0)
                     # Gc[:,:,NoZeroD,:,:]=Gc0[:,:,NoZeroD,:,:]
