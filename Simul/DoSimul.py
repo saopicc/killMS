@@ -81,8 +81,8 @@ def main(options=None):
     Sols=CS0.GiveSols()
     
     for l in ll:
-        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
-        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
+        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
+        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
         CS.FreqDomains=CS0.FreqDomains
         CS.DoSimul()
 
@@ -438,8 +438,13 @@ class ClassSimul():
                 return f
             
         
+        # PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones,Noise=Noise,
+        #                                        VariableFunc=VariableFunc)
+
+        
         PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones,Noise=Noise,
-                                               VariableFunc=VariableFunc)
+                                               VariableFunc=None)
+        print Jones["Beam"].ravel()[0]
         # PredictData=PM5.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones)
 
         # import pylab
