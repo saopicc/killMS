@@ -108,7 +108,7 @@ class ClassModelEvolution():
             #print np.cov(g_t),Pa[iPar,iPar],ratio
             ratio=np.abs(ThisG-np.mean(g_t))/np.sqrt(Pa[iPar,iPar]+Q[iPar,iPar])
             
-           #ratio=np.abs(g_t[-1]-np.mean(g_t))/np.sqrt(Pa[iPar,iPar])#+Q[iPar,iPar]))
+            #ratio=np.abs(g_t[-1]-np.mean(g_t))/np.sqrt(Pa[iPar,iPar])#+Q[iPar,iPar]))
             diff=np.sum(w*(ThisG-g_t))/np.sum(w)
             ratio=np.abs(diff)/np.sqrt(Pa[iPar,iPar]+Q[iPar,iPar])
             F[iPar]=1.#ratio#/np.sqrt(2.)
