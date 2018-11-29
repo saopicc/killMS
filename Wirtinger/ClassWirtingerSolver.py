@@ -1132,7 +1132,7 @@ class ClassWirtingerSolver():
             #print self.P.ravel()
             #if NDone==1: stop
             
-            PList.append(self.P.copy())
+            if self.SolverType=="KAFCA": PList.append(self.P.copy())
             self.AppendGToSolArray()
             T.timeit("AppendGToSolArray")
 
@@ -1160,7 +1160,7 @@ class ClassWirtingerSolver():
         # end while chunk
 
 
-        np.save("P.%s.npy"%self.GD["Solutions"]['OutSolsName'],np.array(PList))
+        if self.SolverType=="KAFCA": np.save("P.%s.npy"%self.GD["Solutions"]['OutSolsName'],np.array(PList))
         if Parallel:
             for ii in range(NCPU):
                 workerlist[ii].shutdown()
