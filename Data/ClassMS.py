@@ -417,6 +417,7 @@ class ClassMS():
         A1=table_all.getcol('ANTENNA2',row0,nRowRead)[SPW==self.ListSPW[0]]
         #print self.ListSPW[0]
         time_all=table_all.getcol("TIME",row0,nRowRead)[SPW==self.ListSPW[0]]
+        self.Time0=table_all.getcol("TIME",0,1)[0]
         #print np.max(time_all)-np.min(time_all)
         time_slots_all=np.array(sorted(list(set(time_all))))
         ntimes=time_all.shape[0]/self.nbl
@@ -443,7 +444,7 @@ class ClassMS():
             fflagged0=np.count_nonzero(flag_all)
             flag_all[fw<MedW*1e-6]=1
             fflagged1=np.count_nonzero(flag_all)
-            if fflagged1>0:
+            if fflagged1>0 and fflagged0!=0:
                 print>>log,"  Increase in flag fraction: %f"%(fflagged1/float(fflagged0)-1)
 
                 

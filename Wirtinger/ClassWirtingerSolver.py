@@ -269,7 +269,7 @@ class ClassWirtingerSolver():
         _,_,_,npolx,npoly=self.G.shape
 
 
-        # print "int!!!!!!!!!!"
+        # # print "int!!!!!!!!!!"
         # self.G+=np.random.randn(*self.G.shape)*1.#sigP
         
         NSols=np.max([1,int(1.5*round(self.VS.MS.DTh/(self.VS.TVisSizeMin/60.)))])
@@ -854,7 +854,7 @@ class ClassWirtingerSolver():
             if SkipMode:
                 print iiCount
                 iiCount+=1
-                if iiCount<240: continue
+                if iiCount<10: continue
 
 
             t0,t1=self.VS.CurrentVisTimes_MS_Sec
@@ -1297,7 +1297,7 @@ class WorkerAntennaLM(multiprocessing.Process):
                     Gc0[iChanSol,iAnt][:]=x[:]
                     Gc=Gc0.copy()
 
-                    # #Gc0.fill(1.)
+                    # # Gc0.fill(1.)
                     # NoZeroD=5
                     # Gc.fill(0)
                     # Gc[:,:,NoZeroD,:,:]=Gc0[:,:,NoZeroD,:,:]
@@ -1307,6 +1307,10 @@ class WorkerAntennaLM(multiprocessing.Process):
                     JM.PredictOrigFormat(Gc[iChanSol])
                     T.timeit("FullPredict")
 
+                # if not JM.DataAllFlagged:
+                #     M=JM.L_JHJ[0]
+                #     u,s,v=np.linalg.svd(M)
+                #     if np.min(s)<0: stop
 
                 self.result_queue.put([iAnt,iChanSol,x,None,None,InfoNoise,0.,JM.SharedDicoDescriptors["SharedAntennaVis"]])
 

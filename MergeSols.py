@@ -38,12 +38,17 @@ def read_options():
     group = optparse.OptionGroup(opt, "* Data-related options", "Won't work if not specified.")
     group.add_option('--SolsFilesIn',help='Solution name patern. For example "*.MS/killMS.lala.npz')
     group.add_option('--SolFileOut',help='Name of the output file')
+    group.add_option('--SigmaFilterOutliers',help='Filter the outliers at this Sigma? Default is %default',default=None,type="float")
     opt.add_option_group(group)
 
 
     options, arguments = opt.parse_args()
     f = open(SaveName,"wb")
     pickle.dump(options,f)
+
+def GiveMAD(X):
+    med=np.median(X)
+    return med,1.4826*np.median(np.abs(X-med))
 
 class ClassMergeSols():
     def __init__(self,ListFilesSols):
@@ -52,6 +57,7 @@ class ClassMergeSols():
         self.SortInFreq()
         self.NSolsFile=len(self.ListDictSols)
         self.CheckConformity()
+
 
     def CheckConformity(self):
         print>>log,"  Checking solution conformity"
@@ -101,8 +107,32 @@ class ClassMergeSols():
                         Gt[iAnt,:,:]=np.dot(U.T.conj(),Gt[iAnt,:,:])
         return G
 
-    def SaveDicoMerged(self,FileOut):
+    def FilterOutliers(self,Sigma):
+        G=self.DicoOut['Sols']["G"]
+        nt,nf,na,nd,_,_=G.shape
+        print>>log,"Filtering out outliers using a sigma of %f"%Sigma
+        Ga=np.abs(G)
+        N=np.zeros((na,nd),np.float32)
+        NMask=np.zeros((na,nd),np.float32)
+        for iDir in range(nd):
+            mean,sig=GiveMAD(Ga[:,:,:,iDir,0,0])
+            for iAnt in range(na):
+                Gas=Ga[:,:,iAnt,iDir,0,0]
+                indt,indf=np.where(Gas>(mean+Sigma*sig))
+                if indt.size>0:
+                    self.DicoOut['Sols']["G"][indt,indf,iAnt,iDir,0,0]=mean
+                    self.DicoOut['Sols']["G"][indt,indf,iAnt,iDir,1,1]=mean
+                    self.DicoOut['Sols']["G"][indt,indf,iAnt,iDir,0,1]=0
+                    self.DicoOut['Sols']["G"][indt,indf,iAnt,iDir,1,0]=0
+                N[iAnt,iDir]=Gas.size
+                NMask[iAnt,iDir]=indt.size
+            
+            print>>log,"  [Dir %2i]  Filtered %5.2f%% of points"%(iDir,100.*np.sum(NMask[iDir])/float(np.sum(N[iDir])))
+        
 
+                
+    def MakeDicoMerged(self):
+        
         print>>log,"  Merging solutions in frequency"
         NTimes=self.ListJonesSols[0].t0.size
         ListNFreqs=[DictSols["FreqDomains"].shape[0] for DictSols in self.ListDictSols]
@@ -128,6 +158,7 @@ class ClassMergeSols():
         print>>log,"Output Solution shape: %s"%(str(SolsOut.G.shape))
         
         Mask=np.ones(SolsOut.G.shape,np.int16)
+        ArrayMSNames=np.zeros((NFreqsOut,),"|S200")
         for iSol in range(self.NSolsFile):
             ThisG=self.ListJonesSols[iSol].G
             ThisNFreq=ThisG.shape[1]
@@ -141,15 +172,22 @@ class ClassMergeSols():
 
             print>>log, "Freq Channels: %s"%str(np.mean(self.ListDictSols[iSol]["FreqDomains"],axis=1).ravel().tolist())
 
+            if "MSName" in self.ListDictSols[iSol].keys():
+                ArrayMSNames[iFreq]=self.ListDictSols[iSol]["MSName"]
+
         self.NormMatrices(SolsOut.G)
 
         DicoOut['FreqDomains']=self.FreqDomainsOut
         DicoOut['MaskedSols']=Mask
         DicoOut['Sols']=SolsOut
+        DicoOut['MSName']=ArrayMSNames
+        
+        self.DicoOut=DicoOut
 
+    def Save(self,FileOut):
         if not ".npz" in FileOut: FileOut+=".npz"
         print>>log,"  Saving interpolated solutions in: %s"%FileOut
-        np.savez(FileOut,**DicoOut)
+        np.savez(FileOut,**self.DicoOut)
 
 
 def test():
@@ -190,7 +228,10 @@ def main(options=None):
     for SolsName in ListSolsFile:
         print>>log, "  %s"%SolsName
     CM=ClassMergeSols(ListSolsFile)
-    DicoOut=CM.SaveDicoMerged(options.SolFileOut)
+    CM.MakeDicoMerged()
+    if options.SigmaFilterOutliers:
+        CM.FilterOutliers(options.SigmaFilterOutliers)
+    DicoOut=CM.Save(options.SolFileOut)
 
 
 if __name__=="__main__":

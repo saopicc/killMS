@@ -95,7 +95,7 @@ class ClassPredict():
             ColOutDir[ind]=data[:]
             # DicoData["flags"][ind]=flags[:]
 
-    def predictKernelPolCluster(self,DicoData,SM,iDirection=None,ApplyJones=None,ApplyTimeJones=None,Noise=None):
+    def predictKernelPolCluster(self,DicoData,SM,iDirection=None,ApplyJones=None,ApplyTimeJones=None,Noise=None,VariableFunc=None):
         T=ClassTimeIt("predictKernelPolCluster")
         T.disable()
         self.DicoData=DicoData
@@ -134,9 +134,6 @@ class ClassPredict():
             if ColOutDir is None: continue
 
 
-            if Noise is not None:
-                ColOutDir+=(Noise/np.sqrt(len(ListDirection)))*(np.random.randn(*ColOutDir.shape)+1j*np.random.randn(*ColOutDir.shape))
-
             # print iCluster,ListDirection
             # print ColOutDir.shape
             # ColOutDir.fill(0)
@@ -156,7 +153,30 @@ class ClassPredict():
                     ColOutDir[:,ichan,:]=ModLinAlg.BatchDot(ColOutDir[:,ichan,:],JH[A1,:])
             T.timeit("3")
 
-            if ApplyTimeJones!=None:#"DicoBeam" in DicoData.keys():
+            if VariableFunc is not None:#"DicoBeam" in DicoData.keys():
+                tt=np.unique(times)
+                lt0,lt1=tt[0:-1],tt[1::]
+                for it in range(lt0.size):
+                    t0,t1=lt0[it],lt1[it]
+                    ind=np.where((times>=t0)&(times<t1))[0]
+                    if ind.size==0: continue
+                    data=ColOutDir[ind]
+
+                    if "ChanMap" in ApplyTimeJones.keys():
+                        ChanMap=ApplyTimeJones["ChanMap"]
+                    else:
+                        ChanMap=range(nf)
+
+                    for ichan in range(len(ChanMap)):
+                        tc=(t0+t1)/2.
+                        nuc=freq[ichan]
+                        ColOutDir[ind,ichan,:]*=VariableFunc(tc,nuc)
+                        # c0=ColOutDir[ind,ichan,:].copy()
+                        # ColOutDir[ind,ichan,:]*=VariableFunc(tc,nuc)
+                        # print c0-ColOutDir[ind,ichan,:]
+                        print it,ichan,VariableFunc(tc,nuc)
+
+            if ApplyTimeJones is not None:#"DicoBeam" in DicoData.keys():
                 D=ApplyTimeJones#DicoData["DicoBeam"]
                 Beam=D["Beam"]
                 BeamH=D["BeamH"]
@@ -194,6 +214,9 @@ class ClassPredict():
             DataOut+=ColOutDir
             T.timeit("5")
 
+
+        if Noise is not None:
+            DataOut+=Noise/np.sqrt(2.)*(np.random.randn(*ColOutDir.shape)+1j*np.random.randn(*ColOutDir.shape))
 
         return DataOut
 
