@@ -79,6 +79,7 @@ class ClassMergeSols():
         DFs=np.array([DicoSols["FreqDomains"][:,1]-DicoSols["FreqDomains"][:,0] for DicoSols in self.ListDictSols])
         f0s=np.array([DicoSols["FreqDomains"][:,0] for DicoSols in self.ListDictSols])
         f1s=np.array([DicoSols["FreqDomains"][:,1] for DicoSols in self.ListDictSols])
+
         if np.max(np.abs(DFs[1::]-DFs[0:-1]))>1e-5:
             raise RuntimeError("Solutions don't have the same width")
         self.df=DFs.ravel()[0]
