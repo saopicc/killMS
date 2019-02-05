@@ -509,11 +509,16 @@ class ClassWirtingerSolver():
             self.rms=self.rmsFromExt
             #print>>log," rmsFromExt: %s"%self.rms
         elif (self.TypeRMS=="GlobalData"):
-            Dpol=DATA["data"][:,:,1:3]
-            Fpol=DATA["flags"][:,:,1:3]
             nrow,nch,_=DATA["flags"].shape
-            w=DATA["W"].reshape((nrow,nch,1))*np.ones((1,1,2))
-            
+            if self.VS.MS.NPolOrig==4:
+                Dpol=DATA["data"][:,:,1:3]
+                Fpol=DATA["flags"][:,:,1:3]
+                w=DATA["W"].reshape((nrow,nch,1))*np.ones((1,1,2))
+            else:
+                Dpol=DATA["data"][:,:,0:1]
+                Fpol=DATA["flags"][:,:,0:1]
+                w=DATA["W"].reshape((nrow,nch,1))
+                
             self.rms=np.sqrt(np.sum((w[Fpol==0]*np.absolute(Dpol[Fpol==0]))**2.0)/np.sum(w[Fpol==0]**2.0))/np.sqrt(2.)
             # print
             # print>>log," rmsFromGlobalData: %s"%self.rms

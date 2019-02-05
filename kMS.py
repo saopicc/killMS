@@ -650,7 +650,11 @@ def main(OP=None,MSName=None):
                 nrow_ThisChunk=Solver.VS.MS.ROW1-Solver.VS.MS.ROW0
                 d=np.zeros((nrow_ThisChunk,VS.MS.NChanOrig,4),PredictData.dtype)
                 d[:,VS.MS.ChanSlice,:]=VS.MS.ToOrigFreqOrder(PredictData)
-                t.putcol(FullPredictColName,d,Solver.VS.MS.ROW0,nrow_ThisChunk)
+                if Solver.VS.MS.NPolOrig==2:
+                    dc=d[:,:,0::3]
+                else:
+                    dc=d
+                t.putcol(FullPredictColName,dc,Solver.VS.MS.ROW0,nrow_ThisChunk)
                 t.close()
 
 
@@ -672,7 +676,12 @@ def main(OP=None,MSName=None):
                 Solver.VS.ThisDataChunk["data"]-=PredictData
                 print>>log, "  save visibilities in %s column"%WriteColName
                 t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
-                t.putcol(WriteColName,VS.MS.ToOrigFreqOrder(Solver.VS.MS.data),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                d=VS.MS.ToOrigFreqOrder(Solver.VS.MS.data)
+                if Solver.VS.MS.NPolOrig==2:
+                    dc=d[:,:,0::3]
+                else:
+                    dc=d
+                t.putcol(WriteColName,dc,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
 
@@ -956,7 +965,12 @@ def main(OP=None,MSName=None):
                 nrow_ThisChunk=Solver.VS.MS.ROW1-Solver.VS.MS.ROW0
                 d=np.zeros((nrow_ThisChunk,VS.MS.NChanOrig,4),Solver.VS.ThisDataChunk["data"].dtype)
                 d[:,VS.MS.ChanSlice,:]=VS.MS.ToOrigFreqOrder(Solver.VS.ThisDataChunk["data"])
-                t.putcol(WriteColName,d,Solver.VS.MS.ROW0,nrow_ThisChunk)
+
+                if Solver.VS.MS.NPolOrig==2:
+                    dc=d[:,:,0::3]
+                else:
+                    dc=d
+                t.putcol(WriteColName,dc,Solver.VS.MS.ROW0,nrow_ThisChunk)
                 #t.putcol("FLAG",VS.MS.ToOrigFreqOrder(Solver.VS.MS.flags_all),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 

@@ -424,6 +424,8 @@ class ClassMS():
 
         flag_all=table_all.getcol("FLAG",row0,nRowRead)[SPW==self.ListSPW[0]][:,self.ChanSlice,:]
         
+            
+            
         self.HasWeights=False
         if ReadWeight==True:
             self.Weights=table_all.getcol("WEIGHT",row0,nRowRead)
@@ -434,18 +436,6 @@ class ClassMS():
                 fcol=flag_all[:,i,0]|flag_all[:,i,1]|flag_all[:,i,2]|flag_all[:,i,3]
                 for pol in range(4):
                     flag_all[:,i,pol]=fcol
-
-        if "IMAGING_WEIGHT" in table_all.colnames():
-            print>>log,"Flagging the zeros-weighted visibilities"
-            fw=table_all.getcol("IMAGING_WEIGHT",row0,nRowRead)[SPW==self.ListSPW[0]][:,self.ChanSlice]
-            nrr,nchr=fw.shape
-            fw=fw.reshape((nrr,nchr,1))*np.ones((1,1,4))
-            MedW=np.median(fw)
-            fflagged0=np.count_nonzero(flag_all)
-            flag_all[fw<MedW*1e-6]=1
-            fflagged1=np.count_nonzero(flag_all)
-            if fflagged1>0 and fflagged0!=0:
-                print>>log,"  Increase in flag fraction: %f"%(fflagged1/float(fflagged0)-1)
 
                 
             
@@ -539,6 +529,30 @@ class ClassMS():
                 for icol in range(len(self.data)):
                     self.data[icol]=self.data[icol][:,::-1,:]
 
+        self.NPolOrig=self.data.shape[-1]
+        if self.data.shape[-1]!=4:
+            print>>log,ModColor.Str("Data has only two polarisation, adapting shape")
+            nrow,nch,_=self.data.shape
+            flag_all=np.zeros((nrow,nch,4),self.flag_all.dtype)
+            data=np.zeros((nrow,nch,4),self.data.dtype)
+            flag_all[:,:,0]=self.flag_all[:,:,0]
+            flag_all[:,:,-1]=self.flag_all[:,:,-1]
+            data[:,:,0]=self.data[:,:,0]
+            data[:,:,-1]=self.data[:,:,-1]
+            self.data=data
+            self.flag_all=flag_all
+            
+        if "IMAGING_WEIGHT" in table_all.colnames():
+            print>>log,"Flagging the zeros-weighted visibilities"
+            fw=table_all.getcol("IMAGING_WEIGHT",row0,nRowRead)[SPW==self.ListSPW[0]][:,self.ChanSlice]
+            nrr,nchr=fw.shape
+            fw=fw.reshape((nrr,nchr,1))*np.ones((1,1,4))
+            MedW=np.median(fw)
+            fflagged0=np.count_nonzero(flag_all)
+            flag_all[fw<MedW*1e-6]=1
+            fflagged1=np.count_nonzero(flag_all)
+            if fflagged1>0 and fflagged0!=0:
+                print>>log,"  Increase in flag fraction: %f"%(fflagged1/float(fflagged0)-1)
 
         self.times_all=time_all
         self.times=time_slots_all
