@@ -55,7 +55,7 @@ class ClassMS():
         self.Field=Field
         self.DDID=DDID
         self.TaQL = "FIELD_ID==%d && DATA_DESC_ID==%d" % (Field, DDID)
-
+        
         self.ChanSlice=slice(None)
         if ChanSlice is not None:
             C=[int(c) if c!=-1 else None for c in ChanSlice]
@@ -412,7 +412,17 @@ class ClassMS():
 
         #table_all=table(self.MSName,ack=False)
         table_all = self.GiveMainTable()
-        SPW=table_all.getcol('DATA_DESC_ID',row0,nRowRead)
+        try:
+            SPW=table_all.getcol('DATA_DESC_ID',row0,nRowRead)
+        except Exception as e:
+            print>>log,ModColor.Str("There was a problem reading DATA_DESC_ID:"+str(e))
+            DATA_DESC_ID=np.unique(table_all.getcol('DATA_DESC_ID'))
+            if DATA_DESC_ID.size==1:
+                print>>log,ModColor.Str("   All DATA_DESC_ID are the same, can proceed")
+                SPW=np.zeros((nRowRead,),)
+                SPW.fill(DATA_DESC_ID[0])
+            else:
+                raise 
         A0=table_all.getcol('ANTENNA1',row0,nRowRead)[SPW==self.ListSPW[0]]
         A1=table_all.getcol('ANTENNA2',row0,nRowRead)[SPW==self.ListSPW[0]]
         #print self.ListSPW[0]
@@ -597,32 +607,31 @@ class ClassMS():
             t.putcol(self.ColName[icol],self.data[icol])
         t.close()
 
-    def RemoveStation(self):
+    # def RemoveStation(self):
         
-        DelStationList=self.DelStationList
-        if DelStationList==None: return
+    #     DelStationList=self.DelStationList
+    #     if DelStationList==None: return
 
-        StationNames=self.StationNames
-        self.MapStationsKeep=np.arange(len(StationNames))
-        DelNumStationList=[]
-        for Station in DelStationList:
-            ind=np.where(Station==np.array(StationNames))[0]
-            self.MapStationsKeep[ind]=-1
-            DelNumStationList.append(ind)
-            indRemove=np.where((self.A0!=ind)&(self.A1!=ind))[0]
-            self.A0=self.A0[indRemove]
-            self.A1=self.A1[indRemove]
-            self.data=self.data[indRemove,:,:]
-            self.flag_all=self.flag_all[indRemove,:,:]
-            self.times_all=self.times_all[indRemove,:,:]
-        self.MapStationsKeep=self.MapStationsKeep[self.MapStationsKeep!=-1]
-        StationNames=(np.array(StationNames)[self.MapStationsKeep]).tolist()
+    #     StationNames=self.StationNames
+    #     self.MapStationsKeep=np.arange(len(StationNames))
+    #     DelNumStationList=[]
+    #     for Station in DelStationList:
+    #         ind=np.where(Station==np.array(StationNames))[0]
+    #         self.MapStationsKeep[ind]=-1
+    #         DelNumStationList.append(ind)
+    #         indRemove=np.where((self.A0!=ind)&(self.A1!=ind))[0]
+    #         self.A0=self.A0[indRemove]
+    #         self.A1=self.A1[indRemove]
+    #         self.data=self.data[indRemove,:,:]
+    #         self.flag_all=self.flag_all[indRemove,:,:]
+    #         self.times_all=self.times_all[indRemove,:,:]
+    #     self.MapStationsKeep=self.MapStationsKeep[self.MapStationsKeep!=-1]
+    #     StationNames=(np.array(StationNames)[self.MapStationsKeep]).tolist()
 
-        na=self.MapStationsKeep.shape[0]
-        self.na=na
-        self.StationPos=self.StationPos[self.MapStationsKeep,:]
-        self.nbl=(na*(na-1))/2+na
-        
+    #     na=self.MapStationsKeep.shape[0]
+    #     self.na=na
+    #     self.StationPos=self.StationPos[self.MapStationsKeep,:]
+    #     self.nbl=(na*(na-1))/2+na
 
     def ReadMSInfo(self,MSname,DoPrint=True):
         T=ClassTimeIt.ClassTimeIt()
@@ -639,9 +648,18 @@ class ClassMS():
 
         StationNames=ta.getcol('NAME')
 
-        na=ta.getcol('POSITION').shape[0]
+        #na=ta.getcol('POSITION').shape[0]
         self.StationPos=ta.getcol('POSITION')
-        nbl=(na*(na-1))/2+na
+        #nbl=(na*(na-1))/2+na
+
+        A0,A1=t.getcol("ANTENNA1"),t.getcol("ANTENNA2")
+        ind=np.where(A0==A1)[0]
+        self.HasAutoCorr=(ind.size>0)
+        A=np.concatenate([A0,A1])
+        na=np.unique(A).size
+        self.nbl=(na**2-na)/2
+        
+
         #nbl=(na*(na-1))/2
         ta.close()
         T.timeit()
