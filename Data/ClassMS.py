@@ -648,18 +648,23 @@ class ClassMS():
 
         StationNames=ta.getcol('NAME')
 
-        #na=ta.getcol('POSITION').shape[0]
+        na=ta.getcol('POSITION').shape[0]
         self.StationPos=ta.getcol('POSITION')
         #nbl=(na*(na-1))/2+na
 
-        A0,A1=t.getcol("ANTENNA1"),t.getcol("ANTENNA2")
+        A0,A1=table_all.getcol("ANTENNA1"),table_all.getcol("ANTENNA2")
         ind=np.where(A0==A1)[0]
         self.HasAutoCorr=(ind.size>0)
         A=np.concatenate([A0,A1])
-        na=np.unique(A).size
-        self.nbl=(na**2-na)/2
-        
 
+        nas=np.unique(A).size
+        self.nbl=(nas**2-nas)/2
+        if self.HasAutoCorr:
+            self.nbl+=nas
+        if A0.size%self.nbl!=0:
+            print>>log,ModColor.Str("MS is non conformant!")
+            raise
+            
         #nbl=(na*(na-1))/2
         ta.close()
         T.timeit()
@@ -760,7 +765,7 @@ class ClassMS():
         self.wavelength_chan=wavelength_chan
         self.rac=rarad
         self.decc=decrad
-        self.nbl=nbl
+        #self.nbl=nbl
         self.StrRA  = rad2hmsdms(self.rarad,Type="ra").replace(" ",":")
         self.StrDEC = rad2hmsdms(self.decrad,Type="dec").replace(" ",".")
 

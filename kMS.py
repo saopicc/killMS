@@ -618,6 +618,7 @@ def main(OP=None,MSName=None):
     # warnings.filterwarnings('error')
     # # ##############################
 
+    iChunk=0
 
     while True:
 
@@ -627,7 +628,8 @@ def main(OP=None,MSName=None):
         if Load=="EndOfObservation":
             break
 
-
+        iChunk+=1
+        #if iChunk<6: continue
         if options.ExtSols=="":
             SaveSols=True
             if options.SubOnly==0:
