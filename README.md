@@ -39,9 +39,21 @@ Preliminary documentation is given below.
 
 
 # Installation KillMS
-
 To build from source:
+```
+virtualenv myvenv
+source myvenv/bin/activate
+(myvenv)$ pip install DDFacet # installs the latest DDF release from PyPI
+(myvenv)$ pip install <path to checked out killMS>
+```
+If you want to run in development mode:
+```
+(myvenv)$ pip install -e <path to checked out killMS>
+(myvenv)$ cd <path to checked out killMS>
+(myvenv)$ python setup.py build  #this rebuilds the backend
+```
 
+The old build system is still in place - you can still do:
 ```
 cd Predict
 make
