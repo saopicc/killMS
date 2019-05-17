@@ -96,7 +96,7 @@ class ClassWeighting():
             print>>log, "Weighting in Natural mode"
             return VisWeights
         else:
-            stop
+            raise ValueError("Expected Briggs, Uniform or Natural, got {0:s} for --Weighting".format(Weighting))
 
         grid=np.zeros((npix,npix),dtype=np.float64)
 
