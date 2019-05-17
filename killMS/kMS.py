@@ -1118,6 +1118,7 @@ def _exc_handler(type, value, tb):
 
 
 if __name__=="__main__":
+    tic = time.time()
     #os.system('clear')
     logo.print_logo()
     sys.excepthook = _exc_handler
@@ -1194,7 +1195,13 @@ if __name__=="__main__":
                     os.system("rm -rf %s*ddfcache"%MSName)
         else:
             main(OP=OP,MSName=MSName)
-                
+        toc = time.time()     
+        elapsed = toc - tic
+        print>>log, ModColor.Str("Dataset(s) calibrated successfully in " \
+                                 "{0:02.0f}h{1:02.0f}m{2:02.0f}s".format(
+                                 (elapsed // 60) // 60,
+                                 (elapsed // 60) % 60,
+                                 elapsed % 60))
     except:
         print>>log, traceback.format_exc()
         NpShared.DelAll(IdSharedMem)
