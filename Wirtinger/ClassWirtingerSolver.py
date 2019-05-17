@@ -40,6 +40,8 @@ import time
 from itertools import product as ItP
 from killMS.Wirtinger import ClassSolverLM
 from killMS.Wirtinger import ClassSolverEKF
+from killMS.Wirtinger import ClassSolPredictMachine
+
 def test():
 
 
@@ -117,7 +119,10 @@ class ClassWirtingerSolver():
                  evP_StepStart=0, evP_Step=1,
                  DoPlot=False,
                  DoPBar=True,GD=None,
-                 ConfigJacobianAntenna={},TypeRMS="GlobalData"):
+                 ConfigJacobianAntenna={},
+                 TypeRMS="GlobalData",
+                 VS_PredictCol=None):
+        self.VS_PredictCol=VS_PredictCol
         self.DType=np.complex128
         self.TypeRMS=TypeRMS
         self.IdSharedMem=IdSharedMem
@@ -156,6 +161,11 @@ class ClassWirtingerSolver():
 
         self.NJacobBlocks_X,self.NJacobBlocks_Y=npolx,npoly
 
+        self.SolPredictMachine=None
+        if self.GD["KAFCA"]["EvolutionSolFile"]!="":
+            self.SolPredictMachine=ClassSolPredictMachine.ClassSolPredictMachine(GD)
+            
+        
         self.G=None
         self.NIter=NIter
         #self.SolsList=[]
@@ -259,7 +269,7 @@ class ClassWirtingerSolver():
         _,_,_,npolx,npoly=self.G.shape
 
 
-        # print "int!!!!!!!!!!"
+        # # print "int!!!!!!!!!!"
         # self.G+=np.random.randn(*self.G.shape)*1.#sigP
         
         NSols=np.max([1,int(1.5*round(self.VS.MS.DTh/(self.VS.TVisSizeMin/60.)))])
@@ -273,6 +283,7 @@ class ClassWirtingerSolver():
         self.SolsArray_G=np.zeros((NSols,nChan,na,nd,npolx,npoly),dtype=np.complex64)
         self.SolsArray_Stats=np.zeros((NSols,nChan,na,4),dtype=np.float32)
 
+        self.Power0=np.zeros((nChan,na),np.float32)
         self.SolsArray_t0=NpShared.ToShared("%sSolsArray_t0"%self.IdSharedMem,self.SolsArray_t0)
         self.SolsArray_t1=NpShared.ToShared("%sSolsArray_t1"%self.IdSharedMem,self.SolsArray_t1)
         self.SolsArray_tm=NpShared.ToShared("%sSolsArray_tm"%self.IdSharedMem,self.SolsArray_tm)
@@ -299,6 +310,10 @@ class ClassWirtingerSolver():
         self.G0Iter=NpShared.ToShared("%sSharedGains0Iter"%self.IdSharedMem,self.G.copy())
         #self.InitCovariance()
 
+
+
+
+        
     def InitCovariance(self,FromG=False,sigP=0.1,sigQ=0.01):
         if self.SolverType!="KAFCA": return
         if self.Q!=None: return
@@ -335,7 +350,7 @@ class ClassWirtingerSolver():
             ns=ra.size
             
             d=np.sqrt((ra.reshape((ns,1))-ra.reshape((1,ns)))**2+(dec.reshape((ns,1))-dec.reshape((1,ns)))**2)
-            d0=1e-7*np.pi/180
+            d0=1.*np.pi/180
             QQ=(1./(1.+d/d0))**2
             Qa=np.zeros((nd,npolx,npoly,nd,npolx,npoly),self.DType)
             for ipol in range(npolx):
@@ -356,9 +371,25 @@ class ClassWirtingerSolver():
                 #Qa[idir,:,:,idir,:,:]=1
                 Qa[idir,:,:,idir,:,:]=ApFluxes[idir]
 
+
+            # for idir in range(nd):
+            #     for jdir in range(nd):
+            #         Qa[idir,:,:,jdir,:,:]=np.sqrt(ApFluxes[idir]*ApFluxes[jdir])*QQ[idir,jdir]
+
+            # import pylab
+            # pylab.clf()
+            # pylab.imshow(QQ,interpolation="nearest")
+            # pylab.draw()
+            # pylab.show()
+
+            
             Qa=Qa.reshape((nd*npolx*npoly,nd*npolx*npoly))
             #print np.diag(Qa)
-            Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iChanSol,iAnt]))**2*(Qa*(self.VS.fracNVisPerAnt[iAnt]**4))**(self.GD["KAFCA"]["PowerSmooth"]) for iAnt in range(na)])
+            #Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iChanSol,iAnt]))**2*(Qa*(self.VS.fracNVisPerAnt[iAnt]**4))**(self.GD["KAFCA"]["PowerSmooth"]) for iAnt in range(na)])
+            Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iChanSol,iAnt]))**2*Qa for iAnt in range(na)])
+            #Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iChanSol,iAnt]))**2*(Qa*(self.VS.Compactness[iAnt]**2*self.VS.fracNVisPerAnt[iAnt]**4))**(self.GD["KAFCA"]["PowerSmooth"]) for iAnt in range(na)])
+            #print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+            #Q=(sigQ**2)*np.array([np.max(np.abs(self.G[iChanSol,iAnt]))**2*Qa for iAnt in range(na)])
             #print Q[0]
 
             QList.append(Q)
@@ -376,7 +407,12 @@ class ClassWirtingerSolver():
         nbuff=10
 
     def InitMeanBeam(self):
+
         self.NormFluxes=self.SM.ClusterCat.SumI.copy()
+        # print np.sort(self.NormFluxes)
+        # FCut=5.
+        # self.NormFluxes[self.NormFluxes>FCut]=FCut
+        
         self.NormFluxes/=self.NormFluxes.max()
         if self.GD["Beam"]["BeamModel"] is None:
             self.SM.ApparentSumI=self.NormFluxes
@@ -441,6 +477,8 @@ class ClassWirtingerSolver():
         
     def setNextData(self):
         DATA=self.VS.GiveNextVis()
+        if self.VS_PredictCol is not None:
+            self.VS_PredictCol.GiveNextVis()
 
         NDone,nt=self.pBarProgress
         intPercent=int(100*  NDone / float(nt))
@@ -471,11 +509,16 @@ class ClassWirtingerSolver():
             self.rms=self.rmsFromExt
             #print>>log," rmsFromExt: %s"%self.rms
         elif (self.TypeRMS=="GlobalData"):
-            Dpol=DATA["data"][:,:,1:3]
-            Fpol=DATA["flags"][:,:,1:3]
             nrow,nch,_=DATA["flags"].shape
-            w=DATA["W"].reshape((nrow,nch,1))*np.ones((1,1,2))
-            
+            if self.VS.MS.NPolOrig==4:
+                Dpol=DATA["data"][:,:,1:3]
+                Fpol=DATA["flags"][:,:,1:3]
+                w=DATA["W"].reshape((nrow,nch,1))*np.ones((1,1,2))
+            else:
+                Dpol=DATA["data"][:,:,0:1]
+                Fpol=DATA["flags"][:,:,0:1]
+                w=DATA["W"].reshape((nrow,nch,1))
+                
             self.rms=np.sqrt(np.sum((w[Fpol==0]*np.absolute(Dpol[Fpol==0]))**2.0)/np.sum(w[Fpol==0]**2.0))/np.sqrt(2.)
             # print
             # print>>log," rmsFromGlobalData: %s"%self.rms
@@ -694,7 +737,7 @@ class ClassWirtingerSolver():
                             expW/=np.sum(expW)
                             kapaW=np.sum(expW*np.array(TraceResidList))
                             self.Q[iChanSol,iAnt][:]=(kapaW)*self.Q_Init[iChanSol,iAnt][:]
-                        
+                            
                     # pylab.figure(1)
                     # pylab.clf()
                     # pylab.plot(np.abs(Gnew[iChanSol].flatten()))
@@ -763,7 +806,7 @@ class ClassWirtingerSolver():
         NCPU=self.NCPU
 
         import time
-        
+        PList=[]
         
                     
 
@@ -817,7 +860,7 @@ class ClassWirtingerSolver():
             if SkipMode:
                 print iiCount
                 iiCount+=1
-                if iiCount<240: continue
+                if iiCount<10: continue
 
 
             t0,t1=self.VS.CurrentVisTimes_MS_Sec
@@ -843,11 +886,12 @@ class ClassWirtingerSolver():
 
 
             Gold=self.G.copy()
-            DoCalcEvP=False
+            DoCalcEvP=np.zeros((self.VS.NChanJones,),bool)            
+            DoCalcEvP[:]=False
             if (self.CounterEvolveP())&(self.SolverType=="KAFCA")&(self.iCurrentSol>self.EvolvePStepStart):
-                DoCalcEvP=True
+                DoCalcEvP[:]=True
             elif (self.SolverType=="KAFCA")&(self.iCurrentSol<=self.EvolvePStepStart):
-                DoCalcEvP=True
+                DoCalcEvP[:]=True
 
             T.timeit("before iterloop")
             u,v,w=self.DATA["uvw"].T
@@ -865,15 +909,46 @@ class ClassWirtingerSolver():
             #NpShared.ToShared("%sSharedGainsPrevious"%self.IdSharedMem,self.G.copy())
             #NpShared.ToShared("%sSharedPPrevious"%self.IdSharedMem,self.P.copy())
             Dico_SharedDicoDescriptors={}
+
+            if self.SolPredictMachine is not None:
+                t0_ms,t1_ms=self.VS.CurrentVisTimes_MS_Sec
+                tm_ms=(t0_ms+t1_ms)/2.
+                xPredict=self.SolPredictMachine.GiveClosestSol(tm_ms,
+                                                               self.VS.SolsFreqDomains,np.arange(self.VS.MS.na),
+                                                               self.SM.ClusterCat.ra,self.SM.ClusterCat.dec)
+                
+                # nChan,na,nd,2,2
+                if self.PolMode=="Scalar":
+                    self.G[:,:,:,0,0]=xPredict[:,:,:,0,0]
+                elif self.PolMode=="IDiag":
+                    self.G[:,:,:,0,0]=xPredict[:,:,:,0,0]
+                    self.G[:,:,:,1,0]=xPredict[:,:,:,1,1]
+                else:
+                    self.G[:]=xPredict[:]
+
+            DoEvP=np.zeros((self.VS.NChanJones,),bool)
             for iChanSol in range(self.VS.NChanJones):
-                # Reset Data
+                # # Reset Data
+                # # _,na,_,_,_=self.G.shape
+                # g=self.G[iChanSol,:,:,0,0]
+                # P=np.mean(np.abs(g)**2,1)
+                # if self.iCurrentSol!=0:
+                #     fact=self.Power0[iChanSol]/P
+                #     self.G[iChanSol]*=fact.reshape((na,1,1,1))
+                #     print fact,self.Power0[iChanSol],P
+                # else:
+                #     self.Power0[iChanSol]=P
+                #     print self.Power0[iChanSol]
+
                 NpShared.DelAll("%sDicoData"%self.IdSharedMem)
                 for LMIter in range(NIter):
-                    
-                    ThisG[:]=self.G[:]
+
+                    ThisG[iChanSol,:]=self.G[iChanSol,:]
+
                     if self.SolverType=="KAFCA":
-                        ThisP[:]=self.P[:]
-                        ThisQ[:]=self.Q[:]
+                        ThisP[iChanSol,:]=self.P[iChanSol,:]
+                        ThisQ[iChanSol,:]=self.Q[iChanSol,:]
+
                     #print
                     # for EKF
     
@@ -882,14 +957,14 @@ class ClassWirtingerSolver():
                     #print "===================================================="
                     #########
                     if LMIter>0:
-                        DoCalcEvP=False
-                        DoEvP=False
+                        DoCalcEvP[iChanSol]=False
+                        DoEvP[iChanSol]=False
                     elif LMIter==0:
-                        self.G0Iter[:]=ThisG[:]
-                        DoEvP=False
+                        self.G0Iter[iChanSol,:]=ThisG[iChanSol,:]
+                        DoEvP[iChanSol]=False
     
                     if LMIter==(NIter-1):
-                        DoEvP=True
+                        DoEvP[iChanSol]=True
                     
                     DoFullPredict=False
                     if LMIter==(NIter-1):
@@ -908,7 +983,7 @@ class ClassWirtingerSolver():
                         if LMIter!=0:
                             SharedDicoDescriptors["SharedAntennaVis"]=Dico_SharedDicoDescriptors[iAnt]
 
-                        work_queue.put((iAnt,iChanSol,DoCalcEvP,tm,self.rms,DoEvP,DoFullPredict,
+                        work_queue.put((iAnt,iChanSol,DoCalcEvP[iChanSol],tm,self.rms,DoEvP[iChanSol],DoFullPredict,
                                         SharedDicoDescriptors))
                         #work_queue.put((iAnt,iChanSol,DoCalcEvP,tm,self.rms,DoEvP,DoFullPredict,
                         #                self.VS.SharedVisDescriptor,self.VS.PreApplyJones))
@@ -1000,6 +1075,7 @@ class ClassWirtingerSolver():
     
                     if self.DoPlot==1:
                         import pylab
+                        pylab.figure(1)
                         AntPlot=np.arange(self.VS.MS.na)#np.array(ListAntSolve)
                         pylab.clf()
                         pylab.plot(np.abs(ThisG[iChanSol,AntPlot].flatten()))
@@ -1024,15 +1100,27 @@ class ClassWirtingerSolver():
                         pylab.draw()
                         pylab.show(False)
                         pylab.pause(0.1)
-    
+                        
     
                     T.timeit("[%i] Plot"%LMIter)
 
-                    self.G[:]=ThisG[:]
+                    self.G[iChanSol,:]=ThisG[iChanSol,:]
                     if self.SolverType=="KAFCA":
-                       self.P[:]=ThisP[:]
-                       self.Q[:]=ThisQ[:]
-
+                        self.P[iChanSol,:]=ThisP[iChanSol,:]
+                        self.Q[iChanSol,:]=ThisQ[iChanSol,:]
+                        nf,na,nd,nd=self.Q.shape
+                        P=np.zeros_like(self.P)
+                        Q=np.zeros_like(self.Q)
+                        # for iChan in range(nf):
+                        #     for iAnt in range(na):
+                        #         P[iChan,iAnt,:,:]=np.diag(np.diag(self.P[iChan,iAnt,:,:]))
+                        #         Q[iChan,iAnt,:,:]=np.diag(np.diag(self.Q[iChan,iAnt,:,:]))
+                        for iAnt in range(na):
+                            P[iChanSol,iAnt,:,:]=np.diag(np.diag(self.P[iChanSol,iAnt,:,:]))
+                            Q[iChanSol,iAnt,:,:]=np.diag(np.diag(self.Q[iChanSol,iAnt,:,:]))
+                        self.P[iChanSol,:]=P[iChanSol,:]
+                        self.Q[iChanSol,:]=Q[iChanSol,:]
+                        
 
                 # self.G[:]=ThisG[:]
                 # #self.G[:]=G[:]
@@ -1050,7 +1138,7 @@ class ClassWirtingerSolver():
             #print self.P.ravel()
             #if NDone==1: stop
             
-
+            if self.SolverType=="KAFCA": PList.append(self.P.copy())
             self.AppendGToSolArray()
             T.timeit("AppendGToSolArray")
 
@@ -1077,6 +1165,8 @@ class ClassWirtingerSolver():
             if OnlyOne: break
         # end while chunk
 
+
+        if self.SolverType=="KAFCA": np.save("P.%s.npy"%self.GD["Solutions"]['OutSolsName'],np.array(PList))
         if Parallel:
             for ii in range(NCPU):
                 workerlist[ii].shutdown()
@@ -1148,7 +1238,7 @@ class WorkerAntennaLM(multiprocessing.Process):
         self.PM=ClassPredict(Precision="S",DoSmearing=self.GD["SkyModel"]["Decorrelation"],IdMemShared=self.IdSharedMem,
                              LExp=LExp,LSinc=LSinc)
 
-        if self.GD["ImageSkyModel"]["BaseImageName"]!="":
+        if self.GD["ImageSkyModel"]["BaseImageName"]!="" and self.GD["SkyModel"]["SkyModelCol"] is None:
             self.PM.InitGM(self.SM)
 
     def shutdown(self):
@@ -1213,7 +1303,7 @@ class WorkerAntennaLM(multiprocessing.Process):
                     Gc0[iChanSol,iAnt][:]=x[:]
                     Gc=Gc0.copy()
 
-                    # #Gc0.fill(1.)
+                    # # Gc0.fill(1.)
                     # NoZeroD=5
                     # Gc.fill(0)
                     # Gc[:,:,NoZeroD,:,:]=Gc0[:,:,NoZeroD,:,:]
@@ -1223,6 +1313,10 @@ class WorkerAntennaLM(multiprocessing.Process):
                     JM.PredictOrigFormat(Gc[iChanSol])
                     T.timeit("FullPredict")
 
+                # if not JM.DataAllFlagged:
+                #     M=JM.L_JHJ[0]
+                #     u,s,v=np.linalg.svd(M)
+                #     if np.min(s)<0: stop
 
                 self.result_queue.put([iAnt,iChanSol,x,None,None,InfoNoise,0.,JM.SharedDicoDescriptors["SharedAntennaVis"]])
 
@@ -1255,6 +1349,17 @@ class WorkerAntennaLM(multiprocessing.Process):
                 # if Ga!=None:
                 #     G[iAnt]=Ga
                 #     P[iAnt]=Pa
+
+                # ThisP=P[iChanSol].copy()
+                # ThisP.fill(0)
+                # # print
+                # # print ThisP.shape
+                # # print
+                # na,nd,_=ThisP.shape
+                # for iAnt in range(na):
+                #     for iDir in range(nd):
+                #         ThisP[iAnt,iDir,iDir]=P[iChanSol][iAnt,iDir,iDir]
+                # x,Pout,InfoNoise=JM.doEKFStep(G[iChanSol],ThisP,evP[iChanSol],rms,Gains0Iter=G0Iter)
 
                 x,Pout,InfoNoise=JM.doEKFStep(G[iChanSol],P[iChanSol],evP[iChanSol],rms,Gains0Iter=G0Iter)
                 T.timeit("EKFStep")

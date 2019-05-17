@@ -35,10 +35,11 @@ from killMS.Other.progressbar import ProgressBar
 class ClassMS():
     def __init__(self,MSname,Col="DATA",zero_flag=True,ReOrder=False,EqualizeFlag=False,DoPrint=True,DoReadData=True,
                  TimeChunkSize=None,GetBeam=False,RejectAutoCorr=False,SelectSPW=None,DelStationList=None,Field=0,DDID=0,
-                 ReadUVWDT=False):
+                 ReadUVWDT=False,ChanSlice=None,GD=None):
 
 
         if MSname=="": exit()
+        self.GD=GD
         self.ReadUVWDT=ReadUVWDT
         MSname=reformat.reformat(os.path.abspath(MSname),LastSlash=False)
         self.MSName=MSname
@@ -54,8 +55,15 @@ class ClassMS():
         self.Field=Field
         self.DDID=DDID
         self.TaQL = "FIELD_ID==%d && DATA_DESC_ID==%d" % (Field, DDID)
+        
+        self.ChanSlice=slice(None)
+        if ChanSlice is not None:
+            C=[int(c) if c!=-1 else None for c in ChanSlice]
+            self.ChanSlice=slice(*C)
+
         self.ReadMSInfo(MSname,DoPrint=DoPrint)
         self.LFlaggedStations=[]
+
 
         self.CurrentChunkTimeRange_SinceT0_sec=None
         try:
@@ -173,7 +181,7 @@ class ClassMS():
         self.SR = stationresponse(self.MSName,
                                       useElementResponse=useElementBeam,
                                       #useElementBeam=useElementBeam,
-                                      useArrayFactor=useArrayFactor)#,useChanFreq=True)
+                                      useArrayFactor=useArrayFactor,useChanFreq=True)
         self.SR.setDirection(self.rarad,self.decrad)
         
     def CopyNonSPWDependent(self,MSnodata):
@@ -363,7 +371,8 @@ class ClassMS():
         if DoPrint==True:
             print "   ... Reading MS"
 
-
+        # TODO: read this from MS properly, as in DDFacet
+        self.CorrelationNames = "xx", "xy", "yx", "yy"
 
         row0=0
         row1=self.F_nrows
@@ -403,16 +412,30 @@ class ClassMS():
 
         #table_all=table(self.MSName,ack=False)
         table_all = self.GiveMainTable()
-        SPW=table_all.getcol('DATA_DESC_ID',row0,nRowRead)
+        try:
+            SPW=table_all.getcol('DATA_DESC_ID',row0,nRowRead)
+        except Exception as e:
+            print>>log,ModColor.Str("There was a problem reading DATA_DESC_ID:"+str(e))
+            DATA_DESC_ID=np.unique(table_all.getcol('DATA_DESC_ID'))
+            if DATA_DESC_ID.size==1:
+                print>>log,ModColor.Str("   All DATA_DESC_ID are the same, can proceed")
+                SPW=np.zeros((nRowRead,),)
+                SPW.fill(DATA_DESC_ID[0])
+            else:
+                raise 
         A0=table_all.getcol('ANTENNA1',row0,nRowRead)[SPW==self.ListSPW[0]]
         A1=table_all.getcol('ANTENNA2',row0,nRowRead)[SPW==self.ListSPW[0]]
         #print self.ListSPW[0]
         time_all=table_all.getcol("TIME",row0,nRowRead)[SPW==self.ListSPW[0]]
+        self.Time0=table_all.getcol("TIME",0,1)[0]
         #print np.max(time_all)-np.min(time_all)
         time_slots_all=np.array(sorted(list(set(time_all))))
         ntimes=time_all.shape[0]/self.nbl
 
-        flag_all=table_all.getcol("FLAG",row0,nRowRead)[SPW==self.ListSPW[0]]
+        flag_all=table_all.getcol("FLAG",row0,nRowRead)[SPW==self.ListSPW[0]][:,self.ChanSlice,:]
+        
+            
+            
         self.HasWeights=False
         if ReadWeight==True:
             self.Weights=table_all.getcol("WEIGHT",row0,nRowRead)
@@ -424,6 +447,8 @@ class ClassMS():
                 for pol in range(4):
                     flag_all[:,i,pol]=fcol
 
+                
+            
         self.multidata=(type(self.ColName)==list)
         self.ReverseAntOrder=(np.where((A0==0)&(A1==1))[0]).shape[0]>0
         self.swapped=False
@@ -432,7 +457,7 @@ class ClassMS():
         self.TimeInterVal=table_all.getcol("INTERVAL")
 
         if self.ReOrder:
-            vis_all=table_all.getcol(self.ColName,row0,nRowRead)
+            vis_all=table_all.getcol(self.ColName,row0,nRowRead)[:,self.ChanSlice,:]
             if self.zero_flag: vis_all[flag_all==1]=0.
             if self.zero_flag: 
                 noise=(np.random.randn(vis_all.shape[0],vis_all.shape[1],vis_all.shape[2])\
@@ -445,7 +470,6 @@ class ClassMS():
             flag_all=np.concatenate(listFlagSPW)#np.swapaxes(np.concatenate(listDataSPW),0,1)
             self.uvw=uvw
             self.swapped=True
-            
 
         else:
             self.uvw=uvw
@@ -453,16 +477,20 @@ class ClassMS():
                 self.data=[]
                 for colin in self.ColName:
                     print "... read %s"%colin
-                    vis_all=table_all.getcol(colin,row0,nRowRead)[SPW==self.ListSPW[0]]
+                    vis_all=table_all.getcol(colin,row0,nRowRead)[SPW==self.ListSPW[0]][:,self.ChanSlice,:]
                     print " shape: %s"%str(vis_all.shape)
                     if self.zero_flag: vis_all[flag_all==1]=0.
                     vis_all[np.isnan(vis_all)]=0.
                     self.data.append(vis_all)
             else:
-                vis_all=table_all.getcol(self.ColName,row0,nRowRead)
+                vis_all=table_all.getcol(self.ColName,row0,nRowRead)[:,self.ChanSlice,:]
                 #if self.zero_flag: vis_all[flag_all==1]=0.
                 #vis_all[np.isnan(vis_all)]=0.
                 self.data=vis_all
+
+        # import pylab
+        # pylab.plot(time_all[::111],vis[::111,512,0].real)
+        # pylab.show()
 
 
         self.flag_all=flag_all
@@ -470,14 +498,17 @@ class ClassMS():
 
 
         if self.ReadUVWDT:
-            print>>log,"Adding uvw speed info to main table: %s"%self.MSName
-            tu=table(self.MSName,readonly=False,ack=False)
-            if 'UVWDT' not in tu.colnames():
-                self.AddUVW_dt()
+
+            tu=table(self.MSName,ack=False)
+            ColNames=tu.colnames()
             tu.close()
             del(tu)
+            
+            if 'UVWDT' not in ColNames:
+                self.AddUVW_dt()
+
             print>>log,"Reading uvw_dt column"
-            tu=table(self.MSName,readonly=False,ack=False)
+            tu=table(self.MSName,ack=False)
             self.uvw_dt=np.float64(tu.getcol('UVWDT', row0, nRowRead))
             tu.close()
 
@@ -508,6 +539,30 @@ class ClassMS():
                 for icol in range(len(self.data)):
                     self.data[icol]=self.data[icol][:,::-1,:]
 
+        self.NPolOrig=self.data.shape[-1]
+        if self.data.shape[-1]!=4:
+            print>>log,ModColor.Str("Data has only two polarisation, adapting shape")
+            nrow,nch,_=self.data.shape
+            flag_all=np.zeros((nrow,nch,4),self.flag_all.dtype)
+            data=np.zeros((nrow,nch,4),self.data.dtype)
+            flag_all[:,:,0]=self.flag_all[:,:,0]
+            flag_all[:,:,-1]=self.flag_all[:,:,-1]
+            data[:,:,0]=self.data[:,:,0]
+            data[:,:,-1]=self.data[:,:,-1]
+            self.data=data
+            self.flag_all=flag_all
+            
+        if "IMAGING_WEIGHT" in table_all.colnames():
+            print>>log,"Flagging the zeros-weighted visibilities"
+            fw=table_all.getcol("IMAGING_WEIGHT",row0,nRowRead)[SPW==self.ListSPW[0]][:,self.ChanSlice]
+            nrr,nchr=fw.shape
+            fw=fw.reshape((nrr,nchr,1))*np.ones((1,1,4))
+            MedW=np.median(fw)
+            fflagged0=np.count_nonzero(flag_all)
+            flag_all[fw<MedW*1e-6]=1
+            fflagged1=np.count_nonzero(flag_all)
+            if fflagged1>0 and fflagged0!=0:
+                print>>log,"  Increase in flag fraction: %f"%(fflagged1/float(fflagged0)-1)
 
         self.times_all=time_all
         self.times=time_slots_all
@@ -552,32 +607,31 @@ class ClassMS():
             t.putcol(self.ColName[icol],self.data[icol])
         t.close()
 
-    def RemoveStation(self):
+    # def RemoveStation(self):
         
-        DelStationList=self.DelStationList
-        if DelStationList==None: return
+    #     DelStationList=self.DelStationList
+    #     if DelStationList==None: return
 
-        StationNames=self.StationNames
-        self.MapStationsKeep=np.arange(len(StationNames))
-        DelNumStationList=[]
-        for Station in DelStationList:
-            ind=np.where(Station==np.array(StationNames))[0]
-            self.MapStationsKeep[ind]=-1
-            DelNumStationList.append(ind)
-            indRemove=np.where((self.A0!=ind)&(self.A1!=ind))[0]
-            self.A0=self.A0[indRemove]
-            self.A1=self.A1[indRemove]
-            self.data=self.data[indRemove,:,:]
-            self.flag_all=self.flag_all[indRemove,:,:]
-            self.times_all=self.times_all[indRemove,:,:]
-        self.MapStationsKeep=self.MapStationsKeep[self.MapStationsKeep!=-1]
-        StationNames=(np.array(StationNames)[self.MapStationsKeep]).tolist()
+    #     StationNames=self.StationNames
+    #     self.MapStationsKeep=np.arange(len(StationNames))
+    #     DelNumStationList=[]
+    #     for Station in DelStationList:
+    #         ind=np.where(Station==np.array(StationNames))[0]
+    #         self.MapStationsKeep[ind]=-1
+    #         DelNumStationList.append(ind)
+    #         indRemove=np.where((self.A0!=ind)&(self.A1!=ind))[0]
+    #         self.A0=self.A0[indRemove]
+    #         self.A1=self.A1[indRemove]
+    #         self.data=self.data[indRemove,:,:]
+    #         self.flag_all=self.flag_all[indRemove,:,:]
+    #         self.times_all=self.times_all[indRemove,:,:]
+    #     self.MapStationsKeep=self.MapStationsKeep[self.MapStationsKeep!=-1]
+    #     StationNames=(np.array(StationNames)[self.MapStationsKeep]).tolist()
 
-        na=self.MapStationsKeep.shape[0]
-        self.na=na
-        self.StationPos=self.StationPos[self.MapStationsKeep,:]
-        self.nbl=(na*(na-1))/2+na
-        
+    #     na=self.MapStationsKeep.shape[0]
+    #     self.na=na
+    #     self.StationPos=self.StationPos[self.MapStationsKeep,:]
+    #     self.nbl=(na*(na-1))/2+na
 
     def ReadMSInfo(self,MSname,DoPrint=True):
         T=ClassTimeIt.ClassTimeIt()
@@ -596,7 +650,21 @@ class ClassMS():
 
         na=ta.getcol('POSITION').shape[0]
         self.StationPos=ta.getcol('POSITION')
-        nbl=(na*(na-1))/2+na
+        #nbl=(na*(na-1))/2+na
+
+        A0,A1=table_all.getcol("ANTENNA1"),table_all.getcol("ANTENNA2")
+        ind=np.where(A0==A1)[0]
+        self.HasAutoCorr=(ind.size>0)
+        A=np.concatenate([A0,A1])
+
+        nas=np.unique(A).size
+        self.nbl=(nas**2-nas)/2
+        if self.HasAutoCorr:
+            self.nbl+=nas
+        if A0.size%self.nbl!=0:
+            print>>log,ModColor.Str("MS is non conformant!")
+            raise
+            
         #nbl=(na*(na-1))/2
         ta.close()
         T.timeit()
@@ -630,14 +698,16 @@ class ClassMS():
         ta_spectral=table(table_all.getkeyword('SPECTRAL_WINDOW'),ack=False)
         reffreq=ta_spectral.getcol('REF_FREQUENCY')
         chan_freq=ta_spectral.getcol('CHAN_FREQ')
-        self.dFreq=ta_spectral.getcol("CHAN_WIDTH").flatten()
-        self.ChanWidth=ta_spectral.getcol('CHAN_WIDTH')
+        self.NChanOrig=chan_freq.size
+        chan_freq=chan_freq[:,self.ChanSlice]
+        self.dFreq=ta_spectral.getcol("CHAN_WIDTH").flatten()[self.ChanSlice]
+        self.ChanWidth=ta_spectral.getcol('CHAN_WIDTH')[:,self.ChanSlice]
         if chan_freq.shape[0]>len(self.ListSPW):
             print ModColor.Str("  ====================== >> More SPW in headers, modifying that error....")
             chan_freq=chan_freq[np.array(self.ListSPW),:]
             reffreq=reffreq[np.array(self.ListSPW)]
             
-
+        
         T.timeit()
 
         wavelength=299792456./reffreq
@@ -695,7 +765,7 @@ class ClassMS():
         self.wavelength_chan=wavelength_chan
         self.rac=rarad
         self.decc=decrad
-        self.nbl=nbl
+        #self.nbl=nbl
         self.StrRA  = rad2hmsdms(self.rarad,Type="ra").replace(" ",":")
         self.StrDEC = rad2hmsdms(self.decrad,Type="dec").replace(" ",".")
 
@@ -789,7 +859,7 @@ class ClassMS():
     def SaveVis(self,vis=None,Col="CORRECTED_DATA",spw=0,DoPrint=True):
         if vis==None:
             vis=self.data
-        if DoPrint: print>>log, "Writting data in column %s"%ModColor.Str(Col,col="green")
+        if DoPrint: print>>log, "Writing data in column %s"%ModColor.Str(Col,col="green")
 
         print "Givemain"
         table_all=self.GiveMainTable(readonly=False)
@@ -1018,6 +1088,7 @@ class ClassMS():
         #self.PutNewCol("MODEL_DATA")
 
     def AddUVW_dt(self):
+        print>>log,"Adding uvw speed info to main table: %s"%self.MSName
         print>>log,"Compute UVW speed column"
         MSName=self.MSName
         MS=self
@@ -1051,6 +1122,7 @@ class ClassMS():
                 C0=((A0==ant0)&(A1==ant1))
                 C1=((A1==ant0)&(A0==ant1))
                 ind=np.where(C0|C1)[0]
+                if len(ind)==0: continue # e.g. if antenna missing
                 UVWs=UVW[ind]
                 timess=times[ind]
                 dtimess=timess[1::]-timess[0:-1]
@@ -1061,7 +1133,7 @@ class ClassMS():
             pBAR.render(intPercent, '%4i/%i' % (ant0+1, na))
                     
     
-        print>>log,"Writting in column UVWDT"
+        print>>log,"Writing in column UVWDT"
         t.putcol("UVWDT",UVW_dt)
         t.close()
     

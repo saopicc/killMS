@@ -20,11 +20,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 #!/usr/bin/env python
 #turtles
+
+import sys,os
+if "PYTHONPATH_FIRST" in os.environ.keys() and int(os.environ["PYTHONPATH_FIRST"]):
+    sys.path = os.environ["PYTHONPATH"].split(":") + sys.path
+import traceback
+
 import optparse
 import sys
 import os
 # hack to allow 'from killMS... import...'
-sys.path.remove(os.path.dirname(os.path.abspath(__file__)))
+#sys.path.remove(os.path.dirname(os.path.abspath(__file__)))
 from killMS.Other import MyPickle
 from killMS.Other import logo
 from killMS.Other import ModColor
@@ -35,13 +41,29 @@ from killMS.Parset import MyOptParse
 import numpy as np
 import DDFacet.Other.MyPickle
 
+# # ##############################
+# # Catch numpy warning
+# np.seterr(all='raise')
+# import warnings
+# warnings.filterwarnings('error')
+# #with warnings.catch_warnings():
+# #    warnings.filterwarnings('error')
+# # ##############################
 
+# # ##############################
+# # Catch numpy warning
+# np.seterr(all='raise')
+# import warnings
+# warnings.filterwarnings('error')
+# #with warnings.catch_warnings():
+# #    warnings.filterwarnings('error')
+# # ##############################
 
 # log
 log=MyLogger.getLogger("killMS")
 MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
 
-#sys.path=[name for name in sys.path if not(("pyrap" in name)&("/usr/local/lib/" in name))]
+
 from pyrap.tables import table
 # test
 SaveFile="last_killMS.obj"
@@ -128,6 +150,7 @@ def read_options():
     OP.add_option('invert',help='Invert the selected sources to kill')
     OP.add_option('Decorrelation',type="str",help=' . Default is %default')
     OP.add_option('FreeFullSub',type="int",help=' . Default is %default')
+    OP.add_option('SkyModelCol',type="str",help=' . Default is %default')
 
 
     OP.OptionGroup("* Sky image related options","ImageSkyModel")
@@ -142,9 +165,11 @@ def read_options():
     OP.add_option('MinFacetSize')
     OP.add_option('DDFCacheDir')
     OP.add_option('RemoveDDFCache')
+    OP.add_option('FilterNegComp')
 
     OP.OptionGroup("* Data Selection","DataSelection")
     OP.add_option('UVMinMax',help='Baseline length selection in km. For example UVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default')
+    OP.add_option('ChanSlice',type="str",help='Channel selection option. Default is %default')
     OP.add_option('FlagAnts',type="str",help='FlagAntenna patern. Default is %default')
     OP.add_option('DistMaxToCore',type="float",help='Maximum distance to core in km. Default is %default')
     OP.add_option('FillFactor',type="float")
@@ -157,6 +182,12 @@ def read_options():
     OP.add_option('DtBeamMin',type="float",help='Estimate the beam every this interval [in minutes]. Default is %default')
     OP.add_option('CenterNorm',type="str",help='Normalise the beam at the field center. Default is %default')
     OP.add_option('NChanBeamPerMS',type="int",help='Number of channel in the Beam Jones matrix. Default is %default')
+    OP.add_option('FITSParAngleIncDeg',type="float",help='Estimate the beam every this PA change [in deg]. Default is %default')
+    OP.add_option('FITSFile',type="str",help='FITS beam mode filename template. Default is %default')
+    OP.add_option('FITSLAxis',type="str",help='L axis of FITS beam. Default is %default')
+    OP.add_option('FITSMAxis',type="str",help='L axis of FITS beam. Default is %default')
+    OP.add_option('FITSFeed',type="str",help='FITS feed. xy or rl or None to take from MS. Default is %default')
+    OP.add_option('FITSVerbosity',type="int",help='Verbosity of debug messages. Default is %default')
 
     OP.OptionGroup("* PreApply killMS Solutions","PreApply")
     OP.add_option('PreApplySols',type="str",help='Pre-apply killMS solutions in the predict step. Has to be a list. Default is %default')
@@ -185,9 +216,14 @@ def read_options():
     OP.add_option('ApplyMode',type="str",help='Subtract selected sources. ')
     OP.add_option('ClipMethod',type="str",help='Clip data in the IMAGING_WEIGHT column. Can be set to Resid, DDEResid or ResidAnt . Default is %default')
     OP.add_option('OutSolsName',type="str",help='If specified will save the estimated solutions in this file. Default is %default')
-    OP.add_option('ApplyCal',type="int",help='Apply direction averaged gains to residual data in the mentioned direction. \
+    OP.add_option('ApplyToDir',type="int",help='Apply direction averaged gains to residual data in the mentioned direction. \
     If ApplyCal=-1 takes the mean gain over directions. -2 if off. Default is %default')
+    OP.add_option('MergeBeamToAppliedSol',type="int",help='Use the beam in applied solution. Default is %default')
+    OP.add_option('SkipExistingSols',type="int",help='Skipping existing solutions if they exist. Default is %default')
+    OP.add_option('SolsDir',type="str",help='Directory in which to save the solutions. Default is %default')
     
+
+
     OP.OptionGroup("* Solver options","Solvers")
     OP.add_option('SolverType',help='Name of the solver to use (CohJones/KAFCA)')
     OP.add_option('PrecisionDot',help='Dot product Precision (S/D). Default is %default.',type="str")
@@ -213,6 +249,8 @@ def read_options():
     OP.add_option('PowerSmooth',type="float",help='When an antenna has missing baselines (like when using UVcuts) underweight its Q matrix. Default is %default') 
     OP.add_option('evPStep',type="int",help='Start calculation evP every evP_Step after that step. Default is %default')
     OP.add_option('evPStepStart',type="int",help='Calculate (I-KJ) matrix every evP_Step steps. Default is %default')
+    OP.add_option('EvolutionSolFile',type="str",help='Evolution solution file. Default is %default')
+    
     
 
     OP.Finalise()
@@ -242,10 +280,11 @@ def main(OP=None,MSName=None):
         
     options=OP.GiveOptionObject()
 
+
     #IdSharedMem=str(int(np.random.rand(1)[0]*100000))+"."
     global IdSharedMem
     IdSharedMem=str(int(os.getpid()))+"."
-    DoApplyCal=(options.ApplyCal!=-2)
+    DoApplyCal=(options.ApplyToDir!=-2)
     if type(options.ClipMethod)!=list: stop
 
     ReWeight=(len(options.ClipMethod)>0)
@@ -307,14 +346,30 @@ def main(OP=None,MSName=None):
         SolsName=options.OutSolsName
 
 
-    ParsetName="%skillMS.%s.sols.parset"%(reformat.reformat(options.MSName),SolsName)
+    if options.SolsDir is None:
+        ParsetName="%skillMS.%s.sols.parset"%(reformat.reformat(options.MSName),SolsName)
+    else:
+        _MSName=reformat.reformat(options.MSName).split("/")[-2]
+        DirName="%s%s"%(reformat.reformat(options.SolsDir),_MSName)
+        if not os.path.isdir(DirName):
+            os.makedirs(DirName)
+        ParsetName="%s/killMS.%s.sols.parset"%(DirName,SolsName)
     OP.ToParset(ParsetName)
+
+
+
+
+
     APP=None
     GD=OP.DicoConfig
-    if GD["ImageSkyModel"]["BaseImageName"]=="":
-        print>>log,"Predict Mode: Catalog"
+    if GD["SkyModel"]["SkyModel"]!="":
+        print>>log,ModColor.Str("Predict Mode: Catalog")
         PredictMode="Catalog"
+    elif GD["SkyModel"]["SkyModelCol"] is not None:
+        print>>log,ModColor.Str("Predict Mode: using culumn %s"%options.SkyModelCol)
+        PredictMode="Column"
     else:
+        print>>log,ModColor.Str("Predict Mode: Image")
         PredictMode="Image"
         BaseImageName=GD["ImageSkyModel"]["BaseImageName"]
 
@@ -323,11 +378,19 @@ def main(OP=None,MSName=None):
         #     ParsetName="%s.parset"%BaseImageName
         # print>>log,"Predict Mode: Image, with Parset: %s"%ParsetName
         # GDPredict=ReadCFG.Parset(ParsetName).DicoPars
-        if options.DicoModel!="":
+
+        if options.DicoModel!="" and options.DicoModel is not None:
             FileDicoModel=options.DicoModel
         else:
             FileDicoModel="%s.DicoModel"%BaseImageName
+        print>>log,"Reading model file %s"%FileDicoModel
         GDPredict=DDFacet.Other.MyPickle.Load(FileDicoModel)["GD"]
+        
+        if not "StokesResidues" in GDPredict["Output"].keys():
+            print>>log,ModColor.Str("Seems like the DicoModel was build by an older version of DDF")
+            print>>log,ModColor.Str("   ... updating keywords")
+            GDPredict["Output"]["StokesResidues"]="I"
+
         GDPredict["Data"]["MS"]=options.MSName
         if options.DDFCacheDir!='':
             GDPredict["Cache"]["Dir"]=options.DDFCacheDir
@@ -341,6 +404,13 @@ def main(OP=None,MSName=None):
         #GDPredict["Compression"]["CompDeGridMode"]=False
         #GDPredict["Compression"]["CompDeGridMode"]=True
         GDPredict["RIME"]["ForwardMode"]="Classic"
+        GDPredict["Cache"]["CF"]=False
+
+        if options.ChanSlice is not None:
+            GDPredict["Selection"]["ChanStart"]=int(options.ChanSlice[0])
+            GDPredict["Selection"]["ChanEnd"]=int(options.ChanSlice[1])
+            GDPredict["Selection"]["ChanStep"]=int(options.ChanSlice[2])
+
         #GDPredict["Caching"]["ResetCache"]=1
         if options.MaxFacetSize:
             GDPredict["Facets"]["DiamMax"]=options.MaxFacetSize
@@ -389,6 +459,9 @@ def main(OP=None,MSName=None):
                                                      GD=GDPredict)
 
 
+        
+
+
     #SM.SourceCat.I*=1000**2
     VS=ClassVisServer.ClassVisServer(options.MSName,ColName=ReadColName,
                                      TVisSizeMin=dt,
@@ -404,11 +477,13 @@ def main(OP=None,MSName=None):
     print VS.MS
     if not(WriteColName in VS.MS.ColNames):
         print>>log, "Column %s not in MS "%WriteColName
-        exit()
+        VS.MS.AddCol(WriteColName,LikeCol="DATA")
+        #exit()
     if not(ReadColName in VS.MS.ColNames):
         print>>log, "Column %s not in MS "%ReadColName
         exit()
 
+    VS_PredictCol=None
     if PredictMode=="Catalog":
         SM=ClassSM.ClassSM(options.SkyModel,
                            killdirs=kills,
@@ -416,8 +491,7 @@ def main(OP=None,MSName=None):
         SM.Type="Catalog"
         Alpha=SM.SourceCat.alpha
         Alpha[np.isnan(Alpha)]=0
-
-    else:
+    elif PredictMode=="Image":
         from killMS.Predict import ClassImageSM2 as ClassImageSM
         #from killMS.Predict import ClassImageSM3 as ClassImageSM
         
@@ -427,6 +501,29 @@ def main(OP=None,MSName=None):
         VS.setGridProps(PreparePredict.FacetMachine.Cell,None)#PreparePredict.FacetMachine.NpixPaddedFacet)
         FacetMachine=PreparePredict.FacetMachine
         VS.setFOV(FacetMachine.OutImShape,FacetMachine.PaddedGridShape,FacetMachine.FacetShape,FacetMachine.CellSizeRad)
+    elif PredictMode=="Column":
+        VS_PredictCol=ClassVisServer.ClassVisServer(options.MSName,ColName=GD["SkyModel"]["SkyModelCol"],
+                                                    TVisSizeMin=dt,
+                                                    DicoSelectOptions=DicoSelectOptions,
+                                                    TChunkSize=TChunk,IdSharedMem=IdSharedMem+"ColPredict.",
+                                                    NCPU=NCPU,
+                                                    Weighting=options.Weighting,
+                                                    Robust=options.Robust,
+                                                    WeightUVMinMax=options.WeightUVMinMax,
+                                                    WTUV=options.WTUV,
+                                                    GD=GD)
+        class cSM:
+            def __init__(self, **kwargs):
+                self.__dict__.update(kwargs)
+        ClusterCat=np.zeros((1,),dtype=[('Name', 'S200'), ('ra', '<f8'), ('dec', '<f8'), ('SumI', '<f8'), ('Cluster', '<i8')]).view(np.recarray)
+        ClusterCat.ra=VS.MS.rac
+        ClusterCat.dec=VS.MS.decc
+        ClusterCat.SumI=1.
+        ClusterCat.Cluster=0
+        SM=cSM(Type="Column",NDir=1,ClusterCat=ClusterCat)
+        VS_PredictCol.setSM(SM)
+        VS_PredictCol.CalcWeigths()
+
     VS.setSM(SM)
     VS.CalcWeigths()
         
@@ -463,6 +560,7 @@ def main(OP=None,MSName=None):
                                 DoPBar=options.DoBar,
                                 IdSharedMem=IdSharedMem,
                                 ConfigJacobianAntenna=ConfigJacobianAntenna,
+                                VS_PredictCol=VS_PredictCol,
                                 GD=GD)
     
     
@@ -472,9 +570,9 @@ def main(OP=None,MSName=None):
     PM2=None#ClassPredict_orig(NCPU=NCPU,IdMemShared=IdSharedMem)
 
 
-    Solver.InitMeanBeam()
     if (options.SolverType=="KAFCA"):
 
+        Solver.InitMeanBeam()
         if (options.InitLM):
             rms,SolverInit_G=GiveNoise(options,
                                        DicoSelectOptions,
@@ -520,20 +618,25 @@ def main(OP=None,MSName=None):
     # warnings.filterwarnings('error')
     # # ##############################
 
+    iChunk=0
 
     while True:
 
         Load=VS.LoadNextVisChunk()
+        if SM.Type=="Column":
+            VS_PredictCol.LoadNextVisChunk()
         if Load=="EndOfObservation":
             break
 
-
+        iChunk+=1
+        #if iChunk<6: continue
         if options.ExtSols=="":
             SaveSols=True
             if options.SubOnly==0:
                 if options.Parallel:
-                    #Solver.doNextTimeSolve_Parallel(Parallel=True)
                     Solver.doNextTimeSolve_Parallel(Parallel=True)
+                    # Solver.doNextTimeSolve_Parallel(Parallel=True,
+                    #                                 SkipMode=True)
                 else:
                     #Solver.doNextTimeSolve_Parallel(SkipMode=True)
                     Solver.doNextTimeSolve()#SkipMode=True)
@@ -546,7 +649,14 @@ def main(OP=None,MSName=None):
                 VS.MS.AddCol(FullPredictColName)
                 PredictData=NpShared.GiveArray("%s%s"%(IdSharedMem,ArrayName))
                 t=VS.MS.GiveMainTable(readonly=False)#table(VS.MS.MSName,readonly=False,ack=False)
-                t.putcol(FullPredictColName,VS.MS.ToOrigFreqOrder(PredictData),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                nrow_ThisChunk=Solver.VS.MS.ROW1-Solver.VS.MS.ROW0
+                d=np.zeros((nrow_ThisChunk,VS.MS.NChanOrig,4),PredictData.dtype)
+                d[:,VS.MS.ChanSlice,:]=VS.MS.ToOrigFreqOrder(PredictData)
+                if Solver.VS.MS.NPolOrig==2:
+                    dc=d[:,:,0::3]
+                else:
+                    dc=d
+                t.putcol(FullPredictColName,dc,Solver.VS.MS.ROW0,nrow_ThisChunk)
                 t.close()
 
 
@@ -568,7 +678,12 @@ def main(OP=None,MSName=None):
                 Solver.VS.ThisDataChunk["data"]-=PredictData
                 print>>log, "  save visibilities in %s column"%WriteColName
                 t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
-                t.putcol(WriteColName,VS.MS.ToOrigFreqOrder(Solver.VS.MS.data),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                d=VS.MS.ToOrigFreqOrder(Solver.VS.MS.data)
+                if Solver.VS.MS.NPolOrig==2:
+                    dc=d[:,:,0::3]
+                else:
+                    dc=d
+                t.putcol(WriteColName,dc,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
 
@@ -591,7 +706,16 @@ def main(OP=None,MSName=None):
             SolsFreqDomain=VS.SolsFreqDomains
             if SaveSols:
 
-                FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.MSName),SolsName)
+
+                if options.SolsDir is None:
+                    FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.MSName),SolsName)
+                else:
+                    _MSName=reformat.reformat(options.MSName).split("/")[-2]
+                    DirName=os.path.abspath("%s%s"%(reformat.reformat(options.SolsDir),_MSName))
+                    if not os.path.isdir(DirName):
+                        os.makedirs(DirName)
+                    FileName="%s/killMS.%s.sols.npz"%(DirName,SolsName)
+                    
 
                 print>>log, "Save Solutions in file: %s"%FileName
                 Sols=Solver.GiveSols()
@@ -613,8 +737,11 @@ def main(OP=None,MSName=None):
                     ClusterCat=PreparePredict.ClusterCatOrig
 
                 StationNames=np.array(Solver.VS.MS.StationNames)
+
                 
                 np.savez(FileName,
+                         MSName=os.path.abspath(VS.MS.MSName),
+                         MSNameTime0=VS.MS.Time0,
                          Sols=SolsSave,
                          StationNames=StationNames,
                          SkyModel=ClusterCat,
@@ -632,7 +759,19 @@ def main(OP=None,MSName=None):
 
 
         else:
-            DicoLoad=np.load(options.ExtSols)
+
+            ExtSolsName=options.ExtSols
+            if options.SolsDir is None:
+                FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.MSName),ExtSolsName)
+            else:
+                _MSName=reformat.reformat(options.MSName).split("/")[-2]
+                DirName=os.path.abspath("%s%s"%(reformat.reformat(options.SolsDir),_MSName))
+                if not os.path.isdir(DirName):
+                    os.makedirs(DirName)
+                FileName="%s/killMS.%s.sols.npz"%(DirName,ExtSolsName)
+
+            print>>log,"Loading external solution file: %s"%FileName
+            DicoLoad=np.load(FileName)
             Sols=DicoLoad["Sols"]
             Sols=Sols.view(np.recarray)
             SolsFreqDomain=DicoLoad["FreqDomains"]
@@ -662,7 +801,10 @@ def main(OP=None,MSName=None):
             freqs=Solver.VS.ThisDataChunk["freqs"]
             DomainMachine=ClassJonesDomains.ClassJonesDomains()
 
-            if options.BeamModel==None:
+
+            JonesMerged=Jones
+
+            if options.BeamModel==None or not options.MergeBeamToAppliedSol:
                 JonesMerged=Jones
             else:
                 Jones["tm"]=(Jones["t0"]+Jones["t1"])/2.
@@ -670,7 +812,6 @@ def main(OP=None,MSName=None):
                 PreApplyJones["tm"]=(PreApplyJones["t0"]+PreApplyJones["t1"])/2.
                 DomainsMachine=ClassJonesDomains.ClassJonesDomains()
                 JonesMerged=DomainsMachine.MergeJones(Jones,PreApplyJones)
-                
                 DicoJonesMatrices=JonesMerged
 
 
@@ -729,9 +870,12 @@ def main(OP=None,MSName=None):
                 print>>log, "  Writing in IMAGING_WEIGHT column "
                 VS.MS.AddCol("IMAGING_WEIGHT",ColDesc="IMAGING_WEIGHT")
                 t=Solver.VS.MS.GiveMainTable(readonly=False) # table(Solver.VS.MS.MSName,readonly=False,ack=False)
-                t.putcol("IMAGING_WEIGHT",VS.MS.ToOrigFreqOrder(Weights),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                WAllChans=t.getcol("IMAGING_WEIGHT",Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                WAllChans[:,Solver.VS.MS.ChanSlice]=VS.MS.ToOrigFreqOrder(Weights)
+                t.putcol("IMAGING_WEIGHT",WAllChans,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
+                
 
 
             if "ResidAnt" in options.ClipMethod and options.SubOnly==0:
@@ -747,9 +891,29 @@ def main(OP=None,MSName=None):
                 print>>log, "  Writing in IMAGING_WEIGHT column "
                 VS.MS.AddCol("IMAGING_WEIGHT",ColDesc="IMAGING_WEIGHT")
                 t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
-                t.putcol("IMAGING_WEIGHT",VS.MS.ToOrigFreqOrder(Weights),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                WAllChans=t.getcol("IMAGING_WEIGHT",Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                WAllChans[:,Solver.VS.MS.ChanSlice]=VS.MS.ToOrigFreqOrder(Weights)
+
+                Med=np.median(WAllChans)
+                Sig=1.4826*np.median(np.abs(WAllChans-Med))
+                Cut=Med+5*Sig
+                WAllChans[WAllChans>Cut]=Cut
+                
+                t.putcol("IMAGING_WEIGHT",WAllChans,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
+                ID=Solver.VS.MS.ROW0
+                if options.SolsDir is None:
+                    FileName="%skillMS.%s.Weights.%i.npy"%(reformat.reformat(options.MSName),SolsName,ID)
+                else:
+                    _MSName=reformat.reformat(options.MSName).split("/")[-2]
+                    DirName=os.path.abspath("%s%s"%(reformat.reformat(options.SolsDir),_MSName))
+                    if not os.path.isdir(DirName):
+                        os.makedirs(DirName)
+                    FileName="%s/killMS.%s.Weights.%i.npy"%(DirName,SolsName,ID)
+                print>>log, "  Saving weights in file %s"%FileName
+                np.save(FileName,WAllChans)
+                
             if DoSubstract:
                 print>>log, ModColor.Str("Subtract sources ... ",col="green")
                 if options.SubOnly==0:
@@ -783,7 +947,7 @@ def main(OP=None,MSName=None):
                 SM.RestoreCat()
 
             if DoApplyCal:
-                print>>log, ModColor.Str("Apply calibration in direction: %i"%options.ApplyCal,col="green")
+                print>>log, ModColor.Str("Apply calibration in direction: %i"%options.ApplyToDir,col="green")
                 G=JonesMerged["Jones"]
                 GH=JonesMerged["JonesH"]
                 if not("A" in options.ApplyMode):
@@ -791,9 +955,7 @@ def main(OP=None,MSName=None):
                     gabs[gabs==0]=1.
                     G/=gabs
                     GH/=gabs
-
-
-                PM.ApplyCal(Solver.VS.ThisDataChunk,JonesMerged,options.ApplyCal)
+                PM.ApplyCal(Solver.VS.ThisDataChunk,JonesMerged,options.ApplyToDir)
 
             Solver.VS.MS.data=Solver.VS.ThisDataChunk["data"]
             Solver.VS.MS.flags_all=Solver.VS.ThisDataChunk["flags"]
@@ -802,15 +964,21 @@ def main(OP=None,MSName=None):
             if (DoSubstract|DoApplyCal):
                 print>>log, "Save visibilities in %s column"%WriteColName
                 t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
-                t.putcol(WriteColName,VS.MS.ToOrigFreqOrder(Solver.VS.ThisDataChunk["data"]),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                nrow_ThisChunk=Solver.VS.MS.ROW1-Solver.VS.MS.ROW0
+                d=np.zeros((nrow_ThisChunk,VS.MS.NChanOrig,4),Solver.VS.ThisDataChunk["data"].dtype)
+                d[:,VS.MS.ChanSlice,:]=VS.MS.ToOrigFreqOrder(Solver.VS.ThisDataChunk["data"])
+
+                if Solver.VS.MS.NPolOrig==2:
+                    dc=d[:,:,0::3]
+                else:
+                    dc=d
+                t.putcol(WriteColName,dc,Solver.VS.MS.ROW0,nrow_ThisChunk)
                 #t.putcol("FLAG",VS.MS.ToOrigFreqOrder(Solver.VS.MS.flags_all),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
                 t.close()
 
                 
-
-
     if APP is not None:
-        APP.terminate()
+        #APP.terminate()
         APP.shutdown()
         del(APP)
         Multiprocessing.cleanupShm()
@@ -928,10 +1096,28 @@ def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2,ConfigJacobianAnte
     return rms,SolverInit.G
 
 
+def _exc_handler(type, value, tb):
+    if hasattr(sys, 'ps1') or not sys.stderr.isatty() or type is SyntaxError:
+    # we are in interactive mode or we don't have a tty-like
+    # device, so we call the default hook
+        sys.__excepthook__(type, value, tb)
+    else:
+        import traceback, pdb
+        # we are NOT in interactive mode, print the exception...
+        traceback.print_exception(type, value, tb)
+        print
+        # ...then start the debugger in post-mortem mode.
+        # pdb.pm() # deprecated
+        pdb.post_mortem(tb) # more "modern"
+
+
+    sys.excepthook = _exc_handler
+
 
 if __name__=="__main__":
     #os.system('clear')
     logo.print_logo()
+    sys.excepthook = _exc_handler
 
 
     ParsetFile=sys.argv[1]
@@ -976,13 +1162,37 @@ if __name__=="__main__":
     try:
         if type(lMS)==list:
             for MSName in lMS:
-                ss="killMS.py %s --MSName=%s"%(BaseParset,MSName)
+
+                if options.SkipExistingSols:
+                    SolsName=options.SolverType
+                    if options.OutSolsName!="":
+                        SolsName=options.OutSolsName
+                    # FileName="%skillMS.%s.sols.npz"%(reformat.reformat(MSName),SolsName)
+
+                    if options.SolsDir is None:
+                        FileName="%skillMS.%s.sols.npz"%(reformat.reformat(MSName),SolsName)
+                    else:
+                        _MSName=reformat.reformat(MSName).split("/")[-2]
+                        DirName=os.path.abspath("%s%s"%(reformat.reformat(options.SolsDir),_MSName))
+                        if not os.path.isdir(DirName):
+                            os.makedirs(DirName)
+                        FileName="%s/killMS.%s.sols.npz"%(DirName,SolsName)
+
+                    print>>log,"Checking %s"%FileName
+                    if os.path.isfile(FileName):
+                        print>>log,ModColor.Str("Solution file %s exist"%FileName)
+                        print>>log,ModColor.Str("   SKIPPING")
+                        continue
+
+                ss="kMS.py %s --MSName=%s"%(BaseParset,MSName)
                 print>>log,"Running %s"%ss
                 os.system(ss)
                 if options.RemoveDDFCache:
                     os.system("rm -rf %s*ddfcache"%MSName)
         else:
             main(OP=OP,MSName=MSName)
+                
     except:
+        print>>log, traceback.format_exc()
         NpShared.DelAll(IdSharedMem)
         raise

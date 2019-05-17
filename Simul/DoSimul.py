@@ -77,11 +77,13 @@ def main(options=None):
     #ll=sorted(glob.glob("SimulHighRes.MS_p0"))
     #ll=sorted(glob.glob("SimulLowRes.MS_p0"))
     
-    CS=ClassSimul(ll[0],SMName)
-    Sols=CS.GiveSols()
+    CS0=ClassSimul(ll[0],SMName)
+    Sols=CS0.GiveSols()
+    
     for l in ll:
-        # CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
+        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
         CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
+        CS.FreqDomains=CS0.FreqDomains
         CS.DoSimul()
 
 class ClassSimul():
@@ -99,6 +101,14 @@ class ClassSimul():
         MS=self.MS
         SM=self.SM
         VS=self.VS
+        nuc=self.VS.MS.ChanFreq.ravel()
+        dnu=self.VS.MS.ChanWidth.ravel()[0]
+        nu0=nuc-dnu/2.
+        nu1=nuc+dnu/2.
+        self.FreqDomains=np.zeros((nuc.size,2),np.float64)
+        self.FreqDomains[:,0]=nu0
+        self.FreqDomains[:,1]=nu1
+
         ApplyBeam=self.ApplyBeam
         na=MS.na
         nd=SM.NDir
@@ -212,14 +222,17 @@ class ClassSimul():
 
 
 
-        # Equalise in time
-        for itime in range(NSols):
-            Sols.G[itime,:,:,:,0,0]=Sols.G[0,:,:,:,0,0]
-            Sols.G[itime,:,:,:,1,1]=Sols.G[0,:,:,:,1,1]
+        # # Equalise in time
+        # for itime in range(NSols):
+        #     Sols.G[itime,:,:,:,0,0]=Sols.G[0,:,:,:,0,0]
+        #     Sols.G[itime,:,:,:,1,1]=Sols.G[0,:,:,:,1,1]
 
         # equalise in freq
         for ich in range(1,nch):
             Sols.G[:,ich,:,:,:,:]=Sols.G[:,0,:,:,:,:]
+        #nu0=np.min(self.FreqDomains)
+        #nu1=np.max(self.FreqDomains)
+        #self.FreqDomains=np.array([[nu0,nu1]])
 
         # make scalar
         Sols.G[:,:,:,:,1,1]=Sols.G[:,:,:,:,0,0]
@@ -229,13 +242,14 @@ class ClassSimul():
         Sols.G[:,:,:,:,0,0]=1.
         Sols.G[:,:,:,:,1,1]=1.
 
+
         # # Sols.G[:,:,:,1:,0,0]=0.01
         # # Sols.G[:,:,:,1:,1,1]=0.01
 
         return Sols
 
     def GiveJones(self):
-        if self.Sols==None:
+        if self.Sols is None:
             Sols=self.GiveSols()
         else:
             Sols=self.Sols
@@ -347,7 +361,7 @@ class ClassSimul():
     
         Jones["Beam"]=G
         Jones["BeamH"]=ModLinAlg.BatchH(G)
-        if self.ChanMap==None:
+        if self.ChanMap is None:
             self.ChanMap=np.zeros((VS.MS.NSPWChan,),np.int32).tolist()
         
         Jones["ChanMap"]=self.ChanMap
@@ -390,7 +404,7 @@ class ClassSimul():
 
     def DoSimul(self):
     
-        Noise=.01
+        Noise=0.
         MS=self.MS
         SM=self.SM
         VS=self.VS
@@ -412,9 +426,25 @@ class ClassSimul():
     
         print>>log, ModColor.Str("Substract sources ... ",col="green")
         #SM.SelectSubCat(SM.SourceCat.kill==0)
+        
+        t0=np.mean(VS.MS.times_all)
+        dt=VS.MS.dt
+        
+        def VariableFunc(t,nu):
+            f=np.exp(-(t-t0)/(3*dt))
+            if f>1:
+                return 0.
+            else:
+                return f
+            
+        
+        # PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones,Noise=Noise,
+        #                                        VariableFunc=VariableFunc)
 
-
-        PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones,Noise=Noise)
+        
+        PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones,Noise=Noise,
+                                               VariableFunc=None)
+        print Jones["Beam"].ravel()[0]
         # PredictData=PM5.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones)
 
         # import pylab
@@ -444,7 +474,8 @@ class ClassSimul():
     
         #VS.MS.SaveVis(Col="DATA")
         #VS.MS.SaveVis(Col="CORRECTED_DATA")
-        VS.MS.SaveVis(Col="CORRECTED_DATA_BACKUP")
+        #VS.MS.SaveVis(Col="CORRECTED_DATA_BACKUP")
+        VS.MS.SaveVis(Col="CORRECTED_DATA")
 
         # t=table(self.MSName,readonly=False)
         # f=t.getcol("FLAG")
@@ -463,7 +494,7 @@ class ClassSimul():
         Sols=self.Sols
         FileName="Simul.npz"
         np.savez(FileName,Sols=Sols,StationNames=MS.StationNames,SkyModel=SM.ClusterCat,ClusterCat=SM.ClusterCat,
-                 BeamTimes=np.array([],np.float64))
+                 BeamTimes=np.array([],np.float64),FreqDomains=self.FreqDomains)
         #self.Plot()
         
     

@@ -35,7 +35,7 @@ import ClassWeighting
 from killMS.Other import reformat
 import os
 from killMS.Other.ModChanEquidistant import IsChanEquidistant
-from killMS.Data import ClassJones
+from killMS.Data import ClassReCluster
 #import MergeJones
 from killMS.Data import ClassJonesDomains
 #from DDFacet.Imager import ClassWeighting as ClassWeightingDDF
@@ -98,7 +98,7 @@ class ClassVisServer():
 
             if self.GD!=None:
                 if self.GD["PreApply"]["PreApplySols"][0]!="":
-                    CJ=ClassJones.ClassJones(self.GD)
+                    CJ=ClassReCluster.ClassReCluster(self.GD)
                     CJ.ReClusterSkyModel(self.SM,self.MS.MSName)
             
 
@@ -117,12 +117,13 @@ class ClassVisServer():
         ReadUVWDT=False
         if self.GD!=None:
             kwargs["Field"]=self.GD["DataSelection"]["FieldID"]
+            kwargs["ChanSlice"]=self.GD["DataSelection"]["ChanSlice"]
             kwargs["DDID"]=self.GD["DataSelection"]["DDID"]
             DecorrMode=self.GD["SkyModel"]["Decorrelation"]
             ReadUVWDT=(("T" in DecorrMode) or ("F" in DecorrMode))
-
+            
         self.ReadUVWDT=ReadUVWDT
-        MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False,ReadUVWDT=ReadUVWDT,**kwargs)
+        MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False,ReadUVWDT=ReadUVWDT,GD=self.GD,**kwargs)
 
         TimesInt=np.arange(0,MS.DTh,self.TMemChunkSize).tolist()
         if not(MS.DTh+1./3600 in TimesInt): TimesInt.append(MS.DTh+1./3600)
@@ -147,8 +148,11 @@ class ClassVisServer():
         FreqDomains=np.array(FreqDomains)
         self.SolsFreqDomains=FreqDomains
         self.NChanJones=NChanJones
+        
+
 
         MeanFreqJonesChan=(FreqDomains[:,0]+FreqDomains[:,1])/2.
+        print>>log,"Center of frequency domains [MHz]: %s"%str((MeanFreqJonesChan/1e6).tolist())
         DFreq=np.abs(self.MS.ChanFreq.reshape((self.MS.NSPWChan,1))-MeanFreqJonesChan.reshape((1,NChanJones)))
         self.VisToSolsChanMapping=np.argmin(DFreq,axis=1)
         print>>log,("VisToSolsChanMapping %s"%str(self.VisToSolsChanMapping))
@@ -456,7 +460,7 @@ class ClassVisServer():
 
 
     def giveDataSizeAntenna(self):
-        t=table(self.MS.MSName)
+        t=table(self.MS.MSName,ack=False)
         uvw=t.getcol("UVW")
         flags=t.getcol("FLAG")
         A0,A1=t.getcol("ANTENNA1"),t.getcol("ANTENNA2")
@@ -465,6 +469,10 @@ class ClassVisServer():
         Field="UVRangeKm"
         self.fracNVisPerAnt=np.ones_like(NVisPerAnt)
         NVis=flags[flags==0].size
+        if NVis==0:
+            print>>log, ModColor.Str("Hummm - All the data is flagged!!!")
+            return
+        
         if self.DicoSelectOptions[Field] is not None:
             d0,d1=self.DicoSelectOptions[Field]
             
@@ -486,6 +494,19 @@ class ClassVisServer():
             self.fracNVisPerAnt=NVisPerAnt/np.max(NVisPerAnt)
             print>>log,"Fraction of data per antenna for covariance estimate: %s"%str(self.fracNVisPerAnt.tolist())
 
+
+            u,v,w=uvw.T
+            d=np.sqrt(u**2+v**2)
+            Compactness=np.zeros((self.MS.na,),np.float32)
+            for iAnt in range(self.MS.na):
+                ind=np.where((A0==iAnt)|(A1==iAnt))[0]
+                Compactness[iAnt]=np.mean(d[ind])
+            self.Compactness=Compactness/np.max(Compactness)
+            print>>log,"Compactness: %s"%str(self.Compactness.tolist())
+
+
+
+            
             NVisSel=flags[flags==0].size
             print>>log,"Total fraction of remaining data after uv-cut: %5.2f %%"%(100*NVisSel/float(NVis))
 
@@ -499,7 +520,7 @@ class ClassVisServer():
         iT0,iT1=self.CurrentMemTimeChunk,self.CurrentMemTimeChunk+1
         self.CurrentMemTimeChunk+=1
 
-        print>>log, "Reading next data chunk in [%5.2f, %5.2f] hours"%(self.TimesInt[iT0],self.TimesInt[iT1])
+        print>>log, "Reading next data chunk in [%5.2f, %5.2f] hours (column %s)"%(self.TimesInt[iT0],self.TimesInt[iT1],MS.ColName)
         self.DATA_CHUNK=MS.ReadData(t0=self.TimesInt[iT0],t1=self.TimesInt[iT1],ReadWeight=True)
 
 
@@ -627,7 +648,10 @@ class ClassVisServer():
                 ind=np.where((MS.A0==A)|(MS.A1==A))[0]
                 fA=fA_all[ind].ravel()
                 nf=np.count_nonzero(fA)
-                Frac=nf/float(fA.size)
+                if fA.size==0:
+                    Frac=1.0
+                else:
+                    Frac=nf/float(fA.size)
                 if Frac>self.ThresholdFlag:
                     print>>log, "Taking antenna #%2.2i[%s] out of the solve (~%4.1f%% of out-grid data, more than %4.1f%%)"%\
                         (A,MS.StationNames[A],Frac*100,self.ThresholdFlag*100)
@@ -893,8 +917,76 @@ class ClassVisServer():
 
                     DoPreApplyJones=True
                     print>>log, "       .... done Update LOFAR beam "
+                elif self.GD["Beam"]["BeamModel"] == "FITS":
+                    RA, DEC = self.SM.ClusterCat.ra, self.SM.ClusterCat.dec
+                    NDir = RA.size
+                    self.DtBeamMin = self.GD["Beam"]["DtBeamMin"]
 
-        
+                    from DDFacet.Data.ClassFITSBeam import ClassFITSBeam
+                    # make fake opts dict (DDFacet clss expects slightly different option names)
+                    opts = self.GD["Beam"]
+                    opts["NBand"] = opts["NChanBeamPerMS"]
+                    fitsbeam = ClassFITSBeam(self.MS, opts)
+
+                    TimesBeam = np.array(fitsbeam.getBeamSampleTimes(times))
+                    FreqDomains = fitsbeam.getFreqDomains()
+                    nfreq_dom = FreqDomains.shape[0]
+
+                    print>> log, "Update FITS beam in %i dirs, %i times, %i freqs ... " % (
+                        NDir, len(TimesBeam), nfreq_dom)
+
+                    T0s = TimesBeam[:-1]
+                    T1s = TimesBeam[1:]
+                    Tm = (T0s + T1s) / 2.
+
+                    self.BeamTimes = TimesBeam
+
+                    Beam = np.zeros((Tm.size, NDir, self.MS.na, FreqDomains.shape[0], 2, 2), np.complex64)
+                    for itime, tm in enumerate(Tm):
+                        Beam[itime] = fitsbeam.evaluateBeam(tm, RA, DEC)
+
+                    DicoBeam = {}
+                    DicoBeam["t0"] = T0s
+                    DicoBeam["t1"] = T1s
+                    DicoBeam["tm"] = Tm
+                    DicoBeam["Jones"] = Beam
+                    DicoBeam["FreqDomain"] = FreqDomains
+
+                    ###### Normalise
+                    rac, decc = self.MS.radec
+                    if self.GD["Beam"]["CenterNorm"] == 1:
+
+                        Beam = DicoBeam["Jones"]
+                        Beam0 = np.zeros((Tm.size, 1, self.MS.na, nfreq_dom, 2, 2), np.complex64)
+                        for itime, tm in enumerate(Tm):
+                            Beam0[itime] = fitsbeam.evaluateBeam(tm, np.array([rac]), np.array([decc]))
+
+                        DicoBeamCenter = {}
+                        DicoBeamCenter["t0"] = T0s
+                        DicoBeamCenter["t1"] = T1s
+                        DicoBeamCenter["tm"] = Tm
+                        DicoBeamCenter["Jones"] = Beam0
+                        DicoBeamCenter["FreqDomain"] = FreqDomains
+                        Beam0inv = ModLinAlg.BatchInverse(Beam0)
+                        nt, nd, _, _, _, _ = Beam.shape
+                        Ones = np.ones((nt, nd, 1, 1, 1, 1), np.float32)
+                        Beam0inv = Beam0inv * Ones
+                        DicoBeam["Jones"] = ModLinAlg.BatchDot(Beam0inv, Beam)
+
+                    ######
+
+
+
+
+                    # nt,nd,na,nch,_,_= Beam.shape
+                    # Beam=np.mean(Beam,axis=3).reshape((nt,nd,na,1,2,2))
+
+                    # DicoBeam["ChanMap"]=np.zeros((nch))
+                    ListDicoPreApply.append(DicoBeam)
+
+                    DoPreApplyJones = True
+                    print>> log, "       .... done Update LOFAR beam "
+
             if self.GD["PreApply"]["PreApplySols"][0]!="":
                 ModeList=self.GD["PreApply"]["PreApplyMode"]
                 if ModeList==[""]: ModeList=["AP"]*len(self.GD["PreApply"]["PreApplySols"])
@@ -905,16 +997,23 @@ class ClassVisServer():
                         Method=SolFile
                         ThisMSName=reformat.reformat(os.path.abspath(self.MS.MSName),LastSlash=False)
                         SolFileLoad="%s/killMS.%s.sols.npz"%(ThisMSName,Method)
+                        if self.GD["Solutions"]["SolsDir"]:
+                            _MSName=reformat.reformat(self.MSName).split("/")[-2]
+                            DirName="%s%s"%(reformat.reformat(self.GD["Solutions"]["SolsDir"]),_MSName)
+                            SolFileLoad="%s/killMS.%s.sols.npz"%(DirName,SolFile)
                     else:
                         SolFileLoad=SolFile
 
-                    Sols=np.load(SolFileLoad)["Sols"]
-                    nt,na,nd,_,_=Sols["G"].shape
+                    S=np.load(SolFileLoad)
+                    Sols=S["Sols"]
+                    nt,nch,na,nd,_,_=Sols["G"].shape
+                    
                     DicoSols={}
                     DicoSols["t0"]=Sols["t0"]
                     DicoSols["t1"]=Sols["t1"]
                     DicoSols["tm"]=(Sols["t0"]+Sols["t1"])/2.
-                    DicoSols["Jones"]=np.swapaxes(Sols["G"],1,2).reshape((nt,nd,na,1,2,2))
+                    DicoSols["Jones"]=np.swapaxes(Sols["G"],1,3).reshape((nt,nd,na,nch,2,2))
+                    DicoSols["FreqDomain"]=S["FreqDomains"]
                     if not("A" in Mode):
                         ind=(DicoSols["Jones"]!=0.)
                         DicoSols["Jones"][ind]/=np.abs(DicoSols["Jones"][ind])

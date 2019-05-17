@@ -40,6 +40,7 @@ import os
 from DDFacet.Data import ClassVisServer
 import pprint
 from DDFacet.Imager.ModModelMachine import ClassModModelMachine
+from pyrap.tables import table
 
 class ClassImageSM():
     def __init__(self):
@@ -61,6 +62,16 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.ModelImageName="%s.model.fits"%self.BaseImageName
 
         self.VS=VS
+
+        if self.GD["CF"]["wmax"]==0:
+            print>>log,"Computing wmax from UVW column"
+            t=table(self.VS.ListMS[0].MSName,ack=False)
+            u,v,w=t.getcol("UVW").T
+            t.close()
+            self.GD["CF"]["wmax"]=np.max(np.abs(w))
+            print>>log,"  found a wmax=%f meters"%self.GD["CF"]["wmax"]
+            
+
 
         # DC=self.GD
         # MSName=DC["VisData"]["MSName"]
@@ -108,22 +119,30 @@ class ClassPreparePredict(ClassImagerDeconv):
         ModConstructor = ClassModModelMachine(self.GD)
         self.MM=ModConstructor.GiveInitialisedMMFromFile(self.FileDicoModel)
         #ModelImage0=self.MM.GiveModelImage(np.mean(self.VS.MS.ChanFreq))
-        #self.MM.CleanNegComponants(box=15,sig=1)
+
+        if self.GD["GDkMS"]["ImageSkyModel"]["FilterNegComp"]:
+            self.MM.FilterNegComponants(box=15,sig=1)
+
         if self.GD["GDkMS"]["ImageSkyModel"]["MaskImage"]!=None:
             self.MM.CleanMaskedComponants(self.GD["GDkMS"]["ImageSkyModel"]["MaskImage"])
         #self.ModelImage=self.MM.GiveModelImage(np.mean(self.VS.MS.ChanFreq))
-        ModelImage=self.MM.GiveModelImage(self.VS.FreqBandChannelsDegrid[0])
+        model_freqs=self.VS.FreqBandChannelsDegrid[0]
+        ModelImage=self.MM.GiveModelImage(model_freqs)
+        
+        print>> log, "model image @%s MHz (min,max) = (%f, %f)" % (
+            str(model_freqs / 1e6), ModelImage.min(), ModelImage.max())
 
         # # From ModelImage
         # print "im!!!!!!!!!!!!!!!!!!!!!!!"
-        # im=image("ModelImage.fits")
+        # im=image("Model.fits")
         # data=im.getdata()
         # nch,npol,nx,_=data.shape
         # for ch in range(nch):
         #     for pol in range(npol):
         #         data[ch,pol]=data[ch,pol].T[::-1]
-        # self.ModelImage=data
-        self.FacetMachine.ToCasaImage(ModelImage,ImageName="Model_kMS",Fits=True)
+        # self.ModelImage=ModelImage=data
+        # # ###############################
+        self.FacetMachine.ToCasaImage(ModelImage,ImageName="%s.Model_kMS"%self.BaseImageName,Fits=True)
         # #stop
 
         #del(data)
@@ -183,6 +202,7 @@ class ClassPreparePredict(ClassImagerDeconv):
             lFacet[iFacet]=l
             mFacet[iFacet]=m
 
+
         NDir=ClusterCat.l.size
         d=np.sqrt((ClusterCat.l.reshape((NDir,1))-lFacet.reshape((1,NFacets)))**2+
                   (ClusterCat.m.reshape((NDir,1))-mFacet.reshape((1,NFacets)))**2)
@@ -190,12 +210,13 @@ class ClassPreparePredict(ClassImagerDeconv):
         for iFacet in range(NFacets):
             self.FacetMachine.DicoImager[iFacet]["iDirJones"]=idDir[iFacet]
 
-
             
         from DDFacet.Other.AsyncProcessPool import APP
         APP.startWorkers()
+        #self.VS.CalcWeightsBackground()
         self.FacetMachine.initCFInBackground()
         self.FacetMachine.awaitInitCompletion()
+
 
         # for iFacet in range(NFacets):
             

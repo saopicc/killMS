@@ -222,6 +222,9 @@ class ClassJacobianAntenna():
         #self.DATA=NpShared.SharedToDico("%sSharedVis"%self.IdSharedMem)
         self.DATA=NpShared.SharedObjectToDico(self.SharedDicoDescriptors["SharedVis"])
 
+        if self.SM.Type=="Column":
+            self.DATA["data_predict"]=NpShared.GiveArray(self.IdSharedMem+"ColPredict.SharedVis.data")
+
 
 
         _,self.NChanMS,_=self.DATA["data"].shape
@@ -362,7 +365,7 @@ class ClassJacobianAntenna():
         return z
 
     def PredictOrigFormat(self,GainsIn):
-        if self.GD["VisData"]["FreePredictGainColName"]!=None:
+        if self.GD["VisData"]["FreePredictGainColName"]!=None or self.GD["SkyModel"]["FreeFullSub"]:
             self.PredictOrigFormat_Type(GainsIn,Type="Gains")
         if self.GD["VisData"]["FreePredictColName"]!=None:
             self.PredictOrigFormat_Type(GainsIn,Type="NoGains")
@@ -669,12 +672,14 @@ class ClassJacobianAntenna():
 
 
         for iDir in range(NDir):
-            
-            K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones)
+            if self.SM.Type=="Column":
+                K=self.DicoData["data_predict"]
+            else:
+                K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones)
+
             #K=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir)#,ApplyTimeJones=ApplyTimeJones)
             #K*=-1
             T.timeit("Calc K0")
-
 
                 #gc.collect()
                 #print gc.garbage
@@ -815,6 +820,16 @@ class ClassJacobianAntenna():
             D1[:,:,1]=c2
             D1[:,:,2]=c1
             DicoData["data"] = np.concatenate([D0, D1])
+            if self.SM.Type=="Column":
+                D0=DATA['data_predict'][ind0,:]
+                D1=DATA['data_predict'][ind1,:].conj()
+                c1=D1[:,:,1].copy()
+                c2=D1[:,:,2].copy()
+                D1[:,:,1]=c2
+                D1[:,:,2]=c1
+                DicoData["data_predict"] = np.concatenate([D0, D1])
+
+
             DicoData["indOrig"] = ind0
             DicoData["indOrig1"] = ind1
             DicoData["uvw"]  = np.concatenate([DATA['uvw'][ind0], -DATA['uvw'][ind1]])
@@ -852,11 +867,22 @@ class ClassJacobianAntenna():
             if self.PolMode=="Scalar":
                 d=(DicoData["data"][:,:,0]+DicoData["data"][:,:,-1])/2
                 DicoData["data"] = d.reshape((nr,nch,1))
+
+                # if self.SM.Type=="Column":
+                #     d=(DicoData["data_predict"][:,:,0]+DicoData["data_predict"][:,:,-1])/2
+                #     DicoData["data_predict"] = d.reshape((nr,nch,1))
+
+
                 f=(DicoData["flags"][:,:,0]|DicoData["flags"][:,:,-1])
                 DicoData["flags"] = f.reshape((nr,nch,1))
             elif self.PolMode=="IDiag":
                 d=DicoData["data"][:,:,0::3]
                 DicoData["data"] = d.copy().reshape((nr,nch,2))
+
+                # if self.SM.Type=="Column":
+                #     d=DicoData["data_predict"][:,:,0::3]
+                #     DicoData["data_predict"] = d.copy().reshape((nr,nch,2))
+
                 f=DicoData["flags"][:,:,0::3]
                 DicoData["flags"] = f.copy().reshape((nr,nch,2))
 
@@ -873,9 +899,12 @@ class ClassJacobianAntenna():
             FlagsSize=DicoData["flags"].size
             DicoData["flags"]=DicoData["flags"].reshape(nr,nch,self.NJacobBlocks_X,self.NJacobBlocks_Y)
             DicoData["data"]=DicoData["data"].reshape(nr,nch,self.NJacobBlocks_X,self.NJacobBlocks_Y)
+            # if self.SM.Type=="Column":
+            #     DicoData["data_predict"]=DicoData["data_predict"].reshape(nr,nch,self.NJacobBlocks_X,self.NJacobBlocks_Y)
 
             DicoData["flags_flat"]=np.rollaxis(DicoData["flags"],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
             DicoData["data_flat"]=np.rollaxis(DicoData["data"],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
+            #DicoData["data_predict_flat"]=np.rollaxis(DicoData["data_predict"],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
 
 
 
@@ -920,7 +949,7 @@ class ClassJacobianAntenna():
                 R=rms**2*V
                 
                 Rinv=1./R
-                Weights=W.reshape((W_nrows,W_nch,1))
+                Weights=W.reshape((W_nrows,W_nch,1))*np.ones((1,1,self.npolData))
                 
                 self.R_flat=np.rollaxis(R,2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
                 self.Rinv_flat=np.rollaxis(Rinv,2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)

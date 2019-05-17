@@ -26,6 +26,7 @@ from killMS.Other import MyPickle
 from killMS.Other import logo
 from killMS.Other import ModColor
 from killMS.Other import MyLogger
+import os
 log=MyLogger.getLogger("killMS")
 MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
 
@@ -64,8 +65,6 @@ def read_options():
     group.add_option('--SolsFile',help='Input Solutions list [no default]',default='')
     group.add_option('--DoResid',type="int",help='No [no default]',default=-1)
     group.add_option('--PlotMode',type='str',help=' [no default]',default="AP")
-    group.add_option('--DirList',type="str",help=' [no default]',default="")
-    group.add_option('--ChanList',help=' [no default]',default="")
     opt.add_option_group(group)
     
     options, arguments = opt.parse_args()
@@ -85,8 +84,8 @@ def GiveNXNYPanels(Ns,ratio=800/500):
 from killMS.Array import ModLinAlg
 
 def NormMatrices(G):
-    #print "no norm"
-    #return G
+    print "no norm"
+    return G
     nt,nch,na,_,_=G.shape
 
     for iChan,it in ItP(range(nch),range(nt)):
@@ -120,7 +119,8 @@ def main(options=None):
 
 
     
-
+    if not os.path.isdir("png"):
+        os.system("mkdir -p png")
 
     LSols=[]
     nSol=len(FilesList)
@@ -134,7 +134,6 @@ def main(options=None):
             ClusterCat=SolsDico["ClusterCat"]
             Sols=Sols.view(np.recarray)
             nt,nch,na,nd,_,_=Sols.G.shape
-
         elif "h5" in FileName:
             import tables
             H5=tables.openFile(FileName)
@@ -195,29 +194,28 @@ def main(options=None):
         Sresid=LSols[1].copy()
         LSols.append(Sresid)
 
-    if options.DirList!="":
-        DirList=options.DirList.split(',')
-        DirList=[int(i) for i in DirList]
-    else:
-        DirList=range(nd)
-
-    if options.ChanList!="":
-        ChanList=options.ChanList.split(',')
-        ChanList=[int(i) for i in ChanList]
-    else:
-        ChanList=range(nch)
+    DirList=range(nd)
 
     #DirList=[np.where(ClusterCat["SumI"]==np.max(ClusterCat["SumI"]))[0][0]]
     #print DirList
+    nt,nch,na,nd,_,_=Sols.G.shape
 
     for iDir in DirList:
-        pylab.figure(0,figsize=(13,8))
         iAnt=0
         for iSol in range(nSol):
             Sols=LSols[iSol]
             G=Sols.G[:,:,:,iDir,:,:]
             Sols.G[:,:,:,iDir,:,:]=NormMatrices(G)
             
+
+            
+    tm=(LSols[0].t0+LSols[0].t1)/2.
+    tm-=tm[0]
+    tm/=60.
+
+    fig=pylab.figure(0,figsize=(13,8))
+    for iTime in range(nt):
+        print "%i/%i"%(iTime,nt)
         ampMax=1.5*np.max(np.median(np.abs(LSols[0].G),axis=0))
         if options.PlotMode=="AP":
             op0=np.abs
@@ -242,14 +240,24 @@ def main(options=None):
             ylim0=-np.pi,np.pi
             PlotDiag=[False]
 
-        L_ylim0=(0,1.5*np.max(np.median(np.abs(LSols[0].G[:,:,:,iDir,:,:]),axis=0)))
+        # L_ylim0=(0,1.5*np.max(np.median(np.abs(LSols[0].G[:,:,:,iDir,:,:]),axis=0)))
 
-        if options.DoResid!=-1:
-            LSols[-1].G[:,:,iDir,:,:]=LSols[1].G[:,:,iDir,:,:]-LSols[0].G[:,:,iDir,:,:]
-            nSol+=1
-        marker="."
+        # if options.DoResid!=-1:
+        #     LSols[-1].G[:,:,iDir,:,:]=LSols[1].G[:,:,iDir,:,:]-LSols[0].G[:,:,iDir,:,:]
+        #     nSol+=1
+        # marker="."
 
+        lmax=1.5*np.max([np.max(np.abs(ClusterCat["l"])),np.max(np.abs(ClusterCat["m"]))])
+        Npix=101
+        lgrid,mgrid=np.mgrid[-lmax:lmax:1j*Npix,-lmax:lmax:1j*Npix]
+        lgrid,mgrid=lgrid.reshape((-1,1)),mgrid.reshape((-1,1))
+        d=np.sqrt((lgrid-ClusterCat["l"].reshape((1,-1)))**2+(mgrid-ClusterCat["m"].reshape((1,-1)))**2)
+        inode=np.argmin(d,axis=1)
+        
+
+        A=np.zeros((Npix,Npix),np.complex64)
         pylab.clf()
+
         for i in range(nx):
             for j in range(ny):
                 if iAnt>=na:continue
@@ -262,43 +270,42 @@ def main(options=None):
                 if op1!=None: ax2 = ax.twinx()
 
                 pylab.title(StationNames[iAnt], fontsize=9)
-                for iChan,iSol in ItP(ChanList,range(nSol)):
+                for iChan in range(nch):
                     Sols=LSols[iSol]
-                    G=Sols.G[:,iChan,:,iDir,:,:]
-                    J=G[:,iAnt,:,:]
-                    ax.plot(Sols.t0,op0(J[:,0,0]),color=Lcol0[iSol],alpha=Lalpha0[iSol],ls=Lls[iSol])#,marker=marker)
-                    ax.plot(Sols.t0,op0(J[:,1,1]),color=Lcol0_off[iSol],alpha=Lalpha0[iSol],ls=Lls_off[iSol])#,marker=marker)
-                    if PlotDiag[0]:
-                        ax.plot(Sols.t0,op0(J[:,1,0]),color=Lcol0[iSol],alpha=Lalpha0[iSol],ls=Lls[iSol])#,marker=marker)
-                        ax.plot(Sols.t0,op0(J[:,0,1]),color=Lcol0_off[iSol],alpha=Lalpha0[iSol],ls=Lls_off[iSol])#,marker=marker)
-                    if options.PlotMode=="P":
-                        ax.set_ylim(ylim0)
-                    else:
-                        ax.set_ylim(L_ylim0)
-                        print L_ylim0
+                    #G=Sols.G[:,iChan,:,iDir,:,:]
+                    G=Sols.G[iTime,iChan,:,:,:,:]
+                    J=G[iAnt,:,:,:]
+                    A.flat[:]=J[:,0,0][inode]
+                        
+                    #ax.scatter(ClusterCat["l"],ClusterCat["m"],c=op0(J[:,0,0]),vmin=0,vmax=ampMax)
+                    ax.imshow(op0(A),vmin=0,vmax=ampMax)
                     ax.set_xticks([])
                     ax.set_yticks([])
 
-                    if op1!=None:
-                        # ax.plot(tm,op1(J[:,0,1]),color="blue")
-                        # ax.plot(tm,op1(J[:,1,0]),color="blue")
-                        ax2.plot(Sols.t0,op1(J[:,1,1]),color=Lcol1[iSol],alpha=Lalpha1[iSol],ls=Lls[iSol])#,marker=marker)
-                        ax2.plot(Sols.t0,op1(J[:,0,0]),color=Lcol1[iSol],alpha=Lalpha1[iSol],ls=Lls[iSol])#,marker=marker)
-                        if PlotDiag[1]:
-                            ax2.plot(Sols.t0,op1(J[:,0,1]),color=Lcol1_off[iSol],alpha=Lalpha1[iSol],ls=Lls_off[iSol])#,marker=marker)
-                            ax2.plot(Sols.t0,op1(J[:,1,0]),color=Lcol1_off[iSol],alpha=Lalpha1[iSol],ls=Lls_off[iSol])#,marker=marker)
-                        ax2.set_ylim(ylim1)
-                        ax2.set_xticks([])
-                        ax2.set_yticks([])
-                        #print StationNames[iAnt]
+                    # if op1!=None:
+                    #     ax2.plot(Sols.t0,op1(J[:,1,1]),color=Lcol1[iSol],alpha=Lalpha1[iSol],ls=Lls[iSol],marker=marker)
+                    #     ax2.plot(Sols.t0,op1(J[:,0,0]),color=Lcol1[iSol],alpha=Lalpha1[iSol],ls=Lls[iSol],marker=marker)
+                    #     if PlotDiag[1]:
+                    #         ax2.plot(Sols.t0,op1(J[:,0,1]),color=Lcol1_off[iSol],alpha=Lalpha1[iSol],ls=Lls_off[iSol],marker=marker)
+                    #         ax2.plot(Sols.t0,op1(J[:,1,0]),color=Lcol1_off[iSol],alpha=Lalpha1[iSol],ls=Lls_off[iSol],marker=marker)
+                    #     ax2.set_ylim(ylim1)
+                    #     ax2.set_xticks([])
+                    #     ax2.set_yticks([])
+                    #     #print StationNames[iAnt]
 
                 iAnt+=1
-        pylab.suptitle('Direction %i [%s]'%(iDir,str(ClusterCat["SumI"][iDir])))#L_ylim0)))
-        pylab.tight_layout(pad=3., w_pad=0.5, h_pad=2.0)
+        pylab.suptitle('Time since start %6.2f minutes'%(tm[iTime]))#L_ylim0)))
+        #pylab.tight_layout(pad=3., w_pad=0.5, h_pad=2.0)
         pylab.draw()
-        pylab.show()
-        #pylab.pause(0.1)
+        # pylab.show(False)
+        # pylab.pause(0.1)
+        fig.savefig("png/%5.5i.png"%iTime)
         #time.sleep(1)
+        iAnt=0
+
+    OutFile="animation.gif"
+    print>>log,"Creating %s"%OutFile
+    os.system("convert -delay 10 -loop 0 png/*.png %s"%OutFile)
 
 
 if __name__=="__main__":
