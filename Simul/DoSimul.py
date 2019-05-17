@@ -81,8 +81,8 @@ def main(options=None):
     Sols=CS0.GiveSols()
     
     for l in ll:
-        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
-        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
+        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
+        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
         CS.FreqDomains=CS0.FreqDomains
         CS.DoSimul()
 
