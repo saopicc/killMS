@@ -167,6 +167,10 @@ def read_options():
     OP.add_option('RemoveDDFCache')
     OP.add_option('FilterNegComp')
 
+    OP.OptionGroup("* Compression","Compression")
+    OP.add_option('CompressionMode',help='Baseline compression mode. Default is %default')
+    OP.add_option('CompressionDirFile',help='Baseline compression mode. Default is %default')
+    
     OP.OptionGroup("* Data Selection","DataSelection")
     OP.add_option('UVMinMax',help='Baseline length selection in km. For example UVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default')
     OP.add_option('ChanSlice',type="str",help='Channel selection option. Default is %default')

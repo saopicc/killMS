@@ -27,6 +27,7 @@ from killMS.Data import ClassVisServer
 from killMS.Array import ModLinAlg
 from killMS.Other import ClassTimeIt
 from killMS.Array.Dot import NpDotSSE
+import killMS.ClassAverageMachine
 
 def testLM():
     import pylab
@@ -135,7 +136,10 @@ def testLM():
 
 class ClassJacobianAntenna():
     def __init__(self,SM,iAnt,PolMode="IFull",Precision="S",PrecisionDot="D",IdSharedMem="",
-                 PM=None,GD=None,NChanSols=1,ChanSel=None,
+                 PM=None,
+                 PM_Compress=None,
+                 SM_Compress=None,
+                 GD=None,NChanSols=1,ChanSel=None,
                  SharedDicoDescriptors=None,
                  **kwargs):
         T=ClassTimeIt.ClassTimeIt("  InitClassJacobianAntenna")
@@ -161,6 +165,12 @@ class ClassJacobianAntenna():
             if self.GD["ImageSkyModel"]["BaseImageName"]!="":
                 self.PM.InitGM(self.SM)
 
+        self.PM_Compress=PM_Compress
+        self.SM_Compress=SM_Compress
+        if self.SM_Compress:
+            self.AverageMachine=ClassAverageMachine.ClassAverageMachine(self.PM_Compress,self.SM_Compress)
+        
+        
         T.timeit("PM")
         if PrecisionDot=="D":
             self.CType=np.complex128
@@ -815,10 +825,18 @@ class ClassJacobianAntenna():
             DicoData["A1"] = np.concatenate([DATA['A1'][ind0], DATA['A0'][ind1]])
             D0=DATA['data'][ind0,self.ch0:self.ch1]
             D1=DATA['data'][ind1,self.ch0:self.ch1].conj()
+
+            
+
+
+            
             c1=D1[:,:,1].copy()
             c2=D1[:,:,2].copy()
             D1[:,:,1]=c2
             D1[:,:,2]=c1
+
+            
+            
             DicoData["data"] = np.concatenate([D0, D1])
             if self.SM.Type=="Column":
                 D0=DATA['data_predict'][ind0,:]
@@ -875,6 +893,10 @@ class ClassJacobianAntenna():
 
                 f=(DicoData["flags"][:,:,0]|DicoData["flags"][:,:,-1])
                 DicoData["flags"] = f.reshape((nr,nch,1))
+                if self.GD["Compression"]["CompressionMode"]:
+                    DicoData["A0_freq"]=(DicoData["A0"].reshape((nr,1,1)) * np.ones((1,nch,1)))
+                    DicoData["A1_freq"]=(DicoData["A1"].reshape((nr,1,1)) * np.ones((1,nch,1)))
+
             elif self.PolMode=="IDiag":
                 d=DicoData["data"][:,:,0::3]
                 DicoData["data"] = d.copy().reshape((nr,nch,2))
@@ -904,10 +926,13 @@ class ClassJacobianAntenna():
 
             DicoData["flags_flat"]=np.rollaxis(DicoData["flags"],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
             DicoData["data_flat"]=np.rollaxis(DicoData["data"],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
-            #DicoData["data_predict_flat"]=np.rollaxis(DicoData["data_predict"],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
 
 
+            if self.GD["Compression"]["CompressionMode"] is not None:
+                DicoData["A0_freq_flat"]=np.rollaxis(DicoData["A0_freq"],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
+                DicoData["A1_freq_flat"]=np.rollaxis(DicoData["A1_freq"],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
 
+            # DicoData["data_predict_flat"]=np.rollaxis(DicoData["data_predict"],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
             # ###################
             # NJacobBlocks_X=2
             # NJacobBlocks_Y=2
@@ -935,7 +960,6 @@ class ClassJacobianAntenna():
                     FWHMFact=2.*np.sqrt(2.*np.log(2.))
                     sig=self.ResolutionRad/FWHMFact
                     V=(1./np.exp(-d**2*np.pi*sig**2))**2
-                    
                     V=V.reshape((V.size,1,1))*np.ones((1,freqs.size,self.npolData))
                 else:
                     V=np.ones((u.size,freqs.size,self.npolData),np.float32)

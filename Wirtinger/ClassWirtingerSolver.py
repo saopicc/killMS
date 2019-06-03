@@ -41,6 +41,7 @@ from itertools import product as ItP
 from killMS.Wirtinger import ClassSolverLM
 from killMS.Wirtinger import ClassSolverEKF
 from killMS.Wirtinger import ClassSolPredictMachine
+from SkyModel.Sky import ClassSM
 
 def test():
 
@@ -148,6 +149,11 @@ class ClassWirtingerSolver():
         if DoPlot==2:
             self.InitPlotGraph()
         self.PolMode=PolMode
+
+        self.SM_Compress=None
+        if self.GD["Compression"]["CompressionMode"] is not None:
+            if self.GD["Compression"]["CompressionMode"].lower()=="auto":
+                self.SM_Compress=ClassSM.ClassSM(SM)
 
         if self.PolMode=="IDiag":
             npolx=2
@@ -818,7 +824,8 @@ class ClassWirtingerSolver():
         for ii in range(NCPU):
              
             W=WorkerAntennaLM(work_queue, result_queue,self.SM,self.PolMode,self.SolverType,self.IdSharedMem,
-                              ConfigJacobianAntenna=self.ConfigJacobianAntenna,GD=self.GD,JonesToVisChanMapping=JonesToVisChanMapping)#,args=(e,))
+                              ConfigJacobianAntenna=self.ConfigJacobianAntenna,GD=self.GD,SM_Compress=self.SM_Compress,
+                              JonesToVisChanMapping=JonesToVisChanMapping)#,args=(e,))
             workerlist.append(W)
             if Parallel:
                 workerlist[ii].start()
@@ -1202,13 +1209,14 @@ class WorkerAntennaLM(multiprocessing.Process):
     def __init__(self,
                  work_queue,
                  result_queue,SM,PolMode,SolverType,IdSharedMem,ConfigJacobianAntenna=None,
-                 GD=None,JonesToVisChanMapping=None):
+                 GD=None,JonesToVisChanMapping=None,SM_Compress=None):
         multiprocessing.Process.__init__(self)
         self.work_queue = work_queue
         self.result_queue = result_queue
         self.kill_received = False
         self.exit = multiprocessing.Event()
         self.SM=SM
+        self.SM_Compress=SM_Compress
         self.PolMode=PolMode
         self.SolverType=SolverType
         self.IdSharedMem=IdSharedMem
@@ -1241,6 +1249,13 @@ class WorkerAntennaLM(multiprocessing.Process):
         if self.GD["ImageSkyModel"]["BaseImageName"]!="" and self.GD["SkyModel"]["SkyModelCol"] is None:
             self.PM.InitGM(self.SM)
 
+        self.PM_Compress=None
+        if self.SM_Compress:
+            self.PM_Compress=ClassPredict(Precision="S",
+                                          DoSmearing=self.GD["SkyModel"]["Decorrelation"],
+                                          IdMemShared=self.IdSharedMem,
+                                          LExp=LExp,LSinc=LSinc)
+            
     def shutdown(self):
         self.exit.set()
     def run(self):
@@ -1270,7 +1285,12 @@ class WorkerAntennaLM(multiprocessing.Process):
             elif self.SolverType=="KAFCA":
                 SolverClass=ClassSolverEKF.ClassSolverEKF
 
-            JM=SolverClass(self.SM,iAnt,PolMode=self.PolMode,PM=self.PM,IdSharedMem=self.IdSharedMem,GD=self.GD,
+            JM=SolverClass(self.SM,iAnt,PolMode=self.PolMode,
+                           PM=self.PM,
+                           PM_Compress=self.PM_Compress,
+                           SM_Compress=self.SM_Compress,
+                           IdSharedMem=self.IdSharedMem,
+                           GD=self.GD,
                            ChanSel=(ch0,ch1),
                            SharedDicoDescriptors=SharedDicoDescriptors,
                            **dict(self.ConfigJacobianAntenna))
