@@ -98,11 +98,11 @@ def requirements():
     # but this the safest assumption for now
     requirements = [("nose >= 1.3.7", "nose >= 1.3.7"),
                     ("Cython >= 0.25.2", "Cython >= 0.25.2"),
-                    ("numpy > 1.16.2", "numpy <= 1.16.1"),
+                    ("numpy > 1.16.2", "numpy >= 1.16.1"),
                     ("SharedArray >= 2.0.2", "SharedArray >= 2.0.2"),
                     ("Polygon2 >= 2.0.8", "Polygon2 >= 2.0.8"),
                     ("pyFFTW >= 0.10.4", "pyFFTW >= 0.10.4"),
-                    ("astropy >= 3.0", "astropy <= 2.0.11"),
+                    ("astropy >= 3.0", "astropy >= 2.0.11"),
                     ("deap >= 1.0.1", "deap >= 1.0.1"),
                     ("ptyprocess>=0.5", "ptyprocess<=0.5"), #workaround for ipdb on py2
                     ("ipdb >= 0.10.3", "ipdb <= 0.10.3"),
@@ -120,16 +120,13 @@ def requirements():
                     ("pyfits >= 3.5", "pyfits >= 3.5"), #kittens dependency, do not remove
                     ("configparser >= 3.7.1", "configparser <= 3.5.0"),
                     ("pandas <=0.23.3", "pandas >=0.23.3"),
-                    ("ruamel.yaml >= 0.15.92", "ruamel.yaml >= 0.15.92")] 
+                    ("ruamel.yaml >= 0.15.92", "ruamel.yaml >= 0.15.92"),
+                    ("DDFacet >= 0.3.0", "DDFacet >= 0.3.0")] 
     try:
         import six
     except ImportError, e:
-        subprocess.check_call(["cd .. && pip install %s" %
-                           (" ".join(preinstall_dependencies)), ""], shell=True)
-        try:
-            import six
-        except ImportError, e:
-            raise ImportError("Six autoinstall failed. Please install Python 2.x compatibility package six before running DDFacet install")
+        raise ImportError("Six not installed. Please install Python 2.x compatibility package six before running KillMS install. "
+                          "You should not see this message unless you are not running pip install -- run pip install!")
 
     py3_requirements, py2_requirements = zip(*requirements)
     install_requirements = py2_requirements if six.PY2 else py3_requirements
