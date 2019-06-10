@@ -819,9 +819,15 @@ class ClassVisServer():
         ListDicoPreApply=[]
         DoPreApplyJones=False
         if self.GD!=None:
+            if self.GD["Beam"]["BeamAt"]=="Tessel":
+                print>>log,"Estimating Beam directions at the center of the tesselated areas"
+                RA,DEC=self.SM.ClusterCat.ra,self.SM.ClusterCat.dec
+            elif self.GD["Beam"]["BeamAt"]=="Facet":
+                print>>log,"Estimating Beam directions at the center of the indicidual facets areas"
+                RA=np.array([self.SM.DicoImager[iFacet]["RaDec"][0] for iFacet in range(len(self.SM.DicoImager))])
+                DEC=np.array([self.SM.DicoImager[iFacet]["RaDec"][1] for iFacet in range(len(self.SM.DicoImager))])
             if self.GD["Beam"]["BeamModel"]!=None:
                 if self.GD["Beam"]["BeamModel"]=="LOFAR":
-                    RA,DEC=self.SM.ClusterCat.ra,self.SM.ClusterCat.dec
                     NDir=RA.size
                     self.DtBeamMin=self.GD["Beam"]["DtBeamMin"]
                     useArrayFactor=("A" in self.GD["Beam"]["LOFARBeamMode"])
@@ -918,7 +924,6 @@ class ClassVisServer():
                     DoPreApplyJones=True
                     print>>log, "       .... done Update LOFAR beam "
                 elif self.GD["Beam"]["BeamModel"] == "FITS":
-                    RA, DEC = self.SM.ClusterCat.ra, self.SM.ClusterCat.dec
                     NDir = RA.size
                     self.DtBeamMin = self.GD["Beam"]["DtBeamMin"]
 

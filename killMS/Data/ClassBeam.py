@@ -33,7 +33,7 @@ class ClassBeam():
         self.SM=SM
         self.MSName=MSName#self.GD["VisData"]["MSName"]
         self.ColName=self.GD["VisData"]["InCol"]
-        self.MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False)
+        self.MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False,GD=GD)
         self.DtBeamMin=self.GD["Beam"]["DtBeamMin"]
 
     def GiveMeanBeam(self):
@@ -60,6 +60,8 @@ class ClassBeam():
             useArrayFactor=("A" in self.GD["Beam"]["LOFARBeamMode"])
             useElementBeam=("E" in self.GD["Beam"]["LOFARBeamMode"])
             self.MS.LoadSR(useElementBeam=useElementBeam,useArrayFactor=useArrayFactor)
+        elif self.GD["Beam"]["BeamModel"]=="FITS":
+            self.MS.LoadFITSBeam()
 
         #print>>log, "  Update beam [Dt = %3.1f min] ... "%self.DtBeamMin
         DtBeamSec=self.DtBeamMin*60
