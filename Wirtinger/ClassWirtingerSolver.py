@@ -154,7 +154,8 @@ class ClassWirtingerSolver():
         if self.GD["Compression"]["CompressionMode"] is not None:
             if self.GD["Compression"]["CompressionMode"].lower()=="auto":
                 self.SM_Compress=ClassSM.ClassSM(SM)
-
+                self.SM.SourceCat.I=1.
+                
         if self.PolMode=="IDiag":
             npolx=2
             npoly=1

@@ -101,6 +101,7 @@ class ClassSolverLM(ClassJacobianAntenna):
         Ga=self.GiveSubVecGainAnt(Gains)
 
         f=(self.DicoData["flags_flat"]==0)
+        
         # ind=np.where(f)[0]
         # if self.iAnt==56:
         #     print ind.size/float(f.size),np.abs(Gains[self.iAnt,0,0,0])
@@ -116,6 +117,8 @@ class ClassSolverLM(ClassJacobianAntenna):
 
 
         z=self.DicoData["data_flat"]#self.GiveDataVec()
+        print z.shape
+        stop
         self.CalcJacobianAntenna(Gains)
         T.timeit("CalcJacobianAntenna")
         self.PrepareJHJ_LM()
