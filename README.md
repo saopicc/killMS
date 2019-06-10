@@ -39,9 +39,21 @@ Preliminary documentation is given below.
 
 
 # Installation KillMS
-
 To build from source:
+```
+virtualenv myvenv
+source myvenv/bin/activate
+(myvenv)$ pip install DDFacet # installs the latest DDF release from PyPI
+(myvenv)$ pip install <path to checked out killMS>
+```
+If you want to run in development mode:
+```
+(myvenv)$ pip install -e <path to checked out killMS>
+(myvenv)$ cd <path to checked out killMS>
+(myvenv)$ python setup.py build  #this rebuilds the backend
+```
 
+The old build system is still in place - you can still do:
 ```
 cd Predict
 make
@@ -53,7 +65,7 @@ make
 
 # Main programs you'll need for DDE calibration and imaging
 
-* killMS.py -> Does DDE calibration using the LM (CohJones) or the Kalman filter (KAFCA)
+* kMS.py -> Does DDE calibration using the LM (CohJones) or the Kalman filter (KAFCA)
 * DDF.py -> Applies DDE calibration in deconvolution
 * MakeModel.py -> Clusters the sky, etc
 * MakeMask.py -> To construct masks
@@ -63,7 +75,7 @@ make
 Type
 
 ```
-killMS.py -h
+kMS.py -h
 MakeModel.py -h
 DDF.py -h
 MakeMask.py -h
@@ -103,7 +115,7 @@ MakeModel.py --BaseImageName image_DI --NCluster 10
 
 ## From the model, calibrate all ms:
 ```
-killMS.py --MSName mslist.txt --SolverType KAFCA --PolMode Scalar --BaseImageName image_DI --dt 1 --NCPU 40 --OutSolsName testKAFCA --NChanSols 1 --InCol DATA --OutCol DATA --Weighting Natural --NodesFile image_DI.npy.ClusterCat.npy --MaxFacetSize 1.5
+kMS.py --MSName mslist.txt --SolverType KAFCA --PolMode Scalar --BaseImageName image_DI --dt 1 --NCPU 40 --OutSolsName testKAFCA --NChanSols 1 --InCol DATA --OutCol DATA --Weighting Natural --NodesFile image_DI.npy.ClusterCat.npy --MaxFacetSize 1.5
 ```
 --> creates solution files inside each <MS>/killMS.testKAFCA.sols.npz
 

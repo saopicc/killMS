@@ -127,6 +127,8 @@ class ClassPreparePredict(ClassImagerDeconv):
             self.MM.CleanMaskedComponants(self.GD["GDkMS"]["ImageSkyModel"]["MaskImage"])
         #self.ModelImage=self.MM.GiveModelImage(np.mean(self.VS.MS.ChanFreq))
         model_freqs=self.VS.FreqBandChannelsDegrid[0]
+        original_freqs=self.VS.FreqBandChannels[0]
+        self.MM.setFreqMachine(original_freqs, model_freqs)
         ModelImage=self.MM.GiveModelImage(model_freqs)
         
         print>> log, "model image @%s MHz (min,max) = (%f, %f)" % (

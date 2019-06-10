@@ -119,7 +119,10 @@ NCPU_default=str(int(0.75*multiprocessing.cpu_count()))
 from killMS.Parset import ReadCFG
 
 global Parset
-Parset=ReadCFG.Parset("%s/killMS/Parset/DefaultParset.cfg"%os.environ["KILLMS_DIR"])
+parset_path = os.path.join(os.environ["KILLMS_DIR"], "Parset", "DefaultParset.cfg")
+if not os.path.exists(parset_path):
+    raise FileNotFoundError("Default parset could not be located in {0:s}. Check your installation".format(parset_path))
+Parset=ReadCFG.Parset(parset_path)
 
 
 def read_options():
@@ -1115,6 +1118,7 @@ def _exc_handler(type, value, tb):
 
 
 if __name__=="__main__":
+    tic = time.time()
     #os.system('clear')
     logo.print_logo()
     sys.excepthook = _exc_handler
@@ -1191,7 +1195,13 @@ if __name__=="__main__":
                     os.system("rm -rf %s*ddfcache"%MSName)
         else:
             main(OP=OP,MSName=MSName)
-                
+        toc = time.time()     
+        elapsed = toc - tic
+        print>>log, ModColor.Str("Dataset(s) calibrated successfully in " \
+                                 "{0:02.0f}h{1:02.0f}m{2:02.0f}s".format(
+                                 (elapsed // 60) // 60,
+                                 (elapsed // 60) % 60,
+                                 elapsed % 60))
     except:
         print>>log, traceback.format_exc()
         NpShared.DelAll(IdSharedMem)

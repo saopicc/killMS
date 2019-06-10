@@ -31,8 +31,11 @@ from killMS.Array import ModLinAlg
 from killMS.Array import NpShared
 #ne.evaluate=lambda sin: ("return %s"%sin)
 import time
-from killMS.Predict import predict 
-#from killMS.Predict import predict_np19 
+try:
+    from killMS.Predict import predict 
+except ImportError:
+    from killMS.cbuild.Predict import predict 
+
 from killMS.Other import findrms
 from killMS.Other import ModColor
 from killMS.Other.ModChanEquidistant import IsChanEquidistant

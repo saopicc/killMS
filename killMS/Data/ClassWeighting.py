@@ -19,7 +19,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 import numpy as np
-from killMS.Gridder import _pyGridder
+try:
+    from killMS.Gridder import _pyGridder
+except:
+    from killMS.cbuild.Gridder import _pyGridder
 from killMS.Other import MyLogger
 from killMS.Other import ModColor
 log=MyLogger.getLogger("ClassWeighting")
@@ -93,7 +96,7 @@ class ClassWeighting():
             print>>log, "Weighting in Natural mode"
             return VisWeights
         else:
-            stop
+            raise ValueError("Expected Briggs, Uniform or Natural, got {0:s} for --Weighting".format(Weighting))
 
         grid=np.zeros((npix,npix),dtype=np.float64)
 
