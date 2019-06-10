@@ -873,7 +873,8 @@ class ClassMS():
         ss="\n".join(ll)+"\n"
         return ss
 
-    def radec2lm_scalar(self,ra,dec):
+    def radec2lm_scalar(self,ra,dec,original=False):
+        ## NB OMS 10/06/2019: added original=False for compaitbility with DDFacet FITSBeams
         l = np.cos(dec) * np.sin(ra - self.rarad)
         m = np.sin(dec) * np.cos(self.decrad) - np.cos(dec) * np.sin(self.decrad) * np.cos(ra - self.rarad)
         return l,m
