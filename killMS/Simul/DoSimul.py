@@ -59,12 +59,12 @@ def main(options=None):
     #SMName="ModelSimulOne.txt.npy"
     #SMName="Deconv.Corr.npy"
     #ll=sorted(glob.glob("Simul.MS"))
-
+    
     SMName="ModelRandom00.txt.npy"
     SMName="ModelRandom00.oneOff.txt.npy"
     #SMName="ModelRandom00.oneCenter.txt.npy"
     SMName="ModelImage.txt.npy"
-    SMName="ModelRandom00.txt.npy"
+    #SMName="ModelRandom00.many.txt.npy"
 
     ll=sorted(glob.glob("000?.MS"))
     #ll=sorted(glob.glob("0000.MS"))
@@ -81,8 +81,8 @@ def main(options=None):
     Sols=CS0.GiveSols()
     
     for l in ll:
-        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
-        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
+        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
+        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
         CS.FreqDomains=CS0.FreqDomains
         CS.DoSimul()
 
@@ -237,11 +237,12 @@ class ClassSimul():
         # make scalar
         Sols.G[:,:,:,:,1,1]=Sols.G[:,:,:,:,0,0]
 
-        # unity
-        Sols.G.fill(0)
-        Sols.G[:,:,:,:,0,0]=1.
-        Sols.G[:,:,:,:,1,1]=1.
+        # # unity
+        # Sols.G.fill(0)
+        # Sols.G[:,:,:,:,0,0]=1.
+        # Sols.G[:,:,:,:,1,1]=1.
 
+        
 
         # # Sols.G[:,:,:,1:,0,0]=0.01
         # # Sols.G[:,:,:,1:,1,1]=0.01
@@ -393,7 +394,7 @@ class ClassSimul():
         MS=VS.MS
         SM.Calc_LM(MS.rac,MS.decc)
         print MS
-        MS.PutBackupCol(incol="CORRECTED_DATA")
+        MS.PutBackupCol(incol="CORRECTED_DATA_BACKUP")
 
         self.MS=MS
         self.SM=SM
@@ -474,8 +475,8 @@ class ClassSimul():
     
         #VS.MS.SaveVis(Col="DATA")
         #VS.MS.SaveVis(Col="CORRECTED_DATA")
-        #VS.MS.SaveVis(Col="CORRECTED_DATA_BACKUP")
-        VS.MS.SaveVis(Col="CORRECTED_DATA")
+        VS.MS.SaveVis(Col="CORRECTED_DATA_BACKUP")
+        #VS.MS.SaveVis(Col="CORRECTED_DATA")
 
         # t=table(self.MSName,readonly=False)
         # f=t.getcol("FLAG")

@@ -23,7 +23,7 @@ import numpy as np
 import MakeClusterCat
 import os
 
-TemplateImage="image.NewLayOut.All.Noise.dirty.fits"#Clean.SS2.app.residual.fits"
+TemplateImage="TestDeconv.dirty.fits"#Clean.SS2.app.residual.fits"
 #TemplateImage="Test_deconv.Corr.GA.dirty.fits"
 OutFile="ModelImage"
 Nc=0
@@ -54,7 +54,7 @@ class ClassMakeModelImage():
 
         nch,npol,nx,_=IM.shape
         
-        dx=int(nx/20.)
+        dx=int(nx/10.)
         indx,indy=np.mgrid[dx:nx-dx:Ns*1j,dx:nx-dx:Ns*1j]
 
         #indx,indy=np.mgrid[0:nx:Ns*1j,0:nx:Ns*1j]
@@ -65,8 +65,8 @@ class ClassMakeModelImage():
         # indx=indx[0:1]
         # indy=indy[0:1]
 
-        indx+=np.int64(np.random.randn(indx.size)*100)
-        indy+=np.int64(np.random.randn(indx.size)*100)
+        indx+=np.int64(np.random.randn(indx.size)*50)
+        indy+=np.int64(np.random.randn(indx.size)*50)
         # #stop
         
 
@@ -87,7 +87,7 @@ class ClassMakeModelImage():
         indy=indy[ind]
         
         S=np.random.rand(indx.size)*100
-        S.fill(100)
+        #S.fill(100)
 
         # indx[0]=6000
         # indy[0]=1000
