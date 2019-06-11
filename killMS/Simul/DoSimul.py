@@ -63,8 +63,8 @@ def main(options=None):
     SMName="ModelRandom00.txt.npy"
     SMName="ModelRandom00.oneOff.txt.npy"
     #SMName="ModelRandom00.oneCenter.txt.npy"
-    SMName="ModelImage.txt.npy"
-    #SMName="ModelRandom00.many.txt.npy"
+    #SMName="ModelImage.txt.npy"
+    SMName="ModelRandom00.many.txt.npy"
 
     ll=sorted(glob.glob("000?.MS"))
     #ll=sorted(glob.glob("0000.MS"))
@@ -95,7 +95,7 @@ class ClassSimul():
         self.ApplyBeam=ApplyBeam
         self.ChanMap=None
         self.Init()
-        
+
 
     def GiveSols(self):
         MS=self.MS
@@ -168,7 +168,7 @@ class ClassSimul():
 
 
 
-        for itime in range(0,NSols):
+        for itime in range(0,NSols)[0:4]:
             # if itime>0: 
             #     continue
             #continue
@@ -242,10 +242,44 @@ class ClassSimul():
         # Sols.G[:,:,:,:,0,0]=1.
         # Sols.G[:,:,:,:,1,1]=1.
 
-        
-
         # # Sols.G[:,:,:,1:,0,0]=0.01
         # # Sols.G[:,:,:,1:,1,1]=0.01
+
+        # ################################
+        # Merge nodes
+        if self.DoClusterJones:
+            lc,mc=self.ClusterDirCat_l,self.ClusterDirCat_m
+            l,m=self.SM.SourceCat.l,self.SM.SourceCat.m
+            D=np.sqrt((l.reshape((-1,1))-lc.reshape((1,-1)))**2+(m.reshape((-1,1))-mc.reshape((1,-1)))**2)
+            indC=np.argmin(D,axis=1)
+            self.Map_kMSToNode=indC
+            # import pylab
+            # pylab.clf()
+            # pylab.scatter(l,m,c=indC)
+            # pylab.scatter(lc,mc,c="red",s=50)
+            # # pylab.scatter(self.kMS_ClusterDirCat.ra,self.kMS_ClusterDirCat.dec,c="red",s=50)
+            # # pylab.scatter(self.SM.SourceCat.ra,self.SM.SourceCat.dec,c=indC)
+            # pylab.show(False)
+            # pylab.pause(0.1)
+            ndMerge=lc.size
+            SolsCluster=np.zeros((NSols,),dtype=[("t0",np.float64),("t1",np.float64),("tm",np.float64),("G",np.complex64,(nch,na,ndMerge,2,2))])
+            SolsCluster=SolsCluster.view(np.recarray)
+            SolsCluster.t0=Sols.t0
+            SolsCluster.t1=Sols.t1
+            SolsCluster.tm=Sols.tm
+            for iDir in np.unique(indC):
+                ind=np.where(indC==iDir)[0]
+                for i in range(ind.size):
+                    Sols.G[:,:,:,ind[i],0,0]=Sols.G[:,:,:,ind[0],0,0]
+                    Sols.G[:,:,:,ind[i],0,1]=Sols.G[:,:,:,ind[0],0,1]
+                    Sols.G[:,:,:,ind[i],1,0]=Sols.G[:,:,:,ind[0],1,0]
+                    Sols.G[:,:,:,ind[i],1,1]=Sols.G[:,:,:,ind[0],1,1]
+                SolsCluster.G[:,:,:,iDir,0,0]=Sols.G[:,:,:,ind[0],0,0]
+                SolsCluster.G[:,:,:,iDir,0,1]=Sols.G[:,:,:,ind[0],0,1]
+                SolsCluster.G[:,:,:,iDir,1,0]=Sols.G[:,:,:,ind[0],1,0]
+                SolsCluster.G[:,:,:,iDir,1,1]=Sols.G[:,:,:,ind[0],1,1]
+            self.SolsCluster=SolsCluster
+        # ################################
 
         return Sols
 
@@ -395,9 +429,17 @@ class ClassSimul():
         SM.Calc_LM(MS.rac,MS.decc)
         print MS
         MS.PutBackupCol(incol="CORRECTED_DATA_BACKUP")
-
         self.MS=MS
         self.SM=SM
+
+        
+        ###################
+        self.kMS_ClusterDirCat=np.load("ModelImage.txt.ClusterCat.npy")
+        self.kMS_ClusterDirCat=self.kMS_ClusterDirCat.view(np.recarray)
+        self.ClusterDirCat_l,self.ClusterDirCat_m=self.SM.radec2lm_scalar(self.kMS_ClusterDirCat.ra,self.kMS_ClusterDirCat.dec,MS.rac,MS.decc)
+        self.DoClusterJones=1
+        ###################
+
         # SM.SourceCat.l[:]=-0.009453866781636
         # SM.SourceCat.m[:]=0.009453866781636
         # stop
@@ -494,8 +536,15 @@ class ClassSimul():
         
         Sols=self.Sols
         FileName="Simul.npz"
-        np.savez(FileName,Sols=Sols,StationNames=MS.StationNames,SkyModel=SM.ClusterCat,ClusterCat=SM.ClusterCat,
-                 BeamTimes=np.array([],np.float64),FreqDomains=self.FreqDomains)
+        if not self.DoClusterJones:
+            np.savez(FileName,Sols=Sols,StationNames=MS.StationNames,SkyModel=SM.ClusterCat,ClusterCat=SM.ClusterCat,
+                     BeamTimes=np.array([],np.float64),FreqDomains=self.FreqDomains)
+        else:
+            np.savez(FileName,
+                     Sols=ClusterSols,StationNames=MS.StationNames,
+                     SkyModel=self.kMS_ClusterDirCat,ClusterCat=self.kMS_ClusterDirCat,
+                     BeamTimes=np.array([],np.float64),FreqDomains=self.FreqDomains)
+            
         #self.Plot()
         
     
