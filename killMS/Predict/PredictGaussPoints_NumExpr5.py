@@ -67,7 +67,7 @@ except:
 
 
 class ClassPredict():
-    def __init__(self,Precision="S",NCPU=6,IdMemShared=None,DoSmearing="",LExp=None,LSinc=None):
+    def __init__(self,Precision="S",NCPU=6,IdMemShared=None,DoSmearing="",BeamAtFacet=False,LExp=None,LSinc=None):
         self.NCPU=NCPU
         ne.set_num_threads(self.NCPU)
         if Precision=="D":
@@ -78,6 +78,7 @@ class ClassPredict():
             self.FType=np.float32
         self.DoSmearing=DoSmearing
         self.IdSharedMem=IdMemShared
+        self._BeamAtFacet = BeamAtFacet
         
         Np=2
         if self.DoSmearing!=0:
@@ -679,10 +680,17 @@ class ClassPredict():
             T.timeit("2: Predict")
             # get() is substracting
 
+            if ApplyTimeJones is not None and self._BeamAtFacet:
+                ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
+                ParamJonesList=ParamJonesList+[iFacet]
+                predict.ApplyJones(DataOut,ParamJonesList)
+                
+                
+
             DataOut-=ColOutDir
             ColOutDir.fill(0)
             
-        if ApplyTimeJones!=None:
+        if ApplyTimeJones is not None and not self._BeamAtFacet:
             #print "apply in direction %i"%iDirection
             ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
             ParamJonesList=ParamJonesList+[iDirection]
@@ -701,7 +709,7 @@ class ClassPredict():
 
 
 class ClassPredictParallel():
-    def __init__(self,Precision="S",NCPU=6,IdMemShared="",DoSmearing=False):
+    def __init__(self,Precision="S",NCPU=6,IdMemShared="",DoSmearing=False,BeamAtFacet=False):
         self.NCPU=NCPU
         ne.set_num_threads(self.NCPU)
         if Precision=="D":
@@ -712,7 +720,9 @@ class ClassPredictParallel():
             self.FType=np.float32
         self.IdMemShared=IdMemShared
         self.DoSmearing=DoSmearing
-        self.PM=ClassPredict(Precision=Precision,NCPU=NCPU,IdMemShared=IdMemShared,DoSmearing=DoSmearing)
+        self._BeamAtFacet = BeamAtFacet
+        self.PM=ClassPredict(Precision=Precision,NCPU=NCPU,IdMemShared=IdMemShared,
+                             DoSmearing=DoSmearing,BeamAtFacet=BeamAtFacet)
 
 
 
@@ -742,7 +752,7 @@ class ClassPredictParallel():
         # CorrectedData=
 
         for ii in range(NCPU):
-            W=WorkerPredict(work_queue, result_queue,self.IdMemShared,Mode=Mode,DoSmearing=self.DoSmearing,SM=SM)
+            W=WorkerPredict(work_queue, result_queue,self.IdMemShared,Mode=Mode,DoSmearing=self.DoSmearing,SM=SM,BeamAtFacet=self._BeamAtFacet)
             workerlist.append(W)
             workerlist[ii].start()
 
@@ -786,7 +796,7 @@ class ClassPredictParallel():
         # CorrectedData=
 
         for ii in range(NCPU):
-            W=WorkerPredict(work_queue, result_queue,self.IdMemShared,Mode="ApplyCal",iCluster=iCluster)
+            W=WorkerPredict(work_queue, result_queue,self.IdMemShared,Mode="ApplyCal",iCluster=iCluster,BeamAtFacet=self._BeamAtFacet)
             workerlist.append(W)
             workerlist[ii].start()
 
@@ -829,7 +839,7 @@ class ClassPredictParallel():
         PredictArray=NpShared.SharedArray.create("%sPredictData"%(self.IdMemShared),DicoData["data"].shape,dtype=DicoData["data"].dtype)
         
         for ii in range(NCPU):
-            W=WorkerPredict(work_queue, result_queue,self.IdMemShared,SM=SM,DoSmearing=self.DoSmearing)
+            W=WorkerPredict(work_queue, result_queue,self.IdMemShared,SM=SM,DoSmearing=self.DoSmearing,BeamAtFacet=self._BeamAtFacet)
             workerlist.append(W)
             workerlist[ii].start()
 
@@ -854,7 +864,7 @@ class ClassPredictParallel():
 class WorkerPredict(multiprocessing.Process):
     def __init__(self,
                  work_queue,
-                 result_queue,IdSharedMem,SM=None,Mode="Predict",iCluster=-1,DoSmearing=False):
+                 result_queue,IdSharedMem,SM=None,Mode="Predict",iCluster=-1,DoSmearing=False,BeamAtFacet=False):
         multiprocessing.Process.__init__(self)
         self.work_queue = work_queue
         self.result_queue = result_queue
@@ -865,6 +875,7 @@ class WorkerPredict(multiprocessing.Process):
         self.Mode=Mode
         self.iCluster=iCluster
         self.DoSmearing=DoSmearing
+        self._BeamAtFacet = BeamAtFacet
 
     def shutdown(self):
         self.exit.set()
@@ -911,7 +922,7 @@ class WorkerPredict(multiprocessing.Process):
             #print ApplyTimeJones["Beam"].flags
             ApplyTimeJones["Map_VisToJones_Time"]=ApplyTimeJones["Map_VisToJones_Time"][Row0:Row1]
             
-            PM=ClassPredict(NCPU=1,DoSmearing=self.DoSmearing)
+            PM=ClassPredict(NCPU=1,DoSmearing=self.DoSmearing,BeamAtFacet=self._BeamAtFacet)
             
             #print DicoData.keys()
 

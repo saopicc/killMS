@@ -232,15 +232,24 @@ class ClassMS():
 
         t.close()
         self.LOFAR_ANTENNA_FIELD=Dico
-        
+
+    def LoadFITSBeam(self):        
+        from DDFacet.Data.ClassFITSBeam import ClassFITSBeam
+        # make fake opts dict (DDFacet clss expects slightly different option names)
+        opts = self.GD["Beam"]
+        opts["NBand"] = self.NSPWChan
+        self.fitsbeam = ClassFITSBeam(self, opts)
         
     def GiveBeam(self,time,ra,dec):
-        #self.LoadSR()
-        Beam=np.zeros((ra.shape[0],self.na,self.NSPWChan,2,2),dtype=np.complex)
-        for i in range(ra.shape[0]):
-            self.SR.setDirection(ra[i],dec[i])
-            Beam[i]=self.SR.evaluate(time)
-        #Beam=np.swapaxes(Beam,1,2)
+        Beam = np.zeros((ra.shape[0], self.na, self.NSPWChan, 2, 2), dtype=np.complex)
+        if self.GD["Beam"]["BeamModel"] == "LOFAR":
+            #self.LoadSR()
+            for i in range(ra.shape[0]):
+                self.SR.setDirection(ra[i],dec[i])
+                Beam[i]=self.SR.evaluate(time)
+            #Beam=np.swapaxes(Beam,1,2)
+        elif self.GD["Beam"]["BeamModel"] == "FITS":
+            Beam[...] = self.fitsbeam.evaluateBeam(time, ra, dec)
         return Beam
 
 
@@ -742,6 +751,19 @@ class ClassMS():
             self.dFreq=np.abs(self.dFreq)
 
         T.timeit()
+        
+        MS_STOKES_ENUMS = [
+            "Undefined", "I", "Q", "U", "V", "RR", "RL", "LR", "LL", "XX", "XY", "YX", "YY", "RX", "RY", "LX", "LY", "XR", "XL", "YR", "YL", "PP", "PQ", "QP", "QQ", "RCircular", "LCircular", "Linear", "Ptotal", "Plinear", "PFtotal", "PFlinear", "Pangle"
+          ]
+        tp = table(table_all.getkeyword('POLARIZATION'),ack=False)
+        # get list of corrype enums for first row of polarization table, and convert to strings via MS_STOKES_ENUMS. 
+        # self.CorrelationNames will be a list of strings
+        self.CorrelationIds = tp.getcol('CORR_TYPE',0,1)[0]
+        self.CorrelationNames = [ (ctype >= 0 and ctype < len(MS_STOKES_ENUMS) and MS_STOKES_ENUMS[ctype]) or
+                None for ctype in self.CorrelationIds ]
+        self.Ncorr = len(self.CorrelationNames)
+        # NB: it is possible for the MS to have different polarization
+        
         table_all.close()
 
         self.na=na
@@ -757,7 +779,7 @@ class ClassMS():
         self.DTs=F_time_all[-1]-F_time_all[0]+self.dt
         self.DTh=self.DTs/3600.
 
-        self.radec=(rarad,decrad)
+        self.radec = self.OriginalRadec = (rarad,decrad)
         self.rarad=rarad
         self.decrad=decrad
         self.reffreq=reffreq
@@ -851,7 +873,8 @@ class ClassMS():
         ss="\n".join(ll)+"\n"
         return ss
 
-    def radec2lm_scalar(self,ra,dec):
+    def radec2lm_scalar(self,ra,dec,original=False):
+        ## NB OMS 10/06/2019: added original=False for compaitbility with DDFacet FITSBeams
         l = np.cos(dec) * np.sin(ra - self.rarad)
         m = np.sin(dec) * np.cos(self.decrad) - np.cos(dec) * np.sin(self.decrad) * np.cos(ra - self.rarad)
         return l,m
