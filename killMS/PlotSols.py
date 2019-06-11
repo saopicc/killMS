@@ -65,6 +65,7 @@ def read_options():
     group.add_option('--DoResid',type="int",help='No [no default]',default=-1)
     group.add_option('--PlotMode',type='str',help=' [no default]',default="AP")
     group.add_option('--DirList',type="str",help=' [no default]',default="")
+    group.add_option('--NoTicks',action="store_true",help="disable Y axis scale")
     group.add_option('--ChanList',help=' [no default]',default="")
     opt.add_option_group(group)
     
@@ -277,7 +278,8 @@ def main(options=None):
                         ax.set_ylim(L_ylim0)
                         print L_ylim0
                     ax.set_xticks([])
-                    ax.set_yticks([])
+                    if options.NoTicks:
+                        ax.set_yticks([])
 
                     if op1!=None:
                         # ax.plot(tm,op1(J[:,0,1]),color="blue")
@@ -289,7 +291,8 @@ def main(options=None):
                             ax2.plot(Sols.t0,op1(J[:,1,0]),color=Lcol1_off[iSol],alpha=Lalpha1[iSol],ls=Lls_off[iSol])#,marker=marker)
                         ax2.set_ylim(ylim1)
                         ax2.set_xticks([])
-                        ax2.set_yticks([])
+                        if options.NoTicks:
+                            ax2.set_yticks([])
                         #print StationNames[iAnt]
 
                 iAnt+=1
