@@ -119,7 +119,9 @@ NCPU_default=str(int(0.75*multiprocessing.cpu_count()))
 from killMS.Parset import ReadCFG
 
 global Parset
-parset_path = os.path.join(os.environ["KILLMS_DIR"], "killMS", "killMS", "Parset", "DefaultParset.cfg")
+parset_path = os.path.join(os.path.dirname(__file__), "Parset", "DefaultParset.cfg")
+    #
+    # os.path.join(os.environ["KILLMS_DIR"], "killMS", "killMS", "Parset", "DefaultParset.cfg")
 print parset_path
 if not os.path.exists(parset_path):
     raise FileNotFoundError("Default parset could not be located in {0:s}. Check your installation".format(parset_path))
