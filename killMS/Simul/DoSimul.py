@@ -40,6 +40,7 @@ import pickle
 from SkyModel.Sky import ClassSM
 from pyrap.tables import table
 import glob
+from SkyModel.Array import RecArrayOps
 
 
 def main(options=None):
@@ -65,6 +66,9 @@ def main(options=None):
     #SMName="ModelRandom00.oneCenter.txt.npy"
     #SMName="ModelImage.txt.npy"
     SMName="ModelRandom00.many.txt.npy"
+    #SMName="ModelRandom00.many.one.txt.npy"
+    #SMName="ModelRandom00.many.10.txt.npy"
+    #SMName="ModelRandom00.many.10.1prob.txt"
 
     ll=sorted(glob.glob("000?.MS"))
     #ll=sorted(glob.glob("0000.MS"))
@@ -84,6 +88,9 @@ def main(options=None):
         CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
         #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
         CS.FreqDomains=CS0.FreqDomains
+        CS.SolsCluster=CS0.SolsCluster
+        CS.DoClusterJones=CS0.DoClusterJones
+        
         CS.DoSimul()
 
 class ClassSimul():
@@ -168,10 +175,10 @@ class ClassSimul():
 
 
 
-        for itime in range(0,NSols)[0:4]:
-            # if itime>0: 
-            #     continue
-            #continue
+        for itime in range(0,NSols):
+            if itime>0: 
+                continue
+            continue
             print itime,"/",NSols
             for ich in range(nch):
                 for iAnt in range(na):
@@ -237,10 +244,10 @@ class ClassSimul():
         # make scalar
         Sols.G[:,:,:,:,1,1]=Sols.G[:,:,:,:,0,0]
 
-        # # unity
-        # Sols.G.fill(0)
-        # Sols.G[:,:,:,:,0,0]=1.
-        # Sols.G[:,:,:,:,1,1]=1.
+        # unity
+        Sols.G.fill(0)
+        Sols.G[:,:,:,:,0,0]=1.
+        Sols.G[:,:,:,:,1,1]=1.
 
         # # Sols.G[:,:,:,1:,0,0]=0.01
         # # Sols.G[:,:,:,1:,1,1]=0.01
@@ -278,7 +285,9 @@ class ClassSimul():
                 SolsCluster.G[:,:,:,iDir,0,1]=Sols.G[:,:,:,ind[0],0,1]
                 SolsCluster.G[:,:,:,iDir,1,0]=Sols.G[:,:,:,ind[0],1,0]
                 SolsCluster.G[:,:,:,iDir,1,1]=Sols.G[:,:,:,ind[0],1,1]
+                self.kMS_ClusterDirCat.SumI[iDir]=np.sum(self.SM.SourceCat.I[ind])
             self.SolsCluster=SolsCluster
+
         # ################################
 
         return Sols
@@ -334,16 +343,24 @@ class ClassSimul():
     
             rac,decc=MS.radec
 
+
+            def GB(time,ra,dec):
+                Beam = np.zeros((ra.shape[0], self.MS.na, self.MS.NSPWChan, 2, 2), dtype=np.complex)
+                for i in range(ra.shape[0]):
+                    self.MS.SR.setDirection(ra[i],dec[i])
+                    Beam[i]=self.MS.SR.evaluate(time)
+                return Beam
+            
             for itime in range(Tm.size):
                 print itime
                 DicoBeam["t0"][itime]=T0s[itime]
                 DicoBeam["t1"][itime]=T1s[itime]
                 DicoBeam["tm"][itime]=Tm[itime]
                 ThisTime=Tm[itime]
-                Beam=MS.GiveBeam(ThisTime,RA,DEC)
+                Beam=GB(ThisTime,RA,DEC)
 
                 ###### Normalise
-                Beam0=MS.GiveBeam(ThisTime,np.array([rac]),np.array([decc]))
+                Beam0=GB(ThisTime,np.array([rac]),np.array([decc]))
                 Beam0inv=ModLinAlg.BatchInverse(Beam0)
                 nd,_,_,_,_=Beam.shape
                 Ones=np.ones((nd, 1, 1, 1, 1),np.float32)
@@ -436,7 +453,13 @@ class ClassSimul():
         ###################
         self.kMS_ClusterDirCat=np.load("ModelImage.txt.ClusterCat.npy")
         self.kMS_ClusterDirCat=self.kMS_ClusterDirCat.view(np.recarray)
-        self.ClusterDirCat_l,self.ClusterDirCat_m=self.SM.radec2lm_scalar(self.kMS_ClusterDirCat.ra,self.kMS_ClusterDirCat.dec,MS.rac,MS.decc)
+        self.kMS_ClusterDirCat
+        if not("l" in self.kMS_ClusterDirCat.dtype.fields.keys()):
+            self.kMS_ClusterDirCat=RecArrayOps.AppendField(self.kMS_ClusterDirCat,('l',float))
+            self.kMS_ClusterDirCat=RecArrayOps.AppendField(self.kMS_ClusterDirCat,('m',float))
+        self.ClusterCat=self.kMS_ClusterDirCat
+        self.kMS_ClusterDirCat.l,self.kMS_ClusterDirCat.m=self.ClusterDirCat_l,self.ClusterDirCat_m=self.SM.radec2lm_scalar(self.kMS_ClusterDirCat.ra,self.kMS_ClusterDirCat.dec,MS.rac,MS.decc)
+        self.kMS_ClusterDirCat.Cluster=np.arange(self.kMS_ClusterDirCat.shape[0])
         self.DoClusterJones=1
         ###################
 
@@ -541,7 +564,8 @@ class ClassSimul():
                      BeamTimes=np.array([],np.float64),FreqDomains=self.FreqDomains)
         else:
             np.savez(FileName,
-                     Sols=ClusterSols,StationNames=MS.StationNames,
+                     Sols=self.SolsCluster,
+                     StationNames=MS.StationNames,
                      SkyModel=self.kMS_ClusterDirCat,ClusterCat=self.kMS_ClusterDirCat,
                      BeamTimes=np.array([],np.float64),FreqDomains=self.FreqDomains)
             
