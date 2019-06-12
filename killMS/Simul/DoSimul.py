@@ -158,8 +158,8 @@ class ClassSimul():
         
         Amp_Amp=np.random.randn(nch,na,nd)
 
-        Amp_Mean.fill(1.)
-        Amp_Amp.fill(0.)
+        #Amp_Mean.fill(1.)
+        #Amp_Amp.fill(0.)
     
         DeltaT_Phase=np.random.randn(nch,na,nd)*60
         period_Phase=300+np.random.randn(nch,na,nd)*10
@@ -177,8 +177,11 @@ class ClassSimul():
 
         for itime in range(0,NSols):
             if itime>0: 
+                print "eq in time"
                 continue
-            continue
+
+            
+            # continue
             print itime,"/",NSols
             for ich in range(nch):
                 for iAnt in range(na):
@@ -214,6 +217,7 @@ class ClassSimul():
 
 
         for itime in range(0,NSols):
+            print "eq in time"
             print "skip pol2"
             continue
             for ich in range(nch):
@@ -229,10 +233,10 @@ class ClassSimul():
 
 
 
-        # # Equalise in time
-        # for itime in range(NSols):
-        #     Sols.G[itime,:,:,:,0,0]=Sols.G[0,:,:,:,0,0]
-        #     Sols.G[itime,:,:,:,1,1]=Sols.G[0,:,:,:,1,1]
+        # Equalise in time
+        for itime in range(NSols):
+            Sols.G[itime,:,:,:,0,0]=Sols.G[0,:,:,:,0,0]
+            Sols.G[itime,:,:,:,1,1]=Sols.G[0,:,:,:,1,1]
 
         # equalise in freq
         for ich in range(1,nch):
@@ -244,10 +248,10 @@ class ClassSimul():
         # make scalar
         Sols.G[:,:,:,:,1,1]=Sols.G[:,:,:,:,0,0]
 
-        # unity
-        Sols.G.fill(0)
-        Sols.G[:,:,:,:,0,0]=1.
-        Sols.G[:,:,:,:,1,1]=1.
+        # # unity
+        # Sols.G.fill(0)
+        # Sols.G[:,:,:,:,0,0]=1.
+        # Sols.G[:,:,:,:,1,1]=1.
 
         # # Sols.G[:,:,:,1:,0,0]=0.01
         # # Sols.G[:,:,:,1:,1,1]=0.01

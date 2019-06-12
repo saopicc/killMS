@@ -156,7 +156,8 @@ class ClassJacobianAntenna():
         if PM==None:
             self.PM=ClassPredict(Precision=Precision,
                                  DoSmearing=self.DoSmearing,
-                                 IdMemShared=IdSharedMem)
+                                 IdMemShared=IdSharedMem,
+                                 BeamAtFacet=(self.GD["Beam"]["BeamAt"].lower() == "facet"))
             
             if self.GD["ImageSkyModel"]["BaseImageName"]!="":
                 self.PM.InitGM(self.SM)
@@ -1084,7 +1085,7 @@ def testPredict():
     DATA=VS.GiveNextVis(0,50)
 
     # Apply Jones
-    PM=ClassPredict(Precision="S")
+    PM=ClassPredict(Precision="S",BeamAtFacet=(self.GD["Beam"]["BeamAt"].lower() == "facet"))
     DATA["data"]=PM.predictKernelPolCluster(DATA,SM,ApplyJones=Gains)
     
     ############################

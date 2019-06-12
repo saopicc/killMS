@@ -475,7 +475,7 @@ class ClassPreparePredict(ClassImagerDeconv):
 
  
 import multiprocessing
-from killMS.Predict.PredictGaussPoints_NumExpr5 import ClassPredict
+
 class Worker(multiprocessing.Process):
     def __init__(self,
                  work_queue,
