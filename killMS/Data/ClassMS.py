@@ -588,6 +588,8 @@ class ClassMS():
         self.A0=A0
         self.A1=A1
 
+        return True
+
             
 
         # DATA_CHUNK["uvw"]=self.uvw

@@ -514,8 +514,8 @@ class ClassVisServer():
     def LoadNextVisChunk(self):
         MS=self.MS
 
-        self.DATA_CHUNK = None
-        while self.DATA_CHUNK is None:
+        have_data = None
+        while not have_data:
             # bug out when we hit the buffers
             if self.CurrentMemTimeChunk >= self.NTChunk:
                 print>>log, ModColor.Str("Reached end of observations")
@@ -527,9 +527,9 @@ class ClassVisServer():
             self.CurrentMemTimeChunk+=1
 
             print>>log, "Reading next data chunk in [%5.2f, %5.2f] hours (column %s)"%(self.TimesInt[iT0],self.TimesInt[iT1],MS.ColName)
-            self.DATA_CHUNK=MS.ReadData(t0=self.TimesInt[iT0],t1=self.TimesInt[iT1],ReadWeight=True)
+            have_data = MS.ReadData(t0=self.TimesInt[iT0],t1=self.TimesInt[iT1],ReadWeight=True)
 
-            if self.DATA_CHUNK is None:
+            if not have_data:
                 print>>log, "  this data chunk is empty"
 
         #print>>log, "    Rows= [%i, %i]"%(MS.ROW0,MS.ROW1)
