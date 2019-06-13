@@ -63,6 +63,9 @@ import DDFacet.Other.MyPickle
 log=MyLogger.getLogger("killMS")
 MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
 
+import logging
+logging.getLogger('matplotlib').setLevel(logging.WARNING)
+
 
 from pyrap.tables import table
 # test

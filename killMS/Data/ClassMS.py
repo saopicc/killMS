@@ -412,6 +412,10 @@ class ClassMS():
         self.ROW1=row1
         self.nRowRead=row1-row0
 
+        # if chunk is empty, return None
+        if self.nRowRead <= 0:
+            return None
+
         DATA_CHUNK["ROW0"]=row0
         DATA_CHUNK["ROW1"]=row1
         DATA_CHUNK["nRowRead"]=self.nRowRead

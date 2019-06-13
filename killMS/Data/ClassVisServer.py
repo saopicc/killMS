@@ -512,21 +512,26 @@ class ClassVisServer():
 
 
     def LoadNextVisChunk(self):
-        if self.CurrentMemTimeChunk==self.NTChunk:
-            print>>log, ModColor.Str("Reached end of observations")
-            self.ReInitChunkCount()
-            return "EndOfObservation"
         MS=self.MS
-        iT0,iT1=self.CurrentMemTimeChunk,self.CurrentMemTimeChunk+1
-        self.CurrentMemTimeChunk+=1
 
-        print>>log, "Reading next data chunk in [%5.2f, %5.2f] hours (column %s)"%(self.TimesInt[iT0],self.TimesInt[iT1],MS.ColName)
-        self.DATA_CHUNK=MS.ReadData(t0=self.TimesInt[iT0],t1=self.TimesInt[iT1],ReadWeight=True)
+        self.DATA_CHUNK = None
+        while self.DATA_CHUNK is None:
+            # bug out when we hit the buffers
+            if self.CurrentMemTimeChunk >= self.NTChunk:
+                print>>log, ModColor.Str("Reached end of observations")
+                self.ReInitChunkCount()
+                return "EndOfObservation"
 
+            # get current chunk boundaries
+            iT0,iT1=self.CurrentMemTimeChunk,self.CurrentMemTimeChunk+1
+            self.CurrentMemTimeChunk+=1
 
+            print>>log, "Reading next data chunk in [%5.2f, %5.2f] hours (column %s)"%(self.TimesInt[iT0],self.TimesInt[iT1],MS.ColName)
+            self.DATA_CHUNK=MS.ReadData(t0=self.TimesInt[iT0],t1=self.TimesInt[iT1],ReadWeight=True)
 
+            if self.DATA_CHUNK is None:
+                print>>log, "  this data chunk is empty"
 
-        
         #print>>log, "    Rows= [%i, %i]"%(MS.ROW0,MS.ROW1)
         #print float(MS.ROW0)/MS.nbl,float(MS.ROW1)/MS.nbl
 
