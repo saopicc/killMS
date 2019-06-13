@@ -869,6 +869,7 @@ class ClassMS():
         ll.append("   - Number of baseline = %i"%self.nbl)
         ll.append("   - Number of SPW = %i"%self.NSPW)
         ll.append("   - Number of channels = %i"%self.Nchan)
+        ll.append("   - Chan freqs = %s"%str(self.ChanFreq.flatten().tolist()))
         
         ss="\n".join(ll)+"\n"
         return ss

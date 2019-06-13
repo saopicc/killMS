@@ -867,10 +867,10 @@ class ClassVisServer():
                         ThisTime=Tm[itime]
                         Beam[itime]=self.MS.GiveBeam(ThisTime,RA,DEC)
     
-                    # Beam[:,76,:,:,0,0]=20.
-                    # Beam[:,76,:,:,0,1]=0.
-                    # Beam[:,76,:,:,1,0]=0.
-                    # Beam[:,76,:,:,1,1]=20.
+                    # # Beam[:,76,:,:,0,0]=20.
+                    # # Beam[:,76,:,:,0,1]=0.
+                    # # Beam[:,76,:,:,1,0]=0.
+                    # # Beam[:,76,:,:,1,1]=20.
                     # Beam[:,:,:,:,0,0]=20.
                     # Beam[:,:,:,:,0,1]=0.
                     # Beam[:,:,:,:,1,0]=0.

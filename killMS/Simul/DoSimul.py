@@ -68,7 +68,7 @@ def main(options=None):
     SMName="ModelRandom00.many.txt.npy"
     #SMName="ModelRandom00.many.one.txt.npy"
     #SMName="ModelRandom00.many.10.txt.npy"
-    #SMName="ModelRandom00.many.10.1prob.txt"
+    #SMName="ModelRandom00.many.1pbl.txt.npy"
 
     ll=sorted(glob.glob("000?.MS"))
     #ll=sorted(glob.glob("0000.MS"))
@@ -87,7 +87,7 @@ def main(options=None):
     for l in ll:
         CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
         #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
-        CS.FreqDomains=CS0.FreqDomains
+
         CS.SolsCluster=CS0.SolsCluster
         CS.DoClusterJones=CS0.DoClusterJones
         
@@ -101,13 +101,23 @@ class ClassSimul():
         self.Sols=Sols
         self.ApplyBeam=ApplyBeam
         self.ChanMap=None
+
         self.Init()
+        nuc=self.VS.MS.ChanFreq.ravel()
+        dnu=self.VS.MS.ChanWidth.ravel()[0]
+        nu0=nuc-dnu/2.
+        nu1=nuc+dnu/2.
+        self.FreqDomains=np.zeros((nuc.size,2),np.float64)
+        self.FreqDomains[:,0]=nu0
+        self.FreqDomains[:,1]=nu1
+
 
 
     def GiveSols(self):
         MS=self.MS
         SM=self.SM
         VS=self.VS
+
         nuc=self.VS.MS.ChanFreq.ravel()
         dnu=self.VS.MS.ChanWidth.ravel()[0]
         nu0=nuc-dnu/2.
@@ -241,6 +251,7 @@ class ClassSimul():
         # equalise in freq
         for ich in range(1,nch):
             Sols.G[:,ich,:,:,:,:]=Sols.G[:,0,:,:,:,:]
+            
         #nu0=np.min(self.FreqDomains)
         #nu1=np.max(self.FreqDomains)
         #self.FreqDomains=np.array([[nu0,nu1]])
@@ -259,7 +270,7 @@ class ClassSimul():
         # ################################
         # Merge nodes
         if self.DoClusterJones:
-            lc,mc=self.ClusterDirCat_l,self.ClusterDirCat_m
+            lc,mc=self.kMS_ClusterDirCat.l,self.kMS_ClusterDirCat.m
             l,m=self.SM.SourceCat.l,self.SM.SourceCat.m
             D=np.sqrt((l.reshape((-1,1))-lc.reshape((1,-1)))**2+(m.reshape((-1,1))-mc.reshape((1,-1)))**2)
             indC=np.argmin(D,axis=1)
@@ -281,6 +292,7 @@ class ClassSimul():
             for iDir in np.unique(indC):
                 ind=np.where(indC==iDir)[0]
                 for i in range(ind.size):
+                    print "%i <- %i"%(iDir,ind[i])
                     Sols.G[:,:,:,ind[i],0,0]=Sols.G[:,:,:,ind[0],0,0]
                     Sols.G[:,:,:,ind[i],0,1]=Sols.G[:,:,:,ind[0],0,1]
                     Sols.G[:,:,:,ind[i],1,0]=Sols.G[:,:,:,ind[0],1,0]
@@ -290,6 +302,7 @@ class ClassSimul():
                 SolsCluster.G[:,:,:,iDir,1,0]=Sols.G[:,:,:,ind[0],1,0]
                 SolsCluster.G[:,:,:,iDir,1,1]=Sols.G[:,:,:,ind[0],1,1]
                 self.kMS_ClusterDirCat.SumI[iDir]=np.sum(self.SM.SourceCat.I[ind])
+
             self.SolsCluster=SolsCluster
 
         # ################################
@@ -350,6 +363,10 @@ class ClassSimul():
 
             def GB(time,ra,dec):
                 Beam = np.zeros((ra.shape[0], self.MS.na, self.MS.NSPWChan, 2, 2), dtype=np.complex)
+                # Beam[...,0,0]=1
+                # Beam[...,1,1]=1
+                # return Beam
+                
                 for i in range(ra.shape[0]):
                     self.MS.SR.setDirection(ra[i],dec[i])
                     Beam[i]=self.MS.SR.evaluate(time)
@@ -372,7 +389,7 @@ class ClassSimul():
                 Beam=ModLinAlg.BatchDot(Beam0inv,Beam)
                 ######
 
-
+                
                 DicoBeam["Jones"][itime]=Beam
                 
             nt,nd,na,nch,_,_= DicoBeam["Jones"].shape
@@ -462,7 +479,7 @@ class ClassSimul():
             self.kMS_ClusterDirCat=RecArrayOps.AppendField(self.kMS_ClusterDirCat,('l',float))
             self.kMS_ClusterDirCat=RecArrayOps.AppendField(self.kMS_ClusterDirCat,('m',float))
         self.ClusterCat=self.kMS_ClusterDirCat
-        self.kMS_ClusterDirCat.l,self.kMS_ClusterDirCat.m=self.ClusterDirCat_l,self.ClusterDirCat_m=self.SM.radec2lm_scalar(self.kMS_ClusterDirCat.ra,self.kMS_ClusterDirCat.dec,MS.rac,MS.decc)
+        self.kMS_ClusterDirCat.l,self.kMS_ClusterDirCat.m=self.SM.radec2lm_scalar(self.kMS_ClusterDirCat.ra,self.kMS_ClusterDirCat.dec,MS.rac,MS.decc)
         self.kMS_ClusterDirCat.Cluster=np.arange(self.kMS_ClusterDirCat.shape[0])
         self.DoClusterJones=1
         ###################
@@ -562,7 +579,9 @@ class ClassSimul():
 
         
         Sols=self.Sols
-        FileName="Simul.npz"
+        FileName="%s/killMS.%s.sols.npz"%(self.VS.MS.MSName,"Simul")
+        print "Saving %s"%FileName
+        print self.FreqDomains
         if not self.DoClusterJones:
             np.savez(FileName,Sols=Sols,StationNames=MS.StationNames,SkyModel=SM.ClusterCat,ClusterCat=SM.ClusterCat,
                      BeamTimes=np.array([],np.float64),FreqDomains=self.FreqDomains)

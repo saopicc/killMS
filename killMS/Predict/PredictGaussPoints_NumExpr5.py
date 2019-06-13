@@ -694,8 +694,6 @@ class ClassPredict():
                 # print iFacet,sra,sdec
                 
                 predict.ApplyJones(ColOutDir,ParamJonesList)
-                
-            
 
             DataOut-=ColOutDir
             ColOutDir.fill(0)
