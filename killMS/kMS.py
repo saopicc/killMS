@@ -22,8 +22,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #turtles
 
 import sys,os
-import traceback
 import time
+import subprocess
 
 if "PYTHONPATH_FIRST" in os.environ.keys() and int(os.environ["PYTHONPATH_FIRST"]):
     sys.path = os.environ["PYTHONPATH"].split(":") + sys.path
@@ -232,6 +232,7 @@ def read_options():
 
 def main(OP=None,MSName=None):
 
+    print>>log,"Checking system configuration:"
     # check for SHM size
     ram_size = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
     shm_stats = os.statvfs('/dev/shm')
@@ -244,10 +245,27 @@ def main(OP=None,MSName=None):
             DDFacet and killMS. If your processes keep failing with SIGBUS or "bus error" messages,
             it is most likely for this reason. You can change the memory size by running
                 $ sudo mount -o remount,size=90% /dev/shm
-            To make the change permanent, edit /etc/defaults/tmps, and add a line saying "SHM_SIZE=90%"
+            To make the change permanent, edit /etc/defaults/tmps, and add a line saying "SHM_SIZE=90%".
             """.format(shm_avail))
     else:
-        print>>log, "Max shared memory size is {:.0%} of total RAM size".format(shm_avail)
+        print>>log, "  Max shared memory size is {:.0%} of total RAM size".format(shm_avail)
+
+    try:
+        output = subprocess.check_output(["/sbin/sysctl", "vm.max_map_count"])
+        max_map_count = int(output.strip().rsplit(" ", 1)[-1])
+    except Exception:
+        print>>log, ModColor.Str("""WARNING: /sbin/sysctl vm.max_map_count failed. Unable to check this setting.""")
+        max_map_count = None
+
+    if max_map_count is not None:
+        if max_map_count < 500000:
+            print>>log, ModColor.Str("""WARNING: sysctl vm.max_map_count = {}. 
+            This may be too little for large DDFacet and killMS jobs. If you get strange "file exists" 
+            errors on /dev/shm, them try to bribe, beg or threaten your friendly local sysadmin into 
+            setting vm.max_map_count=1000000 in /etc/sysctl.conf.
+                """.format(max_map_count))
+        else:
+            print>>log, "  sysctl vm.max_map_count = {}".format(max_map_count)
 
     # check for memory lock limits
     import resource
