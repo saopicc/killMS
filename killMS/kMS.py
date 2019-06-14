@@ -291,6 +291,11 @@ def main(OP=None,MSName=None):
 
     TChunk=float(options.TChunk)
     dt=float(options.dt)
+
+    if dt > TChunk*60:
+        print>>log,ModColor.Str("dt=%.2fm larger than TChunk. Setting dt=%.2fm"%(dt, TChunk*60))
+        dt = TChunk*60
+
     dtInit=float(options.InitLMdt)
     NCPU=int(options.NCPU)
     #SubOnly=(int(options.SubOnly)==1)
