@@ -21,14 +21,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import numpy as np
 import ClassMS
 from pyrap.tables import table
-from killMS.Other import MyLogger
-log=MyLogger.getLogger("ClassVisServer")
+from DDFacet.Other import logger
+log=logger.getLogger("ClassVisServer")
 # import MyPickle
 from killMS.Array import NpShared
 from killMS.Other import ClassTimeIt
 from killMS.Other import ModColor
 from killMS.Array import ModLinAlg
-MyLogger.setSilent(["NpShared"])
+logger.setSilent(["NpShared"])
 #from Sky.PredictGaussPoints_NumExpr3 import ClassPredictParallel as ClassPredict 
 #from Sky.PredictGaussPoints_NumExpr3 import ClassPredict as ClassPredict 
 import ClassWeighting

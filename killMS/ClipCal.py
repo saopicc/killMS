@@ -5,9 +5,9 @@ from pyrap.tables import table
 import optparse
 import time
 #import managecolumns
-from killMS.Other import MyLogger
-log=MyLogger.getLogger("ClipCal")
-MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
+from DDFacet.Other import logger
+log=logger.getLogger("ClipCal")
+logger.itsLog.logger.setLevel(logger.logging.CRITICAL)
 SaveFile="ClipCal.last"
 import pickle
 

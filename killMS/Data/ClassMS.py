@@ -27,8 +27,8 @@ import os
 import pyrap.quanta as qa
 import pyrap.measures as pm
 import ephem
-from killMS.Other import MyLogger
-log=MyLogger.getLogger("ClassMS")
+from DDFacet.Other import logger
+log=logger.getLogger("ClassMS")
 from killMS.Other import ClassTimeIt
 from killMS.Other.progressbar import ProgressBar
 

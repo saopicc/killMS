@@ -23,9 +23,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import optparse
 import sys
 
-from killMS.Other import MyLogger
+from DDFacet.Other import logger
 from killMS.Array import NpShared
-log=MyLogger.getLogger("ClearSHM")
+log=logger.getLogger("ClearSHM")
 
 def read_options():
     desc="""CohJones Questions and suggestions: cyril.tasse@obspm.fr"""

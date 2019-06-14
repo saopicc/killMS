@@ -26,9 +26,9 @@ import numpy as np
 import numpy as np
 #import pylab
 import os
-from DDFacet.Other import MyLogger
+from DDFacet.Other import logger
 from DDFacet.Other import ModColor
-log=MyLogger.getLogger("ClassInterpol")
+log=logger.getLogger("ClassInterpol")
 from DDFacet.Other.AsyncProcessPool import APP
 from DDFacet.Other import Multiprocessing
 #from DDFacet.Array import shared_dict

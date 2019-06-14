@@ -1,6 +1,6 @@
 import numpy as np
-from killMS.Other import MyLogger
-log=MyLogger.getLogger("ClassSolPredictMachine")
+from DDFacet.Other import logger
+log=logger.getLogger("ClassSolPredictMachine")
 from killMS.Other import ModColor
 import os
 from killMS.Other import reformat

@@ -2,16 +2,10 @@ import numpy as np
 import optparse
 import pickle
 import numpy as np
-import pylab
-from pyrap.tables import table
-import killMS.Array.ModLinAlg
-from DDFacet.Other import MyLogger
-log = MyLogger.getLogger("DiagBL")
-from killMS.Data import ClassMS
+from DDFacet.Other import logger
+log = logger.getLogger("DiagBL")
 from DDFacet.Array import shared_dict
 from DDFacet.Other.AsyncProcessPool import APP, WorkerProcessError
-from DDFacet.Other import Multiprocessing
-from DDFacet.Other import ModColor
 
 class ClassCovMat():
     def __init__(self,**kwargs):

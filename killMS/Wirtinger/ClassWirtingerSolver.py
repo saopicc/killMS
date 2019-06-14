@@ -26,8 +26,8 @@ from killMS.Data import ClassVisServer
 from killMS.Array import ModLinAlg
 #import matplotlib.pyplot as pylab
 
-from killMS.Other import MyLogger
-log=MyLogger.getLogger("ClassWirtingerSolver")
+from DDFacet.Other import logger
+log=logger.getLogger("ClassWirtingerSolver")
 from killMS.Other import ModColor
 
 from killMS.Other.progressbar import ProgressBar

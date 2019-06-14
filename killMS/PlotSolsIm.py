@@ -25,10 +25,10 @@ import sys
 from killMS.Other import MyPickle
 from killMS.Other import logo
 from killMS.Other import ModColor
-from killMS.Other import MyLogger
+from DDFacet.Other import logger
 import matplotlib.gridspec as gridspec
-log=MyLogger.getLogger("killMS")
-MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
+log=logger.getLogger("killMS")
+logger.itsLog.logger.setLevel(logger.logging.CRITICAL)
 from itertools import product as ItP
 
 sys.path=[name for name in sys.path if not(("pyrap" in name)&("/usr/local/lib/" in name))]

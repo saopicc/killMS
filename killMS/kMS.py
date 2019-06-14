@@ -42,13 +42,10 @@ if "PYTHONPATH_FIRST" in os.environ.keys() and int(os.environ["PYTHONPATH_FIRST"
 # # ##############################
 
 # log
-from killMS.Other import MyLogger, ModColor
+from DDFacet.Other import logger, ModColor
 
-log=MyLogger.getLogger("killMS")
-MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
-
-import logging
-logging.getLogger('matplotlib').setLevel(logging.WARNING)
+log = logger.getLogger("killMS")
+#log.setLevel(logger.logging.CRITICAL)
 
 
 SaveFile="last_killMS.obj"

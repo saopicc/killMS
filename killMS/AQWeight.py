@@ -6,8 +6,8 @@ import numpy as np
 import pylab
 from pyrap.tables import table
 import Array.ModLinAlg
-from DDFacet.Other import MyLogger
-log = MyLogger.getLogger("AQWeight")
+from DDFacet.Other import logger
+log = logger.getLogger("AQWeight")
 from killMS.Data import ClassMS
 from DDFacet.Array import shared_dict
 APP=None
