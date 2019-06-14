@@ -637,6 +637,10 @@ def main(OP=None,MSName=None):
             VS_PredictCol.LoadNextVisChunk()
         if Load=="EndOfObservation":
             break
+        if Load == "Empty":
+            print>>log, "skipping rest of processing for this chunk"
+            continue
+
 
         iChunk+=1
         #if iChunk<6: continue
@@ -698,7 +702,7 @@ def main(OP=None,MSName=None):
 
 
             Sols=Solver.GiveSols(SaveStats=True)
-
+            
             # ##########
             # FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.MSName),SolsName)
 

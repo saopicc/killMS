@@ -529,6 +529,7 @@ class ClassVisServer():
 
         if not self.have_data:
             print>>log, "this data chunk is empty"
+            return "Empty"
 
         #print>>log, "    Rows= [%i, %i]"%(MS.ROW0,MS.ROW1)
         #print float(MS.ROW0)/MS.nbl,float(MS.ROW1)/MS.nbl
