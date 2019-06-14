@@ -676,7 +676,20 @@ class ClassPredict():
                 
 
             T.timeit("2: Stuff")
+
+            # print """
+            # print times.shape,times.dtype
+            # print uvwThis.shape,uvwThis.dtype
+            # print ColOutDir.shape,ColOutDir.dtype
+            # print flagsThis.shape,flagsThis.dtype
+            # print ModelIm.shape,ModelIm.dtype"""
             
+            # print times.shape,times.dtype
+            # print uvwThis.shape,uvwThis.dtype
+            # print ColOutDir.shape,ColOutDir.dtype
+            # print flagsThis.shape,flagsThis.dtype
+            # print ModelIm.shape,ModelIm.dtype
+            # stop
             vis=GridMachine.get(times,uvwThis,ColOutDir,flagsThis,A0A1,ModelIm,DicoJonesMatrices=DicoJonesMatrices,freqs=freqs,
                                 ImToGrid=False,ChanMapping=ChanMapping)
             T.timeit("2: Predict")

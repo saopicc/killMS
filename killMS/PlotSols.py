@@ -267,6 +267,7 @@ def main(options=None):
                     Sols=LSols[iSol]
                     G=Sols.G[:,iChan,:,iDir,:,:]
                     J=G[:,iAnt,:,:]
+                    print iSol,J
                     ax.plot(Sols.t0,op0(J[:,0,0]),color=Lcol0[iSol],alpha=Lalpha0[iSol],ls=Lls[iSol])#,marker=marker)
                     ax.plot(Sols.t0,op0(J[:,1,1]),color=Lcol0_off[iSol],alpha=Lalpha0[iSol],ls=Lls_off[iSol])#,marker=marker)
                     if PlotDiag[0]:
