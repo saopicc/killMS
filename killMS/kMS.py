@@ -63,6 +63,7 @@ if "nox" in sys.argv:
     print ModColor.Str(" == !NOX! ==")
     
 
+IdSharedMem = None
 
 import multiprocessing
 NCPU_default=str(int(0.75*multiprocessing.cpu_count()))
@@ -230,6 +231,35 @@ def read_options():
     
 
 def main(OP=None,MSName=None):
+
+    # check for SHM size
+    ram_size = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
+    shm_stats = os.statvfs('/dev/shm')
+    shm_size = shm_stats.f_bsize * shm_stats.f_favail
+    shm_avail = shm_size / float(ram_size)
+
+    if shm_avail < 0.6:
+        print>>log, ModColor.Str("""WARNING: max shared memory size is only {:.0%} of total RAM size.
+            This can cause problems for large imaging jobs. A setting of 90% is recommended for 
+            DDFacet and killMS. If your processes keep failing with SIGBUS or "bus error" messages,
+            it is most likely for this reason. You can change the memory size by running
+                $ sudo mount -o remount,size=90% /dev/shm
+            To make the change permanent, edit /etc/defaults/tmps, and add a line saying "SHM_SIZE=90%"
+            """.format(shm_avail))
+    else:
+        print>>log, "Max shared memory size is {:.0%} of total RAM size".format(shm_avail)
+
+    # check for memory lock limits
+    import resource
+    msoft, mhard = resource.getrlimit(resource.RLIMIT_MEMLOCK)
+    if msoft >=0 or mhard >=0:
+        print>>log,ModColor.Str("""WARNING: your system has a limit on memory locks configured.
+            This may possibly slow down killMS performance. You can try removing the limit by running
+                $ ulimit -l unlimited
+            If this gives an "operation not permitted" error, you can try to bribe, beg or threaten 
+            your friendly local sysadmin into doing
+                # echo "*        -   memlock     unlimited" >> /etc/security/limits.conf
+        """)
 
 
     if OP==None:
@@ -1206,7 +1236,8 @@ if __name__=="__main__":
                                  (elapsed // 60) % 60,
                                  elapsed % 60))
     except:
-        print>>log, traceback.format_exc()
-        from killMS.Array import NpShared
-        NpShared.DelAll(IdSharedMem)
+        # print>>log, traceback.format_exc()
+        if IdSharedMem is not None:
+            from killMS.Array import NpShared
+            NpShared.DelAll(IdSharedMem)
         raise
