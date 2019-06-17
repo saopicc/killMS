@@ -1,12 +1,12 @@
 import numpy as np
-from DDFacet.Other import MyLogger
-log=MyLogger.getLogger("ClassFitTEC")
+from DDFacet.Other import logger
+log=logger.getLogger("ClassFitTEC")
 import killMS.Array.ModLinAlg
 K=8.4479745e9
 import scipy.sparse
 from DDFacet.Other import ClassTimeIt
 
-MyLogger.setSilent(["ClassFitTEC"])
+logger.setSilent(["ClassFitTEC"])
 
 def TECToPhase(TEC,freq):
     phase=K*TEC*(1./freq)
@@ -327,14 +327,14 @@ class ClassFitTEC():
 
 
 # import numpy as np
-# from DDFacet.Other import MyLogger
-# log=MyLogger.getLogger("ClassFitTEC")
+# from DDFacet.Other import logger
+# log=logger.getLogger("ClassFitTEC")
 # import killMS.Array.ModLinAlg
 # K=8.4479745e9
 # import scipy.sparse
 # from DDFacet.Other import ClassTimeIt
 
-# MyLogger.setSilent(["ClassFitTEC"])
+# logger.setSilent(["ClassFitTEC"])
 
 # def TECToPhase(TEC,freq):
 #     phase=K*TEC*(1./freq)

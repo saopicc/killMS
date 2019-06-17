@@ -25,8 +25,8 @@ from killMS.Array import NpShared
 from killMS.Other import reformat
 from killMS.Other import ModColor
 
-from killMS.Other import MyLogger
-log=MyLogger.getLogger("ClassImageSM")
+from DDFacet.Other import logger
+log=logger.getLogger("ClassImageSM")
 from killMS.Other.progressbar import ProgressBar
 from DDFacet.ToolsDir.GiveEdges import GiveEdges
 #from DDFacet.Imager.ClassModelMachine import ClassModelMachine

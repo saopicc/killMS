@@ -24,9 +24,9 @@ import sys
 from killMS.Other import MyPickle
 from killMS.Other import logo
 from killMS.Other import ModColor
-from killMS.Other import MyLogger
-log=MyLogger.getLogger("killMS")
-MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
+from DDFacet.Other import logger
+log=logger.getLogger("killMS")
+logger.itsLog.logger.setLevel(logger.logging.CRITICAL)
 from killMS.Other import ClassTimeIt
 from killMS.Data import ClassVisServer
 from killMS.Predict.PredictGaussPoints_NumExpr import ClassPredict

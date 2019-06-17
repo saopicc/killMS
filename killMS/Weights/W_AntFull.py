@@ -5,8 +5,8 @@ import numpy as np
 import pylab
 from pyrap.tables import table
 import killMS.Array.ModLinAlg
-from DDFacet.Other import MyLogger
-log = MyLogger.getLogger("DiagBL")
+from DDFacet.Other import logger
+log = logger.getLogger("DiagBL")
 from killMS.Data import ClassMS
 from DDFacet.Array import shared_dict
 from DDFacet.Other.AsyncProcessPool import APP, WorkerProcessError

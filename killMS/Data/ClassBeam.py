@@ -23,8 +23,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import numpy as np
 import ClassMS
 from pyrap.tables import table
-from killMS.Other import MyLogger
-log=MyLogger.getLogger("ClassBeam")
+from DDFacet.Other import logger
+log=logger.getLogger("ClassBeam")
 from killMS.Array import ModLinAlg
 
 class ClassBeam():
@@ -33,7 +33,7 @@ class ClassBeam():
         self.SM=SM
         self.MSName=MSName#self.GD["VisData"]["MSName"]
         self.ColName=self.GD["VisData"]["InCol"]
-        self.MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False)
+        self.MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False,GD=GD)
         self.DtBeamMin=self.GD["Beam"]["DtBeamMin"]
 
     def GiveMeanBeam(self):
@@ -60,6 +60,8 @@ class ClassBeam():
             useArrayFactor=("A" in self.GD["Beam"]["LOFARBeamMode"])
             useElementBeam=("E" in self.GD["Beam"]["LOFARBeamMode"])
             self.MS.LoadSR(useElementBeam=useElementBeam,useArrayFactor=useArrayFactor)
+        elif self.GD["Beam"]["BeamModel"]=="FITS":
+            self.MS.LoadFITSBeam()
 
         #print>>log, "  Update beam [Dt = %3.1f min] ... "%self.DtBeamMin
         DtBeamSec=self.DtBeamMin*60

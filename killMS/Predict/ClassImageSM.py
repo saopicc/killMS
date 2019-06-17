@@ -24,8 +24,8 @@ from DDFacet.Imager.ClassDeconvMachine import ClassImagerDeconv
 from pyrap.images import image
 from killMS.Array import NpShared
 
-from killMS.Other import MyLogger
-log=MyLogger.getLogger("ClassImageSM")
+from DDFacet.Other import logger
+log=logger.getLogger("ClassImageSM")
 from killMS.Other.progressbar import ProgressBar
 from DDFacet.ToolsDir.GiveEdges import GiveEdges
 

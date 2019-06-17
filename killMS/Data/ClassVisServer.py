@@ -21,14 +21,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import numpy as np
 import ClassMS
 from pyrap.tables import table
-from killMS.Other import MyLogger
-log=MyLogger.getLogger("ClassVisServer")
+from DDFacet.Other import logger
+log=logger.getLogger("ClassVisServer")
 # import MyPickle
 from killMS.Array import NpShared
 from killMS.Other import ClassTimeIt
 from killMS.Other import ModColor
 from killMS.Array import ModLinAlg
-MyLogger.setSilent(["NpShared"])
+logger.setSilent(["NpShared"])
 #from Sky.PredictGaussPoints_NumExpr3 import ClassPredictParallel as ClassPredict 
 #from Sky.PredictGaussPoints_NumExpr3 import ClassPredict as ClassPredict 
 import ClassWeighting
@@ -275,9 +275,9 @@ class ClassVisServer():
         if (t0_sec>=its_t1):
             return "EndChunk"
 
-        
+        if not self.have_data:
+            return "AllFlaggedThisTime"
 
-        
         t0_MS=self.MS.F_tstart
         t0_sec+=t0_MS
         t1_sec+=t0_MS
@@ -512,21 +512,25 @@ class ClassVisServer():
 
 
     def LoadNextVisChunk(self):
-        if self.CurrentMemTimeChunk==self.NTChunk:
+        MS=self.MS
+
+        # bug out when we hit the buffers
+        if self.CurrentMemTimeChunk >= self.NTChunk:
             print>>log, ModColor.Str("Reached end of observations")
             self.ReInitChunkCount()
             return "EndOfObservation"
-        MS=self.MS
+
+        # get current chunk boundaries
         iT0,iT1=self.CurrentMemTimeChunk,self.CurrentMemTimeChunk+1
         self.CurrentMemTimeChunk+=1
 
         print>>log, "Reading next data chunk in [%5.2f, %5.2f] hours (column %s)"%(self.TimesInt[iT0],self.TimesInt[iT1],MS.ColName)
-        self.DATA_CHUNK=MS.ReadData(t0=self.TimesInt[iT0],t1=self.TimesInt[iT1],ReadWeight=True)
+        self.have_data = MS.ReadData(t0=self.TimesInt[iT0],t1=self.TimesInt[iT1],ReadWeight=True)
 
+        if not self.have_data:
+            print>>log, "this data chunk is empty"
+            return "Empty"
 
-
-
-        
         #print>>log, "    Rows= [%i, %i]"%(MS.ROW0,MS.ROW1)
         #print float(MS.ROW0)/MS.nbl,float(MS.ROW1)/MS.nbl
 
@@ -819,9 +823,17 @@ class ClassVisServer():
         ListDicoPreApply=[]
         DoPreApplyJones=False
         if self.GD!=None:
+            if self.GD["Beam"]["BeamAt"].lower() == "tessel":
+                print>>log,"Estimating Beam directions at the center of the tesselated areas"
+                RA,DEC=self.SM.ClusterCat.ra,self.SM.ClusterCat.dec
+            elif self.GD["Beam"]["BeamAt"].lower() == "facet":
+                print>>log,"Estimating Beam directions at the center of the individual facets areas"
+                RA=np.array([self.SM.DicoImager[iFacet]["RaDec"][0] for iFacet in range(len(self.SM.DicoImager))])
+                DEC=np.array([self.SM.DicoImager[iFacet]["RaDec"][1] for iFacet in range(len(self.SM.DicoImager))])
+            else:
+                raise RuntimeError("incorrect BeamAt setting: use Facet or Tessel")
             if self.GD["Beam"]["BeamModel"]!=None:
                 if self.GD["Beam"]["BeamModel"]=="LOFAR":
-                    RA,DEC=self.SM.ClusterCat.ra,self.SM.ClusterCat.dec
                     NDir=RA.size
                     self.DtBeamMin=self.GD["Beam"]["DtBeamMin"]
                     useArrayFactor=("A" in self.GD["Beam"]["LOFARBeamMode"])
@@ -918,7 +930,6 @@ class ClassVisServer():
                     DoPreApplyJones=True
                     print>>log, "       .... done Update LOFAR beam "
                 elif self.GD["Beam"]["BeamModel"] == "FITS":
-                    RA, DEC = self.SM.ClusterCat.ra, self.SM.ClusterCat.dec
                     NDir = RA.size
                     self.DtBeamMin = self.GD["Beam"]["DtBeamMin"]
 

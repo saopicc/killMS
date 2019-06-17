@@ -26,8 +26,8 @@ import numpy as np
 #import pylab
 import os
 import glob
-from DDFacet.Other import MyLogger
-log=MyLogger.getLogger("ClassInterpol")
+from DDFacet.Other import logger
+log=logger.getLogger("ClassInterpol")
 SaveName="last_InterPol.obj"
 
 def read_options():
