@@ -424,7 +424,7 @@ def main(OP=None,MSName=None):
         import DDFacet.Other.MyPickle
         print>>log,"Reading model file %s"%FileDicoModel
         GDPredict=DDFacet.Other.MyPickle.Load(FileDicoModel)["GD"]
-        
+        GDPredict["Output"]["Mode"] = "Predict"
         if not "StokesResidues" in GDPredict["Output"].keys():
             print>>log,ModColor.Str("Seems like the DicoModel was build by an older version of DDF")
             print>>log,ModColor.Str("   ... updating keywords")
