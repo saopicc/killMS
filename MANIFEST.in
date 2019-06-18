@@ -1,0 +1,14 @@
+recursive-include killMS/Array *.py *.h
+recursive-include killMS/Data *.py
+recursive-include killMS/Gridder *.py *.h
+recursive-include killMS/Other *.py
+recursive-include killMS/Parset *.py *.cfg
+recursive-include killMS/Plot *.py
+recursive-include killMS/Predict *.py *.c *.h
+recursive-include killMS/Simul *.py
+recursive-include killMS/Weights *.py
+recursive-include killMS/Wirtinger *.py
+include killMS/*.py
+
+#backend if exists
+recursive-include killMS/cbuild/ *.so __init__.py
