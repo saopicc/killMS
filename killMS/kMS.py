@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import sys,os
 import time
 import subprocess
-
+import killMS
 if "PYTHONPATH_FIRST" in os.environ.keys() and int(os.environ["PYTHONPATH_FIRST"]):
     sys.path = os.environ["PYTHONPATH"].split(":") + sys.path
 
@@ -67,12 +67,12 @@ NCPU_default=str(int(0.75*multiprocessing.cpu_count()))
 
 from killMS.Parset import ReadCFG, MyOptParse
 
-parset_path = os.path.join(os.path.dirname(__file__), "Parset", "DefaultParset.cfg")
+parset_path = os.path.join(os.path.dirname(killMS.__file__), "Parset", "DefaultParset.cfg")
     #
     # os.path.join(os.environ["KILLMS_DIR"], "killMS", "killMS", "Parset", "DefaultParset.cfg")
 print parset_path
 if not os.path.exists(parset_path):
-    raise FileNotFoundError("Default parset could not be located in {0:s}. Check your installation".format(parset_path))
+    raise IOError("Default parset could not be located in {0:s}. Check your installation".format(parset_path))
 Parset = ReadCFG.Parset(parset_path)
 
 
