@@ -27,8 +27,8 @@ import os
 import pyrap.quanta as qa
 import pyrap.measures as pm
 import ephem
-from killMS.Other import MyLogger
-log=MyLogger.getLogger("ClassMS")
+from DDFacet.Other import logger
+log=logger.getLogger("ClassMS")
 from killMS.Other import ClassTimeIt
 from killMS.Other.progressbar import ProgressBar
 
@@ -412,6 +412,10 @@ class ClassMS():
         self.ROW1=row1
         self.nRowRead=row1-row0
 
+        # if chunk is empty, return None
+        if self.nRowRead <= 0:
+            return None
+
         DATA_CHUNK["ROW0"]=row0
         DATA_CHUNK["ROW1"]=row1
         DATA_CHUNK["nRowRead"]=self.nRowRead
@@ -583,6 +587,8 @@ class ClassMS():
         #self.NPol=vis_all.shape[2]
         self.A0=A0
         self.A1=A1
+
+        return True
 
             
 

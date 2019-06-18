@@ -23,9 +23,9 @@ try:
     from killMS.Gridder import _pyGridder
 except:
     from killMS.cbuild.Gridder import _pyGridder
-from killMS.Other import MyLogger
+from DDFacet.Other import logger
 from killMS.Other import ModColor
-log=MyLogger.getLogger("ClassWeighting")
+log=logger.getLogger("ClassWeighting")
 
 
 #import ImagingWeights

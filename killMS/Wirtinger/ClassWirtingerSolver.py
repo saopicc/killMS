@@ -26,8 +26,8 @@ from killMS.Data import ClassVisServer
 from killMS.Array import ModLinAlg
 #import matplotlib.pyplot as pylab
 
-from killMS.Other import MyLogger
-log=MyLogger.getLogger("ClassWirtingerSolver")
+from DDFacet.Other import logger
+log=logger.getLogger("ClassWirtingerSolver")
 from killMS.Other import ModColor
 
 from killMS.Other.progressbar import ProgressBar
@@ -273,7 +273,7 @@ class ClassWirtingerSolver():
         # self.G+=np.random.randn(*self.G.shape)*1.#sigP
         
         NSols=np.max([1,int(1.5*round(self.VS.MS.DTh/(self.VS.TVisSizeMin/60.)))])
-
+        print "Nsols",NSols,self.VS.MS.DTh,self.VS.TVisSizeMin/60.
         
 
         self.SolsArray_t0=np.zeros((NSols,),dtype=np.float64)

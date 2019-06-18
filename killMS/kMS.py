@@ -22,33 +22,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #turtles
 
 import sys,os
+import time
+import subprocess
+
 if "PYTHONPATH_FIRST" in os.environ.keys() and int(os.environ["PYTHONPATH_FIRST"]):
     sys.path = os.environ["PYTHONPATH"].split(":") + sys.path
-import traceback
 
-import optparse
-import sys
-import os
+
 # hack to allow 'from killMS... import...'
 #sys.path.remove(os.path.dirname(os.path.abspath(__file__)))
-from killMS.Other import MyPickle
-from killMS.Other import logo
-from killMS.Other import ModColor
-from killMS.Other import MyLogger
-from killMS.Other import MyPickle
-from killMS.Other import PrintOptParse
-from killMS.Parset import MyOptParse
-import numpy as np
-import DDFacet.Other.MyPickle
-
-# # ##############################
-# # Catch numpy warning
-# np.seterr(all='raise')
-# import warnings
-# warnings.filterwarnings('error')
-# #with warnings.catch_warnings():
-# #    warnings.filterwarnings('error')
-# # ##############################
 
 # # ##############################
 # # Catch numpy warning
@@ -60,19 +42,13 @@ import DDFacet.Other.MyPickle
 # # ##############################
 
 # log
-log=MyLogger.getLogger("killMS")
-MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
+from DDFacet.Other import logger, ModColor
+
+log = logger.getLogger("killMS")
+#log.setLevel(logger.logging.CRITICAL)
 
 
-from pyrap.tables import table
-# test
 SaveFile="last_killMS.obj"
-
-#import numpy
-#print numpy.__file__
-#import pyrap
-#print pyrap.__file__
-#stop
 
 
 if "nocol" in sys.argv:
@@ -84,48 +60,20 @@ if "nox" in sys.argv:
     print ModColor.Str(" == !NOX! ==")
     
 
-
-#from killMS.Data import MergeJones
-from killMS.Data import ClassJonesDomains
-import time
-import numpy as np
-import pickle
-from SkyModel.Sky import ClassSM
-from killMS.Wirtinger.ClassWirtingerSolver import ClassWirtingerSolver
-
-from killMS.Other import ClassTimeIt
-from killMS.Data import ClassVisServer
-from DDFacet.Data import ClassVisServer as ClassVisServer_DDF
-
-from killMS.Predict.PredictGaussPoints_NumExpr5 import ClassPredictParallel as ClassPredict 
-#from Predict.PredictGaussPoints_NumExpr5 import ClassPredict as ClassPredict 
-
-#from Predict.PredictGaussPoints_NumExpr2 import ClassPredictParallel as ClassPredict_orig
-#from Predict.PredictGaussPoints_NumExpr4 import ClassPredict as ClassPredict 
-#from Predict.PredictGaussPoints_NumExpr2 import ClassPredict as ClassPredict_orig
-#from Sky.PredictGaussPoints_NumExpr4 import ClassPredict as ClassPredict 
-
-#from Sky.PredictGaussPoints_NumExpr2 import ClassPredictParallel as ClassPredict_orig 
-#from Sky.PredictGaussPoints_NumExpr3 import ClassPredict as ClassPredict 
-#from Sky.PredictGaussPoints_NumExpr2 import ClassPredict as ClassPredict_orig 
-
-from killMS.Array import ModLinAlg
-from killMS.Array import NpShared
-from killMS.Other import reformat
+IdSharedMem = None
 
 import multiprocessing
 NCPU_default=str(int(0.75*multiprocessing.cpu_count()))
 
-from killMS.Parset import ReadCFG
+from killMS.Parset import ReadCFG, MyOptParse
 
-global Parset
 parset_path = os.path.join(os.path.dirname(__file__), "Parset", "DefaultParset.cfg")
     #
     # os.path.join(os.environ["KILLMS_DIR"], "killMS", "killMS", "Parset", "DefaultParset.cfg")
 print parset_path
 if not os.path.exists(parset_path):
     raise FileNotFoundError("Default parset could not be located in {0:s}. Check your installation".format(parset_path))
-Parset=ReadCFG.Parset(parset_path)
+Parset = ReadCFG.Parset(parset_path)
 
 
 def read_options():
@@ -213,6 +161,7 @@ def read_options():
     OP.add_option('SubOnly',type="int",help='Subtract selected sources. Default is %default')
     OP.add_option('DoBar',help=' Draw progressbar. Default is %default',default="1")
     OP.add_option('NCPU',type="int",help='Number of cores to use. Default is %default ')
+    OP.add_option('NThread',type="int",help='Number of OMP/BLAS/etc. threads to use. Default is %default ', default=1)
 
     # OP.OptionGroup("* PreApply Solution-related options","PreApply")
     # OP.add_option('PreApplySols')#,help='Solutions to apply to the data before solving.')
@@ -279,7 +228,54 @@ def read_options():
     
 
 def main(OP=None,MSName=None):
-    
+
+    print>>log,"Checking system configuration:"
+    # check for SHM size
+    ram_size = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
+    shm_stats = os.statvfs('/dev/shm')
+    shm_size = shm_stats.f_bsize * shm_stats.f_favail
+    shm_avail = shm_size / float(ram_size)
+
+    if shm_avail < 0.6:
+        print>>log, ModColor.Str("""WARNING: max shared memory size is only {:.0%} of total RAM size.
+            This can cause problems for large imaging jobs. A setting of 90% is recommended for 
+            DDFacet and killMS. If your processes keep failing with SIGBUS or "bus error" messages,
+            it is most likely for this reason. You can change the memory size by running
+                $ sudo mount -o remount,size=90% /dev/shm
+            To make the change permanent, edit /etc/defaults/tmps, and add a line saying "SHM_SIZE=90%".
+            """.format(shm_avail))
+    else:
+        print>>log, "  Max shared memory size is {:.0%} of total RAM size".format(shm_avail)
+
+    try:
+        output = subprocess.check_output(["/sbin/sysctl", "vm.max_map_count"])
+        max_map_count = int(output.strip().rsplit(" ", 1)[-1])
+    except Exception:
+        print>>log, ModColor.Str("""WARNING: /sbin/sysctl vm.max_map_count failed. Unable to check this setting.""")
+        max_map_count = None
+
+    if max_map_count is not None:
+        if max_map_count < 500000:
+            print>>log, ModColor.Str("""WARNING: sysctl vm.max_map_count = {}. 
+            This may be too little for large DDFacet and killMS jobs. If you get strange "file exists" 
+            errors on /dev/shm, them try to bribe, beg or threaten your friendly local sysadmin into 
+            setting vm.max_map_count=1000000 in /etc/sysctl.conf.
+                """.format(max_map_count))
+        else:
+            print>>log, "  sysctl vm.max_map_count = {}".format(max_map_count)
+
+    # check for memory lock limits
+    import resource
+    msoft, mhard = resource.getrlimit(resource.RLIMIT_MEMLOCK)
+    if msoft >=0 or mhard >=0:
+        print>>log,ModColor.Str("""WARNING: your system has a limit on memory locks configured.
+            This may possibly slow down killMS performance. You can try removing the limit by running
+                $ ulimit -l unlimited
+            If this gives an "operation not permitted" error, you can try to bribe, beg or threaten 
+            your friendly local sysadmin into doing
+                # echo "*        -   memlock     unlimited" >> /etc/security/limits.conf
+        """)
+
 
     if OP==None:
         OP = MyPickle.Load(SaveFile)
@@ -287,6 +283,33 @@ def main(OP=None,MSName=None):
         
     options=OP.GiveOptionObject()
 
+    ## I've carefully moved the import statements around so that numpy is not yet imported at this
+    ## point. This gives us a chance to set the OPENBLAS thread variables and such.
+    ## But in case of someone messing around with imports in the future, leave this check here
+    if 'numpy' in sys.modules:
+        raise RuntimeError("numpy already imported. This is a bug -- it shouldn't be imported yet")
+
+    os.environ['OPENBLAS_NUM_THREADS'] = os.environ['OPENBLAS_MAX_THREADS'] = str(options.NThread)
+
+    # now do all the other imports
+
+    # from killMS.Data import MergeJones
+    from killMS.Array import NpShared
+    from killMS.Data import ClassJonesDomains
+    import time
+    import numpy as np
+    import pickle
+    from SkyModel.Sky import ClassSM
+    from killMS.Wirtinger.ClassWirtingerSolver import ClassWirtingerSolver
+
+    from killMS.Data import ClassVisServer
+    from DDFacet.Data import ClassVisServer as ClassVisServer_DDF
+
+    from killMS.Predict.PredictGaussPoints_NumExpr5 import ClassPredictParallel as ClassPredict
+
+    from killMS.Array import ModLinAlg
+    from killMS.Array import NpShared
+    from killMS.Other import reformat
 
     #IdSharedMem=str(int(np.random.rand(1)[0]*100000))+"."
     global IdSharedMem
@@ -313,6 +336,11 @@ def main(OP=None,MSName=None):
 
     TChunk=float(options.TChunk)
     dt=float(options.dt)
+
+    if dt > TChunk*60:
+        print>>log,ModColor.Str("dt=%.2fm larger than TChunk. Setting dt=%.2fm"%(dt, TChunk*60))
+        dt = TChunk*60
+
     dtInit=float(options.InitLMdt)
     NCPU=int(options.NCPU)
     #SubOnly=(int(options.SubOnly)==1)
@@ -390,6 +418,10 @@ def main(OP=None,MSName=None):
             FileDicoModel=options.DicoModel
         else:
             FileDicoModel="%s.DicoModel"%BaseImageName
+
+        ## OMS: only import it here, because otherwise is pulls in numpy too early, before I can fix
+        ## the OPENBLAS threads thing
+        import DDFacet.Other.MyPickle
         print>>log,"Reading model file %s"%FileDicoModel
         GDPredict=DDFacet.Other.MyPickle.Load(FileDicoModel)["GD"]
         
@@ -441,6 +473,8 @@ def main(OP=None,MSName=None):
             GDPredict["CF"]["OverS"]=options.OverS
         if options.wmax is not None:
             GDPredict["CF"]["wmax"]=options.wmax
+
+        GDPredict["Facets"].setdefault("MixingWidth", 10)  # for compatibility with older DicoModels
 
         GD["GDImage"]=GDPredict
         GDPredict["GDkMS"]=GD
@@ -634,6 +668,10 @@ def main(OP=None,MSName=None):
             VS_PredictCol.LoadNextVisChunk()
         if Load=="EndOfObservation":
             break
+        if Load == "Empty":
+            print>>log, "skipping rest of processing for this chunk"
+            continue
+
 
         iChunk+=1
         #if iChunk<6: continue
@@ -695,7 +733,7 @@ def main(OP=None,MSName=None):
 
 
             Sols=Solver.GiveSols(SaveStats=True)
-
+            
             # ##########
             # FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.MSName),SolsName)
 
@@ -1122,8 +1160,14 @@ def _exc_handler(type, value, tb):
 
 
 if __name__=="__main__":
+    from killMS.Other import logo
+    from killMS.Other import ModColor
+    from killMS.Other import MyPickle
+
+
     tic = time.time()
     #os.system('clear')
+
     logo.print_logo()
     sys.excepthook = _exc_handler
 
@@ -1140,7 +1184,7 @@ if __name__=="__main__":
     options=OP.GiveOptionObject()
 
     if options.DoBar=="0":
-        from Other.progressbar import ProgressBar
+        from killMS.Other.progressbar import ProgressBar
         ProgressBar.silent=1
 
     
@@ -1207,6 +1251,8 @@ if __name__=="__main__":
                                  (elapsed // 60) % 60,
                                  elapsed % 60))
     except:
-        print>>log, traceback.format_exc()
-        NpShared.DelAll(IdSharedMem)
+        # print>>log, traceback.format_exc()
+        if IdSharedMem is not None:
+            from killMS.Array import NpShared
+            NpShared.DelAll(IdSharedMem)
         raise

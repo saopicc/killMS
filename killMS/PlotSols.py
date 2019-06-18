@@ -25,9 +25,9 @@ import sys
 from killMS.Other import MyPickle
 from killMS.Other import logo
 from killMS.Other import ModColor
-from killMS.Other import MyLogger
-log=MyLogger.getLogger("killMS")
-MyLogger.itsLog.logger.setLevel(MyLogger.logging.CRITICAL)
+from DDFacet.Other import logger
+log=logger.getLogger("killMS")
+logger.itsLog.logger.setLevel(logger.logging.CRITICAL)
 
 sys.path=[name for name in sys.path if not(("pyrap" in name)&("/usr/local/lib/" in name))]
 
@@ -260,7 +260,23 @@ def main(options=None):
                     axRef=pylab.subplot(nx,ny,iAnt+1)
                     ax=axRef
 
-                if op1!=None: ax2 = ax.twinx()
+                ax.set_xticks([])
+                if options.NoTicks:
+                    ax.set_yticks([])
+
+                ax.tick_params(axis='both', which='major', labelsize='xx-small')
+                if options.PlotMode == "P":
+                    ax.set_ylim(ylim0)
+                else:
+                    ax.set_ylim(L_ylim0)
+
+                if op1 is not None:
+                    ax2 = ax.twinx()
+                    ax2.set_ylim(ylim1)
+                    ax2.set_xticks([])
+                    if options.NoTicks or iAnt % ny != ny - 1:
+                        ax2.set_yticks([])
+                    ax2.tick_params(axis='both', which='major', labelsize='xx-small')
 
                 pylab.title(StationNames[iAnt], fontsize=9)
                 for iChan,iSol in ItP(ChanList,range(nSol)):
@@ -273,6 +289,7 @@ def main(options=None):
                     if PlotDiag[0]:
                         ax.plot(Sols.t0,op0(J[:,1,0]),color=Lcol0[iSol],alpha=Lalpha0[iSol],ls=Lls[iSol])#,marker=marker)
                         ax.plot(Sols.t0,op0(J[:,0,1]),color=Lcol0_off[iSol],alpha=Lalpha0[iSol],ls=Lls_off[iSol])#,marker=marker)
+#<<<<<<< HEAD
                     if options.PlotMode=="P":
                         ax.set_ylim(ylim0)
                     else:
@@ -281,6 +298,9 @@ def main(options=None):
                     ax.set_xticks([])
                     if options.NoTicks:
                         ax.set_yticks([])
+# =======
+#                         # print L_ylim0
+# >>>>>>> master
 
                     if op1!=None:
                         # ax.plot(tm,op1(J[:,0,1]),color="blue")
@@ -290,10 +310,6 @@ def main(options=None):
                         if PlotDiag[1]:
                             ax2.plot(Sols.t0,op1(J[:,0,1]),color=Lcol1_off[iSol],alpha=Lalpha1[iSol],ls=Lls_off[iSol])#,marker=marker)
                             ax2.plot(Sols.t0,op1(J[:,1,0]),color=Lcol1_off[iSol],alpha=Lalpha1[iSol],ls=Lls_off[iSol])#,marker=marker)
-                        ax2.set_ylim(ylim1)
-                        ax2.set_xticks([])
-                        if options.NoTicks:
-                            ax2.set_yticks([])
                         #print StationNames[iAnt]
 
                 iAnt+=1

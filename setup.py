@@ -30,7 +30,7 @@ from os.path import join as pjoin
 import sys
 
 pkg='killMS'
-__version__ = "2.6.0.0"
+__version__ = "2.7.0.0"
 build_root=os.path.dirname(__file__)
 
 preinstall_dependencies = ["'pybind11 >= 2.2.2'", "'six >= 1.12.0'"]

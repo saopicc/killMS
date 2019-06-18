@@ -20,8 +20,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
 import time as timemod
-import MyLogger
-log=MyLogger.getLogger("ClassTimeIt")
+from DDFacet.Other import logger
+log=logger.getLogger("ClassTimeIt")
 DoLog=False
 
 
