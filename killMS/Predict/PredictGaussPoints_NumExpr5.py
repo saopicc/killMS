@@ -84,6 +84,8 @@ class ClassPredict():
         if self.DoSmearing!=0:
             if (("F" in DoSmearing)or("T" in DoSmearing)): Np=100000
 
+
+            
         if LExp==None:
             x=np.linspace(0.,10,Np)
             Exp=np.float32(np.exp(-x))
@@ -674,7 +676,20 @@ class ClassPredict():
                 
 
             T.timeit("2: Stuff")
+
+            # print """
+            # print times.shape,times.dtype
+            # print uvwThis.shape,uvwThis.dtype
+            # print ColOutDir.shape,ColOutDir.dtype
+            # print flagsThis.shape,flagsThis.dtype
+            # print ModelIm.shape,ModelIm.dtype"""
             
+            # print times.shape,times.dtype
+            # print uvwThis.shape,uvwThis.dtype
+            # print ColOutDir.shape,ColOutDir.dtype
+            # print flagsThis.shape,flagsThis.dtype
+            # print ModelIm.shape,ModelIm.dtype
+            # stop
             vis=GridMachine.get(times,uvwThis,ColOutDir,flagsThis,A0A1,ModelIm,DicoJonesMatrices=DicoJonesMatrices,freqs=freqs,
                                 ImToGrid=False,ChanMapping=ChanMapping)
             T.timeit("2: Predict")
@@ -683,14 +698,21 @@ class ClassPredict():
             if ApplyTimeJones is not None and self._BeamAtFacet:
                 ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
                 ParamJonesList=ParamJonesList+[iFacet]
-                predict.ApplyJones(DataOut,ParamJonesList)
+
+                # print "facet"
+                # import killMS.Other.rad2hmsdms
+                # RA,DEC=SM.DicoImager[iFacet]["RaDec"]
+                # sra=killMS.Other.rad2hmsdms.rad2hmsdms(RA,Type="ra")
+                # sdec=killMS.Other.rad2hmsdms.rad2hmsdms(DEC,Type="dec")
+                # print iFacet,sra,sdec
                 
-                
+                predict.ApplyJones(ColOutDir,ParamJonesList)
 
             DataOut-=ColOutDir
             ColOutDir.fill(0)
             
         if ApplyTimeJones is not None and not self._BeamAtFacet:
+            #print "tessel"
             #print "apply in direction %i"%iDirection
             ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
             ParamJonesList=ParamJonesList+[iDirection]
