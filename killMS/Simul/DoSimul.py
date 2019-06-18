@@ -40,6 +40,7 @@ import pickle
 from SkyModel.Sky import ClassSM
 from pyrap.tables import table
 import glob
+from SkyModel.Array import RecArrayOps
 
 
 def main(options=None):
@@ -59,13 +60,17 @@ def main(options=None):
     #SMName="ModelSimulOne.txt.npy"
     #SMName="Deconv.Corr.npy"
     #ll=sorted(glob.glob("Simul.MS"))
-
+    
     SMName="ModelRandom00.txt.npy"
     SMName="ModelRandom00.oneOff.txt.npy"
     #SMName="ModelRandom00.oneCenter.txt.npy"
-    SMName="ModelImage.txt.npy"
-    SMName="ModelRandom00.txt.npy"
-
+    #SMName="ModelImage.txt.npy"
+    SMName="ModelRandom00.many.txt.npy"
+    #SMName="ModelRandom00.many.one.txt.npy"
+    #SMName="ModelRandom00.many.10.txt.npy"
+    #SMName="ModelRandom00.many.1pbl.txt.npy"
+    #SMName="ModelRandom00.many.1off.txt.npy"
+    
     ll=sorted(glob.glob("000?.MS"))
     #ll=sorted(glob.glob("0000.MS"))
     #ll=sorted(glob.glob("BOOTES24_SB100-109.2ch8s.ms.tsel"))
@@ -81,9 +86,12 @@ def main(options=None):
     Sols=CS0.GiveSols()
     
     for l in ll:
-        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
-        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
-        CS.FreqDomains=CS0.FreqDomains
+        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
+        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
+
+        CS.SolsCluster=CS0.SolsCluster
+        CS.DoClusterJones=CS0.DoClusterJones
+        
         CS.DoSimul()
 
 class ClassSimul():
@@ -94,13 +102,23 @@ class ClassSimul():
         self.Sols=Sols
         self.ApplyBeam=ApplyBeam
         self.ChanMap=None
+
         self.Init()
-        
+        nuc=self.VS.MS.ChanFreq.ravel()
+        dnu=self.VS.MS.ChanWidth.ravel()[0]
+        nu0=nuc-dnu/2.
+        nu1=nuc+dnu/2.
+        self.FreqDomains=np.zeros((nuc.size,2),np.float64)
+        self.FreqDomains[:,0]=nu0
+        self.FreqDomains[:,1]=nu1
+
+
 
     def GiveSols(self):
         MS=self.MS
         SM=self.SM
         VS=self.VS
+
         nuc=self.VS.MS.ChanFreq.ravel()
         dnu=self.VS.MS.ChanWidth.ravel()[0]
         nu0=nuc-dnu/2.
@@ -151,8 +169,8 @@ class ClassSimul():
         
         Amp_Amp=np.random.randn(nch,na,nd)
 
-        Amp_Mean.fill(1.)
-        Amp_Amp.fill(0.)
+        #Amp_Mean.fill(1.)
+        #Amp_Amp.fill(0.)
     
         DeltaT_Phase=np.random.randn(nch,na,nd)*60
         period_Phase=300+np.random.randn(nch,na,nd)*10
@@ -169,9 +187,12 @@ class ClassSimul():
 
 
         for itime in range(0,NSols):
-            # if itime>0: 
-            #     continue
-            #continue
+            if itime>0: 
+                print "eq in time"
+                continue
+
+            
+            # continue
             print itime,"/",NSols
             for ich in range(nch):
                 for iAnt in range(na):
@@ -207,6 +228,7 @@ class ClassSimul():
 
 
         for itime in range(0,NSols):
+            print "eq in time"
             print "skip pol2"
             continue
             for ich in range(nch):
@@ -222,14 +244,15 @@ class ClassSimul():
 
 
 
-        # # Equalise in time
-        # for itime in range(NSols):
-        #     Sols.G[itime,:,:,:,0,0]=Sols.G[0,:,:,:,0,0]
-        #     Sols.G[itime,:,:,:,1,1]=Sols.G[0,:,:,:,1,1]
+        # Equalise in time
+        for itime in range(NSols):
+            Sols.G[itime,:,:,:,0,0]=Sols.G[0,:,:,:,0,0]
+            Sols.G[itime,:,:,:,1,1]=Sols.G[0,:,:,:,1,1]
 
         # equalise in freq
         for ich in range(1,nch):
             Sols.G[:,ich,:,:,:,:]=Sols.G[:,0,:,:,:,:]
+            
         #nu0=np.min(self.FreqDomains)
         #nu1=np.max(self.FreqDomains)
         #self.FreqDomains=np.array([[nu0,nu1]])
@@ -237,14 +260,53 @@ class ClassSimul():
         # make scalar
         Sols.G[:,:,:,:,1,1]=Sols.G[:,:,:,:,0,0]
 
-        # unity
-        Sols.G.fill(0)
-        Sols.G[:,:,:,:,0,0]=1.
-        Sols.G[:,:,:,:,1,1]=1.
-
+        # # unity
+        # Sols.G.fill(0)
+        # Sols.G[:,:,:,:,0,0]=1.
+        # Sols.G[:,:,:,:,1,1]=1.
 
         # # Sols.G[:,:,:,1:,0,0]=0.01
         # # Sols.G[:,:,:,1:,1,1]=0.01
+
+        # ################################
+        # Merge nodes
+        if self.DoClusterJones:
+            lc,mc=self.kMS_ClusterDirCat.l,self.kMS_ClusterDirCat.m
+            l,m=self.SM.SourceCat.l,self.SM.SourceCat.m
+            D=np.sqrt((l.reshape((-1,1))-lc.reshape((1,-1)))**2+(m.reshape((-1,1))-mc.reshape((1,-1)))**2)
+            indC=np.argmin(D,axis=1)
+            self.Map_kMSToNode=indC
+            # import pylab
+            # pylab.clf()
+            # pylab.scatter(l,m,c=indC)
+            # pylab.scatter(lc,mc,c="red",s=50)
+            # # pylab.scatter(self.kMS_ClusterDirCat.ra,self.kMS_ClusterDirCat.dec,c="red",s=50)
+            # # pylab.scatter(self.SM.SourceCat.ra,self.SM.SourceCat.dec,c=indC)
+            # pylab.show(False)
+            # pylab.pause(0.1)
+            ndMerge=lc.size
+            SolsCluster=np.zeros((NSols,),dtype=[("t0",np.float64),("t1",np.float64),("tm",np.float64),("G",np.complex64,(nch,na,ndMerge,2,2))])
+            SolsCluster=SolsCluster.view(np.recarray)
+            SolsCluster.t0=Sols.t0
+            SolsCluster.t1=Sols.t1
+            SolsCluster.tm=Sols.tm
+            for iDir in np.unique(indC):
+                ind=np.where(indC==iDir)[0]
+                for i in range(ind.size):
+                    print "%i <- %i"%(iDir,ind[i])
+                    Sols.G[:,:,:,ind[i],0,0]=Sols.G[:,:,:,ind[0],0,0]
+                    Sols.G[:,:,:,ind[i],0,1]=Sols.G[:,:,:,ind[0],0,1]
+                    Sols.G[:,:,:,ind[i],1,0]=Sols.G[:,:,:,ind[0],1,0]
+                    Sols.G[:,:,:,ind[i],1,1]=Sols.G[:,:,:,ind[0],1,1]
+                SolsCluster.G[:,:,:,iDir,0,0]=Sols.G[:,:,:,ind[0],0,0]
+                SolsCluster.G[:,:,:,iDir,0,1]=Sols.G[:,:,:,ind[0],0,1]
+                SolsCluster.G[:,:,:,iDir,1,0]=Sols.G[:,:,:,ind[0],1,0]
+                SolsCluster.G[:,:,:,iDir,1,1]=Sols.G[:,:,:,ind[0],1,1]
+                self.kMS_ClusterDirCat.SumI[iDir]=np.sum(self.SM.SourceCat.I[ind])
+
+            self.SolsCluster=SolsCluster
+
+        # ################################
 
         return Sols
 
@@ -299,16 +361,28 @@ class ClassSimul():
     
             rac,decc=MS.radec
 
+
+            def GB(time,ra,dec):
+                Beam = np.zeros((ra.shape[0], self.MS.na, self.MS.NSPWChan, 2, 2), dtype=np.complex)
+                # Beam[...,0,0]=1
+                # Beam[...,1,1]=1
+                # return Beam
+                
+                for i in range(ra.shape[0]):
+                    self.MS.SR.setDirection(ra[i],dec[i])
+                    Beam[i]=self.MS.SR.evaluate(time)
+                return Beam
+            
             for itime in range(Tm.size):
                 print itime
                 DicoBeam["t0"][itime]=T0s[itime]
                 DicoBeam["t1"][itime]=T1s[itime]
                 DicoBeam["tm"][itime]=Tm[itime]
                 ThisTime=Tm[itime]
-                Beam=MS.GiveBeam(ThisTime,RA,DEC)
+                Beam=GB(ThisTime,RA,DEC)
 
                 ###### Normalise
-                Beam0=MS.GiveBeam(ThisTime,np.array([rac]),np.array([decc]))
+                Beam0=GB(ThisTime,np.array([rac]),np.array([decc]))
                 Beam0inv=ModLinAlg.BatchInverse(Beam0)
                 nd,_,_,_,_=Beam.shape
                 Ones=np.ones((nd, 1, 1, 1, 1),np.float32)
@@ -316,7 +390,7 @@ class ClassSimul():
                 Beam=ModLinAlg.BatchDot(Beam0inv,Beam)
                 ######
 
-
+                
                 DicoBeam["Jones"][itime]=Beam
                 
             nt,nd,na,nch,_,_= DicoBeam["Jones"].shape
@@ -393,10 +467,24 @@ class ClassSimul():
         MS=VS.MS
         SM.Calc_LM(MS.rac,MS.decc)
         print MS
-        MS.PutBackupCol(incol="CORRECTED_DATA")
-
+        MS.PutBackupCol(incol="CORRECTED_DATA_BACKUP")
         self.MS=MS
         self.SM=SM
+
+        
+        ###################
+        self.kMS_ClusterDirCat=np.load("ModelImage.txt.ClusterCat.npy")
+        self.kMS_ClusterDirCat=self.kMS_ClusterDirCat.view(np.recarray)
+        self.kMS_ClusterDirCat
+        if not("l" in self.kMS_ClusterDirCat.dtype.fields.keys()):
+            self.kMS_ClusterDirCat=RecArrayOps.AppendField(self.kMS_ClusterDirCat,('l',float))
+            self.kMS_ClusterDirCat=RecArrayOps.AppendField(self.kMS_ClusterDirCat,('m',float))
+        self.ClusterCat=self.kMS_ClusterDirCat
+        self.kMS_ClusterDirCat.l,self.kMS_ClusterDirCat.m=self.SM.radec2lm_scalar(self.kMS_ClusterDirCat.ra,self.kMS_ClusterDirCat.dec,MS.rac,MS.decc)
+        self.kMS_ClusterDirCat.Cluster=np.arange(self.kMS_ClusterDirCat.shape[0])
+        self.DoClusterJones=1
+        ###################
+
         # SM.SourceCat.l[:]=-0.009453866781636
         # SM.SourceCat.m[:]=0.009453866781636
         # stop
@@ -474,8 +562,8 @@ class ClassSimul():
     
         #VS.MS.SaveVis(Col="DATA")
         #VS.MS.SaveVis(Col="CORRECTED_DATA")
-        #VS.MS.SaveVis(Col="CORRECTED_DATA_BACKUP")
-        VS.MS.SaveVis(Col="CORRECTED_DATA")
+        VS.MS.SaveVis(Col="CORRECTED_DATA_BACKUP")
+        #VS.MS.SaveVis(Col="CORRECTED_DATA")
 
         # t=table(self.MSName,readonly=False)
         # f=t.getcol("FLAG")
@@ -492,9 +580,19 @@ class ClassSimul():
 
         
         Sols=self.Sols
-        FileName="Simul.npz"
-        np.savez(FileName,Sols=Sols,StationNames=MS.StationNames,SkyModel=SM.ClusterCat,ClusterCat=SM.ClusterCat,
-                 BeamTimes=np.array([],np.float64),FreqDomains=self.FreqDomains)
+        FileName="%s/killMS.%s.sols.npz"%(self.VS.MS.MSName,"Simul")
+        print "Saving %s"%FileName
+        print self.FreqDomains
+        if not self.DoClusterJones:
+            np.savez(FileName,Sols=Sols,StationNames=MS.StationNames,SkyModel=SM.ClusterCat,ClusterCat=SM.ClusterCat,
+                     BeamTimes=np.array([],np.float64),FreqDomains=self.FreqDomains)
+        else:
+            np.savez(FileName,
+                     Sols=self.SolsCluster,
+                     StationNames=MS.StationNames,
+                     SkyModel=self.kMS_ClusterDirCat,ClusterCat=self.kMS_ClusterDirCat,
+                     BeamTimes=np.array([],np.float64),FreqDomains=self.FreqDomains)
+            
         #self.Plot()
         
     

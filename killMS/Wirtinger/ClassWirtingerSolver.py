@@ -1235,8 +1235,10 @@ class WorkerAntennaLM(multiprocessing.Process):
         LSinc=[Sinc,x[1]-x[0]]
 
         
-        self.PM=ClassPredict(Precision="S",DoSmearing=self.GD["SkyModel"]["Decorrelation"],IdMemShared=self.IdSharedMem,
-                             LExp=LExp,LSinc=LSinc)
+        self.PM=ClassPredict(Precision="S",DoSmearing=self.GD["SkyModel"]["Decorrelation"],
+                             IdMemShared=self.IdSharedMem,
+                             LExp=LExp,LSinc=LSinc,
+                             BeamAtFacet=(self.GD["Beam"]["BeamAt"].lower() == "facet"))
 
         if self.GD["ImageSkyModel"]["BaseImageName"]!="" and self.GD["SkyModel"]["SkyModelCol"] is None:
             self.PM.InitGM(self.SM)
