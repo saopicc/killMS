@@ -798,7 +798,7 @@ class ClassWirtingerSolver():
 
         
 
-        #Parallel=False
+        Parallel=False
 
 
         ListAntSolve=[i for i in range(self.VS.MS.na) if not(i in self.VS.FlagAntNumber)]

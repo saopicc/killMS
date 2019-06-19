@@ -227,7 +227,8 @@ def read_options():
     # #optcomplete.autocomplete(opt)
 
     # options, arguments = opt.parse_args()
-    MyPickle.Save(OP,SaveFile)
+    import killMS.Other.MyPickle
+    killMS.Other.MyPickle.Save(OP,SaveFile)
     return OP
     
 
@@ -282,7 +283,8 @@ def main(OP=None,MSName=None):
 
 
     if OP==None:
-        OP = MyPickle.Load(SaveFile)
+        import killMS.Other.MyPickle
+        OP = killMS.Other.MyPickle.Load(SaveFile)
 
         
     options=OP.GiveOptionObject()

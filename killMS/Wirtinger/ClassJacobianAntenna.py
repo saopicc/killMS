@@ -174,7 +174,9 @@ class ClassJacobianAntenna():
             self.AverageMachine=ClassAverageMachine.ClassAverageMachine(self.GD,
                                                                         self.PM_Compress,
                                                                         self.SM_Compress)
+            
             self.DoCompress=True
+            self.NDirAvg = self.SM_Compress.NDir
         
         T.timeit("PM")
         if PrecisionDot=="D":
@@ -577,7 +579,7 @@ class ClassJacobianAntenna():
         T.timeit("stuff")
         
         self.DicoData=self.GiveData(DATA,iAnt,rms=rms)
-
+       
         T.timeit("data")
         # self.Data=self.DicoData["data"]
         self.A1=self.DicoData["A1"]
@@ -592,7 +594,11 @@ class ClassJacobianAntenna():
         KernelSharedName="%sKernelMat.%2.2i"%(self.IdSharedMem,self.iAnt)
         self.KernelMat_AllChan=NpShared.GiveArray(KernelSharedName)
 
-        if type(self.KernelMat_AllChan)!=type(None):
+        if self.DoCompress:
+            KernelSharedNameAvg="%sKernelMatAvg.%2.2i"%(self.IdSharedMem,self.iAnt)
+            self.KernelMat_AllChan_Avg=NpShared.GiveArray(KernelSharedNameAvg)
+
+        if self.KernelMat_AllChan is not None:
             self.HasKernelMatrix=True
             if self.PolMode=="IFull":
                 self.K_XX_AllChan=self.KernelMat_AllChan[0]
@@ -603,6 +609,9 @@ class ClassJacobianAntenna():
                 #n4vis=self.DicoData["data_flat"].size
                 self.K_XX_AllChan=self.KernelMat_AllChan[0]
                 self.K_YY_AllChan=self.K_XX_AllChan
+                if self.DoCompress:
+                    self.K_XX_AllChan_Avg=self.KernelMat_AllChan_Avg[0]
+                    self.K_YY_AllChan_Avg=self.K_XX_AllChan_Avg
                 #self.n4vis=n4vis
                 self.NJacobBlocks_X=1
                 self.NJacobBlocks_Y=1
@@ -645,6 +654,13 @@ class ClassJacobianAntenna():
             self.K_YY_AllChan=self.K_XX_AllChan
             self.NJacobBlocks_X=1
             self.NJacobBlocks_Y=1
+
+
+            if self.DoCompress:
+                self.KernelMat_AllChan_Avg=NpShared.zeros(KernelSharedNameAvg,(1,NDir,self.NDirAvg * self.DicoData["NpBlBlocks"][0],1),dtype=self.CType)
+                self.K_XX_AllChan_Avg=self.KernelMat_AllChan_Avg[0]
+                self.K_YY_AllChan_Avg=self.K_XX_AllChan_Avg
+
 
             
             ##self.KernelMat_AllChan=NpShared.zeros(KernelSharedName,(1,NDir,n4vis_AllChan/nchan_AllChan,nchan_AllChan),dtype=self.CType)
@@ -728,8 +744,10 @@ class ClassJacobianAntenna():
 
 
         if self.DoCompress:
-            self.K_XX_AllChan[:]=self.AverageMachine.AverageKernelMatrix(self.DicoData,self.K_XX_AllChan)
-            self.K_YY_AllChan[:]=self.K_XX_AllChan[:]
+            k=self.AverageMachine.AverageKernelMatrix(self.DicoData,self.K_XX_AllChan)
+
+            self.K_XX_AllChan_Avg[:,:,0]=k[:,:,0]
+            self.K_YY_AllChan_Avg[:]=self.K_XX_AllChan_Avg[:]
             
         #     ######################
         #     # K1=self.PM.predictKernelPolCluster(self.DicoData,SM,iDirection=iDir)#,ApplyTimeJones=ApplyTimeJones)
@@ -791,10 +809,14 @@ class ClassJacobianAntenna():
         T.timeit("stuff 4")
 
     def SelectChannelKernelMat(self):
-        self.K_XX=self.K_XX_AllChan[:,:,self.ch0:self.ch1]
-        self.K_YY=self.K_YY_AllChan[:,:,self.ch0:self.ch1]
 
-        
+        if self.DoCompress:
+            self.K_XX=self.K_XX_AllChan_Avg[:,:,:]
+            self.K_YY=self.K_YY_AllChan_Avg[:,:,:]
+        else:
+            self.K_XX=self.K_XX_AllChan[:,:,self.ch0:self.ch1]
+            self.K_YY=self.K_YY_AllChan[:,:,self.ch0:self.ch1]
+            
 
 
         NDir=self.SM.NDir
@@ -823,7 +845,7 @@ class ClassJacobianAntenna():
                 self.DataAllFlagged=True
 
 
-        #print "SelectChannelKernelMat",np.count_nonzero(DicoData["flags_flat"]),np.count_nonzero(DicoData["flags"])
+        # print "SelectChannelKernelMat",np.count_nonzero(DicoData["flags_flat"]),np.count_nonzero(DicoData["flags"])
 
 
 
@@ -840,7 +862,10 @@ class ClassJacobianAntenna():
             D0=DATA['data'][ind0,self.ch0:self.ch1]
             D1=DATA['data'][ind1,self.ch0:self.ch1].conj()
 
-            
+            A0,A1=DicoData["A0"],DicoData["A1"]
+            A0A1=sorted(list(set([(A0[i],A1[i]) for i in range(DicoData["A0"].size)])))
+            NpBlBlocks=len(A0A1)
+            DicoData["NpBlBlocks"]=np.array([NpBlBlocks])
 
 
             
@@ -943,6 +968,7 @@ class ClassJacobianAntenna():
             if self.GD["Compression"]["CompressionMode"] is not None:
                 DicoData["A0_freq_flat"]=np.rollaxis(DicoData["A0_freq"],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
                 DicoData["A1_freq_flat"]=np.rollaxis(DicoData["A1_freq"],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
+
 
             # DicoData["data_predict_flat"]=np.rollaxis(DicoData["data_predict"],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
             # ###################
@@ -1086,7 +1112,7 @@ class ClassJacobianAntenna():
         DicoData["dfreqs_full"]   = self.DATA['dfreqs']
 
         if self.DoCompress:
-            pass
+            self.AverageMachine.AverageDataVector(DicoData)
         
         return DicoData
 
