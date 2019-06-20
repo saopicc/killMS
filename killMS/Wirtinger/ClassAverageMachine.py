@@ -53,13 +53,18 @@ class ClassAverageMachine():
 
         d=DicoData["data"]
         f=DicoData["flag"]
+        FOut=np.zeros(d.shape,f.dtype)
+
         for iDirAvg in range(NDirAvg):
             K_Compress=self.PM_Compress.predictKernelPolCluster(DicoData,self.SM_Compress,iDirection=iDirAvg)
             dp=d*K_Compress[:,:,0].conj()
             for iBl,ind in enumerate(IndList):
-                KOut[iDirAvg,iBl,0]=np.mean(pp[ind])
+                if np.min(f[ind])==0:
+                    FOut[iDirAvg,iBl,0]=1
+                    continue
+                KOut[iDirAvg,iBl,0]=np.sum(dp[ind]*(1-f[ind])))/np.sum(1-f[ind])
 
-        DicoData["flags_flat"]=np.rollaxis(DicoData["flags"],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
+        DicoData["flags_flat"]=np.rollaxis(KOut,2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
         DicoData["data_flat"]=np.rollaxis(DicoData["data"],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
 
         KOut=KOut.reshape((NDir,NDirAvg*NpOut,Npol))
