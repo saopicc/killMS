@@ -33,12 +33,7 @@ pkg='killMS'
 __version__ = "2.7.0.0"
 build_root=os.path.dirname(__file__)
 
-preinstall_dependencies = ["'pybind11 >= 2.2.2'", "'six >= 1.12.0'"]
-
 def backend(compile_options):
-
-    subprocess.check_call(["cd .. && pip install %s" %
-                           (" ".join(preinstall_dependencies)), ""], shell=True)
 
     if compile_options is not None:
         print >> sys.stderr, "Compiling extension libraries with user defined options: '%s'"%compile_options
@@ -98,15 +93,15 @@ def requirements():
     # but this the safest assumption for now
     requirements = [("nose >= 1.3.7", "nose >= 1.3.7"),
                     ("Cython >= 0.25.2", "Cython >= 0.25.2"),
-                    ("numpy > 1.16.2", "numpy >= 1.16.1"),
-                    ("SharedArray >= 2.0.2", "SharedArray >= 2.0.2"),
+                    ("numpy>=1.15.1", "numpy>=1.15.1"), # Ubuntu 18.04
+                    ("sharedarray @ git+https://gitlab.com/bennahugo/shared-array.git@master", "sharedarray @ git+https://gitlab.com/bennahugo/shared-array.git@master"),
                     ("Polygon2 >= 2.0.8", "Polygon2 >= 2.0.8"),
                     ("pyFFTW >= 0.10.4", "pyFFTW >= 0.10.4"),
                     ("astropy >= 3.0", "astropy >= 2.0.11"),
                     ("deap >= 1.0.1", "deap >= 1.0.1"),
                     ("ptyprocess>=0.5", "ptyprocess<=0.5"), #workaround for ipdb on py2
                     ("ipdb >= 0.10.3", "ipdb <= 0.10.3"),
-                    ("python-casacore >= 2.1.0", "python-casacore >= 2.1.0"),
+                    ("python-casacore <= 3.0.0", "python-casacore <= 3.0.0"),
                     ("pyephem >= 3.7.6.0", "pyephem >= 3.7.6.0"),
                     ("numexpr >= 2.6.2", "numexpr >= 2.6.2"),
                     ("matplotlib >= 2.0.0", "matplotlib >= 2.0.0"),
