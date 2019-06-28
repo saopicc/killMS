@@ -813,9 +813,13 @@ class ClassJacobianAntenna():
         if self.DoCompress:
             self.K_XX=self.K_XX_AllChan_Avg[:,:,:]
             self.K_YY=self.K_YY_AllChan_Avg[:,:,:]
+            flags_key="flags_avg"
+            flags_flat_key="flags_flat_avg"
         else:
             self.K_XX=self.K_XX_AllChan[:,:,self.ch0:self.ch1]
             self.K_YY=self.K_YY_AllChan[:,:,self.ch0:self.ch1]
+            flags_key="flags"
+            flags_flat_key="flags_flat"
             
 
 
@@ -825,17 +829,20 @@ class ClassJacobianAntenna():
             K=self.K_XX[iDir,:,:]
 
             indRow,indChan=np.where(K==0)
-            self.DicoData["flags"][indRow,indChan,:]=1
+            self.DicoData[flags_key][indRow,indChan,:]=1
+
+
+            
         DicoData=self.DicoData
         nr,nch=K.shape
-        flags_flat=np.rollaxis(DicoData["flags"],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
-        DicoData["flags_flat"][flags_flat]=1
+        flags_flat=np.rollaxis(DicoData[flags_key],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
+        DicoData[flags_flat_key][flags_flat]=1
 
 
         self.DataAllFlagged=False
-        NP,_=DicoData["flags_flat"].shape
+        NP,_=DicoData[flags_flat_key].shape
         for ipol in range(NP):
-            f=(DicoData["flags_flat"][ipol]==0)
+            f=(DicoData[flags_flat_key][ipol]==0)
             ind=np.where(f)[0]
             if ind.size==0: 
                 self.DataAllFlagged=True
@@ -844,6 +851,9 @@ class ClassJacobianAntenna():
             if fracFlagged<0.2:#ind.size==0:
                 self.DataAllFlagged=True
 
+
+        
+                
 
         # print "SelectChannelKernelMat",np.count_nonzero(DicoData["flags_flat"]),np.count_nonzero(DicoData["flags"])
 
@@ -956,6 +966,7 @@ class ClassJacobianAntenna():
 
             FlagsShape=DicoData["flags"].shape
             FlagsSize=DicoData["flags"].size
+            
             DicoData["flags"]=DicoData["flags"].reshape(nr,nch,self.NJacobBlocks_X,self.NJacobBlocks_Y)
             DicoData["data"]=DicoData["data"].reshape(nr,nch,self.NJacobBlocks_X,self.NJacobBlocks_Y)
             # if self.SM.Type=="Column":
@@ -985,7 +996,7 @@ class ClassJacobianAntenna():
             # ###################
 
 
-            del(DicoData["data"])
+            # del(DicoData["data"])
 
 
             if rms!=0.:

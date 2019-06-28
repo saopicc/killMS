@@ -118,7 +118,7 @@ class ClassSolverLM(ClassJacobianAntenna):
 
         z=self.DicoData["data_flat"]#self.GiveDataVec()
         print z.shape
-        stop
+
         self.CalcJacobianAntenna(Gains)
         T.timeit("CalcJacobianAntenna")
         self.PrepareJHJ_LM()
