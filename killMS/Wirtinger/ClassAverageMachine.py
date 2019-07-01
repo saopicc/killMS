@@ -43,7 +43,7 @@ class ClassAverageMachine():
     def AverageDataVector(self,DicoData):
         A0=DicoData["A0"].ravel()
         A1=DicoData["A1"].ravel()
-            
+        
 
         NpBlBlocks=DicoData["NpBlBlocks"][0]
         A0A1=sorted(list(set([(A0[i],A1[i]) for i in range(A0.size)])))
@@ -52,6 +52,10 @@ class ClassAverageMachine():
 
         IndList=[(np.where((A0==ThisA0)&(A1==ThisA1))[0]) for (ThisA0,ThisA1) in A0A1]
 
+        DicoData["A0_Avg"]=np.array([A0A1[i][0] for i in range(len(A0A1))]*NDirAvg)
+        DicoData["A1_Avg"]=np.array([A0A1[i][1] for i in range(len(A0A1))]*NDirAvg)
+        
+        
         d=DicoData["data"]
         f=DicoData["flags"]
         nr,nch,_,_=d.shape
@@ -63,6 +67,7 @@ class ClassAverageMachine():
             K_Compress=self.PM_Compress.predictKernelPolCluster(DicoData,self.SM_Compress,iDirection=iDirAvg)
             dp=d[:,:,0,0]*K_Compress[:,:,0].conj()
             print iDirAvg
+            
             for iBl,ind in enumerate(IndList):
                 print iBl,ind
                 if np.min(f[ind])==1:

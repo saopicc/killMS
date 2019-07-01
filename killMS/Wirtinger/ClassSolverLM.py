@@ -100,7 +100,15 @@ class ClassSolverLM(ClassJacobianAntenna):
 
         Ga=self.GiveSubVecGainAnt(Gains)
 
-        f=(self.DicoData["flags_flat"]==0)
+
+        if self.DoCompress:
+            flags_key="flags_flat_avg"
+            data_key="data_flat_avg"
+        else:
+            flags_key="flags_flat"
+            data_key="data_flat"
+            
+        f=(self.DicoData[flags_key]==0)
         
         # ind=np.where(f)[0]
         # if self.iAnt==56:
@@ -116,7 +124,7 @@ class ClassSolverLM(ClassJacobianAntenna):
         #     return Ga.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),None,{"std":-1.,"max":-1.,"kapa":None}
 
 
-        z=self.DicoData["data_flat"]#self.GiveDataVec()
+        z=self.DicoData[data_key]#self.GiveDataVec()
         print z.shape
 
         self.CalcJacobianAntenna(Gains)
@@ -130,7 +138,7 @@ class ClassSolverLM(ClassJacobianAntenna):
         Jx=self.J_x(Ga)
         T.timeit("Jx")
         zr=z-Jx
-        zr[self.DicoData["flags_flat"]]=0
+        zr[self.DicoData[flags_key]]=0
         T.timeit("resid")
 
         # JH_z_0=np.load("LM.npz")["JH_z"]

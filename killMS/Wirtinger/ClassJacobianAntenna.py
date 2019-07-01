@@ -316,10 +316,19 @@ class ClassJacobianAntenna():
         #z=zin.reshape((self.NJacobBlocks,zin.size/self.NJacobBlocks))
         #z=zin.reshape((1,zin.size))
         Gains=np.zeros((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y),self.CType)
-        for polIndex in range(self.NJacobBlocks_X):
-            Jacob=self.LJacob[polIndex]
+
+        if self.DoCompress:
+            flags_key="flags_flat_avg"
+        else:
+            flags_key="flags_flat"
             
-            flags=self.DicoData["flags_flat"][polIndex]
+
+        for polIndex in range(self.NJacobBlocks_X):
+
+            Jacob=self.LJacob[polIndex]
+
+            
+            flags=self.DicoData[flags_key][polIndex]
             ThisZ=zin[polIndex][flags==0]#self.DicoData["flags_flat"[polIndex]
             
             J=Jacob[flags==0]
@@ -467,11 +476,18 @@ class ClassJacobianAntenna():
         if not(self.HasKernelMatrix): stop
         iAnt=self.iAnt
         NDir=self.NDir
-        n4vis=self.n4vis
+
+        if self.DoCompress:
+            n4vis=self.n4vis_Avg
+        else:
+            n4vis=self.n4vis
+            
         #print "n4vis",n4vis
         na=self.na
         #print GainsIn.shape,na,NDir,self.NJacobBlocks,self.NJacobBlocks
         Gains=GainsIn.reshape((na,NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y))
+
+        
         Jacob=np.zeros((n4vis,self.NJacobBlocks_Y,NDir,self.NJacobBlocks_Y),self.CType)
 
         if (self.PolMode=="IFull")|(self.PolMode=="Scalar"):
@@ -479,10 +495,15 @@ class ClassJacobianAntenna():
         elif self.PolMode=="IDiag":
             self.LJacob=[Jacob,Jacob.copy()]
         LJacob=self.LJacob
+
+        if self.DoCompress:
+            A1=self.DicoData["A1_Avg"]
+        else:
+            A1=self.DicoData["A1"]
         
         for iDir in range(NDir):
-            G=Gains[self.A1,iDir].conj()
-
+            G=Gains[A1,iDir].conj()
+            
             K_XX=self.K_XX[iDir]
             K_YY=self.K_YY[iDir]
 
@@ -492,8 +513,6 @@ class ClassJacobianAntenna():
                 J0=Jacob[:,0,iDir,0]
                 g0_conj=G[:,0,0].reshape((nr,1))
                 J0[:]=(g0_conj*K_XX).reshape((K_XX.size,))
-
-            
             elif self.PolMode=="IFull":
                 J0=Jacob[:,0,iDir,0]
                 g0_conj=G[:,0,0].reshape((nr,1))
@@ -523,16 +542,21 @@ class ClassJacobianAntenna():
         for J in LJacob:
             J.shape=(n4vis*self.NJacobBlocks_Y,NDir*self.NJacobBlocks_Y)
 
+        if self.DoCompress:
+            flags_key="flags_flat_avg"
+        else:
+            flags_key="flags_flat"
+            
 
         self.LJacobTc=[]
         for polIndex in range(self.NJacobBlocks_X):
-            flags=self.DicoData["flags_flat"][polIndex]
+            flags=self.DicoData[flags_key][polIndex]
             J=self.LJacob[polIndex][flags==0]
             self.LJacobTc.append(J.T.conj().copy())
 
         self.L_JHJ=[]
         for polIndex in range(self.NJacobBlocks_X):
-            flags=self.DicoData["flags_flat"][polIndex]
+            flags=self.DicoData[flags_key][polIndex]
             J=self.LJacob[polIndex][flags==0]
             nrow,_=J.shape
             self.nrow_nonflagged=nrow
@@ -582,7 +606,7 @@ class ClassJacobianAntenna():
        
         T.timeit("data")
         # self.Data=self.DicoData["data"]
-        self.A1=self.DicoData["A1"]
+        # self.A1=self.DicoData["A1"]
         # print "AntMax1",self.SharedDataDicoName,np.max(self.A1)
         # print self.DicoData["A1"]
         # print "AntMax0",self.SharedDataDicoName,np.max(self.DicoData["A0"])
@@ -660,6 +684,7 @@ class ClassJacobianAntenna():
                 self.KernelMat_AllChan_Avg=NpShared.zeros(KernelSharedNameAvg,(1,NDir,self.NDirAvg * self.DicoData["NpBlBlocks"][0],1),dtype=self.CType)
                 self.K_XX_AllChan_Avg=self.KernelMat_AllChan_Avg[0]
                 self.K_YY_AllChan_Avg=self.K_XX_AllChan_Avg
+                self.n4vis_Avg=self.n4vis_Avg_AllChan=self.NDirAvg * self.DicoData["NpBlBlocks"][0]
 
 
             
