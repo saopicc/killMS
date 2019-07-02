@@ -1263,7 +1263,7 @@ class WorkerAntennaLM(multiprocessing.Process):
         self.exit.set()
     def run(self):
 
-        while not self.kill_received:# and not self.work_queue.qsize()==0:
+        while not self.kill_received and not self.work_queue.qsize()==0:
             #print "haha"
             iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get()#True,2)
             # try:

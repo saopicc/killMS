@@ -614,6 +614,11 @@ class ClassJacobianAntenna():
         nrows,nchan,_,_=self.DicoData["flags"].shape
         n4vis=nrows*nchan
         self.n4vis=n4vis
+
+        if self.DoCompress:
+            nrows_Avg,nchan_Avg,_,_=self.DicoData["flags_avg"].shape
+            self.n4vis_Avg=self.n4vis_Avg_AllChan=nrows_Avg*nchan_Avg
+            
         
         KernelSharedName="%sKernelMat.%2.2i"%(self.IdSharedMem,self.iAnt)
         self.KernelMat_AllChan=NpShared.GiveArray(KernelSharedName)

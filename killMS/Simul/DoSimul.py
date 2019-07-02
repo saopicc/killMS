@@ -24,9 +24,10 @@ import sys
 from killMS.Other import MyPickle
 from killMS.Other import logo
 from killMS.Other import ModColor
-from DDFacet.Other import logger
-log=logger.getLogger("killMS")
-logger.itsLog.logger.setLevel(logger.logging.CRITICAL)
+from DDFacet.Other import logger, ModColor
+
+log = logger.getLogger("killMS")
+
 from killMS.Other import ClassTimeIt
 from killMS.Data import ClassVisServer
 from killMS.Predict.PredictGaussPoints_NumExpr import ClassPredict
@@ -70,7 +71,8 @@ def main(options=None):
     #SMName="ModelRandom00.many.10.txt.npy"
     #SMName="ModelRandom00.many.1pbl.txt.npy"
     #SMName="ModelRandom00.many.1off.txt.npy"
-    
+    SMName="ModelRandom00.txt.npy"
+
     ll=sorted(glob.glob("000?.MS"))
     #ll=sorted(glob.glob("0000.MS"))
     #ll=sorted(glob.glob("BOOTES24_SB100-109.2ch8s.ms.tsel"))
@@ -86,11 +88,12 @@ def main(options=None):
     Sols=CS0.GiveSols()
     
     for l in ll:
-        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
-        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
+        # CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
+        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
 
-        CS.SolsCluster=CS0.SolsCluster
-        CS.DoClusterJones=CS0.DoClusterJones
+        if CS0.DoClusterJones:
+            CS.SolsCluster=CS0.SolsCluster
+            CS.DoClusterJones=CS0.DoClusterJones
         
         CS.DoSimul()
 
@@ -102,6 +105,7 @@ class ClassSimul():
         self.Sols=Sols
         self.ApplyBeam=ApplyBeam
         self.ChanMap=None
+        self.DoClusterDirs=False
 
         self.Init()
         nuc=self.VS.MS.ChanFreq.ravel()
@@ -260,10 +264,10 @@ class ClassSimul():
         # make scalar
         Sols.G[:,:,:,:,1,1]=Sols.G[:,:,:,:,0,0]
 
-        # # unity
-        # Sols.G.fill(0)
-        # Sols.G[:,:,:,:,0,0]=1.
-        # Sols.G[:,:,:,:,1,1]=1.
+        # unity
+        Sols.G.fill(0)
+        Sols.G[:,:,:,:,0,0]=1.
+        Sols.G[:,:,:,:,1,1]=1.
 
         # # Sols.G[:,:,:,1:,0,0]=0.01
         # # Sols.G[:,:,:,1:,1,1]=0.01
@@ -472,22 +476,21 @@ class ClassSimul():
         self.SM=SM
 
         
+        self.DoClusterJones=0
         ###################
-        self.kMS_ClusterDirCat=np.load("ModelImage.txt.ClusterCat.npy")
-        self.kMS_ClusterDirCat=self.kMS_ClusterDirCat.view(np.recarray)
-        self.kMS_ClusterDirCat
-        if not("l" in self.kMS_ClusterDirCat.dtype.fields.keys()):
-            self.kMS_ClusterDirCat=RecArrayOps.AppendField(self.kMS_ClusterDirCat,('l',float))
-            self.kMS_ClusterDirCat=RecArrayOps.AppendField(self.kMS_ClusterDirCat,('m',float))
-        self.ClusterCat=self.kMS_ClusterDirCat
-        self.kMS_ClusterDirCat.l,self.kMS_ClusterDirCat.m=self.SM.radec2lm_scalar(self.kMS_ClusterDirCat.ra,self.kMS_ClusterDirCat.dec,MS.rac,MS.decc)
-        self.kMS_ClusterDirCat.Cluster=np.arange(self.kMS_ClusterDirCat.shape[0])
-        self.DoClusterJones=1
+        if self.DoClusterDirs:
+            self.kMS_ClusterDirCat=np.load("ModelImage.txt.ClusterCat.npy")
+            self.kMS_ClusterDirCat=self.kMS_ClusterDirCat.view(np.recarray)
+            self.kMS_ClusterDirCat
+            if not("l" in self.kMS_ClusterDirCat.dtype.fields.keys()):
+                self.kMS_ClusterDirCat=RecArrayOps.AppendField(self.kMS_ClusterDirCat,('l',float))
+                self.kMS_ClusterDirCat=RecArrayOps.AppendField(self.kMS_ClusterDirCat,('m',float))
+            self.ClusterCat=self.kMS_ClusterDirCat
+            self.kMS_ClusterDirCat.l,self.kMS_ClusterDirCat.m=self.SM.radec2lm_scalar(self.kMS_ClusterDirCat.ra,self.kMS_ClusterDirCat.dec,MS.rac,MS.decc)
+            self.kMS_ClusterDirCat.Cluster=np.arange(self.kMS_ClusterDirCat.shape[0])
+            self.DoClusterJones=1
         ###################
 
-        # SM.SourceCat.l[:]=-0.009453866781636
-        # SM.SourceCat.m[:]=0.009453866781636
-        # stop
 
 
     def DoSimul(self):

@@ -66,16 +66,13 @@ class ClassAverageMachine():
         for iDirAvg in range(NDirAvg):
             K_Compress=self.PM_Compress.predictKernelPolCluster(DicoData,self.SM_Compress,iDirection=iDirAvg)
             dp=d[:,:,0,0]*K_Compress[:,:,0].conj()
-            print iDirAvg
             
             for iBl,ind in enumerate(IndList):
-                print iBl,ind
                 if np.min(f[ind])==1:
                     FOut[iDirAvg,iBl,0]=1
                     continue
                 w=(1-f[ind])
                 DOut[iDirAvg,iBl,0]=np.sum(dp[ind]*w)/np.sum(w)
-                print iBl
 
         
         DicoData["flags_avg"]=FOut
