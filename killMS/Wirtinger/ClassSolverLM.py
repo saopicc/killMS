@@ -104,6 +104,9 @@ class ClassSolverLM(ClassJacobianAntenna):
         if self.DoCompress:
             flags_key="flags_flat_avg"
             data_key="data_flat_avg"
+            if self.DoMergeStations:
+                flags_key="flags_flat_avg_merged"
+                data_key="data_flat_avg_merged"
         else:
             flags_key="flags_flat"
             data_key="data_flat"
@@ -138,6 +141,7 @@ class ClassSolverLM(ClassJacobianAntenna):
         Jx=self.J_x(Ga)
         T.timeit("Jx")
         zr=z-Jx
+
         zr[self.DicoData[flags_key]]=0
         T.timeit("resid")
 
@@ -218,4 +222,6 @@ class ClassSolverLM(ClassJacobianAntenna):
         T.timeit("rest")
         # print self.iAnt,np.mean(x1),x1.size,ind.size
 
-        return dx.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),None,InfoNoise
+        xout=dx.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y))
+        # print self.iAnt,xout.ravel()
+        return xout,None,InfoNoise

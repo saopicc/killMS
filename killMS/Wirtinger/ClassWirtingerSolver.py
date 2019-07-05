@@ -798,7 +798,7 @@ class ClassWirtingerSolver():
 
         
 
-        Parallel=False
+        # Parallel=False
 
 
         ListAntSolve=[i for i in range(self.VS.MS.na) if not(i in self.VS.FlagAntNumber)]
@@ -1104,7 +1104,7 @@ class ClassWirtingerSolver():
                             pylab.plot(np.abs(ThisG[iChanSol,AntPlot].flatten())+sig,color="black",ls="--")
                             pylab.plot(np.abs(ThisG[iChanSol,AntPlot].flatten())-sig,color="black",ls="--")
                         pylab.title("Channel=%i"%iChanSol)
-                        pylab.ylim(0,2)
+                        #pylab.ylim(0,2)
                         pylab.draw()
                         pylab.show(False)
                         pylab.pause(0.1)
@@ -1217,6 +1217,7 @@ class WorkerAntennaLM(multiprocessing.Process):
         self.kill_received = False
         self.exit = multiprocessing.Event()
         self.SM=SM
+
         self.SM_Compress=SM_Compress
         self.PolMode=PolMode
         self.SolverType=SolverType
@@ -1263,7 +1264,7 @@ class WorkerAntennaLM(multiprocessing.Process):
         self.exit.set()
     def run(self):
 
-        while not self.kill_received and not self.work_queue.qsize()==0:
+        while not self.kill_received: # and not self.work_queue.qsize()==0:
             #print "haha"
             iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get()#True,2)
             # try:

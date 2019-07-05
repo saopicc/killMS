@@ -131,6 +131,22 @@ class ClassVisServer():
         self.NTChunk=len(self.TimesInt)-1
         self.MS=MS
         
+        self.DicoMergeStations={}
+        if self.GD and self.GD["Compression"]["MergeStations"] is not None:
+            MergeStations=self.GD["Compression"]["MergeStations"]
+            ListMergeNames=[]
+            ListMergeStations=[]
+            for Name in MergeStations:
+                for iAnt in range(MS.na):
+                    if Name in MS.StationNames[iAnt]:
+                        ListMergeStations.append(iAnt)
+                        ListMergeNames.append(MS.StationNames[iAnt])
+                        
+            print>>log,"Merging into a single station %s"%str(ListMergeNames)
+            self.DicoMergeStations["ListMergeNames"]=ListMergeNames
+            self.DicoMergeStations["ListBLMerge"]=[(a0,a1) for a0 in ListMergeStations for a1 in ListMergeStations if a0!=a1]
+            self.DicoMergeStations["ListMergeStations"]=ListMergeStations
+                        
 
 
         ######################################################
@@ -671,6 +687,10 @@ class ClassVisServer():
                     if Name in MS.StationNames[iAnt]:
                         print>>log, "Taking antenna #%2.2i[%s] out of the solve"%(iAnt,MS.StationNames[iAnt])
                         self.FlagAntNumber.append(iAnt)
+
+
+
+                        
         if "DistMaxToCore" in self.DicoSelectOptions.keys():
             DMax=self.DicoSelectOptions["DistMaxToCore"]*1e3
             X,Y,Z=MS.StationPos.T

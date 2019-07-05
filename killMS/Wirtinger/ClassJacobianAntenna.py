@@ -154,6 +154,7 @@ class ClassJacobianAntenna():
         self.Rinv_flat=None
         for key in kwargs.keys():
             setattr(self,key,kwargs[key])
+        
         self.PM=PM
         self.SM=SM
         T.timeit("Init0")
@@ -170,11 +171,12 @@ class ClassJacobianAntenna():
         self.SM_Compress=SM_Compress
         self.AverageMachine=None
         self.DoCompress=False
-        if self.SM_Compress:
+        self.DoMergeStations=(self.GD["Compression"]["MergeStations"] is not None)
+        if self.SM_Compress or self.DoMergeStations:
             self.AverageMachine=ClassAverageMachine.ClassAverageMachine(self.GD,
                                                                         self.PM_Compress,
-                                                                        self.SM_Compress)
-            
+                                                                        self.SM_Compress,
+                                                                        DicoMergeStations=self.DicoMergeStations)
             self.DoCompress=True
             self.NDirAvg = self.SM_Compress.NDir
         
@@ -319,6 +321,8 @@ class ClassJacobianAntenna():
 
         if self.DoCompress:
             flags_key="flags_flat_avg"
+            if self.DoMergeStations:
+                flags_key="flags_flat_avg_merged"
         else:
             flags_key="flags_flat"
             
@@ -517,23 +521,19 @@ class ClassJacobianAntenna():
                 J0=Jacob[:,0,iDir,0]
                 g0_conj=G[:,0,0].reshape((nr,1))
                 J0[:]=(g0_conj*K_XX).reshape((K_XX.size,))
-
                 J1=Jacob[:,0,iDir,1]
                 J2=Jacob[:,1,iDir,0]
                 J3=Jacob[:,1,iDir,1]
                 g1_conj=G[:,1,0].reshape((nr,1))
                 g2_conj=G[:,0,1].reshape((nr,1))
                 g3_conj=G[:,1,1].reshape((nr,1))
-
                 J1[:]=(g2_conj*K_YY).reshape((K_XX.size,))
                 J2[:]=(g1_conj*K_XX).reshape((K_XX.size,))
                 J3[:]=(g3_conj*K_YY).reshape((K_XX.size,))
-
             elif self.PolMode=="IDiag":
                 J0=LJacob[0][:,0,iDir,0]
                 g0_conj=G[:,0,0].reshape((nr,1))
                 J0[:]=(g0_conj*K_XX).reshape((K_XX.size,))
-
                 J1=LJacob[1][:,0,iDir,0]
                 g1_conj=G[:,1,0].reshape((nr,1))
                 J1[:]=(g1_conj*K_YY).reshape((K_XX.size,))
@@ -542,6 +542,10 @@ class ClassJacobianAntenna():
         for J in LJacob:
             J.shape=(n4vis*self.NJacobBlocks_Y,NDir*self.NJacobBlocks_Y)
 
+
+
+
+            
         if self.DoCompress:
             flags_key="flags_flat_avg"
         else:
@@ -581,7 +585,10 @@ class ClassJacobianAntenna():
                 
 
             self.L_JHJ.append(self.CType(JHJ))
-
+            
+        if self.DoMergeStations:
+            self.LJacob=self.AverageMachine.MergeAntennaJacobian(self.DicoData,LJacob)
+            #print self.iAnt,len(self.LJacob)
 
         # self.JHJinv=np.linalg.inv(self.JHJ)
         # self.JHJinv=np.diag(np.diag(self.JHJinv))
@@ -845,6 +852,7 @@ class ClassJacobianAntenna():
             self.K_YY=self.K_YY_AllChan_Avg[:,:,:]
             flags_key="flags_avg"
             flags_flat_key="flags_flat_avg"
+            if self.DoMergeStations: return
         else:
             self.K_XX=self.K_XX_AllChan[:,:,self.ch0:self.ch1]
             self.K_YY=self.K_YY_AllChan[:,:,self.ch0:self.ch1]
@@ -864,7 +872,7 @@ class ClassJacobianAntenna():
 
             
         DicoData=self.DicoData
-        nr,nch=K.shape
+        nr,nch = K.shape
         flags_flat=np.rollaxis(DicoData[flags_key],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
         DicoData[flags_flat_key][flags_flat]=1
 

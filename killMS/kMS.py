@@ -122,8 +122,9 @@ def read_options():
     OP.add_option('FilterNegComp')
 
     OP.OptionGroup("* Compression","Compression")
-    OP.add_option('CompressionMode',help='Baseline compression mode. Default is %default')
-    OP.add_option('CompressionDirFile',help='Baseline compression mode. Default is %default')
+    OP.add_option('CompressionMode',help='Only Auto implemented. Default is %default')
+    OP.add_option('CompressionDirFile',help='Directions in which to do the compression. Default is %default')
+    OP.add_option('MergeStations',help='Merge stations into a single one. Use --MergeStations=[CS] to merge all core stations. Default is %default')
     
     OP.OptionGroup("* Data Selection","DataSelection")
     OP.add_option('UVMinMax',help='Baseline length selection in km. For example UVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default')
@@ -587,10 +588,11 @@ def main(OP=None,MSName=None):
                            "ResolutionRad":ResolutionRad,
                            "LambdaKF":options.LambdaKF,
                            "LambdaLM":options.LambdaLM,
-                           "DoReg":False,#True,
+                           "DoReg":False,
                            "gamma":1,
                            "AmpQx":.5,
-                           "PrecisionDot":options.PrecisionDot}
+                           "PrecisionDot":options.PrecisionDot,
+                           "DicoMergeStations":VS.DicoMergeStations}
 
     if (options.SolverType=="KAFCA"):
         NIter=options.NIterKF
