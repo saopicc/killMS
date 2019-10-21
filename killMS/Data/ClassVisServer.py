@@ -136,7 +136,7 @@ class ClassVisServer():
         ######################################################
         ## Taken from ClassLOFARBeam in DDFacet
         
-        ChanWidth=self.MS.ChanWidth.ravel()[0]
+        ChanWidth=abs(self.MS.ChanWidth.ravel()[0])
         ChanFreqs=self.MS.ChanFreq.flatten()
         if self.GD!=None:
             NChanJones=self.GD["Solvers"]["NChanSols"]
@@ -832,7 +832,7 @@ class ClassVisServer():
                 DEC=np.array([self.SM.DicoImager[iFacet]["RaDec"][1] for iFacet in range(len(self.SM.DicoImager))])
             else:
                 raise RuntimeError("incorrect BeamAt setting: use Facet or Tessel")
-            if self.GD["Beam"]["BeamModel"]!=None:
+            if self.GD["Beam"]["BeamModel"] is not None:
                 if self.GD["Beam"]["BeamModel"]=="LOFAR":
                     NDir=RA.size
                     self.DtBeamMin=self.GD["Beam"]["DtBeamMin"]
