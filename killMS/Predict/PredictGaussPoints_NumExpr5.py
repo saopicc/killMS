@@ -659,7 +659,9 @@ class ClassPredict():
             # print "Facet %i: take model image %s"%(iFacet,ModelSharedMemName)
             # ModelIm = NpShared.GiveArray(ModelSharedMemName)
 
-            ModelIm = NpShared.UnPackListArray("%sGrids"%self.IdSharedMem)[iFacet]
+            #ModelIm = NpShared.UnPackListArray("%sGrids"%self.IdSharedMem)[iFacet]
+            ModelIm = SM._model_dict[iFacet]["FacetGrid"]
+            
             ChanMapping=np.int32(SM.ChanMappingDegrid)
             # print ChanMapping
             

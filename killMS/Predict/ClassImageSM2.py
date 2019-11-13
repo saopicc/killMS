@@ -251,7 +251,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.SM.Path={"cf_dict_path":self.FacetMachine._CF.path}
         #self.SM.ChanMappingDegrid=self.VS.FreqBandChannelsDegrid[0]
         self.SM.ChanMappingDegrid=self.VS.DicoMSChanMappingDegridding[0]
-
+        self.SM._model_dict=self.FacetMachine._model_dict
         # import pprint
         # pprint.pprint(self.DicoJonesDirToFacet)
 
@@ -320,8 +320,9 @@ class ClassPreparePredict(ClassImagerDeconv):
 
         self.Dirs=self.DicoJonesDirToFacet.keys()
         self.NDirs=len(self.Dirs)
-        
-        NpShared.PackListArray("%sGrids"%(self.IdSharedMem),ListGrid)
+
+        # NpShared.PackListArray("%sGrids"%(self.IdSharedMem),ListGrid)
+            
         return True
 
 
