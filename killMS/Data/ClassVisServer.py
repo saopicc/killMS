@@ -152,7 +152,7 @@ class ClassVisServer():
         ######################################################
         ## Taken from ClassLOFARBeam in DDFacet
         
-        ChanWidth=self.MS.ChanWidth.ravel()[0]
+        ChanWidth=abs(self.MS.ChanWidth.ravel()[0])
         ChanFreqs=self.MS.ChanFreq.flatten()
         if self.GD!=None:
             NChanJones=self.GD["Solvers"]["NChanSols"]
@@ -852,7 +852,7 @@ class ClassVisServer():
                 DEC=np.array([self.SM.DicoImager[iFacet]["RaDec"][1] for iFacet in range(len(self.SM.DicoImager))])
             else:
                 raise RuntimeError("incorrect BeamAt setting: use Facet or Tessel")
-            if self.GD["Beam"]["BeamModel"]!=None:
+            if self.GD["Beam"]["BeamModel"] is not None:
                 if self.GD["Beam"]["BeamModel"]=="LOFAR":
                     NDir=RA.size
                     self.DtBeamMin=self.GD["Beam"]["DtBeamMin"]
@@ -1023,7 +1023,75 @@ class ClassVisServer():
                     ListDicoPreApply.append(DicoBeam)
 
                     DoPreApplyJones = True
-                    print>> log, "       .... done Update LOFAR beam "
+                    print>> log, "       .... done Update FITS beam "
+                elif self.GD["Beam"]["BeamModel"] == "GMRT":
+                    NDir = RA.size
+                    self.DtBeamMin = self.GD["Beam"]["DtBeamMin"]
+
+                    from DDFacet.Data.ClassGMRTBeam import ClassGMRTBeam
+                    # make fake opts dict (DDFacet clss expects slightly different option names)
+                    opts = self.GD["Beam"]
+                    opts["NBand"] = opts["NChanBeamPerMS"]
+                    gmrtbeam = ClassGMRTBeam(self.MS, opts)
+
+                    TimesBeam = np.array(gmrtbeam.getBeamSampleTimes(times))
+                    FreqDomains = gmrtbeam.getFreqDomains()
+                    nfreq_dom = FreqDomains.shape[0]
+
+                    print>> log, "Update GMRT beam in %i dirs, %i times, %i freqs ... " % (
+                        NDir, len(TimesBeam), nfreq_dom)
+
+                    T0s = TimesBeam[:-1]
+                    T1s = TimesBeam[1:]
+                    Tm = (T0s + T1s) / 2.
+
+                    self.BeamTimes = TimesBeam
+
+                    Beam = np.zeros((Tm.size, NDir, self.MS.na, FreqDomains.shape[0], 2, 2), np.complex64)
+                    for itime, tm in enumerate(Tm):
+                        Beam[itime] = gmrtbeam.GiveInstrumentBeam(tm, RA, DEC)
+
+                    DicoBeam = {}
+                    DicoBeam["t0"] = T0s
+                    DicoBeam["t1"] = T1s
+                    DicoBeam["tm"] = Tm
+                    DicoBeam["Jones"] = Beam
+                    DicoBeam["FreqDomain"] = FreqDomains
+
+                    ###### Normalise
+                    rac, decc = self.MS.radec
+                    if self.GD["Beam"]["CenterNorm"] == 1:
+
+                        Beam = DicoBeam["Jones"]
+                        Beam0 = np.zeros((Tm.size, 1, self.MS.na, nfreq_dom, 2, 2), np.complex64)
+                        for itime, tm in enumerate(Tm):
+                            Beam0[itime] = gmrtbeam.evaluateBeam(tm, np.array([rac]), np.array([decc]))
+
+                        DicoBeamCenter = {}
+                        DicoBeamCenter["t0"] = T0s
+                        DicoBeamCenter["t1"] = T1s
+                        DicoBeamCenter["tm"] = Tm
+                        DicoBeamCenter["Jones"] = Beam0
+                        DicoBeamCenter["FreqDomain"] = FreqDomains
+                        Beam0inv = ModLinAlg.BatchInverse(Beam0)
+                        nt, nd, _, _, _, _ = Beam.shape
+                        Ones = np.ones((nt, nd, 1, 1, 1, 1), np.float32)
+                        Beam0inv = Beam0inv * Ones
+                        DicoBeam["Jones"] = ModLinAlg.BatchDot(Beam0inv, Beam)
+
+                    ######
+
+
+
+
+                    # nt,nd,na,nch,_,_= Beam.shape
+                    # Beam=np.mean(Beam,axis=3).reshape((nt,nd,na,1,2,2))
+
+                    # DicoBeam["ChanMap"]=np.zeros((nch))
+                    ListDicoPreApply.append(DicoBeam)
+
+                    DoPreApplyJones = True
+                    print>> log, "       .... done Update GMRT beam "
 
             if self.GD["PreApply"]["PreApplySols"][0]!="":
                 ModeList=self.GD["PreApply"]["PreApplyMode"]

@@ -27,7 +27,7 @@ from killMS.Other import logo
 from killMS.Other import ModColor
 from DDFacet.Other import logger
 log=logger.getLogger("killMS")
-logger.itsLog.logger.setLevel(logger.logging.CRITICAL)
+#logger.itsLog.logger.setLevel(logger.logging.CRITICAL)
 
 sys.path=[name for name in sys.path if not(("pyrap" in name)&("/usr/local/lib/" in name))]
 
