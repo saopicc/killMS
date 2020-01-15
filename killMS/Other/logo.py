@@ -18,6 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import getpass
 import os
 from killMS.Other import ModColor
@@ -56,12 +59,12 @@ def print_logo():
                                                        
     version=report_version()
 
-    print """       __        _   __   __   ____    ____   ______     """
-    print """      [  |  _   (_) [  | [  | |_   \  /   _|.' ____ \    """
-    print """       | | / ]  __   | |  | |   |   \/   |  | (___ \_|   """
-    print """       | '' <  [  |  | |  | |   | |\  /| |   _.____`.    """
-    print """       | |`\ \  | |  | |  | |  _| |_\/_| |_ | \____) |   """
-    print """      [__|  \_][___][___][___]|_____||_____| \______.'   """
-    print """             This is version : %s""" %ModColor.Str(version)
-    print """                                                        """
+    print("""       __        _   __   __   ____    ____   ______     """)
+    print("""      [  |  _   (_) [  | [  | |_   \  /   _|.' ____ \    """)
+    print("""       | | / ]  __   | |  | |   |   \/   |  | (___ \_|   """)
+    print("""       | '' <  [  |  | |  | |   | |\  /| |   _.____`.    """)
+    print("""       | |`\ \  | |  | |  | |  _| |_\/_| |_ | \____) |   """)
+    print("""      [__|  \_][___][___][___]|_____||_____| \______.'   """)
+    print("""             This is version : %s""" %ModColor.Str(version))
+    print("""                                                        """)
 

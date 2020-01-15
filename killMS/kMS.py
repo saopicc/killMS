@@ -20,6 +20,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 #!/usr/bin/env python
 #turtles
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import sys,os
 import time
@@ -200,7 +203,7 @@ def read_options():
     OP.add_option('LambdaTk',type="float",help=' Tikhonov regularisation parameter. Default is %default')
     
 
-    OP.OptionGroup("* KAFCA additional options","KAFCA")
+-    OP.OptionGroup("* KAFCA additional options","KAFCA")
     OP.add_option('NIterKF',type="int",help=' Number of iterations for the solve. Default is %default ')
     OP.add_option('LambdaKF',type="float",help=' Lambda parameter for KAFCA. Default is %default ')
     OP.add_option('InitLM',type="int",help='Initialise Kalman filter with Levenberg Maquardt. Default is %default')

@@ -1,6 +1,9 @@
 # Copyright: 2008 Nadia Alramli
 # License: BSD
- 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 """Terminal controller module
 Example of usage:
     print BG_BLUE + 'Text on blue background' + NORMAL

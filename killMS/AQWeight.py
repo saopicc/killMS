@@ -1,11 +1,14 @@
 #!/usr/bin/env python
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import optparse
 import pickle
 
 import numpy as np
 import pylab
 from pyrap.tables import table
-import Array.ModLinAlg
+from killMS import Array.ModLinAlg
 from DDFacet.Other import logger
 log = logger.getLogger("AQWeight")
 from killMS.Data import ClassMS
@@ -14,10 +17,10 @@ APP=None
 from DDFacet.Other.AsyncProcessPool import APP, WorkerProcessError
 from DDFacet.Other import Multiprocessing
 from DDFacet.Other import ModColor
-import Weights.W_DiagBL
-import Weights.W_AntFull
-import Weights.W_Jones
-import Weights.W_Imag
+from killMS import Weights.W_DiagBL
+from killMS import Weights.W_AntFull
+from killMS import Weights.W_Jones
+from killMS import Weights.W_Imag
 
 def read_options():
     desc="""Run MCMC """

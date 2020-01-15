@@ -1,3 +1,6 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import numpy as np
 from DDFacet.Other import logger
 log=logger.getLogger("ClassFitTEC")
@@ -60,7 +63,7 @@ class ClassFitTEC():
         self.CentralFreqs=self.nu=nu
         self.NFreq=nu.size
         na=self.na
-        self.nbl=(na**2-na)/2
+        self.nbl=(na**2-na)//2
         self.CurrentX=None
         print>>log,"Number of Antennas: %i"%self.na
         print>>log,"Number of Freqs:    %i"%nu.size

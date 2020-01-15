@@ -18,6 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import numpy as np
 try:
     from killMS.Gridder import _pyGridder
@@ -76,7 +79,7 @@ class ClassWeighting():
             npix+=1
 
         #npix=npixIm
-        xc,yc=npix/2,npix/2
+        xc,yc=npix//2,npix//2
 
 
         VisWeights=np.float64(VisWeights)

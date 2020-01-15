@@ -18,6 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import numpy as np
 from pyrap.tables import table
 from killMS.Other.rad2hmsdms import rad2hmsdms
@@ -542,7 +545,7 @@ class ClassMS():
             else:
                 self.data=self.data[indGetCorrelation,:,:]
                 self.flag_all=self.flag_all[indGetCorrelation,:,:]
-            self.nbl=(self.na*(self.na-1))/2
+            self.nbl=(self.na*(self.na-1))//2
 
         if self.DoRevertChans:
             self.flag_all=self.flag_all[:,::-1,:]
@@ -673,7 +676,7 @@ class ClassMS():
         A=np.concatenate([A0,A1])
 
         nas=np.unique(A).size
-        self.nbl=(nas**2-nas)/2
+        self.nbl=(nas**2-nas)//2
         if self.HasAutoCorr:
             self.nbl+=nas
         if A0.size%self.nbl!=0:

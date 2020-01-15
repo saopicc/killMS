@@ -18,6 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import numpy as np
 from killMS.Array import NpShared
 from killMS.Predict.PredictGaussPoints_NumExpr5 import ClassPredict
@@ -27,7 +30,7 @@ from killMS.Data import ClassVisServer
 from killMS.Array import ModLinAlg
 from killMS.Other import ClassTimeIt
 from killMS.Array.Dot import NpDotSSE
-import ClassAverageMachine
+from . import ClassAverageMachine
 
 def testLM():
     import pylab

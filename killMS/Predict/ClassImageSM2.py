@@ -18,6 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import numpy as np
 from DDFacet.Imager.ClassDeconvMachine import ClassImagerDeconv
 from pyrap.images import image
@@ -58,7 +61,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         if self.GD["GDkMS"]["ImageSkyModel"]["DicoModel"] is not None:
             print>>log,ModColor.Str("Using %s instead of %s"%(self.GD["GDkMS"]["ImageSkyModel"]["DicoModel"],self.FileDicoModel))
             self.FileDicoModel=self.GD["GDkMS"]["ImageSkyModel"]["DicoModel"]
-
+            
         self.ModelImageName="%s.model.fits"%self.BaseImageName
 
         self.VS=VS

@@ -6,10 +6,13 @@ Usage:
     p = ProgressBar("blue")
     p.render(percentage, message)
 """
- 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import sys
 import time as timemod
-import ModColor
+from . import ModColor
 
 def test():
     pBAR= ProgressBar('white', width=50, block='=', empty=' ',Title="Solving ", HeaderSize=10,TitleSize=13)
@@ -162,7 +165,7 @@ class ProgressBar(object):
     def clear(self):
         """Clear all printed lines"""
 
-        import terminal
+        from . import terminal
         sys.stdout.write(
             self.lines * (terminal.UP + terminal.BOL + terminal.CLEAR_EOL)
         )

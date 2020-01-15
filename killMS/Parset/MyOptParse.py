@@ -19,12 +19,15 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 #!/usr/bin/env python
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import collections
 import optparse as OptParse
-import PrintOptParse
-import ReadCFG
+from . import PrintOptParse
+from . import ReadCFG
 
-import ClassPrint
+from . import ClassPrint
 from killMS.Other import ModColor
 from killMS.Other.logo import report_version
 #global Parset

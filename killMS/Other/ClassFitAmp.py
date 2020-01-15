@@ -1,3 +1,6 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import numpy as np
 from DDFacet.Other import logger
 log=logger.getLogger("ClassFitAmp")
@@ -53,7 +56,7 @@ class ClassFitAmp():
         self.CentralFreqs=self.nu=nu
         self.NFreq=nu.size
         na=self.na
-        self.nbl=(na**2-na)/2
+        self.nbl=(na**2-na)//2
         self.CurrentX=None
         print>>log,"Number of Antennas: %i"%self.na
         print>>log,"Number of Freqs:    %i"%nu.size
@@ -200,7 +203,7 @@ class ClassFitAmp():
                 OffCov=(np.sum(fIm[1:,:]*fIm[:-1,:])+np.sum(fIm[:,1:]*fIm[:,:-1]))/fIm.size
                 lOffCov[iw]=OffCov
                 Tot=lOffCov[iw]+lStd[iw]
-                print w,lStd[iw],lOffCov[iw]
+                print(w,lStd[iw],lOffCov[iw])
 
                 import pylab
                 vmin,vmax=Im_n.min(),Im_n.max()
