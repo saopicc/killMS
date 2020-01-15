@@ -105,7 +105,7 @@ class ClassAverageMachine():
         
         DicoData["flags_avg"]=FOut
         DicoData["data_avg"]=DOut
-                
+        
         DicoData["flags_flat_avg"]=np.rollaxis(FOut,2).reshape(self.NJacobBlocks_X,NDirAvg*NpOut*self.NJacobBlocks_Y)
         DicoData["data_flat_avg"]=np.rollaxis(DOut,2).reshape(self.NJacobBlocks_X,NDirAvg*NpOut*self.NJacobBlocks_Y)
 
@@ -152,6 +152,10 @@ class ClassAverageMachine():
                 flags_flat_avg_merged=flags_flat_avg
                 data_flat_avg_merged=data_flat_avg
                 
+        else:
+            flags_flat_avg_merged=DicoData["flags_flat_avg"]
+            data_flat_avg_merged=DicoData["data_flat_avg"]
+
         DicoData["flags_flat_avg_merged"]=flags_flat_avg_merged
         DicoData["data_flat_avg_merged"]=data_flat_avg_merged
 

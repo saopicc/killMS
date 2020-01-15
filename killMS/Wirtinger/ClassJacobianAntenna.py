@@ -1162,7 +1162,7 @@ class ClassJacobianAntenna():
 
         if self.DoCompress:
             self.AverageMachine.AverageDataVector(DicoData)
-        
+
         return DicoData
 
 ###########################################
