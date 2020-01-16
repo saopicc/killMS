@@ -47,8 +47,8 @@ static PyMethodDef module_functions[] = {
 #if PY_MAJOR_VERSION >= 3
 static struct PyModuleDef _mod = {
     PyModuleDef_HEAD_INIT,
-    "_predict3",
-    "_predict3",
+    "predict3x",
+    "predict3x",
     -1,  
     module_functions,
     NULL,
@@ -56,14 +56,14 @@ static struct PyModuleDef _mod = {
     NULL,
     NULL
   };
-  PyMODINIT_FUNC PyInit__predict3(void) {
+  PyMODINIT_FUNC PyInit_predict3x(void) {
     PyObject* m = PyModule_Create(&_mod);
     import_array();
     return m;
   }
 #else
-    void init__predict27()  {
-    (void) Py_InitModule("_predict27", module_functions);
+    void initpredict27()  {
+    (void) Py_InitModule("predict27", module_functions);
     import_array();  // Must be present for NumPy.  Called first after above line.
     }
 #endif
