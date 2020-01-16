@@ -64,7 +64,7 @@ class ClassJonesDomains():
 
 
     def AddVisToJonesMapping(self,Jones,VisTimes,VisFreqs):
-        print>>log, "Building VisToJones time mapping..."
+        log.print( "Building VisToJones time mapping...")
         DicoJonesMatrices=Jones
         G=DicoJonesMatrices["Jones"]
         ind=np.zeros((VisTimes.size,),np.int32)
@@ -82,7 +82,7 @@ class ClassJonesDomains():
             ii+=indMStime.size
         Jones["Map_VisToJones_Time"]=ind
 
-        print>>log, "Building VisToJones freq mapping..."
+        log.print( "Building VisToJones freq mapping...")
         FreqDomains=Jones["FreqDomain"]
         NChanJones=FreqDomains.shape[0]
         MeanFreqJonesChan=(FreqDomains[:,0]+FreqDomains[:,1])/2.
@@ -90,12 +90,12 @@ class ClassJonesDomains():
         DFreq=np.abs(VisFreqs.reshape((NVisChan,1))-MeanFreqJonesChan.reshape((1,NChanJones)))
         VisToJonesChanMapping=np.argmin(DFreq,axis=1)
         Jones["Map_VisToJones_Freq"]=VisToJonesChanMapping
-        print>>log, "  VisToJonesChanMapping %s"%str(VisToJonesChanMapping)
+        log.print( "  VisToJonesChanMapping %s"%str(VisToJonesChanMapping))
     
 
 
     def GetMergedFreqDomains(self,DicoJ0,DicoJ1):
-        print>>log, "Compute frequency domains of merged Jones arrays"
+        log.print( "Compute frequency domains of merged Jones arrays")
         FreqDomain0=DicoJ0["FreqDomain"]
         FreqDomain1=DicoJ1["FreqDomain"]
         f0=FreqDomain0.flatten().tolist()
@@ -127,14 +127,14 @@ class ClassJonesDomains():
         ind=np.where((fm>=fmin)&(fm<fmax))[0]
         FreqDomainOut=FreqDomainOut[ind]
 
-        print>>log, "  There are %i channels in the merged Jones array"%FreqDomainOut.shape[0]
+        log.print( "  There are %i channels in the merged Jones array"%FreqDomainOut.shape[0])
         return FreqDomainOut
         
 
 
     def MergeJones(self,DicoJ0,DicoJ1):
 
-        print>>log, "Merging Jones arrays"
+        log.print( "Merging Jones arrays")
 
         FreqDomainOut=self.GetMergedFreqDomains(DicoJ0,DicoJ1)
 
@@ -194,10 +194,10 @@ class ClassJonesDomains():
         iG0_t=np.argmin(np.abs(DicoOut["tm"].reshape((nt,1))-DicoJ0["tm"].reshape((1,nt0))),axis=1)
         iG1_t=np.argmin(np.abs(DicoOut["tm"].reshape((nt,1))-DicoJ1["tm"].reshape((1,nt1))),axis=1)
         
-#        print>>log,fmOut,DicoJ0["FreqDomain"],DicoJ1["FreqDomain"]
+#        log.print(fmOut,DicoJ0["FreqDomain"],DicoJ1["FreqDomain"])
         for ich in range(nchOut):
 
-#            print>>log,fmOut[ich]
+#            log.print(fmOut[ich])
             indChG0=np.where((fmOut[ich]>=DicoJ0["FreqDomain"][:,0]) & (fmOut[ich]<DicoJ0["FreqDomain"][:,1]))[0][0]
             indChG1=np.where((fmOut[ich]>=DicoJ1["FreqDomain"][:,0]) & (fmOut[ich]<DicoJ1["FreqDomain"][:,1]))[0][0]
  

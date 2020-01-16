@@ -88,15 +88,15 @@ class ClassWeighting():
 
         
         if Weighting=="Briggs":
-            print>>log, "Weighting in Briggs mode"
-            print>>log, "Calculating imaging weights with Robust=%3.1f on an [%i,%i] grid"%(Robust,npix,npix)
+            log.print( "Weighting in Briggs mode")
+            log.print( "Calculating imaging weights with Robust=%3.1f on an [%i,%i] grid"%(Robust,npix,npix))
             Mode=0
         elif Weighting=="Uniform":
-            print>>log, "Weighting in Uniform mode"
-            print>>log, "Calculating imaging weights on an [%i,%i] grid"%(npix,npix)
+            log.print( "Weighting in Uniform mode")
+            log.print( "Calculating imaging weights on an [%i,%i] grid"%(npix,npix))
             Mode=1
         elif Weighting=="Natural":
-            print>>log, "Weighting in Natural mode"
+            log.print( "Weighting in Natural mode")
             return VisWeights
         else:
             raise ValueError("Expected Briggs, Uniform or Natural, got {0:s} for --Weighting".format(Weighting))

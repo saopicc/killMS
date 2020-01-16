@@ -40,7 +40,7 @@ class ClassBeam():
         self.DtBeamMin=self.GD["Beam"]["DtBeamMin"]
 
     def GiveMeanBeam(self):
-        print>>log, "Calculate mean beam for covariance estimate ... "
+        log.print( "Calculate mean beam for covariance estimate ... ")
         t=table(self.MSName,ack=False)
         times=t.getcol("TIME")
         t.close()
@@ -51,7 +51,7 @@ class ClassBeam():
         return AbsMean
     # def SetLOFARBeam(self,LofarBeam):
     #     self.BeamMode,self.DtBeamMin,self.BeamRAs,self.BeamDECs = LofarBeam
-    #     print>>log, "Set LOFARBeam in %s Mode"%self.BeamMode
+    #     log.print( "Set LOFARBeam in %s Mode"%self.BeamMode)
     #     useArrayFactor=("A" in self.BeamMode)
     #     useElementBeam=("E" in self.BeamMode)
     #     self.MS.LoadSR(useElementBeam=useElementBeam,useArrayFactor=useArrayFactor)
@@ -66,7 +66,7 @@ class ClassBeam():
         elif self.GD["Beam"]["BeamModel"]=="FITS":
             self.MS.LoadFITSBeam()
 
-        #print>>log, "  Update beam [Dt = %3.1f min] ... "%self.DtBeamMin
+        #log.print( "  Update beam [Dt = %3.1f min] ... "%self.DtBeamMin)
         DtBeamSec=self.DtBeamMin*60
         tmin,tmax=times[0],times[-1]
         TimesBeam=np.arange(tmin,tmax,DtBeamSec).tolist()

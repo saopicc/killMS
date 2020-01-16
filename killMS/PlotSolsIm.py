@@ -163,7 +163,7 @@ class PlotMachine():
                 for iAnt,Name in enumerate(StationNames):
                     if options.FlagStations in Name:
                         indStations[iAnt]=-1
-                        print>>log,"Flagging station %s"%Name
+                        log.print("Flagging station %s"%Name)
                     else:
                         StationNamesSel.append(Name)
                 indStations=indStations[indStations!=-1]
@@ -222,7 +222,7 @@ class PlotMachine():
 
         self.Mask=None
         if 'MaskedSols' in SolsDico.keys():
-            print>>log,"Some solutions are masked"
+            log.print("Some solutions are masked")
             M=SolsDico['MaskedSols']
             # Sols.G[M==1]=np.nan
             self.Mask=M

@@ -59,7 +59,7 @@ class ClassPreparePredict(ClassImagerDeconv):
 
         self.FileDicoModel="%s.DicoModel"%self.BaseImageName
         if self.GD["GDkMS"]["ImageSkyModel"]["DicoModel"] is not None:
-            print>>log,ModColor.Str("Using %s instead of %s"%(self.GD["GDkMS"]["ImageSkyModel"]["DicoModel"],self.FileDicoModel))
+            log.print(ModColor.Str("Using %s instead of %s"%(self.GD["GDkMS"]["ImageSkyModel"]["DicoModel"],self.FileDicoModel)))
             self.FileDicoModel=self.GD["GDkMS"]["ImageSkyModel"]["DicoModel"]
             
         self.ModelImageName="%s.model.fits"%self.BaseImageName
@@ -67,12 +67,12 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.VS=VS
 
         if self.GD["CF"]["wmax"]==0:
-            print>>log,"Computing wmax from UVW column"
+            log.print("Computing wmax from UVW column")
             t=table(self.VS.ListMS[0].MSName,ack=False)
             u,v,w=t.getcol("UVW").T
             t.close()
             self.GD["CF"]["wmax"]=np.max(np.abs(w))
-            print>>log,"  found a wmax=%f meters"%self.GD["CF"]["wmax"]
+            log.print("  found a wmax=%f meters"%self.GD["CF"]["wmax"])
             
 
 
@@ -134,8 +134,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         # self.MM.setFreqMachine(original_freqs, model_freqs)
         ModelImage=self.MM.GiveModelImage(model_freqs)
         
-        print>> log, "model image @%s MHz (min,max) = (%f, %f)" % (
-            str(model_freqs / 1e6), ModelImage.min(), ModelImage.max())
+        log.print( "model image @%s MHz (min,max) = (%f, %f)" % (str(model_freqs / 1e6), ModelImage.min(), ModelImage.max()))
 
         # # From ModelImage
         # print "im!!!!!!!!!!!!!!!!!!!!!!!"
@@ -197,7 +196,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         #ind=np.where(self.ClusterCat.SumI!=0)[0]
         #self.ClusterCat=self.ClusterCat[ind].copy()
         #NFacets=self.ClusterCat.shape[0]
-        #print>>log, "  There are %i non-zero facets"%NFacets
+        #log.print( "  There are %i non-zero facets"%NFacets)
 
         NFacets=len(self.FacetMachine.DicoImager)
         lFacet=np.zeros((NFacets,),np.float32)
@@ -227,7 +226,7 @@ class ClassPreparePredict(ClassImagerDeconv):
             
         #     #self.FacetMachine.SpacialWeigth[iFacet]=NpShared.ToShared("%sSpacialWeight_%3.3i"%(self.IdSharedMem,iFacet),self.FacetMachine.SpacialWeigth[iFacet])
         #     self.FacetMachine.SpacialWeigth[iFacet]=self.FacetMachine._CF[iFacet]["SW"]
-        # print>>log, "  Splitting model image"
+        # log.print( "  Splitting model image")
         # self.BuildGridsParallel()
         self.FacetMachine.BuildFacetNormImage()
         self.FacetMachine.setModelImage(ModelImage)
@@ -239,7 +238,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         NFacets=self.ClusterCat.shape[0]
         self.SM.NDir=self.NDirs
         self.SM.Dirs=self.Dirs
-        print>>log, "  There are %i non-zero directions"%self.SM.NDir
+        log.print( "  There are %i non-zero directions"%self.SM.NDir)
         self.SM.ClusterCat=self.ClusterCat
         self.SM.DicoJonesDirToFacet=self.DicoJonesDirToFacet
         self.SM.GD=self.FacetMachine.GD
@@ -267,7 +266,7 @@ class ClassPreparePredict(ClassImagerDeconv):
 
 
     def PrepareGridMachinesMapping(self):
-        print>>log, "  Make the solution-directions to gridmachine mapping"
+        log.print( "  Make the solution-directions to gridmachine mapping")
         ListGrid=[]
 
 
@@ -311,7 +310,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         Keep=np.zeros((self.NDirs,),bool)
         for iDirJones in sorted(DicoJonesDirToFacet.keys()):
             if self.DicoJonesDirToFacet[iDirJones]["SumFlux"]==0:
-                print>>log,"  Remove Jones direction %i"%(iDirJones)
+                log.print("  Remove Jones direction %i"%(iDirJones))
             else:
                 D[iDirNew]=self.DicoJonesDirToFacet[iDirJones]
                 iDirNew+=1
@@ -330,7 +329,7 @@ class ClassPreparePredict(ClassImagerDeconv):
 
 
       # def BuildGridsParallel(self):
-      #   print>>log, "  Building the grids"
+      #   log.print( "  Building the grids")
       #   ListGrid=[]
 
 
@@ -442,7 +441,7 @@ class ClassPreparePredict(ClassImagerDeconv):
       #   Keep=np.zeros((self.NDirs,),bool)
       #   for iDirJones in sorted(DicoJonesDirToFacet.keys()):
       #       if self.DicoJonesDirToFacet[iDirJones]["SumFlux"]==0:
-      #           print>>log,"  Remove Jones direction %i"%(iDirJones)
+      #           log.print("  Remove Jones direction %i"%(iDirJones))
       #       else:
       #           D[iDirNew]=self.DicoJonesDirToFacet[iDirJones]
       #           iDirNew+=1

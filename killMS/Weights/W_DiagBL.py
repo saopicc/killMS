@@ -14,8 +14,8 @@ class ClassCovMat():
     def __init__(self,**kwargs):
         for key, value in kwargs.items(): setattr(self, key, value)
         self.DictName="DATA"
-        print>>log,"I am the machine that compute the weights based"
-        print>>log,"  on the diag(nt x nt)_iAnt:jAnt matrix"
+        log.print("I am the machine that compute the weights based")
+        log.print("  on the diag(nt x nt)_iAnt:jAnt matrix")
 
     def giveWeigthParallel(self):
         self.DATA=shared_dict.attach(self.DictName)

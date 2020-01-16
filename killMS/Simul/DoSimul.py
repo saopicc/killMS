@@ -518,7 +518,7 @@ class ClassSimul():
         Jones = self.GiveJones()
     
     
-        print>>log, ModColor.Str("Substract sources ... ",col="green")
+        log.print(ModColor.Str("Substract sources ... ",col="green"))
         #SM.SelectSubCat(SM.SourceCat.kill==0)
         
         t0=np.mean(VS.MS.times_all)

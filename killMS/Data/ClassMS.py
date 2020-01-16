@@ -202,7 +202,7 @@ class ClassMS():
 
 
         t=table("%s/LOFAR_ANTENNA_FIELD"%self.MSName,ack=False)
-        #print>>log, ModColor.Str(" ... Loading LOFAR_ANTENNA_FIELD table...")
+        #log.print( ModColor.Str(" ... Loading LOFAR_ANTENNA_FIELD table..."))
         na,NTiles,dummy=t.getcol("ELEMENT_OFFSET").shape
 
         try:
@@ -263,7 +263,7 @@ class ClassMS():
 
         #ListStrSel=["RT9-RTA", "RTA-RTB", "RTC-RTD", "RT6-RT7", "RT5"]
 
-        print>>log, ModColor.Str("  ... Building BL-mapping for %s"%str(ListStrSel))
+        log.print( ModColor.Str("  ... Building BL-mapping for %s"%str(ListStrSel)))
 
         if row1==None:
             row0=0
@@ -431,10 +431,10 @@ class ClassMS():
         try:
             SPW=table_all.getcol('DATA_DESC_ID',row0,nRowRead)
         except Exception as e:
-            print>>log,ModColor.Str("There was a problem reading DATA_DESC_ID:"+str(e))
+            log.print(ModColor.Str("There was a problem reading DATA_DESC_ID:"+str(e)))
             DATA_DESC_ID=np.unique(table_all.getcol('DATA_DESC_ID'))
             if DATA_DESC_ID.size==1:
-                print>>log,ModColor.Str("   All DATA_DESC_ID are the same, can proceed")
+                log.print(ModColor.Str("   All DATA_DESC_ID are the same, can proceed"))
                 SPW=np.zeros((nRowRead,),)
                 SPW.fill(DATA_DESC_ID[0])
             else:
@@ -523,7 +523,7 @@ class ClassMS():
             if 'UVWDT' not in ColNames:
                 self.AddUVW_dt()
 
-            print>>log,"Reading uvw_dt column"
+            log.print("Reading uvw_dt column")
             tu=table(self.MSName,ack=False)
             self.uvw_dt=np.float64(tu.getcol('UVWDT', row0, nRowRead))
             tu.close()
@@ -557,7 +557,7 @@ class ClassMS():
 
         self.NPolOrig=self.data.shape[-1]
         if self.data.shape[-1]!=4:
-            print>>log,ModColor.Str("Data has only two polarisation, adapting shape")
+            log.print(ModColor.Str("Data has only two polarisation, adapting shape"))
             nrow,nch,_=self.data.shape
             flag_all=np.zeros((nrow,nch,4),self.flag_all.dtype)
             data=np.zeros((nrow,nch,4),self.data.dtype)
@@ -569,7 +569,7 @@ class ClassMS():
             self.flag_all=flag_all
             
         if "IMAGING_WEIGHT" in table_all.colnames():
-            print>>log,"Flagging the zeros-weighted visibilities"
+            log.print("Flagging the zeros-weighted visibilities")
             fw=table_all.getcol("IMAGING_WEIGHT",row0,nRowRead)[SPW==self.ListSPW[0]][:,self.ChanSlice]
             nrr,nchr=fw.shape
             fw=fw.reshape((nrr,nchr,1))*np.ones((1,1,4))
@@ -578,7 +578,7 @@ class ClassMS():
             flag_all[fw<MedW*1e-6]=1
             fflagged1=np.count_nonzero(flag_all)
             if fflagged1>0 and fflagged0!=0:
-                print>>log,"  Increase in flag fraction: %f"%(fflagged1/float(fflagged0)-1)
+                log.print("  Increase in flag fraction: %f"%(fflagged1/float(fflagged0)-1))
 
         self.times_all=time_all
         self.times=time_slots_all
@@ -680,7 +680,7 @@ class ClassMS():
         if self.HasAutoCorr:
             self.nbl+=nas
         if A0.size%self.nbl!=0:
-            print>>log,ModColor.Str("MS is non conformant!")
+            log.print(ModColor.Str("MS is non conformant!"))
             raise
             
         #nbl=(na*(na-1))/2
@@ -892,7 +892,7 @@ class ClassMS():
     def SaveVis(self,vis=None,Col="CORRECTED_DATA",spw=0,DoPrint=True):
         if vis==None:
             vis=self.data
-        if DoPrint: print>>log, "Writing data in column %s"%ModColor.Str(Col,col="green")
+        if DoPrint: log.print( "Writing data in column %s"%ModColor.Str(Col,col="green"))
 
         print "Givemain"
         table_all=self.GiveMainTable(readonly=False)
@@ -985,10 +985,10 @@ class ClassMS():
         backnameFlag="FLAG_BACKUP"
         t=table(self.MSName,readonly=False,ack=False)
         if backname in t.colnames():
-            print>>log, "  Copying ",backname," to CORRECTED_DATA"
+            log.print( "  Copying ",backname," to CORRECTED_DATA")
             #t.putcol("CORRECTED_DATA",t.getcol(backname))
             self.CopyCol(backname,"CORRECTED_DATA")
-            print>>log, "  Copying ",backnameFlag," to FLAG"
+            log.print( "  Copying ",backnameFlag," to FLAG")
             self.CopyCol(backnameFlag,"FLAG")
             #t.putcol(,t.getcol(backnameFlag))
         t.close()
@@ -1007,10 +1007,10 @@ class ClassMS():
     def CopyCol(self,Colin,Colout):
         t=table(self.MSName,readonly=False,ack=False)
         if self.TimeChunkSize==None:
-            print>>log, "  ... Copying column %s to %s"%(Colin,Colout)
+            log.print( "  ... Copying column %s to %s"%(Colin,Colout))
             t.putcol(Colout,t.getcol(Colin))
         else:
-            print>>log, "  ... Copying column %s to %s"%(Colin,Colout)
+            log.print( "  ... Copying column %s to %s"%(Colin,Colout))
             TimesInt=np.arange(0,self.DTh,self.TimeChunkSize).tolist()
             if not(self.DTh in TimesInt): TimesInt.append(self.DTh)
 
@@ -1026,7 +1026,7 @@ class ClassMS():
                 #ind1=np.argmin(np.abs(t1-self.F_times))
                 row0=Rows[i]#ind0*self.nbl
                 row1=Rows[i+1]#ind1*self.nbl
-                print>>log, "      ... Copy in [%i, %i] rows"%( row0,row1)
+                log.print( "      ... Copy in [%i, %i] rows"%( row0,row1))
                 NRow=row1-row0
                 t.putcol(Colout,t.getcol(Colin,row0,NRow),row0,NRow)
         t.close()
@@ -1034,10 +1034,10 @@ class ClassMS():
     def AddCol(self,ColName,LikeCol="DATA",ColDesc=None,ColDescDict=None):
         t=table(self.MSName,readonly=False,ack=False)
         if (ColName in t.colnames()):
-            print>>log, "  Column %s already in %s"%(ColName,self.MSName)
+            log.print( "  Column %s already in %s"%(ColName,self.MSName))
             t.close()
             return
-        print>>log, "  Putting column %s in %s"%(ColName,self.MSName)
+        log.print( "  Putting column %s in %s"%(ColName,self.MSName))
         if ColDesc is None:
             desc=t.getcoldesc(LikeCol)
             desc["name"]=ColName
@@ -1068,15 +1068,15 @@ class ClassMS():
         t=table(self.MSName,readonly=False,ack=False)
         JustAdded=False
         if not(backname in t.colnames()):
-            print>>log, "  Putting column ",backname," in MS"
+            log.print( "  Putting column ",backname," in MS")
             desc=t.getcoldesc("CORRECTED_DATA")
             desc["name"]=backname
             desc['comment']=desc['comment'].replace(" ","_")
             t.addcols(desc)
-            print>>log, "  Copying %s in %s"%(incol,backname)
+            log.print( "  Copying %s in %s"%(incol,backname))
             self.CopyCol(incol,backname)
         else:
-            print>>log, "  Column %s already there"%(backname)
+            log.print( "  Column %s already there"%(backname))
 
         if not(backnameFlag in t.colnames()):
             desc=t.getcoldesc("FLAG")
@@ -1092,7 +1092,7 @@ class ClassMS():
 
     def PutNewCol(self,Name,LikeCol="CORRECTED_DATA"):
         if not(Name in self.ColNames):
-            print>>log, "  Putting column %s in MS, with format of %s"%(Name,LikeCol)
+            log.print( "  Putting column %s in MS, with format of %s"%(Name,LikeCol))
             t=table(self.MSName,readonly=False,ack=False)
             desc=t.getcoldesc(LikeCol)
             desc["name"]=Name
@@ -1121,8 +1121,8 @@ class ClassMS():
         #self.PutNewCol("MODEL_DATA")
 
     def AddUVW_dt(self):
-        print>>log,"Adding uvw speed info to main table: %s"%self.MSName
-        print>>log,"Compute UVW speed column"
+        log.print("Adding uvw speed info to main table: %s"%self.MSName)
+        log.print("Compute UVW speed column")
         MSName=self.MSName
         MS=self
         t=table(MSName,readonly=False,ack=False)
@@ -1132,7 +1132,7 @@ class ClassMS():
         UVW=t.getcol("UVW")
         UVW_dt=np.zeros_like(UVW)
         if "UVWDT" not in t.colnames():
-            print>>log,"Adding column UVWDT in %s"%self.MSName
+            log.print("Adding column UVWDT in %s"%self.MSName)
             desc=t.getcoldesc("UVW")
             desc["name"]="UVWDT"
             desc['comment']=desc['comment'].replace(" ","_")
@@ -1166,7 +1166,7 @@ class ClassMS():
             pBAR.render(intPercent, '%4i/%i' % (ant0+1, na))
                     
     
-        print>>log,"Writing in column UVWDT"
+        log.print("Writing in column UVWDT")
         t.putcol("UVWDT",UVW_dt)
         t.close()
     

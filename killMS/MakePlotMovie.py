@@ -307,7 +307,7 @@ def main(options=None):
         iAnt=0
 
     OutFile="animation.gif"
-    print>>log,"Creating %s"%OutFile
+    log.print("Creating %s"%OutFile)
     os.system("convert -delay 10 -loop 0 png/*.png %s"%OutFile)
 
 

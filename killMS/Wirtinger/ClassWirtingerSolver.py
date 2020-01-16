@@ -201,7 +201,7 @@ class ClassWirtingerSolver():
         self.rmsFromData=None
         self.SM.ApparentSumI=None
         # if SolverType=="KAFCA":
-        #     print>>log, ModColor.Str("niter=%i"%self.NIter)
+        #     log.print( ModColor.Str("niter=%i"%self.NIter))
         #     #self.NIter=1
         self.EvolvePStepStart,EvolvePStep=evP_StepStart,evP_Step
         self.CounterEvolveP=Counter.Counter(EvolvePStep)
@@ -246,7 +246,7 @@ class ClassWirtingerSolver():
         #     NoiseInfo[:,:,:,2]=Kapa[:,:,:]
             
         #     StatFile="NoiseInfo.npy"
-        #     print>>log, "Saving statistics in %s"%StatFile
+        #     log.print( "Saving statistics in %s"%StatFile)
         #     np.save(StatFile,NoiseInfo)
 
 
@@ -491,12 +491,12 @@ class ClassWirtingerSolver():
 
         Linv=Linv**2
 
-        print>>log, "Using Tikhonov regularisation [LambdaTk = %.2f]"%self.GD["CohJones"]["LambdaTk"]
-        #print>>log, "  there are %i free directions"%indFree.size
-        print>>log, "  minimum inverse L-matrix is %.3f"%Linv.min()
-        print>>log, "  maximum inverse L-matrix is %.3f"%Linv.max()
+        log.print( "Using Tikhonov regularisation [LambdaTk = %.2f]"%self.GD["CohJones"]["LambdaTk"])
+        #log.print( "  there are %i free directions"%indFree.size)
+        log.print( "  minimum inverse L-matrix is %.3f"%Linv.min())
+        log.print( "  maximum inverse L-matrix is %.3f"%Linv.max())
         # for iDir in range(NDir):
-        #     print>>log, "  #%i : [%7.3fJy x %7.7f] %7.3f Jy -> %7.7f "%(iDir,SumI[iDir],self.SM.AbsMeanBeamAnt[iDir],SumIApp[iDir],Linv.flat[iDir])
+        #     log.print( "  #%i : [%7.3fJy x %7.7f] %7.3f Jy -> %7.7f "%(iDir,SumI[iDir],self.SM.AbsMeanBeamAnt[iDir],SumIApp[iDir],Linv.flat[iDir]))
 
         NpShared.ToShared("%sLinv"%self.IdSharedMem,Linv)
         NpShared.ToShared("%sX0"%self.IdSharedMem,X0)
@@ -511,10 +511,10 @@ class ClassWirtingerSolver():
         self.pBAR.render(intPercent, '%4i/%i' % (NDone,nt))
 
         if DATA=="EndOfObservation":
-            print>>log, ModColor.Str("Reached end of data")
+            log.print( ModColor.Str("Reached end of data"))
             return "EndOfObservation"
         if DATA=="EndChunk":
-            print>>log, ModColor.Str("Reached end of data chunk")
+            log.print( ModColor.Str("Reached end of data chunk"))
             return "EndChunk"
         if DATA=="AllFlaggedThisTime":
             #print "AllFlaggedThisTime"
@@ -530,10 +530,10 @@ class ClassWirtingerSolver():
         self.rms=-1
         if (self.TypeRMS=="Resid")&(self.rmsFromData!=None):
             self.rms=self.rmsFromData
-            #print>>log," rmsFromDataJacobAnt: %s"%self.rms
+            #log.print(" rmsFromDataJacobAnt: %s"%self.rms)
         elif self.rmsFromExt!=None:
             self.rms=self.rmsFromExt
-            #print>>log," rmsFromExt: %s"%self.rms
+            #log.print(" rmsFromExt: %s"%self.rms)
         elif (self.TypeRMS=="GlobalData"):
             nrow,nch,_=DATA["flags"].shape
             if self.VS.MS.NPolOrig==4:
@@ -547,7 +547,7 @@ class ClassWirtingerSolver():
                 
             self.rms=np.sqrt(np.sum((w[Fpol==0]*np.absolute(Dpol[Fpol==0]))**2.0)/np.sum(w[Fpol==0]**2.0))/np.sqrt(2.)
             # print
-            # print>>log," rmsFromGlobalData: %s"%self.rms
+            # log.print(" rmsFromGlobalData: %s"%self.rms)
             # print DATA["data"].shape
             # print
         else:
@@ -563,7 +563,7 @@ class ClassWirtingerSolver():
 
     def InitPlotGraph(self):
         from Plot import Graph
-        print>>log,"Initialising plots ..." 
+        log.print("Initialising plots ..." )
         import pylab
         #pylab.ion()
         self.Graph=Graph.ClassMplWidget(self.VS.MS.na)

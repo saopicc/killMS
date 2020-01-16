@@ -65,9 +65,9 @@ class ClassFitTEC():
         na=self.na
         self.nbl=(na**2-na)//2
         self.CurrentX=None
-        print>>log,"Number of Antennas: %i"%self.na
-        print>>log,"Number of Freqs:    %i"%nu.size
-        print>>log,"Number of Points:   %i"%(nu.size*self.na**2)
+        log.print("Number of Antennas: %i"%self.na)
+        log.print("Number of Freqs:    %i"%nu.size)
+        log.print("Number of Points:   %i"%(nu.size*self.na**2))
 
         self.Y=np.array([(self.G[iFreq].reshape((-1,1))*self.G[iFreq].conj().reshape((1,-1))).ravel() for iFreq in range(self.NFreq)]).ravel()
         self.nu_Y=np.array([(self.nu[iFreq]*np.ones((self.na,self.na)).ravel()) for iFreq in range(self.NFreq)]).ravel()
@@ -103,7 +103,7 @@ class ClassFitTEC():
             #self.Plot()
             self.Current_iIter=iIter
             if self.Diff<self.Tol:
-                print>>log,"Convergence in %i steps"%(iIter+1)
+                log.print("Convergence in %i steps"%(iIter+1))
                 break
 
         return self.CurrentX
@@ -388,9 +388,9 @@ class ClassFitTEC():
 #         na=self.na
 #         self.nbl=(na**2-na)/2
 #         self.CurrentX=None
-#         print>>log,"Number of Antennas: %i"%self.na
-#         print>>log,"Number of Freqs:    %i"%nu.size
-#         print>>log,"Number of Points:   %i"%(nu.size*self.na**2)
+#         log.print("Number of Antennas: %i"%self.na)
+#         log.print("Number of Freqs:    %i"%nu.size)
+#         log.print("Number of Points:   %i"%(nu.size*self.na**2))
 
 #         self.Y=np.array([(self.G[iFreq].reshape((-1,1))*self.G[iFreq].conj().reshape((1,-1))).ravel() for iFreq in range(self.NFreq)]).ravel()
 #         self.nu_Y=np.array([(self.nu[iFreq]*np.ones((self.na,self.na)).ravel()) for iFreq in range(self.NFreq)]).ravel()
@@ -426,7 +426,7 @@ class ClassFitTEC():
 #             #self.Plot()
 #             self.Current_iIter=iIter
 #             if self.Diff<self.Tol:
-#                 print>>log,"Convergence in %i steps"%(iIter+1)
+#                 log.print("Convergence in %i steps"%(iIter+1))
 #                 break
             
 #         return self.CurrentX

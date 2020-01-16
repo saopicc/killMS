@@ -105,7 +105,7 @@ class ClassInterpol():
         NFreqsOut=self.OutFreqDomains.shape[0]
         self.CentralFreqs=np.mean(self.OutFreqDomains,axis=1)
         
-        print>>log,"Loading %s"%self.SolsFileIn
+        log.print("Loading %s"%self.SolsFileIn)
         self.DicoFile0=dict(np.load(self.SolsFileIn))
         Dico0=self.DicoFile0
         self.Sols0=self.DicoFile0["Sols"].view(np.recarray)
@@ -226,15 +226,15 @@ class ClassInterpol():
         OutFile=self.SolsFileOut
         if not ".npz" in OutFile: OutFile+=".npz"
         
-        print>>log,"  Saving interpolated solution file as: %s"%OutFile
+        log.print("  Saving interpolated solution file as: %s"%OutFile)
         self.DicoOut["Sols"]=self.SolsOut
         self.DicoOut["Sols"]["G"][:]=self.GOut[:]
         try:
             np.savez(OutFile,**(self.DicoOut))
         except:
-            print>>log,"There was an exception while using savez"
-            print>>log,"  you should set the environment variable TMPDIR"
-            print>>log,"  to a directory where there is enough space"
+            log.print("There was an exception while using savez")
+            log.print("  you should set the environment variable TMPDIR")
+            log.print("  to a directory where there is enough space")
 
             
         NpShared.DelAll("%s"%IdSharedMem)

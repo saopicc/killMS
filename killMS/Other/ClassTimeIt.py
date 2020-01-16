@@ -57,7 +57,7 @@ class ClassTimeIt():
             Sout= "  * %s computation time: %i min. %4.1f sec."%(stri,m,s)
         self.t0=t1
         if DoLog:
-            print>>log, Sout
+            log.print( Sout)
         else:
             print Sout
 

@@ -44,7 +44,7 @@ class ClassBLCal():
 
     def Init(self):
         MSName=self.MSName
-        print>>log, "Reading %s"%MSName
+        log.print( "Reading %s"%MSName)
         t=table(MSName,readonly=False,ack=False)
         self.D=t.getcol("CORRECTED_DATA_BACKUP")
         self.P=t.getcol("PREDICTED_DATA")
