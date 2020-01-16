@@ -1,4 +1,4 @@
-FROM bhugo/ddfacet:0.4.1
+FROM bhugo/ddfacet:0.5.0
 MAINTAINER Ben Hugo "bhugo@ska.ac.za"
 
 #Copy killMS into the image
@@ -13,6 +13,7 @@ ADD .gitignore /src/killMS/.gitignore
 WORKDIR /src
 #build and install
 RUN pip install ./killMS
+RUN kMS.py --help
 
 # set as entrypoint - user should be able to run docker run kmstag and get help printed
 ENTRYPOINT ["kMS.py"]
