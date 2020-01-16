@@ -18,6 +18,7 @@
 
 /* A file to test imorting C modules for handling arrays to Python */
 //#define NPY_NO_DEPRECATED_API	NPY_1_8_API_VERSION
+#define NPY_NO_DEPRECATED_API	NPY_1_8_API_VERSION
 
 #include "Python.h"
 #include "arrayobject.h"
@@ -27,13 +28,15 @@
 #include <assert.h>
 #include <stdio.h>
 
-/* #### Globals #################################### */
 
-/* ==== Create 1D Carray from PyArray ======================
-    Assumes PyArray is contiguous in memory.             */
+
+
+
+
+
 
 /* ==== Set up the methods table ====================== */
-static PyMethodDef predict_Methods[] = {
+static PyMethodDef module_functions[] = {
 	{"predictJones2_Gauss", predictJones2_Gauss, METH_VARARGS},
 	{"ApplyJones", ApplyJones, METH_VARARGS},
 	{NULL, NULL}     /* Sentinel - marks the end of this structure */
@@ -41,18 +44,37 @@ static PyMethodDef predict_Methods[] = {
 
 /* ==== Initialize the C_test functions ====================== */
 // Module name must be _C_arraytest in compile and linked 
-void initpredict()  {
-	(void) Py_InitModule("predict", predict_Methods);
-	import_array();  // Must be present for NumPy.  Called first after above line.
-}
+#if PY_MAJOR_VERSION >= 3
+static struct PyModuleDef _mod = {
+    PyModuleDef_HEAD_INIT,
+    "_predict3",
+    "_predict3",
+    -1,  
+    module_functions,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+  };
+  PyMODINIT_FUNC PyInit__predict3(void) {
+    PyObject* m = PyModule_Create(&_mod);
+    import_array();
+    return m;
+  }
+#else
+    void init__predict27()  {
+    (void) Py_InitModule("_predict27", module_functions);
+    import_array();  // Must be present for NumPy.  Called first after above line.
+    }
+#endif
 
 
-
-
-
-
-
-
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 static PyObject *predict(PyObject *self, PyObject *args)
@@ -76,8 +98,8 @@ static PyObject *predict(PyObject *self, PyObject *args)
 			&AllowChanEquidistant))  return NULL;
   
   //NpVisIn = (PyArrayObject *) PyArray_ContiguousFromObject(ObjVisIn, PyArray_COMPLEX64, 0, 3);
-  float complex* VisIn=p_complex64(NpVisIn);
-
+  float complex* VisIn=(float complex*) PyArray_DATA(NpVisIn);
+  
   PyArrayObject *Np_l;
   Np_l = (PyArrayObject *) PyList_GetItem(LSM, 0);
   PyArrayObject *Np_m;
@@ -91,8 +113,8 @@ static PyObject *predict(PyObject *self, PyObject *args)
   NpFreqs= (PyArrayObject *)  PyList_GetItem(LFreqs, 1);
   PyArrayObject *NpDFreqs;
   NpDFreqs= (PyArrayObject *) PyList_GetItem(LFreqs, 2);
-  float *p_DFreqs=p_float32(NpDFreqs);
-  float *p_Freqs=p_float32(NpFreqs);
+  float *p_DFreqs=(float *) PyArray_DATA(NpDFreqs);
+  float *p_Freqs=(float *) PyArray_DATA(NpFreqs);
 
 
 
@@ -101,7 +123,7 @@ static PyObject *predict(PyObject *self, PyObject *args)
   //PyArrayObject *NpDFreqs;
   PyObject *_DT  = PyList_GetItem(LUVWSpeed, 1);
   float DT=(float) PyFloat_AsDouble(_DT);
-  float *UVW_dt=p_float32(NpUVW_dt);
+  float *UVW_dt=(float *) PyArray_DATA(NpUVW_dt);
 
   PyObject *_FSmear  = PyList_GetItem(LSmearMode, 0);
   int FSmear=(int) PyFloat_AsDouble(_FSmear);
@@ -112,17 +134,23 @@ static PyObject *predict(PyObject *self, PyObject *args)
 
 
 
-  UVWin=p_float64(NpUVWin);
-  p_l=p_float32(Np_l);
-  p_m=p_float32(Np_m);
+  UVWin=(double *) PyArray_DATA(NpUVWin);
 
-  p_Flux=p_float32(Np_I);
+  p_l=(float *) PyArray_DATA(Np_l);
+  p_m=(float *) PyArray_DATA(Np_m);
+  p_Flux=(float *) PyArray_DATA(Np_I);
 
-  WaveL=p_float32(NpWaveL);
+  WaveL=(float *) PyArray_DATA(NpWaveL);
   
   int ch,dd,nchan,ndir;
-  nrow=NpVisIn->dimensions[0];
-  nchan=NpVisIn->dimensions[1];
+
+  npy_intp *Cat_DIMS=PyArray_DIMS(Np_l);
+  ndir=Cat_DIMS[0];
+  
+  npy_intp *UVW_DIMS=PyArray_DIMS(NpVisIn);
+  nrow=UVW_DIMS[0];
+  nchan=UVW_DIMS[1];
+
 
   int ChanEquidistant=0;
   /* if(nchan>2){ */
@@ -142,7 +170,6 @@ static PyObject *predict(PyObject *self, PyObject *args)
   ChanEquidistant=AllowChanEquidistant;
   //printf("ChanEquidistant %i\n",ChanEquidistant);
   
-  ndir=Np_l->dimensions[0];
 
   /* Get the dimensions of the input */
   
@@ -284,7 +311,7 @@ static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args)
   
 
 
-  float complex* VisIn=p_complex64(NpVisIn);
+  float complex* VisIn=(float complex*) PyArray_DATA(NpVisIn);
   float complex* ThisVis;
   float complex VisCorr[4]={0};
 
@@ -304,17 +331,19 @@ static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args)
   PyArrayObject *Np_GPA;
   Np_GPA = (PyArrayObject *) (PyList_GetItem(LSM, 5));
 
-  float *p_Gmin,*p_Gmaj,*p_GPA;
-  p_Gmin=p_float32(Np_Gmin);
-  p_Gmaj=p_float32(Np_Gmaj);
-  p_GPA=p_float32(Np_GPA);
+  float *p_Gmin=(float *) PyArray_DATA(Np_Gmin);
+  float *p_Gmaj=(float *) PyArray_DATA(Np_Gmaj);
+  float *p_GPA=(float *) PyArray_DATA(Np_GPA);
   //===================
   // Exponential table: exp(-x)
   PyArrayObject *Np_Exp;
   Np_Exp = (PyArrayObject *) (PyList_GetItem(LExp, 0));
-  float *p_Exp;
-  p_Exp=p_float32(Np_Exp);
-  int NmaxExp=Np_Exp->dimensions[0];
+  float *p_Exp=(float *) PyArray_DATA(Np_Exp);
+
+
+  npy_intp *Np_Exp_DIMS=PyArray_DIMS(Np_Exp);
+  int NmaxExp=Np_Exp_DIMS[0];
+  
   PyObject *_FStepExp= PyList_GetItem(LExp, 1);
   float StepExp=(float) (PyFloat_AsDouble(_FStepExp));
   
@@ -322,9 +351,11 @@ static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args)
   // Sinc table: sin(x)/x
   PyArrayObject *Np_Sinc;
   Np_Sinc = (PyArrayObject *) (PyList_GetItem(LSinc, 0));
-  float *p_Sinc;
-  p_Sinc=p_float32(Np_Sinc);
-  int NmaxSinc=Np_Sinc->dimensions[0];
+  float *p_Sinc=(float *) PyArray_DATA(Np_Sinc);
+
+
+  npy_intp *Np_Sinc_DIMS=PyArray_DIMS(Np_Sinc);
+  int NmaxSinc=Np_Sinc_DIMS[0];
   PyObject *_FStepSinc= PyList_GetItem(LSinc, 1);
   float StepSinc=(float) (PyFloat_AsDouble(_FStepSinc));
   
@@ -337,16 +368,17 @@ static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args)
   NpFreqs= (PyArrayObject *)  (PyList_GetItem(LFreqs, 1));
   PyArrayObject *NpDFreqs;
   NpDFreqs= (PyArrayObject *) (PyList_GetItem(LFreqs, 2));
-  float *p_DFreqs=p_float32(NpDFreqs);
-  float *p_Freqs=p_float32(NpFreqs);
+
+  float *p_DFreqs=(float *) PyArray_DATA(NpDFreqs);
+  float *p_Freqs=(float *) PyArray_DATA(NpFreqs);
 
   PyArrayObject *NpUVW_dt;
   NpUVW_dt= (PyArrayObject *) (PyList_GetItem(LUVWSpeed, 0));
   //PyArrayObject *NpDFreqs;
   PyObject *_DT  = PyList_GetItem(LUVWSpeed, 1);
   float DT=(float) PyFloat_AsDouble(_DT);
-  double *UVW_dt=p_float64(NpUVW_dt);
-
+  double *UVW_dt=(double *) PyArray_DATA(NpUVW_dt);
+  
   PyObject *_FSmear  = PyList_GetItem(LSmearMode, 0);
   int FSmear=(int) PyFloat_AsDouble(_FSmear);
   PyObject *_TSmear  = PyList_GetItem(LSmearMode, 1);
@@ -356,24 +388,28 @@ static PyObject *predictJones2_Gauss(PyObject *self, PyObject *args)
 
 
 
-  UVWin=p_float64(NpUVWin);
-  p_l=p_float64(Np_l);
-  p_m=p_float64(Np_m);
+  UVWin=(double *) PyArray_DATA(NpUVWin);
+  p_l=(double *) PyArray_DATA(Np_l);
+  p_m=(double *) PyArray_DATA(Np_m);
+  p_Flux=(float *) PyArray_DATA(Np_I);
+  
   //printf("l=%f",((float)p_l[0]));
 
-  p_Flux=p_float32(Np_I);
-
-  WaveL=p_float64(NpWaveL);
+  WaveL=(double *) PyArray_DATA(NpWaveL);
   
   int ch,dd,nchan,ndir;
-  nrow=NpVisIn->dimensions[0];
-  nchan=NpVisIn->dimensions[1];
+
+  npy_intp *NpVisIn_DIMS=PyArray_DIMS(NpVisIn);
+  nrow=NpVisIn_DIMS[0];
+  nchan=NpVisIn_DIMS[1];
+
 
   int ChanEquidistant=0;
 
   ChanEquidistant=AllowChanEquidistant;
 
-  ndir=Np_l->dimensions[0];
+  npy_intp *Np_l_DIMS=PyArray_DIMS(Np_l);
+  ndir=Np_l_DIMS[0];
   //printf("ndir=%i ",ndir);
   
   /* Get the dimensions of the input */
@@ -571,42 +607,45 @@ static PyObject *ApplyJones(PyObject *self, PyObject *args)
   int *ptrModeInterpolation;
 
   npTimeMappingJonesMatrices  = (PyArrayObject *) (PyList_GetItem(LJones, 0));
-  ptrTimeMappingJonesMatrices = p_int32(npTimeMappingJonesMatrices);
+  ptrTimeMappingJonesMatrices=(int *) PyArray_DATA(npTimeMappingJonesMatrices);
 
   npA0 = (PyArrayObject *) (PyList_GetItem(LJones, 1));
-  ptrA0 = p_int32(npA0);
+  ptrA0=(int *) PyArray_DATA(npA0);
 
   npA1= (PyArrayObject *) (PyList_GetItem(LJones, 2));
-  ptrA1=p_int32(npA1);
+  ptrA1=(int *) PyArray_DATA(npA1);
  
       
   // (nt,nd,na,1,2,2)
   npJonesMatrices = (PyArrayObject *) (PyList_GetItem(LJones, 3));
-  ptrJonesMatrices=p_complex64(npJonesMatrices);
-  nt_Jones=(int)npJonesMatrices->dimensions[0];
-  nd_Jones=(int)npJonesMatrices->dimensions[1];
-  na_Jones=(int)npJonesMatrices->dimensions[2];
-  nch_Jones=(int)npJonesMatrices->dimensions[3];
+  ptrJonesMatrices=(float complex *) PyArray_DATA(npJonesMatrices);
+  
+  npy_intp *npJonesMatrices_DIMS=PyArray_DIMS(npJonesMatrices);
+  nt_Jones=npJonesMatrices_DIMS[0];
+  nd_Jones=npJonesMatrices_DIMS[1];
+  na_Jones=npJonesMatrices_DIMS[2];
+  nch_Jones=npJonesMatrices_DIMS[3];
   JonesDims[0]=nt_Jones;
   JonesDims[1]=nd_Jones;
   JonesDims[2]=na_Jones;
   JonesDims[3]=nch_Jones;
 
   npFreqMappingJonesMatrices  = (PyArrayObject *) (PyList_GetItem(LJones, 4));
-  ptrFreqMappingJonesMatrices = p_int32(npFreqMappingJonesMatrices);
+  ptrFreqMappingJonesMatrices=(int *) PyArray_DATA(npFreqMappingJonesMatrices);
 
   
   PyObject *_IDIR  = PyList_GetItem(LJones, 5);
   i_dir=(int) PyFloat_AsDouble(_IDIR);
   // printf("idir=%i\n",i_dir);
 
-  float complex* VisIn=p_complex64(NpVisIn);
+  float complex* VisIn=(float complex *) PyArray_DATA(NpVisIn);
   float complex* ThisVis;
   float complex VisCorr[4]={0};
   
   int ch,dd,nchan,ndir;
-  nrow=NpVisIn->dimensions[0];
-  nchan=NpVisIn->dimensions[1];
+  npy_intp *NpVisIn_DIMS=PyArray_DIMS(NpVisIn);
+  nrow=NpVisIn_DIMS[0];
+  nchan=NpVisIn_DIMS[1];
 
   float complex J0[4]={0},J1[4]={0},J0inv[4]={0},J1H[4]={0},J1Hinv[4]={0},JJ[4]={0};
   
