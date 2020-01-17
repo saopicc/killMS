@@ -256,8 +256,8 @@ class ClassMS():
         return Beam
 
 
-    def GiveMappingAnt(self,ListStrSel,(row0,row1)=(None,None),FlagAutoCorr=True,WriteAttribute=True):
-
+    def GiveMappingAnt(self,ListStrSel,row0row1=(None,None),FlagAutoCorr=True,WriteAttribute=True):
+        row0,row1=row0row1
         if type(ListStrSel)!=list:
             assert(False)
 
@@ -381,7 +381,7 @@ class ClassMS():
 
 
         if DoPrint==True:
-            print "   ... Reading MS"
+            print("   ... Reading MS")
 
         # TODO: read this from MS properly, as in DDFacet
         self.CorrelationNames = "xx", "xy", "yx", "yy"
@@ -441,10 +441,10 @@ class ClassMS():
                 raise 
         A0=table_all.getcol('ANTENNA1',row0,nRowRead)[SPW==self.ListSPW[0]]
         A1=table_all.getcol('ANTENNA2',row0,nRowRead)[SPW==self.ListSPW[0]]
-        #print self.ListSPW[0]
+        #print(self.ListSPW[0])
         time_all=table_all.getcol("TIME",row0,nRowRead)[SPW==self.ListSPW[0]]
         self.Time0=table_all.getcol("TIME",0,1)[0]
-        #print np.max(time_all)-np.min(time_all)
+        #print(np.max(time_all)-np.min(time_all))
         time_slots_all=np.array(sorted(list(set(time_all))))
         ntimes=time_all.shape[0]/self.nbl
 
@@ -492,9 +492,9 @@ class ClassMS():
             if self.multidata:
                 self.data=[]
                 for colin in self.ColName:
-                    print "... read %s"%colin
+                    print("... read %s"%colin)
                     vis_all=table_all.getcol(colin,row0,nRowRead)[SPW==self.ListSPW[0]][:,self.ChanSlice,:]
-                    print " shape: %s"%str(vis_all.shape)
+                    print(" shape: %s"%str(vis_all.shape))
                     if self.zero_flag: vis_all[flag_all==1]=0.
                     vis_all[np.isnan(vis_all)]=0.
                     self.data.append(vis_all)
@@ -655,12 +655,12 @@ class ClassMS():
         T=ClassTimeIt.ClassTimeIt()
         T.enableIncr()
         T.disable()
-        #print MSname+'/ANTENNA'
+        #print(MSname+'/ANTENNA')
 
         # open main table
         table_all=table(MSname,ack=False)
 
-        #print MSname+'/ANTENNA'
+        #print(MSname+'/ANTENNA')
         ta=table(table_all.getkeyword('ANTENNA'),ack=False)
         #ta=table(MSname+'::ANTENNA',ack=False)
 
@@ -694,7 +694,7 @@ class ClassMS():
         SPW=table_all.getcol('DATA_DESC_ID')
         if self.SelectSPW!=None:
             self.ListSPW=self.SelectSPW
-            #print "dosel"
+            #print("dosel")
         else:
             self.ListSPW=sorted(list(set(SPW.tolist())))
         T.timeit()
@@ -721,7 +721,7 @@ class ClassMS():
         self.dFreq=ta_spectral.getcol("CHAN_WIDTH").flatten()[self.ChanSlice]
         self.ChanWidth=ta_spectral.getcol('CHAN_WIDTH')[:,self.ChanSlice]
         if chan_freq.shape[0]>len(self.ListSPW):
-            print ModColor.Str("  ====================== >> More SPW in headers, modifying that error....")
+            print(ModColor.Str("  ====================== >> More SPW in headers, modifying that error...."))
             chan_freq=chan_freq[np.array(self.ListSPW),:]
             reffreq=reffreq[np.array(self.ListSPW)]
             
@@ -735,7 +735,7 @@ class ClassMS():
         wavelength_chan=299792456./chan_freq
 
         if NSPW>1:
-            print "Don't deal with multiple SPW yet"
+            print("Don't deal with multiple SPW yet")
 
 
         Nchan=wavelength_chan.shape[1]
@@ -754,7 +754,7 @@ class ClassMS():
         if Nchan>1:
             self.DoRevertChans=(self.ChanFreq.flatten()[0]>self.ChanFreq.flatten()[-1])
         if self.DoRevertChans:
-            print ModColor.Str("  ====================== >> Revert Channel order!")
+            print(ModColor.Str("  ====================== >> Revert Channel order!"))
             wavelength_chan=wavelength_chan[0,::-1]
             self.ChanFreq=self.ChanFreq[0,::-1]
             self.dFreq=np.abs(self.dFreq)
@@ -809,7 +809,7 @@ class ClassMS():
     #     uvw1=self.Give_dUVW_dt0(np.mean(ttVec)+30.,A0,A1,LongitudeDeg=6.8689,R="UVW")
     #     duvw0=uvw1-uvw0
     #     duvw1=30*self.Give_dUVW_dt0(np.mean(ttVec)+15.,A0,A1,LongitudeDeg=6.8689,R="UVW_dt")
-    #     print duvw0-duvw1
+    #     print(duvw0-duvw1)
     #     stop
 
     def Give_dUVW_dt(self,ttVec,A0,A1,LongitudeDeg=6.8689,R="UVW_dt"):
@@ -894,7 +894,7 @@ class ClassMS():
             vis=self.data
         if DoPrint: log.print( "Writing data in column %s"%ModColor.Str(Col,col="green"))
 
-        print "Givemain"
+        print("Givemain")
         table_all=self.GiveMainTable(readonly=False)
 
         if self.swapped:
@@ -904,16 +904,16 @@ class ClassMS():
             visout=vis
             flag_all=self.flag_all
 
-        print "Col"
+        print("Col")
         table_all.putcol(Col,visout.astype(self.data.dtype),self.ROW0,self.nRowRead)
-        print "Flag"
+        print("Flag")
         table_all.putcol("FLAG",flag_all,self.ROW0,self.nRowRead)
-        print "Weight"
+        print("Weight")
         if self.HasWeights:
             
             table_all.putcol("WEIGHT",self.Weights,self.ROW0,self.nRowRead)
-            #print "ok w"
-        print "Close"
+            #print("ok w")
+        print("Close")
         table_all.close()
         
     def GiveUvwBL(self,a0,a1):
@@ -1057,7 +1057,7 @@ class ClassMS():
                   'shape': np.array([self.Nchan], dtype=np.int32),
                   'valueType': 'float'}
         else:
-            print "Not supported"
+            print("Not supported")
         t.addcols(desc)
         t.close()
         
@@ -1141,7 +1141,7 @@ class ClassMS():
         # # #######################
         # LTimes=np.sort(np.unique(times))
         # for iTime,ThisTime in enumerate(LTimes):
-        #     print iTime,LTimes.size
+        #     print(iTime,LTimes.size)
         #     ind=np.where(times==ThisTime)[0]
         #     UVW_dt[ind]=MS.Give_dUVW_dt(times[ind],A0[ind],A1[ind])
         # # #######################

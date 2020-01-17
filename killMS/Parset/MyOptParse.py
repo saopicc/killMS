@@ -107,7 +107,7 @@ class MyOptParse():
 
     def Print(self,RejectGroup=[]):
         P=ClassPrint.ClassPrint(HW=50)
-        print ModColor.Str(" Selected Options:")
+        print(ModColor.Str(" Selected Options:"))
     
         for Group,V in self.DefaultDict.items():
             Skip=False
@@ -119,7 +119,7 @@ class MyOptParse():
                 GroupTitle=self.DicoGroupDesc[Group]
             except:
                 GroupTitle=Group
-            print ModColor.Str(GroupTitle,col="green")
+            print(ModColor.Str(GroupTitle,col="green"))
     
             option_list=self.DefaultDict[Group]
             for oname in option_list:
@@ -128,7 +128,7 @@ class MyOptParse():
                 if True:#V!="":
                     if V=="": V="''"
                     P.Print(oname,V)
-            print
+            print()
 
 
 

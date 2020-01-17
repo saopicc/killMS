@@ -59,7 +59,7 @@ class ClassTimeIt():
         if DoLog:
             log.print( Sout)
         else:
-            print Sout
+            print(Sout)
 
         return dt
 

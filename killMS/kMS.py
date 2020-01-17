@@ -55,12 +55,12 @@ SaveFile="last_killMS.obj"
 
 
 if "nocol" in sys.argv:
-    print "nocol"
+    print("nocol")
     ModColor.silent=1
 if "nox" in sys.argv:
     import matplotlib
     matplotlib.use('agg')
-    print ModColor.Str(" == !NOX! ==")
+    print(ModColor.Str(" == !NOX! =="))
     
 
 IdSharedMem = None
@@ -73,7 +73,7 @@ from killMS.Parset import ReadCFG, MyOptParse
 parset_path = os.path.join(os.path.dirname(killMS.__file__), "Parset", "DefaultParset.cfg")
     #
     # os.path.join(os.environ["KILLMS_DIR"], "killMS", "killMS", "Parset", "DefaultParset.cfg")
-print parset_path
+print(parset_path)
 if not os.path.exists(parset_path):
     raise IOError("Default parset could not be located in {0:s}. Check your installation".format(parset_path))
 Parset = ReadCFG.Parset(parset_path)
@@ -203,7 +203,7 @@ def read_options():
     OP.add_option('LambdaTk',type="float",help=' Tikhonov regularisation parameter. Default is %default')
     
 
--    OP.OptionGroup("* KAFCA additional options","KAFCA")
+    OP.OptionGroup("* KAFCA additional options","KAFCA")
     OP.add_option('NIterKF',type="int",help=' Number of iterations for the solve. Default is %default ')
     OP.add_option('LambdaKF',type="float",help=' Lambda parameter for KAFCA. Default is %default ')
     OP.add_option('InitLM',type="int",help='Initialise Kalman filter with Levenberg Maquardt. Default is %default')
@@ -246,13 +246,13 @@ def main(OP=None,MSName=None):
     shm_avail = shm_size / float(ram_size)
 
     if shm_avail < 0.6:
-        log.print( ModColor.Str("""WARNING: max shared memory size is only {:.0%} of total RAM size.)
+        log.print( ModColor.Str("""WARNING: max shared memory size is only {:.0%} of total RAM size.
             This can cause problems for large imaging jobs. A setting of 90% is recommended for 
             DDFacet and killMS. If your processes keep failing with SIGBUS or "bus error" messages,
             it is most likely for this reason. You can change the memory size by running
                 $ sudo mount -o remount,size=90% /dev/shm
             To make the change permanent, edit /etc/defaults/tmps, and add a line saying "SHM_SIZE=90%".
-            """.format(shm_avail))
+            """.format(shm_avail)))
     else:
         log.print( "  Max shared memory size is {:.0%} of total RAM size".format(shm_avail))
 
@@ -265,11 +265,11 @@ def main(OP=None,MSName=None):
 
     if max_map_count is not None:
         if max_map_count < 500000:
-            log.print( ModColor.Str("""WARNING: sysctl vm.max_map_count = {}. )
+            log.print( ModColor.Str("""WARNING: sysctl vm.max_map_count = {}. 
             This may be too little for large DDFacet and killMS jobs. If you get strange "file exists" 
             errors on /dev/shm, them try to bribe, beg or threaten your friendly local sysadmin into 
             setting vm.max_map_count=1000000 in /etc/sysctl.conf.
-                """.format(max_map_count))
+                """.format(max_map_count)))
         else:
             log.print( "  sysctl vm.max_map_count = {}".format(max_map_count))
 
@@ -277,13 +277,13 @@ def main(OP=None,MSName=None):
     import resource
     msoft, mhard = resource.getrlimit(resource.RLIMIT_MEMLOCK)
     if msoft >=0 or mhard >=0:
-        log.print(ModColor.Str("""WARNING: your system has a limit on memory locks configured.)
+        log.print(ModColor.Str("""WARNING: your system has a limit on memory locks configured.
             This may possibly slow down killMS performance. You can try removing the limit by running
                 $ ulimit -l unlimited
             If this gives an "operation not permitted" error, you can try to bribe, beg or threaten 
             your friendly local sysadmin into doing
                 # echo "*        -   memlock     unlimited" >> /etc/security/limits.conf
-        """)
+        """))
 
 
     if OP==None:
@@ -334,7 +334,7 @@ def main(OP=None,MSName=None):
         options.MSName=MSName
 
     if options.MSName=="":
-        print "Give an MS name!"
+        print("Give an MS name!")
         exit()
 
     # if options.SkyModel=="":
@@ -467,8 +467,8 @@ def main(OP=None,MSName=None):
             GDPredict["Facets"]["DiamMin"]=options.MinFacetSize
 
         if options.Decorrelation is not None and options.Decorrelation is not "":
-            log.print(ModColor.Str("Overwriting DDF parset decorrelation mode [%s] with kMS option [%s]"\)
-                                    %(GDPredict["RIME"]["DecorrMode"],options.Decorrelation))
+            log.print(ModColor.Str("Overwriting DDF parset decorrelation mode [%s] with kMS option [%s]"\
+                                    %(GDPredict["RIME"]["DecorrMode"],options.Decorrelation)))
             GDPredict["RIME"]["DecorrMode"]=options.Decorrelation
         else:
             GD["SkyModel"]["Decorrelation"]=DoSmearing=options.Decorrelation=GDPredict["RIME"]["DecorrMode"]
@@ -525,7 +525,7 @@ def main(OP=None,MSName=None):
                                      WTUV=options.WTUV,
                                      GD=GD)
 
-    print VS.MS
+    print(VS.MS)
     if not(WriteColName in VS.MS.ColNames):
         log.print( "Column %s not in MS "%WriteColName)
         VS.MS.AddCol(WriteColName,LikeCol="DATA")
@@ -1189,7 +1189,7 @@ if __name__=="__main__":
     if TestParset.Success==True:
         #global Parset
         Parset=TestParset
-        print >>log,ModColor.Str("Successfully read %s parset"%ParsetFile)
+        log.print(ModColor.Str("Successfully read %s parset"%ParsetFile))
 
     OP=read_options()
     options=OP.GiveOptionObject()
@@ -1256,11 +1256,11 @@ if __name__=="__main__":
             main(OP=OP,MSName=MSName)
         toc = time.time()     
         elapsed = toc - tic
-        log.print( ModColor.Str("Dataset(s) calibrated successfully in " \)
+        log.print( ModColor.Str("Dataset(s) calibrated successfully in " \
                                  "{0:02.0f}h{1:02.0f}m{2:02.0f}s".format(
                                  (elapsed // 60) // 60,
                                  (elapsed // 60) % 60,
-                                 elapsed % 60))
+                                 elapsed % 60)))
     except:
         # log.print( traceback.format_exc())
         if IdSharedMem is not None:

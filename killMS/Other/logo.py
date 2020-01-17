@@ -38,7 +38,8 @@ def report_version():
         result = subprocess.check_output('cd %s; git describe --tags' % path, shell=True, stderr=subprocess.STDOUT).rstrip()
     except subprocess.CalledProcessError:
         result = None
-    if result is not None and 'fatal' not in result:
+
+    if result is not None and b'fatal' not in result:
         # will succeed if tags exist
         return result
     else:

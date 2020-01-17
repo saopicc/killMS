@@ -22,7 +22,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 #import sharedarray.SharedArray as SharedArray
-from . import SharedArray
+import SharedArray
 from killMS.Other import ModColor
 import numpy as np
 from DDFacet.Other import logger

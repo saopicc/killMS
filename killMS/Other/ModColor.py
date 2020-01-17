@@ -62,7 +62,7 @@ def Title(strin,Big=False):
     print()
     if Big: print(Sep(strin,D=0))
     print(Sep(strin))
-    if Big:(print Sep(strin,D=0))
+    if Big: print(Sep(strin,D=0))
     print()
 
 def disable():
