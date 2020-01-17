@@ -39,7 +39,7 @@ def ToShared(Name,A):
         a=SharedArray.create(Name,A.shape,dtype=A.dtype)
     except:
         log.print( ModColor.Str("File %s exists, delete it..."%Name))
-        DelArray(Name)
+        DelArray(Name.decode("byte"))
         a=SharedArray.create(Name,A.shape,dtype=A.dtype)
 
     a[:]=A[:]
@@ -56,7 +56,7 @@ def ListNames():
     T=ClassTimeIt.ClassTimeIt("   SharedToDico")
     
     ll=list(SharedArray.list())
-    return [AR.name for AR in ll]
+    return [(AR.name).decode("ascii") for AR in ll]
     
 def DelAll(key=None):
     ll=ListNames()

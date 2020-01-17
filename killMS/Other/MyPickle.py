@@ -26,7 +26,7 @@ import pickle
 
 def Save(Obj,fileout):
     #print "  Saving in %s ... "%fileout,
-    pickle.dump(Obj, file(fileout,'w'))
+    pickle.dump(Obj, open(fileout,'wb'))
     #print "  done"
 
 def Load(filein):

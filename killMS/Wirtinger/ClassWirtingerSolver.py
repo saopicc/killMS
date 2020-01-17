@@ -33,7 +33,8 @@ from DDFacet.Other import logger
 log=logger.getLogger("ClassWirtingerSolver")
 from killMS.Other import ModColor
 
-from killMS.Other.progressbar import ProgressBar
+#from killMS.Other.progressbar import ProgressBar
+from DDFacet.Other.progressbar import ProgressBar
             
 #from Sky.PredictGaussPoints_NumExpr import ClassPredict
 from killMS.Other import ClassTimeIt
