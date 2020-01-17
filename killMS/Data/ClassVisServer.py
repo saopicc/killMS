@@ -256,16 +256,16 @@ class ClassVisServer():
 
         if self.WeightUVMinMax is not None:
             uvmin,uvmax=self.WeightUVMinMax
-            print >>log,'Giving full weight to data in range %f - %f km' % (uvmin, uvmax)
+            log.print('Giving full weight to data in range %f - %f km' % (uvmin, uvmax))
             uvmin*=1000
             uvmax*=1000
             filter=(uvdist<uvmin) | (uvdist>uvmax)
-            print >>log,'Downweighting %i out of %i visibilities' % (np.sum(filter),len(uvdist))
+            log.print('Downweighting %i out of %i visibilities' % (np.sum(filter),len(uvdist)))
             VisWeights[filter]*=self.WTUV
 
         MeanW=np.mean(VisWeights[VisWeights!=0.])
         VisWeights/=MeanW
-        print >>log, 'Min weight is %f max is %f' % (np.min(VisWeights),np.max(VisWeights))
+        log.print('Min weight is %f max is %f' % (np.min(VisWeights),np.max(VisWeights)))
         #VisWeight[VisWeight==0.]=1.
         self.VisWeights=VisWeights
 
@@ -641,8 +641,8 @@ class ClassVisServer():
             
             Frac=nf/float(fA.size)
             if Frac>self.ThresholdFlag:
-                log.print( "Taking antenna #%2.2i[%s] out of the solve (~%4.1f%% of flagged data, more than %4.1f%%)"%\)
-                    (A,MS.StationNames[A],Frac*100,self.ThresholdFlag*100)
+                log.print( "Taking antenna #%2.2i[%s] out of the solve (~%4.1f%% of flagged data, more than %4.1f%%)"%\
+                    (A,MS.StationNames[A],Frac*100,self.ThresholdFlag*100))
                 self.FlagAntNumber.append(A)
                 
         if self.CalcGridBasedFlags:
@@ -676,8 +676,8 @@ class ClassVisServer():
                 else:
                     Frac=nf/float(fA.size)
                 if Frac>self.ThresholdFlag:
-                    log.print( "Taking antenna #%2.2i[%s] out of the solve (~%4.1f%% of out-grid data, more than %4.1f%%)"%\)
-                        (A,MS.StationNames[A],Frac*100,self.ThresholdFlag*100)
+                    log.print( "Taking antenna #%2.2i[%s] out of the solve (~%4.1f%% of out-grid data, more than %4.1f%%)"%\
+                               (A,MS.StationNames[A],Frac*100,self.ThresholdFlag*100))
                     self.FlagAntNumber.append(A)
 
 

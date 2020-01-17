@@ -1068,7 +1068,7 @@ class ClassMS():
         t=table(self.MSName,readonly=False,ack=False)
         JustAdded=False
         if not(backname in t.colnames()):
-            log.print( "  Putting column ",backname," in MS")
+            log.print("  Putting column %s in MS"%backname)
             desc=t.getcoldesc("CORRECTED_DATA")
             desc["name"]=backname
             desc['comment']=desc['comment'].replace(" ","_")

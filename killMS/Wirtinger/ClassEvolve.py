@@ -230,7 +230,7 @@ class ClassModelEvolution():
         
         
         Gout=Gout.reshape((nd,npol,npol))
-        print np.diag(PaOut)
+        print(np.diag(PaOut))
 
         return Gout,PaOut
   

@@ -69,7 +69,7 @@ class ClassPredict():
             # flags=DicoData["flags"][ind]
             A0sel=A0[ind]
             A1sel=A1[ind]
-            print "CACA",ChanMap
+            print("CACA",ChanMap)
             if "ChanMap" in ApplyTimeJones.keys():
                 ChanMap=ApplyTimeJones["ChanMap"]
             else:
@@ -137,14 +137,14 @@ class ClassPredict():
             if ColOutDir is None: continue
 
 
-            # print iCluster,ListDirection
-            # print ColOutDir.shape
+            # print(iCluster,ListDirection)
+            # print(ColOutDir.shape)
             # ColOutDir.fill(0)
-            # print ColOutDir.shape
+            # print(ColOutDir.shape)
             # ColOutDir[:,:,0]=1
-            # print ColOutDir.shape
+            # print(ColOutDir.shape)
             # ColOutDir[:,:,3]=1
-            # print ColOutDir.shape
+            # print(ColOutDir.shape)
 
             # Apply Jones
             if ApplyJones!=None:
@@ -176,8 +176,8 @@ class ClassPredict():
                         ColOutDir[ind,ichan,:]*=VariableFunc(tc,nuc)
                         # c0=ColOutDir[ind,ichan,:].copy()
                         # ColOutDir[ind,ichan,:]*=VariableFunc(tc,nuc)
-                        # print c0-ColOutDir[ind,ichan,:]
-                        print it,ichan,VariableFunc(tc,nuc)
+                        # print(c0-ColOutDir[ind,ichan,:])
+                        print(it,ichan,VariableFunc(tc,nuc))
 
             if ApplyTimeJones is not None:#"DicoBeam" in DicoData.keys():
                 D=ApplyTimeJones#DicoData["DicoBeam"]
@@ -200,7 +200,7 @@ class ClassPredict():
                     else:
                         ChanMap=range(nf)
 
-                    print "ChanMap:",ChanMap
+                    print("ChanMap:",ChanMap)
 
                     for ichan in range(len(ChanMap)):
                         JChan=ChanMap[ichan]
@@ -258,9 +258,9 @@ class ClassPredict():
         Gmin=SourceCat.Gmin.reshape((NSource,1,1,1))
         Gangle=SourceCat.Gangle.reshape((NSource,1,1,1))
 
-        print "%i:"%idir
-        print Gmin,Gmaj,Gangle
-        print
+        print("%i:"%idir)
+        print(Gmin,Gmaj,Gangle)
+        print()
         RefFreq=SourceCat.RefFreq.reshape((NSource,1,1,1))
         alpha=SourceCat.alpha.reshape((NSource,1,1,1))
 
@@ -284,7 +284,7 @@ class ClassPredict():
         Ll=self.FType(SourceCat.l)
         Lm=self.FType(SourceCat.m)
         
-        print Ssel,Ll, Lm
+        print(Ssel,Ll, Lm)
 
         l=Ll.reshape(NSource,1,1,1)
         m=Lm.reshape(NSource,1,1,1)

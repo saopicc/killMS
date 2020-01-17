@@ -29,7 +29,7 @@ from killMS.Data import ClassVisServer
 #from Sky import ClassSM
 from killMS.Array import ModLinAlg
 from killMS.Other import ClassTimeIt
-from killMS.Array.Dot import NpDotSSE
+#from killMS.Array.Dot import NpDotSSE
 from killMS.Wirtinger.ClassJacobianAntenna import ClassJacobianAntenna
 
 class ClassSolverLM(ClassJacobianAntenna):

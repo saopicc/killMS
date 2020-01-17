@@ -22,10 +22,14 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 import numpy as np
-try:
-    from killMS.Gridder import _pyGridder
-except:
-    from killMS.cbuild.Gridder import _pyGridder
+import six
+# if six.PY2:
+#     try:
+#         from killMS.Gridder import _pyGridder
+#     except:
+#         from killMS.cbuild.Gridder import _pyGridder
+
+        
 from DDFacet.Other import logger
 from killMS.Other import ModColor
 log=logger.getLogger("ClassWeighting")
@@ -85,7 +89,7 @@ class ClassWeighting():
         VisWeights=np.float64(VisWeights)
         #VisWeights.fill(1.)
 
-
+        
         
         if Weighting=="Briggs":
             log.print( "Weighting in Briggs mode")

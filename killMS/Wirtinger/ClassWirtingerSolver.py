@@ -621,7 +621,7 @@ class ClassWirtingerSolver():
             T.timeit("read data")
 
             if SkipMode:
-                print iiCount
+                print(iiCount)
                 iiCount+=1
                 if iiCount<585: continue
             
@@ -655,13 +655,13 @@ class ClassWirtingerSolver():
             T.timeit("Class")
             
             if (self.CounterEvolveP())&(self.SolverType=="KAFCA")&(self.iCurrentSol>self.EvolvePStepStart):
-                print "Evolve0"
+                print("Evolve0")
                 for (iAnt,iChanSol) in ItP(ListAntSolve,range(self.VS.NChanJones)):
                     JM=self.DicoJM[(iAnt,iChanSol)]
                     self.evP[iChanSol,iAnt]=JM.CalcMatrixEvolveCov(self.G[iChanSol],self.P[iChanSol],self.rms)
 
             elif (self.SolverType=="KAFCA")&(self.iCurrentSol<=self.EvolvePStepStart):
-                print "Evolve1"
+                print("Evolve1")
                 for (iAnt,iChanSol) in ItP(ListAntSolve,range(self.VS.NChanJones)):
                     JM=self.DicoJM[(iAnt,iChanSol)]
                     self.evP[iChanSol,iAnt]=JM.CalcMatrixEvolveCov(self.G[iChanSol],self.P[iChanSol],self.rms)
@@ -689,7 +689,7 @@ class ClassWirtingerSolver():
                             x,_,InfoNoise=JM.doLMStep(self.G[iChanSol])
                             T.timeit("LMStep")
                             if LMIter==self.NIter-1: 
-                                print "!!!!!!!!!!!!!!!!!!!"
+                                print("!!!!!!!!!!!!!!!!!!!")
                                 # self.G.fill(1)
                                 JM.PredictOrigFormat(self.G[iChanSol])
                                 T.timeit("PredictOrig")
@@ -709,7 +709,7 @@ class ClassWirtingerSolver():
                             #     stop
 
                             #print self.G.ravel()[0::5],self.Q.ravel()[0::5],self.evP.ravel()[0::5],self.P.ravel()[0::5]
-                            print self.evP.ravel()[0::5]
+                            print(self.evP.ravel()[0::5])
                             if NDone==1: stop
                             x,P,InfoNoise=JM.doEKFStep(self.G[iChanSol],self.P[iChanSol],self.evP[iChanSol],self.rms)
                             if LMIter==self.NIter-1: JM.PredictOrigFormat(self.G[iChanSol])
@@ -885,7 +885,7 @@ class ClassWirtingerSolver():
             #np.save("lastSols",sols)
             #print "done"
             if SkipMode:
-                print iiCount
+                print(iiCount)
                 iiCount+=1
                 if iiCount<10: continue
 
