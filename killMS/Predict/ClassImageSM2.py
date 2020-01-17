@@ -30,7 +30,7 @@ from killMS.Other import ModColor
 
 from DDFacet.Other import logger
 log=logger.getLogger("ClassImageSM")
-from killMS.Other.progressbar import ProgressBar
+from DDFacet.Other.progressbar import ProgressBar
 from DDFacet.ToolsDir.GiveEdges import GiveEdges
 #from DDFacet.Imager.ClassModelMachine import ClassModelMachine
 #print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"

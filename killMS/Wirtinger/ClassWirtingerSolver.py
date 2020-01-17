@@ -509,7 +509,7 @@ class ClassWirtingerSolver():
 
         NDone,nt=self.pBarProgress
         intPercent=int(100*  NDone / float(nt))
-        self.pBAR.render(intPercent, '%4i/%i' % (NDone,nt))
+        self.pBAR.render(NDone,nt)
 
         if DATA=="EndOfObservation":
             log.print( ModColor.Str("Reached end of data"))
@@ -595,7 +595,7 @@ class ClassWirtingerSolver():
         ListAntSolve=[i for i in range(self.VS.MS.na) if not(i in self.VS.FlagAntNumber)]
         self.DicoJM={}
 
-        self.pBAR= ProgressBar('white', width=50, block='=', empty=' ',Title="Solving ", HeaderSize=10,TitleSize=13)
+        self.pBAR= ProgressBar(Title="Solving ")
         if not(self.DoPBar): self.pBAR.disable()
         NDone=0
         T0,T1=self.VS.TimeMemChunkRange_sec[0],self.VS.TimeMemChunkRange_sec[1]
@@ -818,7 +818,7 @@ class ClassWirtingerSolver():
 
         
 
-        # Parallel=False
+        Parallel=False
 
 
         ListAntSolve=[i for i in range(self.VS.MS.na) if not(i in self.VS.FlagAntNumber)]
@@ -850,7 +850,7 @@ class ClassWirtingerSolver():
             workerlist.append(W)
             if Parallel:
                 workerlist[ii].start()
-
+            print(ii)
 
         ##############################
 
@@ -860,10 +860,10 @@ class ClassWirtingerSolver():
         nt=int(DT/float(dt))+1
         
 
-        self.pBAR= ProgressBar('white', width=50, block='=', empty=' ',Title="Solving ", HeaderSize=10,TitleSize=13)
+        self.pBAR= ProgressBar(Title="Solving ")
         if not(self.DoPBar): self.pBAR.disable()
         #self.pBAR.disable()
-        self.pBAR.render(0, '%4i/%i' % (0,nt))
+        self.pBAR.render(0,nt)
         NDone=0
         iiCount=0
         ThisG=self.G.copy()
@@ -1010,11 +1010,15 @@ class ClassWirtingerSolver():
                                                "DicoClusterDirs":self.VS.DicoClusterDirs_Descriptor}
                         if LMIter!=0:
                             SharedDicoDescriptors["SharedAntennaVis"]=Dico_SharedDicoDescriptors[iAnt]
-
-                        work_queue.put((iAnt,iChanSol,DoCalcEvP[iChanSol],tm,self.rms,DoEvP[iChanSol],DoFullPredict,
+                        print("iAnt",iAnt)
+                        print(SharedDicoDescriptors)
+                        work_queue.put((iAnt,iChanSol,
+                                        DoCalcEvP[iChanSol],tm,
+                                        self.rms,DoEvP[iChanSol],
+                                        DoFullPredict,
                                         SharedDicoDescriptors))
-                        #work_queue.put((iAnt,iChanSol,DoCalcEvP,tm,self.rms,DoEvP,DoFullPredict,
-                        #                self.VS.SharedVisDescriptor,self.VS.PreApplyJones))
+                        # work_queue.put((iAnt,iChanSol,DoCalcEvP[iChanSol],tm,self.rms,DoEvP[iChanSol],
+                        #                 DoFullPredict))
      
                     if not Parallel:
                         for ii in range(NCPU):
@@ -1285,8 +1289,9 @@ class WorkerAntennaLM(multiprocessing.Process):
     def run(self):
 
         while not self.kill_received: # and not self.work_queue.qsize()==0:
-            #print "haha"
+            print("haha")
             iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get()#True,2)
+            print("hahahahahahahaha")
             # try:
 
             #     iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get()
@@ -1299,7 +1304,7 @@ class WorkerAntennaLM(multiprocessing.Process):
 
             T0=time.time()
             T=ClassTimeIt.ClassTimeIt("  Worker Ant=%2.2i"%iAnt)
-            T.disable()
+            #T.disable()
             # if DoCalcEvP:
             #     T.disable()
             # print SharedDicoDescriptors
@@ -1362,7 +1367,17 @@ class WorkerAntennaLM(multiprocessing.Process):
                 #     u,s,v=np.linalg.svd(M)
                 #     if np.min(s)<0: stop
 
-                self.result_queue.put([iAnt,iChanSol,x,None,None,InfoNoise,0.,JM.SharedDicoDescriptors["SharedAntennaVis"]])
+                L=[iAnt,
+                   iChanSol,
+                   x,
+                   None,
+                   None,
+                   InfoNoise,
+                   0.,
+                   JM.SharedDicoDescriptors["SharedAntennaVis"]]
+                L=[]
+                
+                self.result_queue.put(L)
 
             elif self.SolverType=="KAFCA":
                 #T.disable()
@@ -1423,4 +1438,20 @@ class WorkerAntennaLM(multiprocessing.Process):
                     Pout=Pa
 
                 DT=time.time()-T0
-                self.result_queue.put([iAnt,iChanSol,x,Pout,rmsFromData,InfoNoise,DT,JM.SharedDicoDescriptors["SharedAntennaVis"]])
+                L=[iAnt,
+                   iChanSol,
+                   x,
+                   Pout,
+                   rmsFromData,
+                   InfoNoise,
+                   DT]
+                self.result_queue.put(L)
+                
+                # self.result_queue.put([iAnt,
+                #                        iChanSol,
+                #                        x,
+                #                        Pout,
+                #                        rmsFromData,
+                #                        InfoNoise,
+                #                        DT,
+                #                        JM.SharedDicoDescriptors["SharedAntennaVis"]])

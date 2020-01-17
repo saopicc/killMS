@@ -28,7 +28,7 @@ from killMS.Data.ClassMS import ClassMS
 from killMS.Other.ClassTimeIt import ClassTimeIt
 import numexpr as ne
 #import ModNumExpr
-from killMS.Other.progressbar import ProgressBar
+
 import multiprocessing
 from killMS.Array import ModLinAlg
 from killMS.Array import NpShared

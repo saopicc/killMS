@@ -119,7 +119,7 @@ def SharedToDico(Prefix):
 class SharedDicoDescriptor():
     def __init__(self,prefixName,Dico):
         self.prefixName=prefixName
-        self.DicoKeys=Dico.keys()
+        self.DicoKeys=list(Dico.keys())
 
 
 def SharedObjectToDico(SObject):

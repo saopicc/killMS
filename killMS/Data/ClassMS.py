@@ -33,7 +33,7 @@ import ephem
 from DDFacet.Other import logger
 log=logger.getLogger("ClassMS")
 from killMS.Other import ClassTimeIt
-from killMS.Other.progressbar import ProgressBar
+from DDFacet.Other.progressbar import ProgressBar
 
 class ClassMS():
     def __init__(self,MSname,Col="DATA",zero_flag=True,ReOrder=False,EqualizeFlag=False,DoPrint=True,DoReadData=True,
@@ -1147,7 +1147,7 @@ class ClassMS():
         # # #######################
         
         na=MS.na
-        pBAR= ProgressBar('white', width=50, block='=', empty=' ',Title=" Calc dUVW/dt ", HeaderSize=10,TitleSize=13)
+        pBAR= ProgressBar(Title=" Calc dUVW/dt ")
         pBAR.render(0, '%4i/%i' % (0,na))
         for ant0 in range(na):
             for ant1 in range(ant0,MS.na):

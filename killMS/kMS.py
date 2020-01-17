@@ -1195,7 +1195,7 @@ if __name__=="__main__":
     options=OP.GiveOptionObject()
 
     if options.DoBar=="0":
-        from killMS.Other.progressbar import ProgressBar
+        from DDFacet.Other.progressbar import ProgressBar
         ProgressBar.silent=1
 
     
