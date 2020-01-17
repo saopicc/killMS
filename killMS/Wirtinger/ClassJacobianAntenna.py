@@ -29,7 +29,7 @@ from killMS.Data import ClassVisServer
 #from Sky import ClassSM
 from killMS.Array import ModLinAlg
 from killMS.Other import ClassTimeIt
-from killMS.Array.Dot import NpDotSSE
+#from killMS.Array.Dot import NpDotSSE
 from . import ClassAverageMachine
 
 def testLM():
@@ -105,7 +105,7 @@ def testLM():
     G[iAnt]+=Radd
 
 
-    print "start"
+    print("start")
     for i in range(10):
         xbef=G[iAnt].copy()
         x=JM.doLMStep(G)
@@ -287,13 +287,13 @@ class ClassJacobianAntenna():
         Gains=Gains.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y))
         for polIndex in range(self.NJacobBlocks_X):
             Gain=Gains[:,polIndex,:]
-            #print "JHJinv_x: %i %s . %s "%(polIndex,str(self.L_JHJinv[polIndex].shape),str(Gain.flatten().shape))
+            #print("JHJinv_x: %i %s . %s "%(polIndex,str(self.L_JHJinv[polIndex].shape),str(Gain.flatten().shape)))
             Vec=np.dot(self.L_JHJinv[polIndex],Gain.flatten())
             Vec=Vec.reshape((self.NDir,1,self.NJacobBlocks_Y))
             G.append(Vec)
             
         Gout=np.concatenate(G,axis=1)
-        #print "JHJinv_x: Gout %s "%(str(Gout.shape))
+        #print("JHJinv_x: Gout %s "%(str(Gout.shape)))
         
         return Gout.flatten()
 
@@ -304,13 +304,13 @@ class ClassJacobianAntenna():
         Gains=Gains.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y))
         for polIndex in range(self.NJacobBlocks_X):
             Gain=Gains[:,polIndex,:]
-            #print "Msq_x: %i %s . %s"%(polIndex,str(LM[polIndex].shape),str(Gain.flatten().shape))
+            #print("Msq_x: %i %s . %s"%(polIndex,str(LM[polIndex].shape),str(Gain.flatten().shape)))
             Vec=np.dot(LM[polIndex],Gain.flatten())
             Vec=Vec.reshape((self.NDir,1,self.NJacobBlocks_Y))
             G.append(Vec)
             
         Gout=np.concatenate(G,axis=1)
-        #print "Msq_x: Gout %s "%(str(Gout.shape))
+        #print("Msq_x: Gout %s "%(str(Gout.shape)))
         
         return Gout.flatten()
 
@@ -380,7 +380,7 @@ class ClassJacobianAntenna():
 
             #flags=self.DicoData["flags_flat"][polIndex]
             J=Jacob#[flags==0]
-            # print J.shape, Gain.shape
+            # print(J.shape, Gain.shape)
 
             # # Numpy
 
@@ -405,7 +405,7 @@ class ClassJacobianAntenna():
 
 
     def PredictOrigFormat_Type(self,GainsIn,Type="Gains"):
-        #print "    COMPUTE PredictOrigFormat"
+        #print("    COMPUTE PredictOrigFormat")
         Gains=GainsIn.copy()
         na,nd,_,_=Gains.shape
         #Type="NoGains"
@@ -489,9 +489,9 @@ class ClassJacobianAntenna():
         else:
             n4vis=self.n4vis
             
-        #print "n4vis",n4vis
+        #print("n4vis",n4vis)
         na=self.na
-        #print GainsIn.shape,na,NDir,self.NJacobBlocks,self.NJacobBlocks
+        #print(GainsIn.shape,na,NDir,self.NJacobBlocks,self.NJacobBlocks)
         Gains=GainsIn.reshape((na,NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y))
 
         
@@ -591,7 +591,7 @@ class ClassJacobianAntenna():
             
         if self.DoMergeStations:
             self.LJacob=self.AverageMachine.MergeAntennaJacobian(self.DicoData,LJacob)
-            #print self.iAnt,len(self.LJacob)
+            #print(self.iAnt,len(self.LJacob))
 
         # self.JHJinv=np.linalg.inv(self.JHJ)
         # self.JHJinv=np.diag(np.diag(self.JHJinv))
@@ -617,10 +617,10 @@ class ClassJacobianAntenna():
         T.timeit("data")
         # self.Data=self.DicoData["data"]
         # self.A1=self.DicoData["A1"]
-        # print "AntMax1",self.SharedDataDicoName,np.max(self.A1)
-        # print self.DicoData["A1"]
-        # print "AntMax0",self.SharedDataDicoName,np.max(self.DicoData["A0"])
-        # print self.DicoData["A0"]
+        # print("AntMax1",self.SharedDataDicoName,np.max(self.A1))
+        # print(self.DicoData["A1"])
+        # print("AntMax0",self.SharedDataDicoName,np.max(self.DicoData["A0"]))
+        # print(self.DicoData["A0"])
         nrows,nchan,_,_=self.DicoData["flags"].shape
         n4vis=nrows*nchan
         self.n4vis=n4vis
@@ -663,10 +663,10 @@ class ClassJacobianAntenna():
                 self.NJacobBlocks_Y=1
             # self.Data=self.Data.reshape((nrows,nchan,self.NJacobBlocks,self.NJacobBlocks))
 
-            #print "Kernel From shared"
+            #print("Kernel From shared")
             return
         else:
-            #print "    COMPUTE KERNEL"
+            #print("    COMPUTE KERNEL")
             pass
 
         T.timeit("stuff 2")
@@ -678,7 +678,7 @@ class ClassJacobianAntenna():
         if self.PolMode=="IFull":
             #self.K_XX=np.zeros((NDir,n4vis/nchan,nchan),np.complex64)
             #self.K_YY=np.zeros((NDir,n4vis/nchan,nchan),np.complex64)
-            self.KernelMat_AllChan=NpShared.zeros(KernelSharedName,(2,NDir,n4vis_AllChan/nchan_AllChan,nchan_AllChan),dtype=self.CType)
+            self.KernelMat_AllChan=NpShared.zeros(KernelSharedName,(2,NDir,n4vis_AllChan//nchan_AllChan,nchan_AllChan),dtype=self.CType)
             self.K_XX_AllChan=self.KernelMat_AllChan[0]
             self.K_YY_AllChan=self.KernelMat_AllChan[1]
             # KernelMatrix=NpShared.zeros(KernelSharedName,(n4vis,NDir,2),dtype=np.complex64)
@@ -688,7 +688,7 @@ class ClassJacobianAntenna():
             #n4vis=self.Data.size
             # KernelMatrix_XX=np.zeros((NDir,n4vis,nchan),np.complex64)
             # KernelMatrix=NpShared.zeros(KernelSharedName,(n4vis,NDir,1),dtype=np.complex64)
-            self.KernelMat_AllChan=NpShared.zeros(KernelSharedName,(1,NDir,n4vis_AllChan/nchan_AllChan,nchan_AllChan),dtype=self.CType)
+            self.KernelMat_AllChan=NpShared.zeros(KernelSharedName,(1,NDir,n4vis_AllChan//nchan_AllChan,nchan_AllChan),dtype=self.CType)
             self.K_XX_AllChan=self.KernelMat_AllChan[0]
             self.K_YY_AllChan=self.K_XX_AllChan
             self.NJacobBlocks_X=1
@@ -707,7 +707,7 @@ class ClassJacobianAntenna():
 
             
         elif self.PolMode=="IDiag":
-            self.KernelMat_AllChan=NpShared.zeros(KernelSharedName,(2,NDir,n4vis_AllChan/nchan_AllChan,nchan_AllChan),dtype=self.CType)
+            self.KernelMat_AllChan=NpShared.zeros(KernelSharedName,(2,NDir,n4vis_AllChan//nchan_AllChan,nchan_AllChan),dtype=self.CType)
             self.K_XX_AllChan=self.KernelMat_AllChan[0]
             self.K_YY_AllChan=self.KernelMat_AllChan[1]
             self.NJacobBlocks_X=2
@@ -720,7 +720,7 @@ class ClassJacobianAntenna():
         #self.K_YY=[]
 
         ApplyTimeJones=None
-        #print self.DicoData.keys()
+        #print(self.DicoData.keys())
         if "DicoPreApplyJones" in self.DicoData.keys():
             ApplyTimeJones=self.DicoData["DicoPreApplyJones"]
 
@@ -759,7 +759,7 @@ class ClassJacobianAntenna():
 
             
                 #gc.collect()
-                #print gc.garbage
+                #print(gc.garbage)
 
 
             # if (iDir==31)&(self.iAnt==51):
@@ -896,7 +896,7 @@ class ClassJacobianAntenna():
         
                 
 
-        # print "SelectChannelKernelMat",np.count_nonzero(DicoData["flags_flat"]),np.count_nonzero(DicoData["flags"])
+        # print("SelectChannelKernelMat",np.count_nonzero(DicoData["flags_flat"]),np.count_nonzero(DicoData["flags"]))
 
 
 
@@ -904,7 +904,7 @@ class ClassJacobianAntenna():
         
         #DicoData=NpShared.SharedToDico(self.SharedDataDicoName)
         if self.SharedDicoDescriptors["SharedAntennaVis"]==None:
-            #print "     COMPUTE DATA"
+            #print("     COMPUTE DATA")
             DicoData={}
             ind0=np.where(DATA['A0']==iAnt)[0]
             ind1=np.where(DATA['A1']==iAnt)[0]
@@ -1032,7 +1032,7 @@ class ClassJacobianAntenna():
             # F0=np.arange(FlagsSize).reshape(FlagsShape)
             # F0Flat=np.rollaxis(F0,2).reshape(NJacobBlocks_X,nr*nch*NJacobBlocks_Y)
             # F1=np.rollaxis(F0Flat.reshape(NJacobBlocks_X,nr,nch,NJacobBlocks_Y),0,3).reshape(FlagsShape)
-            # print np.count_nonzero((F0-F1).ravel())
+            # print(np.count_nonzero((F0-F1).ravel()))
             # stop
             # ###################
 
@@ -1104,12 +1104,12 @@ class ClassJacobianAntenna():
                 self.R_flat=DicoData["R_flat"]
                 self.Weights_flat=DicoData["Weights_flat"]
 
-            #print "DATA From shared"
-            #print np.max(DicoData["A0"])
+            #print("DATA From shared")
+            #print(np.max(DicoData["A0"]))
             #np.save("testA0",DicoData["A0"])
             #DicoData["A0"]=np.load("testA0.npy")
             #DicoData=NpShared.SharedToDico(self.SharedDataDicoName)
-            #print np.max(DicoData["A0"])
+            #print(np.max(DicoData["A0"]))
             #print
 
             #stop
@@ -1128,7 +1128,7 @@ class ClassJacobianAntenna():
 
 
             DicoData["DicoPreApplyJones"]=DicoJonesMatrices
-            #print DATA["Map_VisToJones_Time"].max()
+            #print(DATA["Map_VisToJones_Time"].max())
             #stop
 
         self.DoTikhonov=False

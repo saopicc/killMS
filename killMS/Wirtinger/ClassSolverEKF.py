@@ -29,7 +29,7 @@ from killMS.Data import ClassVisServer
 #from Sky import ClassSM
 from killMS.Array import ModLinAlg
 from killMS.Other import ClassTimeIt
-from killMS.Array.Dot import NpDotSSE
+#from killMS.Array.Dot import NpDotSSE
 from killMS.Wirtinger.ClassJacobianAntenna import ClassJacobianAntenna
 
 class ClassSolverEKF(ClassJacobianAntenna):
@@ -86,7 +86,7 @@ class ClassSolverEKF(ClassJacobianAntenna):
             kapa=np.abs((trYYH-trR)/trJPJH)
             kapaout+=np.sqrt(kapa)
             #if self.iAnt==0:
-            #    print "old",self.iAnt,rms,np.sqrt(kapa),trYYH,trR,trJPJH,pa
+            #    print("old",self.iAnt,rms,np.sqrt(kapa),trYYH,trR,trJPJH,pa)
 
         kapaout=np.max([1.,kapaout])
         return kapaout
@@ -132,7 +132,7 @@ class ClassSolverEKF(ClassJacobianAntenna):
             #kapa=1
             kapaout+=np.sqrt(kapa)
             #if self.iAnt==0:
-            #    print "new",self.iAnt,rms,np.sqrt(kapa),trYYH_R,trJPJH,pa
+            #    print("new",self.iAnt,rms,np.sqrt(kapa),trYYH_R,trJPJH,pa)
         kapaout=np.max([1.,kapaout])
         return kapaout
 
@@ -195,9 +195,9 @@ class ClassSolverEKF(ClassJacobianAntenna):
             self.G0=np.ones_like(self.Ga)#*200.
             dx1a=self.Msq_x(self.LQxInv,(self.Ga-self.G0))
             dx1b = self.gamma*self.JHJinv_x(dx1a)
-            print "x'_0:",dx1b
+            print("x'_0:",dx1b)
             x1+=dx1b
-            print "x':",x1
+            print("x':",x1)
 
         z1 = self.J_x(x1)
 
@@ -213,7 +213,7 @@ class ClassSolverEKF(ClassJacobianAntenna):
         x3=[]
         for ipol in range(self.NJacobBlocks_X):
             PaPol=self.GivePaPol(Pa,ipol)
-            #print PaPol,PaPol.shape
+            #print(PaPol,PaPol.shape)
 
 
             if self.TypeDot=="Numpy":
@@ -252,7 +252,7 @@ class ClassSolverEKF(ClassJacobianAntenna):
         self.rms=rms
 
         #if self.iAnt==1:
-        #    print evP.ravel()
+        #    print(evP.ravel())
         self.rmsFromData=None
         if ind.size==0:
             return Ga.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),Pa,{"std":-1.,"max":-1.,"kapa":-1.}
@@ -293,16 +293,16 @@ class ClassSolverEKF(ClassJacobianAntenna):
 
 
         InfoNoise={"std":std,"max":np.max(np.abs(zr[f])),"kapa":kapa}
-        #print self.iAnt,InfoNoise
+        #print(self.iAnt,InfoNoise)
         #T.timeit("kapa")
 
         self.rmsFromData=np.std(zr[f])
         T.timeit("rmsFromData")
 
         # if np.isnan(self.rmsFromData):
-        #     print zr
-        #     print zr[f]
-        #     print self.rmsFromData
+        #     print(zr)
+        #     print(zr[f])
+        #     print(self.rmsFromData)
         #     stop
 
         # if self.iAnt==51:
@@ -356,14 +356,14 @@ class ClassSolverEKF(ClassJacobianAntenna):
         T.timeit("Rest")
         
         #if self.iAnt==0:
-        #    print x4,Pa_new1,InfoNoise,evPa,Pa
+        #    print(x4,Pa_new1,InfoNoise,evPa,Pa)
 
 
         return x4.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),Pa_new1,InfoNoise
 
 
     def CalcMatrixEvolveCov(self,Gains,P,rms):
-        #print "EVOLVE!!!!!!!!!"
+        #print("EVOLVE!!!!!!!!!")
         if not(self.HasKernelMatrix):
             self.CalcKernelMatrix(rms)
             self.SelectChannelKernelMat()
@@ -386,8 +386,8 @@ class ClassSolverEKF(ClassJacobianAntenna):
 
         evPa= PaOnes-evPa#(np.diag(np.diag(Pa-Pa_new)))#Pa-Pa_new#np.abs(np.diag(np.diag(Pa-Pa_new)))
         evPa=np.diag(np.diag(evPa))
-        #print evPa.min(),evPa.real.min()
-        #print "=========Ev",self.iAnt,evPa
+        #print(evPa.min(),evPa.real.min())
+        #print("=========Ev",self.iAnt,evPa)
         #if self.iAnt==0:
-        #    print evPa,Gains.ravel(),P.ravel()
+        #    print(evPa,Gains.ravel(),P.ravel())
         return evPa

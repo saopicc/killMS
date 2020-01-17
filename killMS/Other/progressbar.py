@@ -13,6 +13,7 @@ from __future__ import print_function
 import sys
 import time as timemod
 from . import ModColor
+from . import terminal
 
 def test():
     pBAR= ProgressBar('white', width=50, block='=', empty=' ',Title="Solving ", HeaderSize=10,TitleSize=13)
@@ -40,7 +41,6 @@ class ProgressBar(object):
         block -- progress display character (default '█')
         empty -- bar display character (default ' ')
         """
-        import terminal
         if terminal.failed:
             self.silent=1
         if self.silent==1: return
@@ -108,7 +108,6 @@ class ProgressBar(object):
         """
         if self.silent==1: return
         if self.disableTag: return
-        import terminal
 
         if (self.Title!=None)&(self.HasRendered==False):
             #print
@@ -146,9 +145,9 @@ class ProgressBar(object):
             'title': self.Title,
             'percent': percent,
             'color': self.color,
-            'progress': self.block * self.progress,
+            'progress': self.block * int(self.progress),
             'normal': terminal.NORMAL,
-            'empty': self.empty * (bar_width - self.progress),
+            'empty': self.empty * int(bar_width - self.progress),
             'message': message,
             'time': StrTime,
             'header': self.format(message,self.HeaderSize,1,TitleIn="")
@@ -165,7 +164,6 @@ class ProgressBar(object):
     def clear(self):
         """Clear all printed lines"""
 
-        from . import terminal
         sys.stdout.write(
             self.lines * (terminal.UP + terminal.BOL + terminal.CLEAR_EOL)
         )
