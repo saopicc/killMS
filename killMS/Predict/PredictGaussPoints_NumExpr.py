@@ -28,7 +28,7 @@ from SkyModel.Sky.ClassSM import ClassSM
 from killMS.Other.ClassTimeIt import ClassTimeIt
 import numexpr as ne
 #import ModNumExpr
-from killMS.Other.progressbar import ProgressBar
+#from DDFacet.Other.progressbar import ProgressBar
 import multiprocessing
 from killMS.Array import ModLinAlg
 

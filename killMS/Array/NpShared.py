@@ -39,7 +39,8 @@ def ToShared(Name,A):
         a=SharedArray.create(Name,A.shape,dtype=A.dtype)
     except:
         log.print( ModColor.Str("File %s exists, delete it..."%Name))
-        DelArray(Name.decode("byte"))
+        #DelArray(Name.decode("byte"))
+        DelArray(Name)
         a=SharedArray.create(Name,A.shape,dtype=A.dtype)
 
     a[:]=A[:]

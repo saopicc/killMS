@@ -818,7 +818,7 @@ class ClassWirtingerSolver():
 
         
 
-        Parallel=False
+        Parallel=True
 
 
         ListAntSolve=[i for i in range(self.VS.MS.na) if not(i in self.VS.FlagAntNumber)]
@@ -850,7 +850,7 @@ class ClassWirtingerSolver():
             workerlist.append(W)
             if Parallel:
                 workerlist[ii].start()
-            print(ii)
+
 
         ##############################
 
@@ -1010,8 +1010,8 @@ class ClassWirtingerSolver():
                                                "DicoClusterDirs":self.VS.DicoClusterDirs_Descriptor}
                         if LMIter!=0:
                             SharedDicoDescriptors["SharedAntennaVis"]=Dico_SharedDicoDescriptors[iAnt]
-                        print("iAnt",iAnt)
-                        print(SharedDicoDescriptors)
+                        # print("iAnt",iAnt)
+                        # print(SharedDicoDescriptors)
                         work_queue.put((iAnt,iChanSol,
                                         DoCalcEvP[iChanSol],tm,
                                         self.rms,DoEvP[iChanSol],
@@ -1288,14 +1288,10 @@ class WorkerAntennaLM(multiprocessing.Process):
         self.exit.set()
     def run(self):
 
-        while not self.kill_received: # and not self.work_queue.qsize()==0:
-            print("haha")
+        while not self.kill_received:# and not self.work_queue.qsize()==0:
             iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get()#True,2)
-            print("hahahahahahahaha")
             # try:
-
             #     iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get()
-                
             # except:
             #     break
             # #self.e.wait()
@@ -1304,7 +1300,7 @@ class WorkerAntennaLM(multiprocessing.Process):
 
             T0=time.time()
             T=ClassTimeIt.ClassTimeIt("  Worker Ant=%2.2i"%iAnt)
-            #T.disable()
+            T.disable()
             # if DoCalcEvP:
             #     T.disable()
             # print SharedDicoDescriptors
@@ -1375,7 +1371,7 @@ class WorkerAntennaLM(multiprocessing.Process):
                    InfoNoise,
                    0.,
                    JM.SharedDicoDescriptors["SharedAntennaVis"]]
-                L=[]
+
                 
                 self.result_queue.put(L)
 
@@ -1438,20 +1434,20 @@ class WorkerAntennaLM(multiprocessing.Process):
                     Pout=Pa
 
                 DT=time.time()-T0
-                L=[iAnt,
-                   iChanSol,
-                   x,
-                   Pout,
-                   rmsFromData,
-                   InfoNoise,
-                   DT]
-                self.result_queue.put(L)
+                # L=[iAnt,
+                #    iChanSol,
+                #    x,
+                #    Pout,
+                #    rmsFromData,
+                #    InfoNoise,
+                #    DT]
+                # self.result_queue.put(L)
                 
-                # self.result_queue.put([iAnt,
-                #                        iChanSol,
-                #                        x,
-                #                        Pout,
-                #                        rmsFromData,
-                #                        InfoNoise,
-                #                        DT,
-                #                        JM.SharedDicoDescriptors["SharedAntennaVis"]])
+                self.result_queue.put([iAnt,
+                                       iChanSol,
+                                       x,
+                                       Pout,
+                                       rmsFromData,
+                                       InfoNoise,
+                                       DT,
+                                       JM.SharedDicoDescriptors["SharedAntennaVis"]])
