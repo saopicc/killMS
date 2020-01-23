@@ -868,7 +868,7 @@ class ClassVisServer():
                     # TimesBeam=np.arange(np.min(times),np.max(times),DtBeamSec).tolist()
                     # if not(tmax in TimesBeam): TimesBeam.append(tmax)
                     NTimesBeam=round((tmax-tmin)/DtBeamSec)
-                    NTimesBeam=np.max([2,NTimesBeam])
+                    NTimesBeam=int(np.max([2,NTimesBeam]))
 
 
                     TimesBeam=np.linspace(np.min(times)-1,np.max(times)+1,NTimesBeam).tolist()
