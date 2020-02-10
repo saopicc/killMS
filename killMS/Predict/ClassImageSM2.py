@@ -188,6 +188,22 @@ class ClassPreparePredict(ClassImagerDeconv):
         ClusterCat.ra=NodesCat.ra
         ClusterCat.dec=NodesCat.dec
 
+        NN=ClusterCat.shape[0]
+        Cat=np.zeros((NN,),dtype=[('Name','|S200'),('ra',np.float),('dec',np.float),('Sref',np.float),('I',np.float),('Q',np.float),\
+                                  ('U',np.float),('V',np.float),('RefFreq',np.float),('alpha',np.float),('ESref',np.float),\
+                                  ('Ealpha',np.float),('kill',np.int),('Cluster',np.int),('Type',np.int),('Gmin',np.float),\
+                                  ('Gmaj',np.float),('Gangle',np.float),("Select",np.int),('l',np.float),('m',np.float),
+                                  ("Exclude",bool)])
+        Cat=Cat.view(np.recarray)
+        Cat.RefFreq=1.
+        Cat.ra[:]=ClusterCat.ra
+        Cat.dec[:]=ClusterCat.dec
+        Cat.I[:]=ClusterCat.SumI[:]
+        Cat.Cluster=np.arange(NN)
+        Cat.Sref[:]=ClusterCat.SumI[:]
+        self.SourceCat=Cat
+
+        
         self.DicoImager=self.FacetMachine.DicoImager
         self.ClusterCat=ClusterCat
         self.ClusterCat.SumI=0.
@@ -240,6 +256,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.SM.Dirs=self.Dirs
         log.print( "  There are %i non-zero directions"%self.SM.NDir)
         self.SM.ClusterCat=self.ClusterCat
+        self.SM.SourceCat=self.SourceCat
         self.SM.DicoJonesDirToFacet=self.DicoJonesDirToFacet
         self.SM.GD=self.FacetMachine.GD
         self.SM.DicoImager=self.FacetMachine.DicoImager
