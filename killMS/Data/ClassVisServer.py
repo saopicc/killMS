@@ -593,11 +593,12 @@ class ClassVisServer():
         # flags[ind,:,:]=1
         
         Equidistant=IsChanEquidistant(freqs)
-        if Equidistant:
-            log.print( "Channels are equidistant, can go fast")
-        else:
-            log.print( ModColor.Str("Channels are not equidistant, cannot go fast"))
-
+        if freqs.size>1:
+            if Equidistant:
+                log.print( "Channels are equidistant, can go fast")
+            else:
+                log.print( ModColor.Str("Channels are not equidistant, cannot go fast"))
+        
         MS=self.MS
 
 
