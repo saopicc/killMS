@@ -1180,9 +1180,11 @@ if __name__=="__main__":
     #os.system('clear')
 
     logo.print_logo()
+    if len(sys.argv)<2:
+        raise RuntimeError('At least one parset name or option must be supplied')
+
     sys.excepthook = _exc_handler
-
-
+        
     ParsetFile=sys.argv[1]
 
     TestParset=ReadCFG.Parset(ParsetFile)
