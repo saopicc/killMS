@@ -77,7 +77,7 @@ class ClassClipMachine():
 
                 log.print("  pol#%i %.7f%% [n=%i, <rms> = %f]"%(pol,frac*100.,nfg,std))
 
-        log.print("Writting %s in %s"%(self.WeightCol,self.MSName))
+        log.print("Writing %s in %s"%(self.WeightCol,self.MSName))
         t=table(self.MSName,readonly=False,ack=False)
         if self.WeightCol=="FLAG":
             Wf=W*np.ones((1,1,4))
