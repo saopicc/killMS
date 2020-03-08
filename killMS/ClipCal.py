@@ -10,7 +10,8 @@ import time
 #import managecolumns
 from DDFacet.Other import logger
 log=logger.getLogger("ClipCal")
-logger.itsLog.logger.setLevel(logger.logging.CRITICAL)
+# next line adapted for newer DDFacet versions
+log.log_verbosity(logger.logging.CRITICAL)
 SaveFile="ClipCal.last"
 import pickle
 
