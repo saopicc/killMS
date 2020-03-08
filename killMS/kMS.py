@@ -242,7 +242,7 @@ def main(OP=None,MSName=None):
     # check for SHM size
     ram_size = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
     shm_stats = os.statvfs('/dev/shm')
-    shm_size = shm_stats.f_bsize * shm_stats.f_favail
+    shm_size = shm_stats.f_bsize * shm_stats.f_bavail
     shm_avail = shm_size / float(ram_size)
 
     if shm_avail < 0.6:
