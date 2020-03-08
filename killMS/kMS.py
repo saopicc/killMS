@@ -257,11 +257,12 @@ def main(OP=None,MSName=None):
         log.print( "  Max shared memory size is {:.0%} of total RAM size".format(shm_avail))
 
     try:
-        output = subprocess.check_output(["/sbin/sysctl", "vm.max_map_count"])
-        max_map_count = int(output.strip().rsplit(" ", 1)[-1])
+        output = subprocess.check_output(["/sbin/sysctl", "vm.max_map_count"],universal_newlines=True)
     except Exception:
         log.print( ModColor.Str("""WARNING: /sbin/sysctl vm.max_map_count failed. Unable to check this setting."""))
         max_map_count = None
+    else:
+        max_map_count = int(output.strip().rsplit(" ", 1)[-1])
 
     if max_map_count is not None:
         if max_map_count < 500000:
