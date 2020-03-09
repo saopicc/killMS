@@ -1148,7 +1148,7 @@ class ClassMS():
         
         na=MS.na
         pBAR= ProgressBar(Title=" Calc dUVW/dt ")
-        pBAR.render(0, '%4i/%i' % (0,na))
+        pBAR.render(0,na)
         for ant0 in range(na):
             for ant1 in range(ant0,MS.na):
                 if ant0==ant1: continue
@@ -1163,7 +1163,7 @@ class ClassMS():
                 UVW_dt[ind[0:-1]]=UVWs_dt0
                 UVW_dt[ind[-1]]=UVWs_dt0[-1]
             intPercent = int(100 * (ant0+1) / float(na))
-            pBAR.render(intPercent, '%4i/%i' % (ant0+1, na))
+            pBAR.render(ant0+1, na)
                     
     
         log.print("Writing in column UVWDT")
