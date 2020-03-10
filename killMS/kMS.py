@@ -97,7 +97,7 @@ def read_options():
     OP.add_option('FreePredictColName',type="str",help=' . Default is %default')
     OP.add_option('FreePredictGainColName',type="str",help=' . Default is %default')
     OP.add_option('Parallel',type="int",help=' . Default is %default')
-    
+    OP.add_option('DebugPdb',type="int",help='Default is %default')
 
 
     OP.OptionGroup("* Sky catalog related options","SkyModel")
@@ -1183,8 +1183,6 @@ if __name__=="__main__":
     logo.print_logo()
     if len(sys.argv)<2:
         raise RuntimeError('At least one parset name or option must be supplied')
-
-    sys.excepthook = _exc_handler
         
     ParsetFile=sys.argv[1]
 
@@ -1200,6 +1198,9 @@ if __name__=="__main__":
     if options.DoBar=="0":
         from DDFacet.Other.progressbar import ProgressBar
         ProgressBar.silent=1
+
+    if options.DebugPdb==1:
+        sys.excepthook = _exc_handler
 
     
     #main(OP=OP)
