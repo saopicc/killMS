@@ -97,7 +97,6 @@ def read_options():
     OP.add_option('FreePredictColName',type="str",help=' . Default is %default')
     OP.add_option('FreePredictGainColName',type="str",help=' . Default is %default')
     OP.add_option('Parallel',type="int",help=' . Default is %default')
-    OP.add_option('DebugPdb',type="int",help='Default is %default')
 
 
     OP.OptionGroup("* Sky catalog related options","SkyModel")
@@ -170,6 +169,7 @@ def read_options():
     OP.add_option('DoBar',help=' Draw progressbar. Default is %default',default="1")
     OP.add_option('NCPU',type="int",help='Number of cores to use. Default is %default ')
     OP.add_option('NThread',type="int",help='Number of OMP/BLAS/etc. threads to use. Default is %default ', default=1)
+    OP.add_option('DebugPdb',type="int",help='Default is %default')
 
     # OP.OptionGroup("* PreApply Solution-related options","PreApply")
     # OP.add_option('PreApplySols')#,help='Solutions to apply to the data before solving.')
