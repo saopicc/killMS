@@ -169,7 +169,8 @@ def read_options():
     OP.add_option('DoBar',help=' Draw progressbar. Default is %default',default="1")
     OP.add_option('NCPU',type="int",help='Number of cores to use. Default is %default ')
     OP.add_option('NThread',type="int",help='Number of OMP/BLAS/etc. threads to use. Default is %default ', default=1)
-    OP.add_option('DebugPdb',type="int",help='Default is %default')
+    OP.add_option('UpdateWeights',help='Update imaging weights. Default is %default',default="1")
+    OP.add_option('DebugPdb',type="int",help='Drop into Pdb on error. Default is %default')
 
     # OP.OptionGroup("* PreApply Solution-related options","PreApply")
     # OP.add_option('PreApplySols')#,help='Solutions to apply to the data before solving.')
@@ -186,7 +187,6 @@ def read_options():
     OP.add_option('SkipExistingSols',type="int",help='Skipping existing solutions if they exist. Default is %default')
     OP.add_option('SolsDir',type="str",help='Directory in which to save the solutions. Default is %default')
     
-
 
     OP.OptionGroup("* Solver options","Solvers")
     OP.add_option('SolverType',help='Name of the solver to use (CohJones/KAFCA)')
@@ -924,15 +924,17 @@ def main(OP=None,MSName=None):
                 # Weights=Weights.reshape((Weights.size,1))*np.ones((1,4))
                 # Solver.VS.MS.Weights[:]=Weights[:]
 
-                log.print( "  Writing in IMAGING_WEIGHT column ")
-                VS.MS.AddCol("IMAGING_WEIGHT",ColDesc="IMAGING_WEIGHT")
-                t=Solver.VS.MS.GiveMainTable(readonly=False) # table(Solver.VS.MS.MSName,readonly=False,ack=False)
-                WAllChans=t.getcol("IMAGING_WEIGHT",Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
-                WAllChans[:,Solver.VS.MS.ChanSlice]=VS.MS.ToOrigFreqOrder(Weights)
-                t.putcol("IMAGING_WEIGHT",WAllChans,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
-                t.close()
-
-                
+                if options.UpdateWeights:
+                    log.print( "  Writing in IMAGING_WEIGHT column ")
+                    VS.MS.AddCol("IMAGING_WEIGHT",ColDesc="IMAGING_WEIGHT")
+                    t=Solver.VS.MS.GiveMainTable(readonly=(options.UpdateWeights==0)) # table(Solver.VS.MS.MSName,readonly=False,ack=False)
+                    WAllChans=t.getcol("IMAGING_WEIGHT",Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                    WAllChans[:,Solver.VS.MS.ChanSlice]=VS.MS.ToOrigFreqOrder(Weights)
+                    t.putcol("IMAGING_WEIGHT",WAllChans,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                    t.close()
+                else:
+                    log.print("  Imaging weight update not requested, skipping")
+                    WallChans=None
 
 
             if "ResidAnt" in options.ClipMethod and options.SubOnly==0:
@@ -945,31 +947,37 @@ def main(OP=None,MSName=None):
                 Weights=Solver.VS.ThisDataChunk["W"]
                 # Weights/=np.mean(Weights)
                 
-                log.print( "  Writing in IMAGING_WEIGHT column ")
-                VS.MS.AddCol("IMAGING_WEIGHT",ColDesc="IMAGING_WEIGHT")
-                t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
-                WAllChans=t.getcol("IMAGING_WEIGHT",Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
-                WAllChans[:,Solver.VS.MS.ChanSlice]=VS.MS.ToOrigFreqOrder(Weights)
+                if options.UpdateWeights:
+                    log.print( "  Writing in IMAGING_WEIGHT column ")
+                    VS.MS.AddCol("IMAGING_WEIGHT",ColDesc="IMAGING_WEIGHT")
+                    t=Solver.VS.MS.GiveMainTable(readonly=(options.UpdateWeights==0))#table(Solver.VS.MS.MSName,readonly=False,ack=False)
+                    WAllChans=t.getcol("IMAGING_WEIGHT",Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                    WAllChans[:,Solver.VS.MS.ChanSlice]=VS.MS.ToOrigFreqOrder(Weights)
 
-                Med=np.median(WAllChans)
-                Sig=1.4826*np.median(np.abs(WAllChans-Med))
-                Cut=Med+5*Sig
-                WAllChans[WAllChans>Cut]=Cut
-                
-                t.putcol("IMAGING_WEIGHT",WAllChans,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
-                t.close()
-
-                ID=Solver.VS.MS.ROW0
-                if options.SolsDir is None:
-                    FileName="%skillMS.%s.Weights.%i.npy"%(reformat.reformat(options.MSName),SolsName,ID)
+                    Med=np.median(WAllChans)
+                    Sig=1.4826*np.median(np.abs(WAllChans-Med))
+                    Cut=Med+5*Sig
+                    WAllChans[WAllChans>Cut]=Cut
+                    t.putcol("IMAGING_WEIGHT",WAllChans,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                    t.close()
                 else:
-                    _MSName=reformat.reformat(options.MSName).split("/")[-2]
-                    DirName=os.path.abspath("%s%s"%(reformat.reformat(options.SolsDir),_MSName))
-                    if not os.path.isdir(DirName):
-                        os.makedirs(DirName)
-                    FileName="%s/killMS.%s.Weights.%i.npy"%(DirName,SolsName,ID)
-                log.print( "  Saving weights in file %s"%FileName)
-                np.save(FileName,WAllChans)
+                    log.print("  Imaging weight update not requested, skipping")
+                    WallChans=None
+
+                if WallChans is not None:
+                    ID=Solver.VS.MS.ROW0
+                    if options.SolsDir is None:
+                        FileName="%skillMS.%s.Weights.%i.npy"%(reformat.reformat(options.MSName),SolsName,ID)
+                    else:
+                        _MSName=reformat.reformat(options.MSName).split("/")[-2]
+                        DirName=os.path.abspath("%s%s"%(reformat.reformat(options.SolsDir),_MSName))
+                        if not os.path.isdir(DirName):
+                            os.makedirs(DirName)
+                        FileName="%s/killMS.%s.Weights.%i.npy"%(DirName,SolsName,ID)
+                    log.print( "  Saving weights in file %s"%FileName)
+                    np.save(FileName,WAllChans)
+                else:
+                    log.print("  Weights not computed so not saving them")
                 
             if DoSubstract:
                 log.print( ModColor.Str("Subtract sources ... ",col="green"))
