@@ -962,9 +962,9 @@ def main(OP=None,MSName=None):
                     t.close()
                 else:
                     log.print("  Imaging weight update not requested, skipping")
-                    WallChans=None
+                    WAllChans=None
 
-                if WallChans is not None:
+                if WAllChans is not None:
                     ID=Solver.VS.MS.ROW0
                     if options.SolsDir is None:
                         FileName="%skillMS.%s.Weights.%i.npy"%(reformat.reformat(options.MSName),SolsName,ID)
