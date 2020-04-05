@@ -529,10 +529,6 @@ class ClassMS():
             tu.close()
 
 
-
-        table_all.close()
-
-
         if self.RejectAutoCorr:
             indGetCorrelation=np.where(A0!=A1)[0]
             A0=A0[indGetCorrelation]
@@ -579,6 +575,8 @@ class ClassMS():
             fflagged1=np.count_nonzero(flag_all)
             if fflagged1>0 and fflagged0!=0:
                 log.print("  Increase in flag fraction: %f"%(fflagged1/float(fflagged0)-1))
+
+        table_all.close()
 
         self.times_all=time_all
         self.times=time_slots_all
