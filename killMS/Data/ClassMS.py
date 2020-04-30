@@ -508,7 +508,7 @@ class ClassMS():
         # pylab.plot(time_all[::111],vis[::111,512,0].real)
         # pylab.show()
 
-
+        
         self.flag_all=flag_all
         self.uvw_dt=None
 
@@ -527,10 +527,6 @@ class ClassMS():
             tu=table(self.MSName,ack=False)
             self.uvw_dt=np.float64(tu.getcol('UVWDT', row0, nRowRead))
             tu.close()
-
-
-
-        table_all.close()
 
 
         if self.RejectAutoCorr:
@@ -567,7 +563,7 @@ class ClassMS():
             data[:,:,-1]=self.data[:,:,-1]
             self.data=data
             self.flag_all=flag_all
-            
+        
         if "IMAGING_WEIGHT" in table_all.colnames():
             log.print("Flagging the zeros-weighted visibilities")
             fw=table_all.getcol("IMAGING_WEIGHT",row0,nRowRead)[SPW==self.ListSPW[0]][:,self.ChanSlice]
@@ -579,6 +575,9 @@ class ClassMS():
             fflagged1=np.count_nonzero(flag_all)
             if fflagged1>0 and fflagged0!=0:
                 log.print("  Increase in flag fraction: %f"%(fflagged1/float(fflagged0)-1))
+
+        table_all.close()
+
 
         self.times_all=time_all
         self.times=time_slots_all

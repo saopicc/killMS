@@ -519,6 +519,9 @@ class ClassVisServer():
             Compactness=np.zeros((self.MS.na,),np.float32)
             for iAnt in range(self.MS.na):
                 ind=np.where((A0==iAnt)|(A1==iAnt))[0]
+                if ind.size==0:
+                    Compactness[iAnt]=1.e-3
+                    continue
                 Compactness[iAnt]=np.mean(d[ind])
             self.Compactness=Compactness/np.max(Compactness)
             log.print("Compactness: %s"%str(self.Compactness.tolist()))

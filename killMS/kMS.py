@@ -149,6 +149,7 @@ def read_options():
     OP.add_option('FITSLAxis',type="str",help='L axis of FITS beam. Default is %default')
     OP.add_option('FITSMAxis',type="str",help='L axis of FITS beam. Default is %default')
     OP.add_option('FITSFeed',type="str",help='FITS feed. xy or rl or None to take from MS. Default is %default')
+    OP.add_option('FITSFeedSwap',type="int",default=0,help='Swap the feeds around. Default is %default')
     OP.add_option('FITSVerbosity',type="int",help='Verbosity of debug messages. Default is %default')
 
     OP.OptionGroup("* PreApply killMS Solutions","PreApply")
@@ -962,9 +963,9 @@ def main(OP=None,MSName=None):
                     t.close()
                 else:
                     log.print("  Imaging weight update not requested, skipping")
-                    WallChans=None
+                    WAllChans=None
 
-                if WallChans is not None:
+                if WAllChans is not None:
                     ID=Solver.VS.MS.ROW0
                     if options.SolsDir is None:
                         FileName="%skillMS.%s.Weights.%i.npy"%(reformat.reformat(options.MSName),SolsName,ID)
