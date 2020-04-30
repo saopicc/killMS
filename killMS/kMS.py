@@ -139,7 +139,7 @@ def read_options():
 
     OP.OptionGroup("* Beam Options","Beam")
     OP.add_option('BeamModel',type="str",help='Apply beam model, Can be set to: None/LOFAR. Default is %default')
-    OP.add_option('BeamAt',type="str",help='Apply beam model, Can be set to: None/LOFAR. Default is %default')
+    OP.add_option('BeamAt',type="str",help='Where to apply beam model, Can be set to: tessel/facet. Default is %default')
     OP.add_option('LOFARBeamMode',type="str",help='LOFAR beam mode. "AE" sets the beam model to Array and Element. Default is %default')
     OP.add_option('DtBeamMin',type="float",help='Estimate the beam every this interval [in minutes]. Default is %default')
     OP.add_option('CenterNorm',type="str",help='Normalise the beam at the field center. Default is %default')
