@@ -413,7 +413,7 @@ def main(OP=None,MSName=None):
         log.print(ModColor.Str("Predict Mode: Catalog"))
         PredictMode="Catalog"
     elif GD["SkyModel"]["SkyModelCol"] is not None:
-        log.print(ModColor.Str("Predict Mode: using culumn %s"%options.SkyModelCol))
+        log.print(ModColor.Str("Predict Mode: using column %s"%options.SkyModelCol))
         PredictMode="Column"
     else:
         log.print(ModColor.Str("Predict Mode: Image"))
@@ -438,7 +438,7 @@ def main(OP=None,MSName=None):
         GDPredict=DDFacet.Other.MyPickle.Load(FileDicoModel)["GD"]
         GDPredict["Output"]["Mode"] = "Predict"
         if not "StokesResidues" in GDPredict["Output"].keys():
-            log.print(ModColor.Str("Seems like the DicoModel was build by an older version of DDF"))
+            log.print(ModColor.Str("Seems like the DicoModel was built by an older version of DDF"))
             log.print(ModColor.Str("   ... updating keywords"))
             GDPredict["Output"]["StokesResidues"]="I"
 
@@ -905,7 +905,7 @@ def main(OP=None,MSName=None):
                     Weights[ind]=0.
 
                 if "DDEResid" in options.ClipMethod:
-                    log.print("   Compute corrected residual data in all direction")
+                    log.print("   Compute corrected residual data in all directions")
                     PM.GiveCovariance(Solver.VS.ThisDataChunk,JonesMerged,SM)
 
 
