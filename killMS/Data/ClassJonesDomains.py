@@ -30,7 +30,7 @@ log=logger.getLogger("ClassJonesDomains")
 
 class ClassJonesDomains():
     def __init__(self):
-        pass
+        self.FacetToJonesDir=None
 
     def GiveFreqDomains(self,ChanFreqs,ChanWidth,NChanJones=0):
         if NChanJones==0:
@@ -129,13 +129,18 @@ class ClassJonesDomains():
 
         log.print( "  There are %i channels in the merged Jones array"%FreqDomainOut.shape[0])
         return FreqDomainOut
-        
+
+
+    def setFacetToDirMapping(self,FacetToJonesDir):
+        self.FacetToJonesDir=FacetToJonesDir
 
 
     def MergeJones(self,DicoJ0,DicoJ1):
 
         log.print( "Merging Jones arrays")
-
+                
+                
+            
         FreqDomainOut=self.GetMergedFreqDomains(DicoJ0,DicoJ1)
 
         DicoOut={}
@@ -184,12 +189,31 @@ class ClassJonesDomains():
         fm1=np.mean(DicoJ1["FreqDomain"],axis=1)
         fmOut=np.mean(DicoOut["FreqDomain"],axis=1)
 
+        #nt,nd,na,_,_,_=G.shape
+        _,nd0,_,_,_,_=DicoJ0["Jones"].shape
+        _,nd1,_,_,_,_=DicoJ1["Jones"].shape
         _,nd,na,_,_,_=DicoJ0["Jones"].shape
+        if nd0==nd1:
+            _,nd,na,_,_,_=DicoJ0["Jones"].shape
+            ndOut=nd
+            indexDirJ0=indexDirJ1=range(nd)
+        else:
+            if not self.FacetToJonesDir:
+                log.print("  need to provide a direction mapping DicoJ0<-DicoJ1")
+                stop
+            else:
+                if nd0>nd1: stop
+                log.print("  using provided FacetToJonesDir mapping [%i->%i]"%(nd1,nd0))
+                ndOut=nd1
+                indexDirJ0=self.FacetToJonesDir
+                indexDirJ1=range(nd1)
+                
+                
         nt=DicoOut["tm"].size
 
         nchOut=fmOut.size
 
-        DicoOut["Jones"]=np.zeros((nt,nd,na,nchOut,2,2),np.complex64)
+        DicoOut["Jones"]=np.zeros((nt,ndOut,na,nchOut,2,2),np.complex64)
         
         iG0_t=np.argmin(np.abs(DicoOut["tm"].reshape((nt,1))-DicoJ0["tm"].reshape((1,nt0))),axis=1)
         iG1_t=np.argmin(np.abs(DicoOut["tm"].reshape((nt,1))-DicoJ1["tm"].reshape((1,nt1))),axis=1)
@@ -202,9 +226,10 @@ class ClassJonesDomains():
             indChG1=np.where((fmOut[ich]>=DicoJ1["FreqDomain"][:,0]) & (fmOut[ich]<DicoJ1["FreqDomain"][:,1]))[0][0]
  
             for itime in range(nt):
-                G0=DicoJ0["Jones"][iG0_t[itime],:,:,indChG0,:,:]
-                G1=DicoJ1["Jones"][iG1_t[itime],:,:,indChG1,:,:]
-                DicoOut["Jones"][itime,:,:,ich,:,:]=ModLinAlg.BatchDot(G0,G1)
+                for iDir in range(ndOut):
+                    G0=DicoJ0["Jones"][iG0_t[itime], indexDirJ0[iDir], :,indChG0,:,:]
+                    G1=DicoJ1["Jones"][iG1_t[itime], indexDirJ1[iDir], :,indChG1,:,:]
+                    DicoOut["Jones"][itime,iDir,:,ich,:,:]=ModLinAlg.BatchDot(G0,G1)
             
         
         return DicoOut
