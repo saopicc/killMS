@@ -1139,11 +1139,15 @@ class ClassVisServer():
                     ListDicoPreApply.append(DicoSols)
                     DoPreApplyJones=True
 
+
+                    
             
         if DoPreApplyJones:
             DicoJones=ListDicoPreApply[0]
             DomainsMachine=self.DomainsMachine
-            
+
+            if self.SM.Type=="Image":
+                DomainsMachine.setFacetToDirMapping([self.SM.DicoImager[iFacet]["iDirJones"] for iFacet in range(len(self.SM.DicoImager))])
             for DicoJones1 in ListDicoPreApply[1::]:
                 DicoJones=DomainsMachine.MergeJones(DicoJones1,DicoJones)
             
