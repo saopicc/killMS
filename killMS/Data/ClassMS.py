@@ -411,9 +411,12 @@ class ClassMS():
                 ind1=ind1[0]
                 row1=ind1*self.nbl
 
+        # print("!!!!!!!=======")
+        # row0,row1=1207458, 1589742
         self.ROW0=row0
         self.ROW1=row1
         self.nRowRead=row1-row0
+        log.print("   Reading rows [%i -> %i]"%(self.ROW0,self.ROW1))
 
         # if chunk is empty, return None
         if self.nRowRead <= 0:

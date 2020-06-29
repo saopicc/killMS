@@ -254,7 +254,7 @@ class ClassSolverEKF(ClassJacobianAntenna):
         #if self.iAnt==1:
         #    print(evP.ravel())
         self.rmsFromData=None
-        if ind.size==0:
+        if ind.size==0 or self.DataAllFlagged or self.ZeroSizedData:
             return Ga.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),Pa,{"std":-1.,"max":-1.,"kapa":-1.}
         if self.DoReg:
             self.setQxInvPol()
@@ -372,6 +372,9 @@ class ClassSolverEKF(ClassJacobianAntenna):
 #            self.CalcKernelMatrix(rms)
         self.CalcJacobianAntenna(Gains)
         Pa=P[self.iAnt]
+        if self.DataAllFlagged:
+            return Pa
+        
         self.PrepareJHJ_EKF(Pa,rms)
         NPars=Pa.shape[0]
         PaOnes=np.diag(np.ones((NPars,),self.CType))

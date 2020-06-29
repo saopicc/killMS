@@ -908,6 +908,9 @@ class ClassJacobianAntenna():
             DicoData={}
             ind0=np.where(DATA['A0']==iAnt)[0]
             ind1=np.where(DATA['A1']==iAnt)[0]
+            self.ZeroSizedData=False
+            if ind0.size==0 and ind1.size==0:
+                self.ZeroSizedData=True
             DicoData["A0"] = np.concatenate([DATA['A0'][ind0], DATA['A1'][ind1]])
             DicoData["A1"] = np.concatenate([DATA['A1'][ind0], DATA['A0'][ind1]])
             D0=DATA['data'][ind0,self.ch0:self.ch1]
@@ -1039,8 +1042,8 @@ class ClassJacobianAntenna():
 
             # del(DicoData["data"])
 
-
-            if rms!=0.:
+            
+            if rms!=0. and not self.ZeroSizedData:
                 DicoData["rms"]=np.array([rms],np.float32)
                 u,v,w=DicoData["uvw"].T
                 if self.ResolutionRad!=None:
@@ -1071,7 +1074,7 @@ class ClassJacobianAntenna():
 
                 self.R_flat=np.require(self.R_flat,dtype=self.CType)
                 self.Rinv_flat=np.require(self.Rinv_flat,dtype=self.CType)
-
+                
                 Rmin=np.min(R)
                 #Rmax=np.max(R)
                 Flag=(self.R_flat>1e3*Rmin)
@@ -1099,7 +1102,10 @@ class ClassJacobianAntenna():
             self.SharedDicoDescriptors["SharedAntennaVis"]=NpShared.SharedDicoDescriptor(self.SharedDataDicoName,DicoData)
         else:
             DicoData=NpShared.SharedObjectToDico(self.SharedDicoDescriptors["SharedAntennaVis"])
-            if rms!=0.:
+            self.ZeroSizedData=False
+            if DicoData["A0"].size==0 and DicoData["A1"].size==0:
+                self.ZeroSizedData=True
+            if rms!=0. and not self.ZeroSizedData:
                 self.Rinv_flat=DicoData["Rinv_flat"]
                 self.R_flat=DicoData["R_flat"]
                 self.Weights_flat=DicoData["Weights_flat"]

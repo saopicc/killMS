@@ -309,6 +309,9 @@ class ClassVisServer():
         Tmax=self.ThisDataChunk["times"][-1]
         # time selection
         indRowsThisChunk=np.where((self.ThisDataChunk["times"]>=t0_sec)&(self.ThisDataChunk["times"]<t1_sec))[0]
+        # np.save("indRowsThisChunk.npy",indRowsThisChunk)
+        # indRowsThisChunk=np.load("indRowsThisChunk.npy")
+        
         if indRowsThisChunk.shape[0]==0:
             if t0_sec>=Tmax:
                 return "EndChunk"
