@@ -21,14 +21,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #!/usr/bin/env python
 import numpy as np
 import timeit
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
-print
-print np.__file__
+print()
+print(np.__file__)
 
 ss="a=np.complex128(np.random.rand(52894,30)+1j*np.random.rand(52894, 30)); b=a+1"
-print "Dot1: ",timeit.timeit("np.dot(a.T.conj(),b)",number=1,setup="import numpy as np; %s"%ss)
+print("Dot1: ",timeit.timeit("np.dot(a.T.conj(),b)",number=1,setup="import numpy as np; %s"%ss))
 
 ss+="; a.fill(0)"
-print "Dot2: ",timeit.timeit("np.dot(a.T.conj(),a)",number=1,setup="import numpy as np; %s"%ss)
+print("Dot2: ",timeit.timeit("np.dot(a.T.conj(),a)",number=1,setup="import numpy as np; %s"%ss))
 
 

@@ -18,6 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import numpy as np
 from DDFacet.Other import logger
 log=logger.getLogger("ClassReCluster")
@@ -38,7 +41,7 @@ class ClassReCluster():
             SolRefFile="%s/killMS.%s.sols.npz"%(ThisMSName,Method)
 
 
-        print>>log, ModColor.Str("Re-clustering input SkyModel to match %s clustering"%SolRefFile)
+        log.print( ModColor.Str("Re-clustering input SkyModel to match %s clustering"%SolRefFile))
         
         ClusterCat0=np.load(SolRefFile)["ClusterCat"]
         ClusterCat0=ClusterCat0.view(np.recarray)
@@ -63,7 +66,7 @@ class ClassReCluster():
         SM.Dirs=sorted(list(set(SM.SourceCat.Cluster.tolist())))
         SM.NDir=len(SM.Dirs)
 
-        print>>log, "  There are %i clusters in the re-clustered skymodel"%SM.NDir
+        log.print( "  There are %i clusters in the re-clustered skymodel"%SM.NDir)
 
         NDir=lc.size
         for iDir in range(NDir):

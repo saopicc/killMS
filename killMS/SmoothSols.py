@@ -19,6 +19,9 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 #!/usr/bin/env python
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import optparse
 import pickle
@@ -104,7 +107,7 @@ class ClassInterpol():
         self.OutSolsName=OutSolsName
         self.RemoveMedianAmp=RemoveMedianAmp
         
-        print>>log,"Loading %s"%self.InSolsName
+        log.print("Loading %s"%self.InSolsName)
         self.DicoFile=dict(np.load(self.InSolsName))
         self.Sols=self.DicoFile["Sols"].view(np.recarray)
         if "MaskedSols" in self.DicoFile.keys():
@@ -113,7 +116,7 @@ class ClassInterpol():
 
             self.DicoFile["FreqDomains"]=self.DicoFile["FreqDomains"][MaskFreq]
             NFreqsOut=np.count_nonzero(MaskFreq)
-            print>>log,"There are %i non-zero freq channels"%NFreqsOut
+            log.print("There are %i non-zero freq channels"%NFreqsOut)
             SolsOut=np.zeros((nt,),dtype=[("t0",np.float64),("t1",np.float64),
                                           ("G",np.complex64,(NFreqsOut,na,nd,2,2)),
                                           ("Stats",np.float32,(NFreqsOut,na,4))])
@@ -154,15 +157,15 @@ class ClassInterpol():
         self.Amp_SmoothType=Amp_SmoothType
 
         if "TEC" in self.InterpMode:
-            print>>log, "  Smooth phases using a TEC model"
+            log.print( "  Smooth phases using a TEC model")
             if self.CrossMode: 
-                print>>log,ModColor.Str("Using CrossMode")
+                log.print(ModColor.Str("Using CrossMode"))
 
         if "Amp" in self.InterpMode:
             if Amp_SmoothType=="Poly":
-                print>>log, "  Smooth amplitudes using polynomial model of order %i"%self.Amp_PolyOrder
+                log.print( "  Smooth amplitudes using polynomial model of order %i"%self.Amp_PolyOrder)
             if Amp_SmoothType=="Gauss":
-                print>>log, "  Smooth amplitudes using Gaussian kernel of %s (Time/Freq) bins"%str(Amp_GaussKernel)
+                log.print( "  Smooth amplitudes using Gaussian kernel of %s (Time/Freq) bins"%str(Amp_GaussKernel))
 
         if self.RemoveAmpBias:
             self.GOut*=self.G0
@@ -183,7 +186,7 @@ class ClassInterpol():
                     self.FitThisTEC(it,iAnt,iDir)
 
     def CalcFreqAmpSystematics(self):
-        print>>log, "  Calculating amplitude systematics..."
+        log.print( "  Calculating amplitude systematics...")
         Sols0=self.Sols
         nt,nch,na,nd,_,_=Sols0.G.shape
         self.G0=np.zeros((1,nch,na,nd,1,1),np.float32)
@@ -198,10 +201,10 @@ class ClassInterpol():
     def InterpolParallel(self):
         Sols0=self.Sols
         nt,nch,na,nd,_,_=Sols0.G.shape
-        print>>log," #Times:      %i"%nt
-        print>>log," #Channels:   %i"%nch
-        print>>log," #Antennas:   %i"%na
-        print>>log," #Directions: %i"%nd
+        log.print(" #Times:      %i"%nt)
+        log.print(" #Channels:   %i"%nch)
+        log.print(" #Antennas:   %i"%na)
+        log.print(" #Directions: %i"%nd)
         
 
         # APP.terminate()
@@ -606,7 +609,7 @@ class ClassInterpol():
         
         
     def SpacialSmoothTEC(self):
-        print>>log,"Do the spacial smoothing..."
+        log.print("Do the spacial smoothing...")
         t=table("/data/tasse/P025+41/L593429_SB132_uv.pre-cal_12A2A9C48t_148MHz.pre-cal.ms/ANTENNA")
         X,Y,Z=t.getcol("POSITION").T
         dx=X.reshape((-1,1))-X.reshape((1,-1))
@@ -657,7 +660,7 @@ class ClassInterpol():
 
         if "TEC" in self.InterpMode:
             # OutFileTEC="%s.TEC_CPhase.npz"%OutFile
-            # print>>log,"  Saving TEC/CPhase solution file as: %s"%OutFileTEC
+            # log.print("  Saving TEC/CPhase solution file as: %s"%OutFileTEC)
             # np.savez(OutFileTEC,
             #          TEC=self.TECArray,
             #          CPhase=self.CPhaseArray)
@@ -666,7 +669,7 @@ class ClassInterpol():
             
 
             
-        print>>log,"  Saving interpolated solution file as: %s"%OutFile
+        log.print("  Saving interpolated solution file as: %s"%OutFile)
         self.DicoFile["SmoothMode"]=self.InterpMode
         self.DicoFile["SolsOrig"]=copy.deepcopy(self.DicoFile["Sols"])
         self.DicoFile["SolsOrig"]["G"][:]=self.DicoFile["Sols"]["G"][:]

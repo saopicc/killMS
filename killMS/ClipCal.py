@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import numpy as np
 from pyrap.tables import table
 #import pylab
@@ -7,7 +10,8 @@ import time
 #import managecolumns
 from DDFacet.Other import logger
 log=logger.getLogger("ClipCal")
-logger.itsLog.logger.setLevel(logger.logging.CRITICAL)
+# next line adapted for newer DDFacet versions
+log.log_verbosity(logger.logging.CRITICAL)
 SaveFile="ClipCal.last"
 import pickle
 
@@ -16,24 +20,24 @@ class ClassClipMachine():
                  ReinitWeights=False):
         self.MSName=MSName
         t=self.t=table(MSName,ack=False)
-        print>>log,"Reading visibility column %s from %s"%(ColName,MSName)
+        log.print("Reading visibility column %s from %s"%(ColName,MSName))
         vis=t.getcol(ColName)
         if SubCol is not None:
-            print>>log,"  Subtracting column %s"%SubCol
+            log.print("  Subtracting column %s"%SubCol)
             vis1=t.getcol(SubCol)
             vis-=vis1
 
-        print>>log,"  Reading flags"
+        log.print("  Reading flags")
         flag=t.getcol("FLAG")
-        print>>log,"  Zeroing flagged data"
+        log.print("  Zeroing flagged data")
         vis[flag==1]=0
         self.WeightCol=WeightCol
 
-        print>>log,"  Reading weights column %s"%WeightCol
+        log.print("  Reading weights column %s"%WeightCol)
         W=t.getcol(WeightCol)
         t.close()
         if ReinitWeights:
-            print>>log,"  Initialise weights to one"
+            log.print("  Initialise weights to one")
             W.fill(1)
             
 
@@ -49,16 +53,16 @@ class ClassClipMachine():
 
         nrow,nch,npol=vis.shape
 
-        print>>log,"Fraction of zero-weighted visibilities previously non-flagged"
+        log.print("Fraction of zero-weighted visibilities previously non-flagged")
         for ch in range(nch):
-            print>>log,"Channel = %i"%ch
+            log.print("Channel = %i"%ch)
             for pol in range(npol):
                 f=(flag[:,ch,pol]==0)
 
                 AbsVis=np.abs(vis[:,ch,pol])
                 AbsVis_s=AbsVis[f]
                 if AbsVis_s.size==0:
-                    print>>log,"  All data is flagged - skipping..."
+                    log.print("  All data is flagged - skipping...")
                     continue
                 
                 MAD=np.median(AbsVis_s)
@@ -71,9 +75,9 @@ class ClassClipMachine():
                 nfg=np.count_nonzero(Ms)
                 frac=nfg/float(Ms.size)
 
-                print>>log,"  pol#%i %.7f%% [n=%i, <rms> = %f]"%(pol,frac*100.,nfg,std)
+                log.print("  pol#%i %.7f%% [n=%i, <rms> = %f]"%(pol,frac*100.,nfg,std))
 
-        print>>log,"Writting %s in %s"%(self.WeightCol,self.MSName)
+        log.print("Writing %s in %s"%(self.WeightCol,self.MSName))
         t=table(self.MSName,readonly=False,ack=False)
         if self.WeightCol=="FLAG":
             Wf=W*np.ones((1,1,4))
@@ -120,7 +124,7 @@ def main(options=None):
                             ReinitWeights=options.ReinitWeights)
         CM.ClipWeights()
         if len(LMSName)>1:
-            print>>log,"=========================================="
+            log.print("==========================================")
 
 
 if __name__=="__main__":

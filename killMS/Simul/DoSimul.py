@@ -19,14 +19,18 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 #!/usr/bin/env python
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import optparse
 import sys
 from killMS.Other import MyPickle
 from killMS.Other import logo
 from killMS.Other import ModColor
-from DDFacet.Other import logger
-log=logger.getLogger("killMS")
-logger.itsLog.logger.setLevel(logger.logging.CRITICAL)
+from DDFacet.Other import logger, ModColor
+
+log = logger.getLogger("killMS")
+
 from killMS.Other import ClassTimeIt
 from killMS.Data import ClassVisServer
 from killMS.Predict.PredictGaussPoints_NumExpr import ClassPredict
@@ -70,7 +74,8 @@ def main(options=None):
     #SMName="ModelRandom00.many.10.txt.npy"
     #SMName="ModelRandom00.many.1pbl.txt.npy"
     #SMName="ModelRandom00.many.1off.txt.npy"
-    
+    SMName="ModelRandom00.txt.npy"
+
     ll=sorted(glob.glob("000?.MS"))
     #ll=sorted(glob.glob("0000.MS"))
     #ll=sorted(glob.glob("BOOTES24_SB100-109.2ch8s.ms.tsel"))
@@ -86,11 +91,12 @@ def main(options=None):
     Sols=CS0.GiveSols()
     
     for l in ll:
-        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
-        #CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
+        # CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
+        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
 
-        CS.SolsCluster=CS0.SolsCluster
-        CS.DoClusterJones=CS0.DoClusterJones
+        if CS0.DoClusterJones:
+            CS.SolsCluster=CS0.SolsCluster
+            CS.DoClusterJones=CS0.DoClusterJones
         
         CS.DoSimul()
 
@@ -102,6 +108,7 @@ class ClassSimul():
         self.Sols=Sols
         self.ApplyBeam=ApplyBeam
         self.ChanMap=None
+        self.DoClusterDirs=False
 
         self.Init()
         nuc=self.VS.MS.ChanFreq.ravel()
@@ -188,12 +195,12 @@ class ClassSimul():
 
         for itime in range(0,NSols):
             if itime>0: 
-                print "eq in time"
+                print("eq in time")
                 continue
 
             
             # continue
-            print itime,"/",NSols
+            print(itime,"/",NSols)
             for ich in range(nch):
                 for iAnt in range(na):
                     for iDir in range(nd):
@@ -222,14 +229,14 @@ class ClassSimul():
         #PhaseAbs.fill(0)
         #Amp_Phase=np.zeros((na,nd))
     
-        #print "!!!!!!!!!!!!!!!!!!!!! A=1"
-        #print "!!!!!!!!!!!!!!!!!!!!! A=1"
-        #print "!!!!!!!!!!!!!!!!!!!!! A=1"
+        #print("!!!!!!!!!!!!!!!!!!!!! A=1")
+        #print("!!!!!!!!!!!!!!!!!!!!! A=1")
+        #print("!!!!!!!!!!!!!!!!!!!!! A=1")
 
 
         for itime in range(0,NSols):
-            print "eq in time"
-            print "skip pol2"
+            print("eq in time")
+            print("skip pol2")
             continue
             for ich in range(nch):
                 for iAnt in range(na):
@@ -260,10 +267,10 @@ class ClassSimul():
         # make scalar
         Sols.G[:,:,:,:,1,1]=Sols.G[:,:,:,:,0,0]
 
-        # # unity
-        # Sols.G.fill(0)
-        # Sols.G[:,:,:,:,0,0]=1.
-        # Sols.G[:,:,:,:,1,1]=1.
+        # unity
+        Sols.G.fill(0)
+        Sols.G[:,:,:,:,0,0]=1.
+        Sols.G[:,:,:,:,1,1]=1.
 
         # # Sols.G[:,:,:,1:,0,0]=0.01
         # # Sols.G[:,:,:,1:,1,1]=0.01
@@ -293,7 +300,7 @@ class ClassSimul():
             for iDir in np.unique(indC):
                 ind=np.where(indC==iDir)[0]
                 for i in range(ind.size):
-                    print "%i <- %i"%(iDir,ind[i])
+                    print("%i <- %i"%(iDir,ind[i]))
                     Sols.G[:,:,:,ind[i],0,0]=Sols.G[:,:,:,ind[0],0,0]
                     Sols.G[:,:,:,ind[i],0,1]=Sols.G[:,:,:,ind[0],0,1]
                     Sols.G[:,:,:,ind[i],1,0]=Sols.G[:,:,:,ind[0],1,0]
@@ -345,7 +352,7 @@ class ClassSimul():
         useArrayFactor=True
         useElementBeam=False
         if ApplyBeam:
-            print ModColor.Str("Apply Beam")
+            print(ModColor.Str("Apply Beam"))
             MS.LoadSR(useElementBeam=False,useArrayFactor=True)
             RA=SM.ClusterCat.ra
             DEC=SM.ClusterCat.dec
@@ -374,7 +381,7 @@ class ClassSimul():
                 return Beam
             
             for itime in range(Tm.size):
-                print itime
+                print(itime)
                 DicoBeam["t0"][itime]=T0s[itime]
                 DicoBeam["t1"][itime]=T1s[itime]
                 DicoBeam["tm"][itime]=Tm[itime]
@@ -425,7 +432,7 @@ class ClassSimul():
 
 
 
-            print "Done"
+            print("Done")
     
     
         # #################
@@ -466,33 +473,32 @@ class ClassSimul():
         VS.CalcWeigths()
         MS=VS.MS
         SM.Calc_LM(MS.rac,MS.decc)
-        print MS
-        MS.PutBackupCol(incol="CORRECTED_DATA_BACKUP")
+        print(MS)
+        MS.PutBackupCol(incol="CORRECTED_DATA")
         self.MS=MS
         self.SM=SM
 
         
+        self.DoClusterJones=0
         ###################
-        self.kMS_ClusterDirCat=np.load("ModelImage.txt.ClusterCat.npy")
-        self.kMS_ClusterDirCat=self.kMS_ClusterDirCat.view(np.recarray)
-        self.kMS_ClusterDirCat
-        if not("l" in self.kMS_ClusterDirCat.dtype.fields.keys()):
-            self.kMS_ClusterDirCat=RecArrayOps.AppendField(self.kMS_ClusterDirCat,('l',float))
-            self.kMS_ClusterDirCat=RecArrayOps.AppendField(self.kMS_ClusterDirCat,('m',float))
-        self.ClusterCat=self.kMS_ClusterDirCat
-        self.kMS_ClusterDirCat.l,self.kMS_ClusterDirCat.m=self.SM.radec2lm_scalar(self.kMS_ClusterDirCat.ra,self.kMS_ClusterDirCat.dec,MS.rac,MS.decc)
-        self.kMS_ClusterDirCat.Cluster=np.arange(self.kMS_ClusterDirCat.shape[0])
-        self.DoClusterJones=1
+        if self.DoClusterDirs:
+            self.kMS_ClusterDirCat=np.load("ModelImage.txt.ClusterCat.npy")
+            self.kMS_ClusterDirCat=self.kMS_ClusterDirCat.view(np.recarray)
+            self.kMS_ClusterDirCat
+            if not("l" in self.kMS_ClusterDirCat.dtype.fields.keys()):
+                self.kMS_ClusterDirCat=RecArrayOps.AppendField(self.kMS_ClusterDirCat,'l',float)
+                self.kMS_ClusterDirCat=RecArrayOps.AppendField(self.kMS_ClusterDirCat,'m',float)
+            self.ClusterCat=self.kMS_ClusterDirCat
+            self.kMS_ClusterDirCat.l,self.kMS_ClusterDirCat.m=self.SM.radec2lm_scalar(self.kMS_ClusterDirCat.ra,self.kMS_ClusterDirCat.dec,MS.rac,MS.decc)
+            self.kMS_ClusterDirCat.Cluster=np.arange(self.kMS_ClusterDirCat.shape[0])
+            self.DoClusterJones=1
         ###################
 
-        # SM.SourceCat.l[:]=-0.009453866781636
-        # SM.SourceCat.m[:]=0.009453866781636
-        # stop
 
 
     def DoSimul(self):
     
-        Noise=0.
+        Noise=0.001
         MS=self.MS
         SM=self.SM
         VS=self.VS
@@ -512,7 +518,7 @@ class ClassSimul():
         Jones = self.GiveJones()
     
     
-        print>>log, ModColor.Str("Substract sources ... ",col="green")
+        log.print(ModColor.Str("Substract sources ... ",col="green"))
         #SM.SelectSubCat(SM.SourceCat.kill==0)
         
         t0=np.mean(VS.MS.times_all)
@@ -532,7 +538,7 @@ class ClassSimul():
         
         PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones,Noise=Noise,
                                                VariableFunc=None)
-        print Jones["Beam"].ravel()[0]
+        print(Jones["Beam"].ravel()[0])
         # PredictData=PM5.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones)
 
         # import pylab
@@ -562,7 +568,7 @@ class ClassSimul():
     
         #VS.MS.SaveVis(Col="DATA")
         #VS.MS.SaveVis(Col="CORRECTED_DATA")
-        VS.MS.SaveVis(Col="CORRECTED_DATA_BACKUP")
+        VS.MS.SaveVis(Col="CORRECTED_DATA")
         #VS.MS.SaveVis(Col="CORRECTED_DATA")
 
         # t=table(self.MSName,readonly=False)
@@ -581,8 +587,8 @@ class ClassSimul():
         
         Sols=self.Sols
         FileName="%s/killMS.%s.sols.npz"%(self.VS.MS.MSName,"Simul")
-        print "Saving %s"%FileName
-        print self.FreqDomains
+        print("Saving %s"%FileName)
+        print(self.FreqDomains)
         if not self.DoClusterJones:
             np.savez(FileName,Sols=Sols,StationNames=MS.StationNames,SkyModel=SM.ClusterCat,ClusterCat=SM.ClusterCat,
                      BeamTimes=np.array([],np.float64),FreqDomains=self.FreqDomains)
@@ -601,7 +607,7 @@ class ClassSimul():
         from pyrap.tables import table
         t=table("BOOTES24_SB100-109.2ch8s.ms/",readonly=False)
         D0=t.getcol("MODEL_DATA")
-        D1=t.getcol("CORRECTED_DATA_BACKUP")
+        D1=t.getcol("CORRECTED_DATA")
         f=t.getcol("FLAG")
         DD=D0-D1
         DD[f==1]=0

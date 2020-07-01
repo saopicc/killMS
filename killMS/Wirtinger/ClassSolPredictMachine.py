@@ -1,3 +1,6 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import numpy as np
 from DDFacet.Other import logger
 log=logger.getLogger("ClassSolPredictMachine")
@@ -36,7 +39,7 @@ class ClassSolPredictMachine():
 
 
 
-        print>>log, "Reading solution file %s"%FileName
+        log.print( "Reading solution file %s"%FileName)
         self.DicoSols=np.load(FileName)
         self.Sols=self.DicoSols["Sols"]
         self.Sols=self.Sols.view(np.recarray)

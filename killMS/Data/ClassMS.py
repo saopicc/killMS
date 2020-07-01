@@ -18,6 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import numpy as np
 from pyrap.tables import table
 from killMS.Other.rad2hmsdms import rad2hmsdms
@@ -30,7 +33,7 @@ import ephem
 from DDFacet.Other import logger
 log=logger.getLogger("ClassMS")
 from killMS.Other import ClassTimeIt
-from killMS.Other.progressbar import ProgressBar
+from DDFacet.Other.progressbar import ProgressBar
 
 class ClassMS():
     def __init__(self,MSname,Col="DATA",zero_flag=True,ReOrder=False,EqualizeFlag=False,DoPrint=True,DoReadData=True,
@@ -199,7 +202,7 @@ class ClassMS():
 
 
         t=table("%s/LOFAR_ANTENNA_FIELD"%self.MSName,ack=False)
-        #print>>log, ModColor.Str(" ... Loading LOFAR_ANTENNA_FIELD table...")
+        #log.print( ModColor.Str(" ... Loading LOFAR_ANTENNA_FIELD table..."))
         na,NTiles,dummy=t.getcol("ELEMENT_OFFSET").shape
 
         try:
@@ -253,14 +256,14 @@ class ClassMS():
         return Beam
 
 
-    def GiveMappingAnt(self,ListStrSel,(row0,row1)=(None,None),FlagAutoCorr=True,WriteAttribute=True):
-
+    def GiveMappingAnt(self,ListStrSel,row0row1=(None,None),FlagAutoCorr=True,WriteAttribute=True):
+        row0,row1=row0row1
         if type(ListStrSel)!=list:
             assert(False)
 
         #ListStrSel=["RT9-RTA", "RTA-RTB", "RTC-RTD", "RT6-RT7", "RT5"]
 
-        print>>log, ModColor.Str("  ... Building BL-mapping for %s"%str(ListStrSel))
+        log.print( ModColor.Str("  ... Building BL-mapping for %s"%str(ListStrSel)))
 
         if row1==None:
             row0=0
@@ -378,7 +381,7 @@ class ClassMS():
 
 
         if DoPrint==True:
-            print "   ... Reading MS"
+            print("   ... Reading MS")
 
         # TODO: read this from MS properly, as in DDFacet
         self.CorrelationNames = "xx", "xy", "yx", "yy"
@@ -408,9 +411,12 @@ class ClassMS():
                 ind1=ind1[0]
                 row1=ind1*self.nbl
 
+        # print("!!!!!!!=======")
+        # row0,row1=1207458, 1589742
         self.ROW0=row0
         self.ROW1=row1
         self.nRowRead=row1-row0
+        log.print("   Reading rows [%i -> %i]"%(self.ROW0,self.ROW1))
 
         # if chunk is empty, return None
         if self.nRowRead <= 0:
@@ -428,20 +434,20 @@ class ClassMS():
         try:
             SPW=table_all.getcol('DATA_DESC_ID',row0,nRowRead)
         except Exception as e:
-            print>>log,ModColor.Str("There was a problem reading DATA_DESC_ID:"+str(e))
+            log.print(ModColor.Str("There was a problem reading DATA_DESC_ID:"+str(e)))
             DATA_DESC_ID=np.unique(table_all.getcol('DATA_DESC_ID'))
             if DATA_DESC_ID.size==1:
-                print>>log,ModColor.Str("   All DATA_DESC_ID are the same, can proceed")
+                log.print(ModColor.Str("   All DATA_DESC_ID are the same, can proceed"))
                 SPW=np.zeros((nRowRead,),)
                 SPW.fill(DATA_DESC_ID[0])
             else:
                 raise 
         A0=table_all.getcol('ANTENNA1',row0,nRowRead)[SPW==self.ListSPW[0]]
         A1=table_all.getcol('ANTENNA2',row0,nRowRead)[SPW==self.ListSPW[0]]
-        #print self.ListSPW[0]
+        #print(self.ListSPW[0])
         time_all=table_all.getcol("TIME",row0,nRowRead)[SPW==self.ListSPW[0]]
         self.Time0=table_all.getcol("TIME",0,1)[0]
-        #print np.max(time_all)-np.min(time_all)
+        #print(np.max(time_all)-np.min(time_all))
         time_slots_all=np.array(sorted(list(set(time_all))))
         ntimes=time_all.shape[0]/self.nbl
 
@@ -489,9 +495,9 @@ class ClassMS():
             if self.multidata:
                 self.data=[]
                 for colin in self.ColName:
-                    print "... read %s"%colin
+                    print("... read %s"%colin)
                     vis_all=table_all.getcol(colin,row0,nRowRead)[SPW==self.ListSPW[0]][:,self.ChanSlice,:]
-                    print " shape: %s"%str(vis_all.shape)
+                    print(" shape: %s"%str(vis_all.shape))
                     if self.zero_flag: vis_all[flag_all==1]=0.
                     vis_all[np.isnan(vis_all)]=0.
                     self.data.append(vis_all)
@@ -505,7 +511,7 @@ class ClassMS():
         # pylab.plot(time_all[::111],vis[::111,512,0].real)
         # pylab.show()
 
-
+        
         self.flag_all=flag_all
         self.uvw_dt=None
 
@@ -520,14 +526,10 @@ class ClassMS():
             if 'UVWDT' not in ColNames:
                 self.AddUVW_dt()
 
-            print>>log,"Reading uvw_dt column"
+            log.print("Reading uvw_dt column")
             tu=table(self.MSName,ack=False)
             self.uvw_dt=np.float64(tu.getcol('UVWDT', row0, nRowRead))
             tu.close()
-
-
-
-        table_all.close()
 
 
         if self.RejectAutoCorr:
@@ -542,7 +544,7 @@ class ClassMS():
             else:
                 self.data=self.data[indGetCorrelation,:,:]
                 self.flag_all=self.flag_all[indGetCorrelation,:,:]
-            self.nbl=(self.na*(self.na-1))/2
+            self.nbl=(self.na*(self.na-1))//2
 
         if self.DoRevertChans:
             self.flag_all=self.flag_all[:,::-1,:]
@@ -554,7 +556,7 @@ class ClassMS():
 
         self.NPolOrig=self.data.shape[-1]
         if self.data.shape[-1]!=4:
-            print>>log,ModColor.Str("Data has only two polarisation, adapting shape")
+            log.print(ModColor.Str("Data has only two polarisation, adapting shape"))
             nrow,nch,_=self.data.shape
             flag_all=np.zeros((nrow,nch,4),self.flag_all.dtype)
             data=np.zeros((nrow,nch,4),self.data.dtype)
@@ -564,9 +566,9 @@ class ClassMS():
             data[:,:,-1]=self.data[:,:,-1]
             self.data=data
             self.flag_all=flag_all
-            
+        
         if "IMAGING_WEIGHT" in table_all.colnames():
-            print>>log,"Flagging the zeros-weighted visibilities"
+            log.print("Flagging the zeros-weighted visibilities")
             fw=table_all.getcol("IMAGING_WEIGHT",row0,nRowRead)[SPW==self.ListSPW[0]][:,self.ChanSlice]
             nrr,nchr=fw.shape
             fw=fw.reshape((nrr,nchr,1))*np.ones((1,1,4))
@@ -575,7 +577,10 @@ class ClassMS():
             flag_all[fw<MedW*1e-6]=1
             fflagged1=np.count_nonzero(flag_all)
             if fflagged1>0 and fflagged0!=0:
-                print>>log,"  Increase in flag fraction: %f"%(fflagged1/float(fflagged0)-1)
+                log.print("  Increase in flag fraction: %f"%(fflagged1/float(fflagged0)-1))
+
+        table_all.close()
+
 
         self.times_all=time_all
         self.times=time_slots_all
@@ -652,12 +657,12 @@ class ClassMS():
         T=ClassTimeIt.ClassTimeIt()
         T.enableIncr()
         T.disable()
-        #print MSname+'/ANTENNA'
+        #print(MSname+'/ANTENNA')
 
         # open main table
         table_all=table(MSname,ack=False)
 
-        #print MSname+'/ANTENNA'
+        #print(MSname+'/ANTENNA')
         ta=table(table_all.getkeyword('ANTENNA'),ack=False)
         #ta=table(MSname+'::ANTENNA',ack=False)
 
@@ -673,11 +678,11 @@ class ClassMS():
         A=np.concatenate([A0,A1])
 
         nas=np.unique(A).size
-        self.nbl=(nas**2-nas)/2
+        self.nbl=(nas**2-nas)//2
         if self.HasAutoCorr:
             self.nbl+=nas
         if A0.size%self.nbl!=0:
-            print>>log,ModColor.Str("MS is non conformant!")
+            log.print(ModColor.Str("MS is non conformant!"))
             raise
             
         #nbl=(na*(na-1))/2
@@ -691,7 +696,7 @@ class ClassMS():
         SPW=table_all.getcol('DATA_DESC_ID')
         if self.SelectSPW!=None:
             self.ListSPW=self.SelectSPW
-            #print "dosel"
+            #print("dosel")
         else:
             self.ListSPW=sorted(list(set(SPW.tolist())))
         T.timeit()
@@ -718,7 +723,7 @@ class ClassMS():
         self.dFreq=ta_spectral.getcol("CHAN_WIDTH").flatten()[self.ChanSlice]
         self.ChanWidth=ta_spectral.getcol('CHAN_WIDTH')[:,self.ChanSlice]
         if chan_freq.shape[0]>len(self.ListSPW):
-            print ModColor.Str("  ====================== >> More SPW in headers, modifying that error....")
+            print(ModColor.Str("  ====================== >> More SPW in headers, modifying that error...."))
             chan_freq=chan_freq[np.array(self.ListSPW),:]
             reffreq=reffreq[np.array(self.ListSPW)]
             
@@ -732,7 +737,7 @@ class ClassMS():
         wavelength_chan=299792456./chan_freq
 
         if NSPW>1:
-            print "Don't deal with multiple SPW yet"
+            print("Don't deal with multiple SPW yet")
 
 
         Nchan=wavelength_chan.shape[1]
@@ -751,7 +756,7 @@ class ClassMS():
         if Nchan>1:
             self.DoRevertChans=(self.ChanFreq.flatten()[0]>self.ChanFreq.flatten()[-1])
         if self.DoRevertChans:
-            print ModColor.Str("  ====================== >> Revert Channel order!")
+            print(ModColor.Str("  ====================== >> Revert Channel order!"))
             wavelength_chan=wavelength_chan[0,::-1]
             self.ChanFreq=self.ChanFreq[0,::-1]
             self.dFreq=np.abs(self.dFreq)
@@ -806,7 +811,7 @@ class ClassMS():
     #     uvw1=self.Give_dUVW_dt0(np.mean(ttVec)+30.,A0,A1,LongitudeDeg=6.8689,R="UVW")
     #     duvw0=uvw1-uvw0
     #     duvw1=30*self.Give_dUVW_dt0(np.mean(ttVec)+15.,A0,A1,LongitudeDeg=6.8689,R="UVW_dt")
-    #     print duvw0-duvw1
+    #     print(duvw0-duvw1)
     #     stop
 
     def Give_dUVW_dt(self,ttVec,A0,A1,LongitudeDeg=6.8689,R="UVW_dt"):
@@ -889,9 +894,9 @@ class ClassMS():
     def SaveVis(self,vis=None,Col="CORRECTED_DATA",spw=0,DoPrint=True):
         if vis==None:
             vis=self.data
-        if DoPrint: print>>log, "Writing data in column %s"%ModColor.Str(Col,col="green")
+        if DoPrint: log.print( "Writing data in column %s"%ModColor.Str(Col,col="green"))
 
-        print "Givemain"
+        print("Givemain")
         table_all=self.GiveMainTable(readonly=False)
 
         if self.swapped:
@@ -901,16 +906,16 @@ class ClassMS():
             visout=vis
             flag_all=self.flag_all
 
-        print "Col"
+        print("Col")
         table_all.putcol(Col,visout.astype(self.data.dtype),self.ROW0,self.nRowRead)
-        print "Flag"
+        print("Flag")
         table_all.putcol("FLAG",flag_all,self.ROW0,self.nRowRead)
-        print "Weight"
+        print("Weight")
         if self.HasWeights:
             
             table_all.putcol("WEIGHT",self.Weights,self.ROW0,self.nRowRead)
-            #print "ok w"
-        print "Close"
+            #print("ok w")
+        print("Close")
         table_all.close()
         
     def GiveUvwBL(self,a0,a1):
@@ -982,10 +987,10 @@ class ClassMS():
         backnameFlag="FLAG_BACKUP"
         t=table(self.MSName,readonly=False,ack=False)
         if backname in t.colnames():
-            print>>log, "  Copying ",backname," to CORRECTED_DATA"
+            log.print( "  Copying ",backname," to CORRECTED_DATA")
             #t.putcol("CORRECTED_DATA",t.getcol(backname))
             self.CopyCol(backname,"CORRECTED_DATA")
-            print>>log, "  Copying ",backnameFlag," to FLAG"
+            log.print( "  Copying ",backnameFlag," to FLAG")
             self.CopyCol(backnameFlag,"FLAG")
             #t.putcol(,t.getcol(backnameFlag))
         t.close()
@@ -1004,10 +1009,10 @@ class ClassMS():
     def CopyCol(self,Colin,Colout):
         t=table(self.MSName,readonly=False,ack=False)
         if self.TimeChunkSize==None:
-            print>>log, "  ... Copying column %s to %s"%(Colin,Colout)
+            log.print( "  ... Copying column %s to %s"%(Colin,Colout))
             t.putcol(Colout,t.getcol(Colin))
         else:
-            print>>log, "  ... Copying column %s to %s"%(Colin,Colout)
+            log.print( "  ... Copying column %s to %s"%(Colin,Colout))
             TimesInt=np.arange(0,self.DTh,self.TimeChunkSize).tolist()
             if not(self.DTh in TimesInt): TimesInt.append(self.DTh)
 
@@ -1023,7 +1028,7 @@ class ClassMS():
                 #ind1=np.argmin(np.abs(t1-self.F_times))
                 row0=Rows[i]#ind0*self.nbl
                 row1=Rows[i+1]#ind1*self.nbl
-                print>>log, "      ... Copy in [%i, %i] rows"%( row0,row1)
+                log.print( "      ... Copy in [%i, %i] rows"%( row0,row1))
                 NRow=row1-row0
                 t.putcol(Colout,t.getcol(Colin,row0,NRow),row0,NRow)
         t.close()
@@ -1031,10 +1036,10 @@ class ClassMS():
     def AddCol(self,ColName,LikeCol="DATA",ColDesc=None,ColDescDict=None):
         t=table(self.MSName,readonly=False,ack=False)
         if (ColName in t.colnames()):
-            print>>log, "  Column %s already in %s"%(ColName,self.MSName)
+            log.print( "  Column %s already in %s"%(ColName,self.MSName))
             t.close()
             return
-        print>>log, "  Putting column %s in %s"%(ColName,self.MSName)
+        log.print( "  Putting column %s in %s"%(ColName,self.MSName))
         if ColDesc is None:
             desc=t.getcoldesc(LikeCol)
             desc["name"]=ColName
@@ -1054,7 +1059,7 @@ class ClassMS():
                   'shape': np.array([self.Nchan], dtype=np.int32),
                   'valueType': 'float'}
         else:
-            print "Not supported"
+            print("Not supported")
         t.addcols(desc)
         t.close()
         
@@ -1065,15 +1070,15 @@ class ClassMS():
         t=table(self.MSName,readonly=False,ack=False)
         JustAdded=False
         if not(backname in t.colnames()):
-            print>>log, "  Putting column ",backname," in MS"
+            log.print("  Putting column %s in MS"%backname)
             desc=t.getcoldesc("CORRECTED_DATA")
             desc["name"]=backname
             desc['comment']=desc['comment'].replace(" ","_")
             t.addcols(desc)
-            print>>log, "  Copying %s in %s"%(incol,backname)
+            log.print( "  Copying %s in %s"%(incol,backname))
             self.CopyCol(incol,backname)
         else:
-            print>>log, "  Column %s already there"%(backname)
+            log.print( "  Column %s already there"%(backname))
 
         if not(backnameFlag in t.colnames()):
             desc=t.getcoldesc("FLAG")
@@ -1089,7 +1094,7 @@ class ClassMS():
 
     def PutNewCol(self,Name,LikeCol="CORRECTED_DATA"):
         if not(Name in self.ColNames):
-            print>>log, "  Putting column %s in MS, with format of %s"%(Name,LikeCol)
+            log.print( "  Putting column %s in MS, with format of %s"%(Name,LikeCol))
             t=table(self.MSName,readonly=False,ack=False)
             desc=t.getcoldesc(LikeCol)
             desc["name"]=Name
@@ -1118,8 +1123,8 @@ class ClassMS():
         #self.PutNewCol("MODEL_DATA")
 
     def AddUVW_dt(self):
-        print>>log,"Adding uvw speed info to main table: %s"%self.MSName
-        print>>log,"Compute UVW speed column"
+        log.print("Adding uvw speed info to main table: %s"%self.MSName)
+        log.print("Compute UVW speed column")
         MSName=self.MSName
         MS=self
         t=table(MSName,readonly=False,ack=False)
@@ -1129,7 +1134,7 @@ class ClassMS():
         UVW=t.getcol("UVW")
         UVW_dt=np.zeros_like(UVW)
         if "UVWDT" not in t.colnames():
-            print>>log,"Adding column UVWDT in %s"%self.MSName
+            log.print("Adding column UVWDT in %s"%self.MSName)
             desc=t.getcoldesc("UVW")
             desc["name"]="UVWDT"
             desc['comment']=desc['comment'].replace(" ","_")
@@ -1138,14 +1143,14 @@ class ClassMS():
         # # #######################
         # LTimes=np.sort(np.unique(times))
         # for iTime,ThisTime in enumerate(LTimes):
-        #     print iTime,LTimes.size
+        #     print(iTime,LTimes.size)
         #     ind=np.where(times==ThisTime)[0]
         #     UVW_dt[ind]=MS.Give_dUVW_dt(times[ind],A0[ind],A1[ind])
         # # #######################
         
         na=MS.na
-        pBAR= ProgressBar('white', width=50, block='=', empty=' ',Title=" Calc dUVW/dt ", HeaderSize=10,TitleSize=13)
-        pBAR.render(0, '%4i/%i' % (0,na))
+        pBAR= ProgressBar(Title=" Calc dUVW/dt ")
+        pBAR.render(0,na)
         for ant0 in range(na):
             for ant1 in range(ant0,MS.na):
                 if ant0==ant1: continue
@@ -1160,10 +1165,10 @@ class ClassMS():
                 UVW_dt[ind[0:-1]]=UVWs_dt0
                 UVW_dt[ind[-1]]=UVWs_dt0[-1]
             intPercent = int(100 * (ant0+1) / float(na))
-            pBAR.render(intPercent, '%4i/%i' % (ant0+1, na))
+            pBAR.render(ant0+1, na)
                     
     
-        print>>log,"Writing in column UVWDT"
+        log.print("Writing in column UVWDT")
         t.putcol("UVWDT",UVW_dt)
         t.close()
     

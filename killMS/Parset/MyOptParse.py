@@ -19,12 +19,15 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 #!/usr/bin/env python
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import collections
 import optparse as OptParse
-import PrintOptParse
-import ReadCFG
+from . import PrintOptParse
+from . import ReadCFG
 
-import ClassPrint
+from . import ClassPrint
 from killMS.Other import ModColor
 from killMS.Other.logo import report_version
 #global Parset
@@ -104,7 +107,7 @@ class MyOptParse():
 
     def Print(self,RejectGroup=[]):
         P=ClassPrint.ClassPrint(HW=50)
-        print ModColor.Str(" Selected Options:")
+        print(ModColor.Str(" Selected Options:"))
     
         for Group,V in self.DefaultDict.items():
             Skip=False
@@ -116,7 +119,7 @@ class MyOptParse():
                 GroupTitle=self.DicoGroupDesc[Group]
             except:
                 GroupTitle=Group
-            print ModColor.Str(GroupTitle,col="green")
+            print(ModColor.Str(GroupTitle,col="green"))
     
             option_list=self.DefaultDict[Group]
             for oname in option_list:
@@ -125,7 +128,7 @@ class MyOptParse():
                 if True:#V!="":
                     if V=="": V="''"
                     P.Print(oname,V)
-            print
+            print()
 
 
 

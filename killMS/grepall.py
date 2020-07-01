@@ -19,6 +19,9 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 #!/usr/bin/python
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import os
 import sys
@@ -27,9 +30,9 @@ import sys
 if __name__=="__main__":
     name=sys.argv[1]
     typein=sys.argv[2]
-    print sys.argv
+    print(sys.argv)
     strin='grep -r "%s" --include=*.%s .'%(name,typein)
-    print strin
+    print(strin)
     os.system(strin)
 
 

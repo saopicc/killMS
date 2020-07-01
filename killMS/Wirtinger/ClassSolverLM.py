@@ -18,6 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import numpy as np
 from killMS.Array import NpShared
 from killMS.Predict.PredictGaussPoints_NumExpr5 import ClassPredict
@@ -26,7 +29,7 @@ from killMS.Data import ClassVisServer
 #from Sky import ClassSM
 from killMS.Array import ModLinAlg
 from killMS.Other import ClassTimeIt
-from killMS.Array.Dot import NpDotSSE
+#from killMS.Array.Dot import NpDotSSE
 from killMS.Wirtinger.ClassJacobianAntenna import ClassJacobianAntenna
 
 class ClassSolverLM(ClassJacobianAntenna):
@@ -100,7 +103,19 @@ class ClassSolverLM(ClassJacobianAntenna):
 
         Ga=self.GiveSubVecGainAnt(Gains)
 
-        f=(self.DicoData["flags_flat"]==0)
+
+        if self.DoCompress:
+            flags_key="flags_flat_avg"
+            data_key="data_flat_avg"
+            if self.DoMergeStations:
+                flags_key="flags_flat_avg_merged"
+                data_key="data_flat_avg_merged"
+        else:
+            flags_key="flags_flat"
+            data_key="data_flat"
+            
+        f=(self.DicoData[flags_key]==0)
+        
         # ind=np.where(f)[0]
         # if self.iAnt==56:
         #     print ind.size/float(f.size),np.abs(Gains[self.iAnt,0,0,0])
@@ -115,7 +130,9 @@ class ClassSolverLM(ClassJacobianAntenna):
         #     return Ga.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),None,{"std":-1.,"max":-1.,"kapa":None}
 
 
-        z=self.DicoData["data_flat"]#self.GiveDataVec()
+        z=self.DicoData[data_key]#self.GiveDataVec()
+        
+
         self.CalcJacobianAntenna(Gains)
         T.timeit("CalcJacobianAntenna")
         self.PrepareJHJ_LM()
@@ -127,7 +144,8 @@ class ClassSolverLM(ClassJacobianAntenna):
         Jx=self.J_x(Ga)
         T.timeit("Jx")
         zr=z-Jx
-        zr[self.DicoData["flags_flat"]]=0
+
+        zr[self.DicoData[flags_key]]=0
         T.timeit("resid")
 
         # JH_z_0=np.load("LM.npz")["JH_z"]
@@ -207,4 +225,6 @@ class ClassSolverLM(ClassJacobianAntenna):
         T.timeit("rest")
         # print self.iAnt,np.mean(x1),x1.size,ind.size
 
-        return dx.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),None,InfoNoise
+        xout=dx.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y))
+        # print self.iAnt,xout.ravel()
+        return xout,None,InfoNoise

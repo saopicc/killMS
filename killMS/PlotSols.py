@@ -19,6 +19,9 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 #!/usr/bin/env python
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import optparse
 import sys
@@ -27,7 +30,7 @@ from killMS.Other import logo
 from killMS.Other import ModColor
 from DDFacet.Other import logger
 log=logger.getLogger("killMS")
-logger.itsLog.logger.setLevel(logger.logging.CRITICAL)
+#logger.itsLog.logger.setLevel(logger.logging.CRITICAL)
 
 sys.path=[name for name in sys.path if not(("pyrap" in name)&("/usr/local/lib/" in name))]
 
@@ -41,12 +44,13 @@ sys.path=[name for name in sys.path if not(("pyrap" in name)&("/usr/local/lib/" 
 
 
 if "nocol" in sys.argv:
-    print "nocol"
+    print("nocol")
     ModColor.silent=1
+    
 if "nox" in sys.argv:
     import matplotlib
     matplotlib.use('agg')
-    print ModColor.Str(" == !NOX! ==")
+    print(ModColor.Str(" == !NOX! =="))
 
 import time
 import os

@@ -18,7 +18,16 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
-import ConfigParser
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+import six
+
+if six.PY3:
+    import configparser
+else:
+    import ConfigParser as configparser
+    
 from collections import OrderedDict
 
 def test():
@@ -92,7 +101,7 @@ class Parset():
     
 
     def Read(self):
-        config = ConfigParser.ConfigParser(dict_type=OrderedDict)
+        config = configparser.ConfigParser(dict_type=OrderedDict)
         config.optionxform = str
         L=config.read(self.File)
         self.Success=True

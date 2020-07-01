@@ -20,6 +20,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 #!/usr/bin/env python
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import optparse
 import pickle
 import numpy as np
@@ -60,7 +64,7 @@ class ClassMergeSols():
 
 
     def CheckConformity(self):
-        print>>log,"  Checking solution conformity"
+        log.print("  Checking solution conformity")
         for iSol in range(1,self.NSolsFile):
             C0=np.allclose(self.ListJonesSols[0].t0,self.ListJonesSols[iSol].t0)
             C1=np.allclose(self.ListJonesSols[0].t1,self.ListJonesSols[iSol].t1)
@@ -71,7 +75,7 @@ class ClassMergeSols():
                 raise RuntimeError("Only merging in frequency")
 
     def SortInFreq(self):
-        print>>log,"  Sorting in frequency"
+        log.print("  Sorting in frequency")
         ListCentralFreqs=[np.mean(DicoSols["FreqDomains"]) for DicoSols in self.ListDictSols]
         indSort=np.argsort(ListCentralFreqs)
         self.ListDictSols=[self.ListDictSols[iSort] for iSort in indSort]
@@ -83,7 +87,7 @@ class ClassMergeSols():
         if np.max(np.abs(DFs[1::]-DFs[0:-1]))>1e-5:
             raise RuntimeError("Solutions don't have the same width")
         self.df=DFs.ravel()[0]
-        print>>log,"  Solution channel width is %f MHz for each solution file"%(self.df/1e6)
+        log.print("  Solution channel width is %f MHz for each solution file"%(self.df/1e6))
         f0=f0s.min()
         f1=f1s.max()
         NFreqsOut=(f1-f0)/self.df
@@ -95,7 +99,7 @@ class ClassMergeSols():
         self.FreqDomainsOut[:,1]=f0+self.df+np.arange(self.NFreqsOut)*self.df
 
     def NormMatrices(self,G):
-        print>>log,"  Normalising Jones matrices (to antenna 0)"
+        log.print("  Normalising Jones matrices (to antenna 0)")
         nt,nch,na,nd,_,_=G.shape
         for ich in range(nch):
             #print "%i,%i"%(ich,nch)
@@ -111,7 +115,7 @@ class ClassMergeSols():
     def FilterOutliers(self,Sigma):
         G=self.DicoOut['Sols']["G"]
         nt,nf,na,nd,_,_=G.shape
-        print>>log,"Filtering out outliers using a sigma of %f"%Sigma
+        log.print("Filtering out outliers using a sigma of %f"%Sigma)
         Ga=np.abs(G)
         N=np.zeros((na,nd),np.float32)
         NMask=np.zeros((na,nd),np.float32)
@@ -128,13 +132,13 @@ class ClassMergeSols():
                 N[iAnt,iDir]=Gas.size
                 NMask[iAnt,iDir]=indt.size
             
-            print>>log,"  [Dir %2i]  Filtered %5.2f%% of points"%(iDir,100.*np.sum(NMask[iDir])/float(np.sum(N[iDir])))
+            log.print("  [Dir %2i]  Filtered %5.2f%% of points"%(iDir,100.*np.sum(NMask[iDir])/float(np.sum(N[iDir]))))
         
 
                 
     def MakeDicoMerged(self):
         
-        print>>log,"  Merging solutions in frequency"
+        log.print("  Merging solutions in frequency")
         NTimes=self.ListJonesSols[0].t0.size
         ListNFreqs=[DictSols["FreqDomains"].shape[0] for DictSols in self.ListDictSols]
 
@@ -156,7 +160,7 @@ class ClassMergeSols():
         SolsOut=SolsOut.view(np.recarray)
         SolsOut.t0=Sols0.t0
         SolsOut.t1=Sols0.t1
-        print>>log,"Output Solution shape: %s"%(str(SolsOut.G.shape))
+        log.print("Output Solution shape: %s"%(str(SolsOut.G.shape)))
         
         Mask=np.ones(SolsOut.G.shape,np.int16)
         ArrayMSNames=np.zeros((NFreqsOut,),"|S200")
@@ -171,7 +175,7 @@ class ClassMergeSols():
             SolsOut.G[:,iFreq:iFreq+ThisNFreq,:,:,:,:]=ThisG
             Mask[:,iFreq:iFreq+ThisNFreq]=0
 
-            print>>log, "Freq Channels: %s"%str(np.mean(self.ListDictSols[iSol]["FreqDomains"],axis=1).ravel().tolist())
+            log.print( "Freq Channels: %s"%str(np.mean(self.ListDictSols[iSol]["FreqDomains"],axis=1).ravel().tolist()))
 
             if "MSName" in self.ListDictSols[iSol].keys():
                 ArrayMSNames[iFreq]=self.ListDictSols[iSol]["MSName"]
@@ -187,7 +191,7 @@ class ClassMergeSols():
 
     def Save(self,FileOut):
         if not ".npz" in FileOut: FileOut+=".npz"
-        print>>log,"  Saving interpolated solutions in: %s"%FileOut
+        log.print("  Saving interpolated solutions in: %s"%FileOut)
         np.savez(FileOut,**self.DicoOut)
 
 
@@ -225,9 +229,9 @@ def main(options=None):
         raise RuntimeError("No files found")
 
 
-    print>>log, "Running Merge on the following SolsFile:"
+    log.print( "Running Merge on the following SolsFile:")
     for SolsName in ListSolsFile:
-        print>>log, "  %s"%SolsName
+        log.print( "  %s"%SolsName)
     CM=ClassMergeSols(ListSolsFile)
     CM.MakeDicoMerged()
     if options.SigmaFilterOutliers:

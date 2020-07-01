@@ -1,11 +1,14 @@
 #!/usr/bin/env python
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import optparse
 import pickle
 
 import numpy as np
 import pylab
 from pyrap.tables import table
-import Array.ModLinAlg
+from killMS import Array.ModLinAlg
 from DDFacet.Other import logger
 log = logger.getLogger("AQWeight")
 from killMS.Data import ClassMS
@@ -14,10 +17,10 @@ APP=None
 from DDFacet.Other.AsyncProcessPool import APP, WorkerProcessError
 from DDFacet.Other import Multiprocessing
 from DDFacet.Other import ModColor
-import Weights.W_DiagBL
-import Weights.W_AntFull
-import Weights.W_Jones
-import Weights.W_Imag
+from killMS import Weights.W_DiagBL
+from killMS import Weights.W_AntFull
+from killMS import Weights.W_Jones
+from killMS import Weights.W_Imag
 
 def read_options():
     desc="""Run MCMC """
@@ -53,9 +56,9 @@ class AQW():
 
         self.MS0=ClassMS.ClassMS(self.ListMSName[0],Col=self.DataCol,DoReadData=False,ReadUVWDT=False)
 
-        print>>log, "Running reweighting on the following MSNames:"
+        log.print( "Running reweighting on the following MSNames:")
         for MSName in self.ListMSName:
-            print>>log, "  %s"%MSName
+            log.print( "  %s"%MSName)
 
         self.Normalise=False
         self.DictName="DATA"
@@ -80,7 +83,7 @@ class AQW():
 
     def LoadNextMS(self):
         if self.iCurrentMS==len(self.ListMSName):
-            print>>log,"Reached end of MSList"
+            log.print("Reached end of MSList")
             return False
         MSName=self.ListMSName[self.iCurrentMS]
         self.MS=ClassMS.ClassMS(MSName,Col=self.DataCol,DoReadData=False,ReadUVWDT=False)
@@ -90,12 +93,12 @@ class AQW():
         f=None
         
         if self.DoNeedVisibilities:
-            print>>log,"Reading data column %s"%self.DataCol
+            log.print("Reading data column %s"%self.DataCol)
             d=t.getcol(self.DataCol)
             
-            print>>log,"Reading model column %s"%self.PredictCol
+            log.print("Reading model column %s"%self.PredictCol)
             p=t.getcol(self.PredictCol)
-            print>>log,"Reading flags"
+            log.print("Reading flags")
             f=t.getcol("FLAG")
             f[:,:,1]=1
             f[:,:,2]=1
@@ -119,7 +122,7 @@ class AQW():
         self.DATA["freqs"]=self.MS.ChanFreq.ravel()
         self.DATA["uvw"]=t.getcol("UVW")
         
-        print>>log,"Reading other stuff"
+        log.print("Reading other stuff")
         self.DATA["A0"]=t.getcol("ANTENNA1")
         self.DATA["times"]=t.getcol("TIME")
         self.DATA["times_unique"]=np.sort(np.unique(self.DATA["times"]))
@@ -127,17 +130,17 @@ class AQW():
         self.DATA["W"]=t.getcol("IMAGING_WEIGHT")#np.zeros_like(t.getcol("IMAGING_WEIGHT"))
         #self.DATA["N"]=np.zeros_like(self.DATA["W"])
         self.na=self.DATA["na"]=np.max(self.DATA["A0"])+1
-        print>>log,"There are %i antennas"%self.na
+        log.print("There are %i antennas"%self.na)
         t.close()
 
-        print>>log, "Add weight column %s"%self.WeightCol
+        log.print( "Add weight column %s"%self.WeightCol)
         self.MS.AddCol(self.WeightCol,ColDesc="IMAGING_WEIGHT")
         return True
 
 
 
     def killWorkers(self):
-        print>>log, ModColor.Str("Killing workers")
+        log.print( ModColor.Str("Killing workers"))
         APP.terminate()
         APP.shutdown()
         Multiprocessing.cleanupShm()
@@ -158,7 +161,7 @@ class AQW():
     def Write(self):
 
         
-        print>>log,"Writting weights in column %s"%self.WeightCol
+        log.print("Writting weights in column %s"%self.WeightCol)
         t=table(self.ListMSName[self.iCurrentMS],ack=False,readonly=False)
         t.putcol(self.WeightCol,self.DATA["W"])
         t.close()

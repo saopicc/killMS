@@ -18,6 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import numpy as np
 from killMS.Array import NpShared
 
@@ -30,17 +33,19 @@ from DDFacet.Other import logger
 log=logger.getLogger("ClassWirtingerSolver")
 from killMS.Other import ModColor
 
-from killMS.Other.progressbar import ProgressBar
+#from killMS.Other.progressbar import ProgressBar
+from DDFacet.Other.progressbar import ProgressBar
             
 #from Sky.PredictGaussPoints_NumExpr import ClassPredict
 from killMS.Other import ClassTimeIt
 from killMS.Other import Counter
-from ClassEvolve import ClassModelEvolution
+from .ClassEvolve import ClassModelEvolution
 import time
 from itertools import product as ItP
 from killMS.Wirtinger import ClassSolverLM
 from killMS.Wirtinger import ClassSolverEKF
 from killMS.Wirtinger import ClassSolPredictMachine
+from SkyModel.Sky import ClassSM
 
 def test():
 
@@ -149,6 +154,28 @@ class ClassWirtingerSolver():
             self.InitPlotGraph()
         self.PolMode=PolMode
 
+        self.SM_Compress=None
+        if (self.GD["Compression"]["CompressionMode"] is not None) or self.GD["Compression"]["CompressionDirFile"]:
+            if self.GD["Compression"]["CompressionMode"] and self.GD["Compression"]["CompressionMode"].lower()=="auto":
+                self.SM_Compress=ClassSM.ClassSM(SM)
+            else:
+                ClusterCat=np.load(self.GD["Compression"]["CompressionDirFile"])
+                ClusterCat=ClusterCat.view(np.recarray)
+                SourceCat=np.zeros((ClusterCat.shape[0],),dtype=[('Name', 'S200'), ('ra', '<f8'), ('dec', '<f8'), ('Sref', '<f8'),
+                                                                 ('I', '<f8'), ('Q', '<f8'), ('U', '<f8'), ('V', '<f8'), ('RefFreq', '<f8'),
+                                                                 ('alpha', '<f8'), ('ESref', '<f8'), ('Ealpha', '<f8'), ('kill', '<i8'),
+                                                                 ('Cluster', '<i8'), ('Type', '<i8'), ('Gmin', '<f8'), ('Gmaj', '<f8'),
+                                                                 ('Gangle', '<f8'), ('Select', '<i8'), ('l', '<f8'), ('m', '<f8'), ('Exclude', '<i8')])
+                SourceCat=SourceCat.view(np.recarray)
+                SourceCat.ra[:]=ClusterCat.ra[:]
+                SourceCat.dec[:]=ClusterCat.dec[:]
+                SourceCat.RefFreq[:]=100.e6
+                SourceCat.I[:]=1.
+                SourceCat.Cluster=np.arange(ClusterCat.shape[0])
+                np.save("dummy.npy",SourceCat)
+                self.SM_Compress=ClassSM.ClassSM("dummy.npy")
+                
+                
         if self.PolMode=="IDiag":
             npolx=2
             npoly=1
@@ -175,7 +202,7 @@ class ClassWirtingerSolver():
         self.rmsFromData=None
         self.SM.ApparentSumI=None
         # if SolverType=="KAFCA":
-        #     print>>log, ModColor.Str("niter=%i"%self.NIter)
+        #     log.print( ModColor.Str("niter=%i"%self.NIter))
         #     #self.NIter=1
         self.EvolvePStepStart,EvolvePStep=evP_StepStart,evP_Step
         self.CounterEvolveP=Counter.Counter(EvolvePStep)
@@ -220,7 +247,7 @@ class ClassWirtingerSolver():
         #     NoiseInfo[:,:,:,2]=Kapa[:,:,:]
             
         #     StatFile="NoiseInfo.npy"
-        #     print>>log, "Saving statistics in %s"%StatFile
+        #     log.print( "Saving statistics in %s"%StatFile)
         #     np.save(StatFile,NoiseInfo)
 
 
@@ -273,7 +300,7 @@ class ClassWirtingerSolver():
         # self.G+=np.random.randn(*self.G.shape)*1.#sigP
         
         NSols=np.max([1,int(1.5*round(self.VS.MS.DTh/(self.VS.TVisSizeMin/60.)))])
-        print "Nsols",NSols,self.VS.MS.DTh,self.VS.TVisSizeMin/60.
+        #print "Nsols",NSols,self.VS.MS.DTh,self.VS.TVisSizeMin/60.
         
 
         self.SolsArray_t0=np.zeros((NSols,),dtype=np.float64)
@@ -465,12 +492,12 @@ class ClassWirtingerSolver():
 
         Linv=Linv**2
 
-        print>>log, "Using Tikhonov regularisation [LambdaTk = %.2f]"%self.GD["CohJones"]["LambdaTk"]
-        #print>>log, "  there are %i free directions"%indFree.size
-        print>>log, "  minimum inverse L-matrix is %.3f"%Linv.min()
-        print>>log, "  maximum inverse L-matrix is %.3f"%Linv.max()
+        log.print( "Using Tikhonov regularisation [LambdaTk = %.2f]"%self.GD["CohJones"]["LambdaTk"])
+        #log.print( "  there are %i free directions"%indFree.size)
+        log.print( "  minimum inverse L-matrix is %.3f"%Linv.min())
+        log.print( "  maximum inverse L-matrix is %.3f"%Linv.max())
         # for iDir in range(NDir):
-        #     print>>log, "  #%i : [%7.3fJy x %7.7f] %7.3f Jy -> %7.7f "%(iDir,SumI[iDir],self.SM.AbsMeanBeamAnt[iDir],SumIApp[iDir],Linv.flat[iDir])
+        #     log.print( "  #%i : [%7.3fJy x %7.7f] %7.3f Jy -> %7.7f "%(iDir,SumI[iDir],self.SM.AbsMeanBeamAnt[iDir],SumIApp[iDir],Linv.flat[iDir]))
 
         NpShared.ToShared("%sLinv"%self.IdSharedMem,Linv)
         NpShared.ToShared("%sX0"%self.IdSharedMem,X0)
@@ -482,13 +509,13 @@ class ClassWirtingerSolver():
 
         NDone,nt=self.pBarProgress
         intPercent=int(100*  NDone / float(nt))
-        self.pBAR.render(intPercent, '%4i/%i' % (NDone,nt))
+        self.pBAR.render(NDone,nt)
 
         if DATA=="EndOfObservation":
-            print>>log, ModColor.Str("Reached end of data")
+            log.print( ModColor.Str("Reached end of data"))
             return "EndOfObservation"
         if DATA=="EndChunk":
-            print>>log, ModColor.Str("Reached end of data chunk")
+            log.print( ModColor.Str("Reached end of data chunk"))
             return "EndChunk"
         if DATA=="AllFlaggedThisTime":
             #print "AllFlaggedThisTime"
@@ -504,10 +531,10 @@ class ClassWirtingerSolver():
         self.rms=-1
         if (self.TypeRMS=="Resid")&(self.rmsFromData!=None):
             self.rms=self.rmsFromData
-            #print>>log," rmsFromDataJacobAnt: %s"%self.rms
+            #log.print(" rmsFromDataJacobAnt: %s"%self.rms)
         elif self.rmsFromExt!=None:
             self.rms=self.rmsFromExt
-            #print>>log," rmsFromExt: %s"%self.rms
+            #log.print(" rmsFromExt: %s"%self.rms)
         elif (self.TypeRMS=="GlobalData"):
             nrow,nch,_=DATA["flags"].shape
             if self.VS.MS.NPolOrig==4:
@@ -521,7 +548,7 @@ class ClassWirtingerSolver():
                 
             self.rms=np.sqrt(np.sum((w[Fpol==0]*np.absolute(Dpol[Fpol==0]))**2.0)/np.sum(w[Fpol==0]**2.0))/np.sqrt(2.)
             # print
-            # print>>log," rmsFromGlobalData: %s"%self.rms
+            # log.print(" rmsFromGlobalData: %s"%self.rms)
             # print DATA["data"].shape
             # print
         else:
@@ -537,7 +564,7 @@ class ClassWirtingerSolver():
 
     def InitPlotGraph(self):
         from Plot import Graph
-        print>>log,"Initialising plots ..." 
+        log.print("Initialising plots ..." )
         import pylab
         #pylab.ion()
         self.Graph=Graph.ClassMplWidget(self.VS.MS.na)
@@ -568,7 +595,7 @@ class ClassWirtingerSolver():
         ListAntSolve=[i for i in range(self.VS.MS.na) if not(i in self.VS.FlagAntNumber)]
         self.DicoJM={}
 
-        self.pBAR= ProgressBar('white', width=50, block='=', empty=' ',Title="Solving ", HeaderSize=10,TitleSize=13)
+        self.pBAR= ProgressBar(Title="Solving ")
         if not(self.DoPBar): self.pBAR.disable()
         NDone=0
         T0,T1=self.VS.TimeMemChunkRange_sec[0],self.VS.TimeMemChunkRange_sec[1]
@@ -595,7 +622,7 @@ class ClassWirtingerSolver():
             T.timeit("read data")
 
             if SkipMode:
-                print iiCount
+                print(iiCount)
                 iiCount+=1
                 if iiCount<585: continue
             
@@ -629,13 +656,13 @@ class ClassWirtingerSolver():
             T.timeit("Class")
             
             if (self.CounterEvolveP())&(self.SolverType=="KAFCA")&(self.iCurrentSol>self.EvolvePStepStart):
-                print "Evolve0"
+                print("Evolve0")
                 for (iAnt,iChanSol) in ItP(ListAntSolve,range(self.VS.NChanJones)):
                     JM=self.DicoJM[(iAnt,iChanSol)]
                     self.evP[iChanSol,iAnt]=JM.CalcMatrixEvolveCov(self.G[iChanSol],self.P[iChanSol],self.rms)
 
             elif (self.SolverType=="KAFCA")&(self.iCurrentSol<=self.EvolvePStepStart):
-                print "Evolve1"
+                print("Evolve1")
                 for (iAnt,iChanSol) in ItP(ListAntSolve,range(self.VS.NChanJones)):
                     JM=self.DicoJM[(iAnt,iChanSol)]
                     self.evP[iChanSol,iAnt]=JM.CalcMatrixEvolveCov(self.G[iChanSol],self.P[iChanSol],self.rms)
@@ -663,7 +690,7 @@ class ClassWirtingerSolver():
                             x,_,InfoNoise=JM.doLMStep(self.G[iChanSol])
                             T.timeit("LMStep")
                             if LMIter==self.NIter-1: 
-                                print "!!!!!!!!!!!!!!!!!!!"
+                                print("!!!!!!!!!!!!!!!!!!!")
                                 # self.G.fill(1)
                                 JM.PredictOrigFormat(self.G[iChanSol])
                                 T.timeit("PredictOrig")
@@ -683,7 +710,7 @@ class ClassWirtingerSolver():
                             #     stop
 
                             #print self.G.ravel()[0::5],self.Q.ravel()[0::5],self.evP.ravel()[0::5],self.P.ravel()[0::5]
-                            print self.evP.ravel()[0::5]
+                            print(self.evP.ravel()[0::5])
                             if NDone==1: stop
                             x,P,InfoNoise=JM.doEKFStep(self.G[iChanSol],self.P[iChanSol],self.evP[iChanSol],self.rms)
                             if LMIter==self.NIter-1: JM.PredictOrigFormat(self.G[iChanSol])
@@ -791,7 +818,7 @@ class ClassWirtingerSolver():
 
         
 
-        #Parallel=False
+        Parallel=True
 
 
         ListAntSolve=[i for i in range(self.VS.MS.na) if not(i in self.VS.FlagAntNumber)]
@@ -818,7 +845,8 @@ class ClassWirtingerSolver():
         for ii in range(NCPU):
              
             W=WorkerAntennaLM(work_queue, result_queue,self.SM,self.PolMode,self.SolverType,self.IdSharedMem,
-                              ConfigJacobianAntenna=self.ConfigJacobianAntenna,GD=self.GD,JonesToVisChanMapping=JonesToVisChanMapping)#,args=(e,))
+                              ConfigJacobianAntenna=self.ConfigJacobianAntenna,GD=self.GD,SM_Compress=self.SM_Compress,
+                              JonesToVisChanMapping=JonesToVisChanMapping)#,args=(e,))
             workerlist.append(W)
             if Parallel:
                 workerlist[ii].start()
@@ -832,10 +860,10 @@ class ClassWirtingerSolver():
         nt=int(DT/float(dt))+1
         
 
-        self.pBAR= ProgressBar('white', width=50, block='=', empty=' ',Title="Solving ", HeaderSize=10,TitleSize=13)
+        self.pBAR= ProgressBar(Title="Solving ")
         if not(self.DoPBar): self.pBAR.disable()
         #self.pBAR.disable()
-        self.pBAR.render(0, '%4i/%i' % (0,nt))
+        self.pBAR.render(0,nt)
         NDone=0
         iiCount=0
         ThisG=self.G.copy()
@@ -858,7 +886,7 @@ class ClassWirtingerSolver():
             #np.save("lastSols",sols)
             #print "done"
             if SkipMode:
-                print iiCount
+                print(iiCount)
                 iiCount+=1
                 if iiCount<10: continue
 
@@ -982,11 +1010,15 @@ class ClassWirtingerSolver():
                                                "DicoClusterDirs":self.VS.DicoClusterDirs_Descriptor}
                         if LMIter!=0:
                             SharedDicoDescriptors["SharedAntennaVis"]=Dico_SharedDicoDescriptors[iAnt]
-
-                        work_queue.put((iAnt,iChanSol,DoCalcEvP[iChanSol],tm,self.rms,DoEvP[iChanSol],DoFullPredict,
+                        # print("iAnt",iAnt)
+                        # print(SharedDicoDescriptors)
+                        work_queue.put((iAnt,iChanSol,
+                                        DoCalcEvP[iChanSol],tm,
+                                        self.rms,DoEvP[iChanSol],
+                                        DoFullPredict,
                                         SharedDicoDescriptors))
-                        #work_queue.put((iAnt,iChanSol,DoCalcEvP,tm,self.rms,DoEvP,DoFullPredict,
-                        #                self.VS.SharedVisDescriptor,self.VS.PreApplyJones))
+                        # work_queue.put((iAnt,iChanSol,DoCalcEvP[iChanSol],tm,self.rms,DoEvP[iChanSol],
+                        #                 DoFullPredict))
      
                     if not Parallel:
                         for ii in range(NCPU):
@@ -1096,7 +1128,7 @@ class ClassWirtingerSolver():
                             pylab.plot(np.abs(ThisG[iChanSol,AntPlot].flatten())+sig,color="black",ls="--")
                             pylab.plot(np.abs(ThisG[iChanSol,AntPlot].flatten())-sig,color="black",ls="--")
                         pylab.title("Channel=%i"%iChanSol)
-                        pylab.ylim(0,2)
+                        #pylab.ylim(0,2)
                         pylab.draw()
                         pylab.show(False)
                         pylab.pause(0.1)
@@ -1202,13 +1234,15 @@ class WorkerAntennaLM(multiprocessing.Process):
     def __init__(self,
                  work_queue,
                  result_queue,SM,PolMode,SolverType,IdSharedMem,ConfigJacobianAntenna=None,
-                 GD=None,JonesToVisChanMapping=None):
+                 GD=None,JonesToVisChanMapping=None,SM_Compress=None):
         multiprocessing.Process.__init__(self)
         self.work_queue = work_queue
         self.result_queue = result_queue
         self.kill_received = False
         self.exit = multiprocessing.Event()
         self.SM=SM
+
+        self.SM_Compress=SM_Compress
         self.PolMode=PolMode
         self.SolverType=SolverType
         self.IdSharedMem=IdSharedMem
@@ -1243,17 +1277,23 @@ class WorkerAntennaLM(multiprocessing.Process):
         if self.GD["ImageSkyModel"]["BaseImageName"]!="" and self.GD["SkyModel"]["SkyModelCol"] is None:
             self.PM.InitGM(self.SM)
 
+        self.PM_Compress=None
+        if self.SM_Compress:
+            self.PM_Compress=ClassPredict(Precision="S",
+                                          DoSmearing=self.GD["SkyModel"]["Decorrelation"],
+                                          IdMemShared=self.IdSharedMem,
+                                          LExp=LExp,LSinc=LSinc)
+            
     def shutdown(self):
         self.exit.set()
     def run(self):
 
         while not self.kill_received:# and not self.work_queue.qsize()==0:
-            #print "haha"
-            iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get()#True,2)
+            #iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get(True,2)
+            iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get()
+            # print(iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors)
             # try:
-
             #     iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get()
-                
             # except:
             #     break
             # #self.e.wait()
@@ -1272,7 +1312,12 @@ class WorkerAntennaLM(multiprocessing.Process):
             elif self.SolverType=="KAFCA":
                 SolverClass=ClassSolverEKF.ClassSolverEKF
 
-            JM=SolverClass(self.SM,iAnt,PolMode=self.PolMode,PM=self.PM,IdSharedMem=self.IdSharedMem,GD=self.GD,
+            JM=SolverClass(self.SM,iAnt,PolMode=self.PolMode,
+                           PM=self.PM,
+                           PM_Compress=self.PM_Compress,
+                           SM_Compress=self.SM_Compress,
+                           IdSharedMem=self.IdSharedMem,
+                           GD=self.GD,
                            ChanSel=(ch0,ch1),
                            SharedDicoDescriptors=SharedDicoDescriptors,
                            **dict(self.ConfigJacobianAntenna))
@@ -1320,7 +1365,17 @@ class WorkerAntennaLM(multiprocessing.Process):
                 #     u,s,v=np.linalg.svd(M)
                 #     if np.min(s)<0: stop
 
-                self.result_queue.put([iAnt,iChanSol,x,None,None,InfoNoise,0.,JM.SharedDicoDescriptors["SharedAntennaVis"]])
+                L=[iAnt,
+                   iChanSol,
+                   x,
+                   None,
+                   None,
+                   InfoNoise,
+                   0.,
+                   JM.SharedDicoDescriptors["SharedAntennaVis"]]
+
+                
+                self.result_queue.put(L)
 
             elif self.SolverType=="KAFCA":
                 #T.disable()
@@ -1381,4 +1436,20 @@ class WorkerAntennaLM(multiprocessing.Process):
                     Pout=Pa
 
                 DT=time.time()-T0
-                self.result_queue.put([iAnt,iChanSol,x,Pout,rmsFromData,InfoNoise,DT,JM.SharedDicoDescriptors["SharedAntennaVis"]])
+                # L=[iAnt,
+                #    iChanSol,
+                #    x,
+                #    Pout,
+                #    rmsFromData,
+                #    InfoNoise,
+                #    DT]
+                # self.result_queue.put(L)
+                
+                self.result_queue.put([iAnt,
+                                       iChanSol,
+                                       x,
+                                       Pout,
+                                       rmsFromData,
+                                       InfoNoise,
+                                       DT,
+                                       JM.SharedDicoDescriptors["SharedAntennaVis"]])

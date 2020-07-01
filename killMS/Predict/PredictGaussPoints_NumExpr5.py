@@ -18,6 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import numpy as np
 from pyrap.tables import table
 from killMS.Data.ClassMS import ClassMS
@@ -25,16 +28,21 @@ from killMS.Data.ClassMS import ClassMS
 from killMS.Other.ClassTimeIt import ClassTimeIt
 import numexpr as ne
 #import ModNumExpr
-from killMS.Other.progressbar import ProgressBar
+
 import multiprocessing
 from killMS.Array import ModLinAlg
 from killMS.Array import NpShared
 #ne.evaluate=lambda sin: ("return %s"%sin)
 import time
-try:
-    from killMS.Predict import predict 
-except ImportError:
-    from killMS.cbuild.Predict import predict 
+
+import six
+if six.PY2:
+    try:
+        from killMS.Predict import predict27 as predict
+    except ImportError:
+        from killMS.cbuild.Predict import predict27 as predict
+elif six.PY3:
+    from killMS.cbuild.Predict import predict3x as predict 
 
 from killMS.Other import findrms
 from killMS.Other import ModColor
@@ -409,10 +417,10 @@ class ClassPredict():
         
         A0=DicoData["A0"]
         A1=DicoData["A1"]
-        if ApplyJones!=None:
-            print "!!!!!",ApplyJones.shape
-            print "!!!!!",ApplyJones.shape
-            print "!!!!!",ApplyJones.shape
+        if ApplyJones is not None:
+            #print "!!!!!",ApplyJones.shape
+            #print "!!!!!",ApplyJones.shape
+            #print "!!!!!",ApplyJones.shape
             na,NDir,_=ApplyJones.shape
             Jones=np.swapaxes(ApplyJones,0,1)
             Jones=Jones.reshape((NDir,na,4))
@@ -659,7 +667,9 @@ class ClassPredict():
             # print "Facet %i: take model image %s"%(iFacet,ModelSharedMemName)
             # ModelIm = NpShared.GiveArray(ModelSharedMemName)
 
-            ModelIm = NpShared.UnPackListArray("%sGrids"%self.IdSharedMem)[iFacet]
+            #ModelIm = NpShared.UnPackListArray("%sGrids"%self.IdSharedMem)[iFacet]
+            ModelIm = SM._model_dict[iFacet]["FacetGrid"]
+            
             ChanMapping=np.int32(SM.ChanMappingDegrid)
             # print ChanMapping
             

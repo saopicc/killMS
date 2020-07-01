@@ -20,6 +20,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 #!/usr/bin/env python
 #turtles
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import sys,os
 import time
@@ -52,12 +55,12 @@ SaveFile="last_killMS.obj"
 
 
 if "nocol" in sys.argv:
-    print "nocol"
+    print("nocol")
     ModColor.silent=1
 if "nox" in sys.argv:
     import matplotlib
     matplotlib.use('agg')
-    print ModColor.Str(" == !NOX! ==")
+    print(ModColor.Str(" == !NOX! =="))
     
 
 IdSharedMem = None
@@ -70,7 +73,7 @@ from killMS.Parset import ReadCFG, MyOptParse
 parset_path = os.path.join(os.path.dirname(killMS.__file__), "Parset", "DefaultParset.cfg")
     #
     # os.path.join(os.environ["KILLMS_DIR"], "killMS", "killMS", "Parset", "DefaultParset.cfg")
-print parset_path
+print(parset_path)
 if not os.path.exists(parset_path):
     raise IOError("Default parset could not be located in {0:s}. Check your installation".format(parset_path))
 Parset = ReadCFG.Parset(parset_path)
@@ -94,7 +97,6 @@ def read_options():
     OP.add_option('FreePredictColName',type="str",help=' . Default is %default')
     OP.add_option('FreePredictGainColName',type="str",help=' . Default is %default')
     OP.add_option('Parallel',type="int",help=' . Default is %default')
-    
 
 
     OP.OptionGroup("* Sky catalog related options","SkyModel")
@@ -121,6 +123,11 @@ def read_options():
     OP.add_option('RemoveDDFCache')
     OP.add_option('FilterNegComp')
 
+    OP.OptionGroup("* Compression","Compression")
+    OP.add_option('CompressionMode',help='Only Auto implemented. Default is %default')
+    OP.add_option('CompressionDirFile',help='Directions in which to do the compression. Default is %default')
+    OP.add_option('MergeStations',help='Merge stations into a single one. Use --MergeStations=[CS] to merge all core stations. Default is %default')
+    
     OP.OptionGroup("* Data Selection","DataSelection")
     OP.add_option('UVMinMax',help='Baseline length selection in km. For example UVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default')
     OP.add_option('ChanSlice',type="str",help='Channel selection option. Default is %default')
@@ -132,7 +139,7 @@ def read_options():
 
     OP.OptionGroup("* Beam Options","Beam")
     OP.add_option('BeamModel',type="str",help='Apply beam model, Can be set to: None/LOFAR. Default is %default')
-    OP.add_option('BeamAt',type="str",help='Apply beam model, Can be set to: None/LOFAR. Default is %default')
+    OP.add_option('BeamAt',type="str",help='Where to apply beam model, Can be set to: tessel/facet. Default is %default')
     OP.add_option('LOFARBeamMode',type="str",help='LOFAR beam mode. "AE" sets the beam model to Array and Element. Default is %default')
     OP.add_option('DtBeamMin',type="float",help='Estimate the beam every this interval [in minutes]. Default is %default')
     OP.add_option('CenterNorm',type="str",help='Normalise the beam at the field center. Default is %default')
@@ -142,6 +149,7 @@ def read_options():
     OP.add_option('FITSLAxis',type="str",help='L axis of FITS beam. Default is %default')
     OP.add_option('FITSMAxis',type="str",help='L axis of FITS beam. Default is %default')
     OP.add_option('FITSFeed',type="str",help='FITS feed. xy or rl or None to take from MS. Default is %default')
+    OP.add_option('FITSFeedSwap',type="int",default=0,help='Swap the feeds around. Default is %default')
     OP.add_option('FITSVerbosity',type="int",help='Verbosity of debug messages. Default is %default')
 
     OP.OptionGroup("* PreApply killMS Solutions","PreApply")
@@ -162,6 +170,8 @@ def read_options():
     OP.add_option('DoBar',help=' Draw progressbar. Default is %default',default="1")
     OP.add_option('NCPU',type="int",help='Number of cores to use. Default is %default ')
     OP.add_option('NThread',type="int",help='Number of OMP/BLAS/etc. threads to use. Default is %default ', default=1)
+    OP.add_option('UpdateWeights',help='Update imaging weights. Default is %default',default="1")
+    OP.add_option('DebugPdb',type="int",help='Drop into Pdb on error. Default is %default')
 
     # OP.OptionGroup("* PreApply Solution-related options","PreApply")
     # OP.add_option('PreApplySols')#,help='Solutions to apply to the data before solving.')
@@ -178,7 +188,6 @@ def read_options():
     OP.add_option('SkipExistingSols',type="int",help='Skipping existing solutions if they exist. Default is %default')
     OP.add_option('SolsDir',type="str",help='Directory in which to save the solutions. Default is %default')
     
-
 
     OP.OptionGroup("* Solver options","Solvers")
     OP.add_option('SolverType',help='Name of the solver to use (CohJones/KAFCA)')
@@ -223,62 +232,65 @@ def read_options():
     # #optcomplete.autocomplete(opt)
 
     # options, arguments = opt.parse_args()
-    MyPickle.Save(OP,SaveFile)
+    import killMS.Other.MyPickle
+    killMS.Other.MyPickle.Save(OP,SaveFile)
     return OP
     
 
 def main(OP=None,MSName=None):
 
-    print>>log,"Checking system configuration:"
+    log.print("Checking system configuration:")
     # check for SHM size
     ram_size = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
     shm_stats = os.statvfs('/dev/shm')
-    shm_size = shm_stats.f_bsize * shm_stats.f_favail
+    shm_size = shm_stats.f_bsize * shm_stats.f_bavail
     shm_avail = shm_size / float(ram_size)
 
     if shm_avail < 0.6:
-        print>>log, ModColor.Str("""WARNING: max shared memory size is only {:.0%} of total RAM size.
+        log.print( ModColor.Str("""WARNING: max shared memory size is only {:.0%} of total RAM size.
             This can cause problems for large imaging jobs. A setting of 90% is recommended for 
             DDFacet and killMS. If your processes keep failing with SIGBUS or "bus error" messages,
             it is most likely for this reason. You can change the memory size by running
                 $ sudo mount -o remount,size=90% /dev/shm
             To make the change permanent, edit /etc/defaults/tmps, and add a line saying "SHM_SIZE=90%".
-            """.format(shm_avail))
+            """.format(shm_avail)))
     else:
-        print>>log, "  Max shared memory size is {:.0%} of total RAM size".format(shm_avail)
+        log.print( "  Max shared memory size is {:.0%} of total RAM size".format(shm_avail))
 
     try:
-        output = subprocess.check_output(["/sbin/sysctl", "vm.max_map_count"])
-        max_map_count = int(output.strip().rsplit(" ", 1)[-1])
+        output = subprocess.check_output(["/sbin/sysctl", "vm.max_map_count"],universal_newlines=True)
     except Exception:
-        print>>log, ModColor.Str("""WARNING: /sbin/sysctl vm.max_map_count failed. Unable to check this setting.""")
+        log.print( ModColor.Str("""WARNING: /sbin/sysctl vm.max_map_count failed. Unable to check this setting."""))
         max_map_count = None
+    else:
+        max_map_count = int(output.strip().rsplit(" ", 1)[-1])
 
     if max_map_count is not None:
         if max_map_count < 500000:
-            print>>log, ModColor.Str("""WARNING: sysctl vm.max_map_count = {}. 
+            log.print( ModColor.Str("""WARNING: sysctl vm.max_map_count = {}. 
             This may be too little for large DDFacet and killMS jobs. If you get strange "file exists" 
             errors on /dev/shm, them try to bribe, beg or threaten your friendly local sysadmin into 
             setting vm.max_map_count=1000000 in /etc/sysctl.conf.
-                """.format(max_map_count))
+                """.format(max_map_count)))
         else:
-            print>>log, "  sysctl vm.max_map_count = {}".format(max_map_count)
+            log.print( "  sysctl vm.max_map_count = {}".format(max_map_count))
 
     # check for memory lock limits
     import resource
     msoft, mhard = resource.getrlimit(resource.RLIMIT_MEMLOCK)
     if msoft >=0 or mhard >=0:
-        print>>log,ModColor.Str("""WARNING: your system has a limit on memory locks configured.
+        log.print(ModColor.Str("""WARNING: your system has a limit on memory locks configured.
             This may possibly slow down killMS performance. You can try removing the limit by running
                 $ ulimit -l unlimited
             If this gives an "operation not permitted" error, you can try to bribe, beg or threaten 
             your friendly local sysadmin into doing
                 # echo "*        -   memlock     unlimited" >> /etc/security/limits.conf
-        """)
+        """))
 
 
     if OP==None:
-        OP = MyPickle.Load(SaveFile)
+        import killMS.Other.MyPickle
+        OP = killMS.Other.MyPickle.Load(SaveFile)
 
         
     options=OP.GiveOptionObject()
@@ -324,7 +336,7 @@ def main(OP=None,MSName=None):
         options.MSName=MSName
 
     if options.MSName=="":
-        print "Give an MS name!"
+        print("Give an MS name!")
         exit()
 
     # if options.SkyModel=="":
@@ -338,7 +350,7 @@ def main(OP=None,MSName=None):
     dt=float(options.dt)
 
     if dt > TChunk*60:
-        print>>log,ModColor.Str("dt=%.2fm larger than TChunk. Setting dt=%.2fm"%(dt, TChunk*60))
+        log.print(ModColor.Str("dt=%.2fm larger than TChunk. Setting dt=%.2fm"%(dt, TChunk*60)))
         dt = TChunk*60
 
     dtInit=float(options.InitLMdt)
@@ -398,20 +410,20 @@ def main(OP=None,MSName=None):
     APP=None
     GD=OP.DicoConfig
     if GD["SkyModel"]["SkyModel"]!="":
-        print>>log,ModColor.Str("Predict Mode: Catalog")
+        log.print(ModColor.Str("Predict Mode: Catalog"))
         PredictMode="Catalog"
     elif GD["SkyModel"]["SkyModelCol"] is not None:
-        print>>log,ModColor.Str("Predict Mode: using culumn %s"%options.SkyModelCol)
+        log.print(ModColor.Str("Predict Mode: using column %s"%options.SkyModelCol))
         PredictMode="Column"
     else:
-        print>>log,ModColor.Str("Predict Mode: Image")
+        log.print(ModColor.Str("Predict Mode: Image"))
         PredictMode="Image"
         BaseImageName=GD["ImageSkyModel"]["BaseImageName"]
 
         # ParsetName=GD["ImageSkyModel"]["ImagePredictParset"]
         # if ParsetName=="":
         #     ParsetName="%s.parset"%BaseImageName
-        # print>>log,"Predict Mode: Image, with Parset: %s"%ParsetName
+        # log.print("Predict Mode: Image, with Parset: %s"%ParsetName)
         # GDPredict=ReadCFG.Parset(ParsetName).DicoPars
 
         if options.DicoModel!="" and options.DicoModel is not None:
@@ -422,12 +434,12 @@ def main(OP=None,MSName=None):
         ## OMS: only import it here, because otherwise is pulls in numpy too early, before I can fix
         ## the OPENBLAS threads thing
         import DDFacet.Other.MyPickle
-        print>>log,"Reading model file %s"%FileDicoModel
+        log.print("Reading model file %s"%FileDicoModel)
         GDPredict=DDFacet.Other.MyPickle.Load(FileDicoModel)["GD"]
         GDPredict["Output"]["Mode"] = "Predict"
         if not "StokesResidues" in GDPredict["Output"].keys():
-            print>>log,ModColor.Str("Seems like the DicoModel was build by an older version of DDF")
-            print>>log,ModColor.Str("   ... updating keywords")
+            log.print(ModColor.Str("Seems like the DicoModel was built by an older version of DDF"))
+            log.print(ModColor.Str("   ... updating keywords"))
             GDPredict["Output"]["StokesResidues"]="I"
 
         GDPredict["Data"]["MS"]=options.MSName
@@ -457,15 +469,15 @@ def main(OP=None,MSName=None):
             GDPredict["Facets"]["DiamMin"]=options.MinFacetSize
 
         if options.Decorrelation is not None and options.Decorrelation is not "":
-            print>>log,ModColor.Str("Overwriting DDF parset decorrelation mode [%s] with kMS option [%s]"\
-                                    %(GDPredict["RIME"]["DecorrMode"],options.Decorrelation))
+            log.print(ModColor.Str("Overwriting DDF parset decorrelation mode [%s] with kMS option [%s]"\
+                                    %(GDPredict["RIME"]["DecorrMode"],options.Decorrelation)))
             GDPredict["RIME"]["DecorrMode"]=options.Decorrelation
         else:
             GD["SkyModel"]["Decorrelation"]=DoSmearing=options.Decorrelation=GDPredict["RIME"]["DecorrMode"]
-            print>>log,ModColor.Str("Decorrelation mode will be [%s]" % DoSmearing)
+            log.print(ModColor.Str("Decorrelation mode will be [%s]" % DoSmearing))
 
         # if options.Decorrelation != GDPredict["DDESolutions"]["DecorrMode"]:
-        #     print>>log,ModColor.Str("Decorrelation modes for DDFacet and killMS are different [%s vs %s respectively]"\
+        #     log.print(ModColor.Str("Decorrelation modes for DDFacet and killMS are different [%s vs %s respectively]"\)
         #                             %(GDPredict["DDESolutions"]["DecorrMode"],options.Decorrelation))
         # GDPredict["DDESolutions"]["DecorrMode"]=options.Decorrelation
         
@@ -515,13 +527,13 @@ def main(OP=None,MSName=None):
                                      WTUV=options.WTUV,
                                      GD=GD)
 
-    print VS.MS
+    print(VS.MS)
     if not(WriteColName in VS.MS.ColNames):
-        print>>log, "Column %s not in MS "%WriteColName
+        log.print( "Column %s not in MS "%WriteColName)
         VS.MS.AddCol(WriteColName,LikeCol="DATA")
         #exit()
     if not(ReadColName in VS.MS.ColNames):
-        print>>log, "Column %s not in MS "%ReadColName
+        log.print( "Column %s not in MS "%ReadColName)
         exit()
 
     VS_PredictCol=None
@@ -581,10 +593,11 @@ def main(OP=None,MSName=None):
                            "ResolutionRad":ResolutionRad,
                            "LambdaKF":options.LambdaKF,
                            "LambdaLM":options.LambdaLM,
-                           "DoReg":False,#True,
+                           "DoReg":False,
                            "gamma":1,
                            "AmpQx":.5,
-                           "PrecisionDot":options.PrecisionDot}
+                           "PrecisionDot":options.PrecisionDot,
+                           "DicoMergeStations":VS.DicoMergeStations}
 
     if (options.SolverType=="KAFCA"):
         NIter=options.NIterKF
@@ -669,7 +682,7 @@ def main(OP=None,MSName=None):
         if Load=="EndOfObservation":
             break
         if Load == "Empty":
-            print>>log, "skipping rest of processing for this chunk"
+            log.print( "skipping rest of processing for this chunk")
             continue
 
 
@@ -690,7 +703,7 @@ def main(OP=None,MSName=None):
 
             
             def SavePredict(ArrayName,FullPredictColName):
-                print>>log, "Writing full predicted data in column %s of %s"%(FullPredictColName,options.MSName)
+                log.print( "Writing full predicted data in column %s of %s"%(FullPredictColName,options.MSName))
                 VS.MS.AddCol(FullPredictColName)
                 PredictData=NpShared.GiveArray("%s%s"%(IdSharedMem,ArrayName))
                 t=VS.MS.GiveMainTable(readonly=False)#table(VS.MS.MSName,readonly=False,ack=False)
@@ -718,10 +731,10 @@ def main(OP=None,MSName=None):
                 SavePredict(ArrayName,FullPredictColName)
 
             if GD["SkyModel"]["FreeFullSub"]:
-                print>>log, "Subtracting free predict from data"
+                log.print( "Subtracting free predict from data")
                 PredictData=NpShared.GiveArray("%s%s"%(IdSharedMem,"PredictedDataGains"))
                 Solver.VS.ThisDataChunk["data"]-=PredictData
-                print>>log, "  save visibilities in %s column"%WriteColName
+                log.print( "  save visibilities in %s column"%WriteColName)
                 t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
                 d=VS.MS.ToOrigFreqOrder(Solver.VS.MS.data)
                 if Solver.VS.MS.NPolOrig==2:
@@ -737,7 +750,7 @@ def main(OP=None,MSName=None):
             # ##########
             # FileName="%skillMS.%s.sols.npz"%(reformat.reformat(options.MSName),SolsName)
 
-            # print>>log, "Save Solutions in file: %s"%FileName
+            # log.print( "Save Solutions in file: %s"%FileName)
             # Sols=Solver.GiveSols()
             # StationNames=np.array(Solver.VS.MS.StationNames)
             # np.savez(FileName,
@@ -762,7 +775,7 @@ def main(OP=None,MSName=None):
                     FileName="%s/killMS.%s.sols.npz"%(DirName,SolsName)
                     
 
-                print>>log, "Save Solutions in file: %s"%FileName
+                log.print( "Save Solutions in file: %s"%FileName)
                 Sols=Solver.GiveSols()
                 SolsSave=Sols
                 ClusterCat=SM.ClusterCat
@@ -815,7 +828,7 @@ def main(OP=None,MSName=None):
                     os.makedirs(DirName)
                 FileName="%s/killMS.%s.sols.npz"%(DirName,ExtSolsName)
 
-            print>>log,"Loading external solution file: %s"%FileName
+            log.print("Loading external solution file: %s"%FileName)
             DicoLoad=np.load(FileName)
             Sols=DicoLoad["Sols"]
             Sols=Sols.view(np.recarray)
@@ -864,7 +877,7 @@ def main(OP=None,MSName=None):
             JonesMerged["JonesH"]=ModLinAlg.BatchH(JonesMerged["Jones"])
 
             if ("Resid" in options.ClipMethod) or ("DDEResid" in options.ClipMethod):
-                print>>log, ModColor.Str("Clipping bad solution-based data ... ",col="green")
+                log.print( ModColor.Str("Clipping bad solution-based data ... ",col="green"))
                 
 
                 nrows=Solver.VS.ThisDataChunk["times"].size
@@ -875,7 +888,7 @@ def main(OP=None,MSName=None):
                 ################
                 # #PM.GiveCovariance(Solver.VS.ThisDataChunk,Jones)
 
-                print>>log,"   Compute residual data"
+                log.print("   Compute residual data")
                 Predict=PM.predictKernelPolCluster(Solver.VS.ThisDataChunk,Solver.SM,ApplyTimeJones=JonesMerged)
                 Solver.VS.ThisDataChunk["resid"]=Solver.VS.ThisDataChunk["data"]-Predict
                 Weights=Solver.VS.ThisDataChunk["W"]
@@ -884,7 +897,7 @@ def main(OP=None,MSName=None):
                 if "Resid" in options.ClipMethod:
                     Diff=Solver.VS.ThisDataChunk["resid"]
                     std=np.std(Diff[Solver.VS.ThisDataChunk["flags"]==0])
-                    print>>log, "   Estimated standard deviation in the residual data: %f"%std
+                    log.print( "   Estimated standard deviation in the residual data: %f"%std)
 
                     ThresHold=5.
                     cond=(np.abs(Diff)>ThresHold*std)
@@ -892,14 +905,14 @@ def main(OP=None,MSName=None):
                     Weights[ind]=0.
 
                 if "DDEResid" in options.ClipMethod:
-                    print>>log,"   Compute corrected residual data in all direction"
+                    log.print("   Compute corrected residual data in all directions")
                     PM.GiveCovariance(Solver.VS.ThisDataChunk,JonesMerged,SM)
 
 
 
                 Weights=Solver.VS.ThisDataChunk["W"]
                 NNotFlagged=np.count_nonzero(Weights)
-                print>>log,"   Set weights to Zero for %5.2f %% of data"%(100*float(Weights.size-NNotFlagged)/(Weights.size))
+                log.print("   Set weights to Zero for %5.2f %% of data"%(100*float(Weights.size-NNotFlagged)/(Weights.size)))
 
                 # ################
                 # T=ClassTimeIt.ClassTimeIt()
@@ -912,19 +925,21 @@ def main(OP=None,MSName=None):
                 # Weights=Weights.reshape((Weights.size,1))*np.ones((1,4))
                 # Solver.VS.MS.Weights[:]=Weights[:]
 
-                print>>log, "  Writing in IMAGING_WEIGHT column "
-                VS.MS.AddCol("IMAGING_WEIGHT",ColDesc="IMAGING_WEIGHT")
-                t=Solver.VS.MS.GiveMainTable(readonly=False) # table(Solver.VS.MS.MSName,readonly=False,ack=False)
-                WAllChans=t.getcol("IMAGING_WEIGHT",Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
-                WAllChans[:,Solver.VS.MS.ChanSlice]=VS.MS.ToOrigFreqOrder(Weights)
-                t.putcol("IMAGING_WEIGHT",WAllChans,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
-                t.close()
-
-                
+                if options.UpdateWeights:
+                    log.print( "  Writing in IMAGING_WEIGHT column ")
+                    VS.MS.AddCol("IMAGING_WEIGHT",ColDesc="IMAGING_WEIGHT")
+                    t=Solver.VS.MS.GiveMainTable(readonly=(options.UpdateWeights==0)) # table(Solver.VS.MS.MSName,readonly=False,ack=False)
+                    WAllChans=t.getcol("IMAGING_WEIGHT",Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                    WAllChans[:,Solver.VS.MS.ChanSlice]=VS.MS.ToOrigFreqOrder(Weights)
+                    t.putcol("IMAGING_WEIGHT",WAllChans,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                    t.close()
+                else:
+                    log.print("  Imaging weight update not requested, skipping")
+                    WallChans=None
 
 
             if "ResidAnt" in options.ClipMethod and options.SubOnly==0:
-                print>>log,"Compute weighting based on antenna-selected residual"
+                log.print("Compute weighting based on antenna-selected residual")
                 DomainMachine.AddVisToJonesMapping(Jones,times,freqs)
                 nrows=Solver.VS.ThisDataChunk["times"].size
                 Solver.VS.ThisDataChunk["W"]=np.ones((nrows,Solver.VS.MS.ChanFreq.size),np.float64)
@@ -933,34 +948,40 @@ def main(OP=None,MSName=None):
                 Weights=Solver.VS.ThisDataChunk["W"]
                 # Weights/=np.mean(Weights)
                 
-                print>>log, "  Writing in IMAGING_WEIGHT column "
-                VS.MS.AddCol("IMAGING_WEIGHT",ColDesc="IMAGING_WEIGHT")
-                t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
-                WAllChans=t.getcol("IMAGING_WEIGHT",Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
-                WAllChans[:,Solver.VS.MS.ChanSlice]=VS.MS.ToOrigFreqOrder(Weights)
+                if options.UpdateWeights:
+                    log.print( "  Writing in IMAGING_WEIGHT column ")
+                    VS.MS.AddCol("IMAGING_WEIGHT",ColDesc="IMAGING_WEIGHT")
+                    t=Solver.VS.MS.GiveMainTable(readonly=(options.UpdateWeights==0))#table(Solver.VS.MS.MSName,readonly=False,ack=False)
+                    WAllChans=t.getcol("IMAGING_WEIGHT",Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                    WAllChans[:,Solver.VS.MS.ChanSlice]=VS.MS.ToOrigFreqOrder(Weights)
 
-                Med=np.median(WAllChans)
-                Sig=1.4826*np.median(np.abs(WAllChans-Med))
-                Cut=Med+5*Sig
-                WAllChans[WAllChans>Cut]=Cut
-                
-                t.putcol("IMAGING_WEIGHT",WAllChans,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
-                t.close()
-
-                ID=Solver.VS.MS.ROW0
-                if options.SolsDir is None:
-                    FileName="%skillMS.%s.Weights.%i.npy"%(reformat.reformat(options.MSName),SolsName,ID)
+                    Med=np.median(WAllChans)
+                    Sig=1.4826*np.median(np.abs(WAllChans-Med))
+                    Cut=Med+5*Sig
+                    WAllChans[WAllChans>Cut]=Cut
+                    t.putcol("IMAGING_WEIGHT",WAllChans,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                    t.close()
                 else:
-                    _MSName=reformat.reformat(options.MSName).split("/")[-2]
-                    DirName=os.path.abspath("%s%s"%(reformat.reformat(options.SolsDir),_MSName))
-                    if not os.path.isdir(DirName):
-                        os.makedirs(DirName)
-                    FileName="%s/killMS.%s.Weights.%i.npy"%(DirName,SolsName,ID)
-                print>>log, "  Saving weights in file %s"%FileName
-                np.save(FileName,WAllChans)
+                    log.print("  Imaging weight update not requested, skipping")
+                    WAllChans=None
+
+                if WAllChans is not None:
+                    ID=Solver.VS.MS.ROW0
+                    if options.SolsDir is None:
+                        FileName="%skillMS.%s.Weights.%i.npy"%(reformat.reformat(options.MSName),SolsName,ID)
+                    else:
+                        _MSName=reformat.reformat(options.MSName).split("/")[-2]
+                        DirName=os.path.abspath("%s%s"%(reformat.reformat(options.SolsDir),_MSName))
+                        if not os.path.isdir(DirName):
+                            os.makedirs(DirName)
+                        FileName="%s/killMS.%s.Weights.%i.npy"%(DirName,SolsName,ID)
+                    log.print( "  Saving weights in file %s"%FileName)
+                    np.save(FileName,WAllChans)
+                else:
+                    log.print("  Weights not computed so not saving them")
                 
             if DoSubstract:
-                print>>log, ModColor.Str("Subtract sources ... ",col="green")
+                log.print( ModColor.Str("Subtract sources ... ",col="green"))
                 if options.SubOnly==0:
                     SM.SelectSubCat(SM.SourceCat.kill==1)
 
@@ -970,7 +991,7 @@ def main(OP=None,MSName=None):
 
                 # PredictColName=options.PredictColName
                 # if PredictColName!="":
-                #     print>>log, "Writing predicted data in column %s of %s"%(PredictColName,MSName)
+                #     log.print( "Writing predicted data in column %s of %s"%(PredictColName,MSName))
                 #     VS.MS.AddCol(PredictColName)
                 #     t=Solver.VS.MS.GiveMainTable(readonly=False)#table(VS.MS.MSName,readonly=False,ack=False)
                 #     t.putcol(PredictColName,VS.MS.ToOrigFreqOrder(PredictData),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
@@ -992,7 +1013,7 @@ def main(OP=None,MSName=None):
                 SM.RestoreCat()
 
             if DoApplyCal:
-                print>>log, ModColor.Str("Apply calibration in direction: %i"%options.ApplyToDir,col="green")
+                log.print( ModColor.Str("Apply calibration in direction: %i"%options.ApplyToDir,col="green"))
                 G=JonesMerged["Jones"]
                 GH=JonesMerged["JonesH"]
                 if not("A" in options.ApplyMode):
@@ -1007,7 +1028,7 @@ def main(OP=None,MSName=None):
             # Solver.VS.MS.SaveVis(Col=WriteColName)
 
             if (DoSubstract|DoApplyCal):
-                print>>log, "Save visibilities in %s column"%WriteColName
+                log.print( "Save visibilities in %s column"%WriteColName)
                 t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
                 nrow_ThisChunk=Solver.VS.MS.ROW1-Solver.VS.MS.ROW0
                 d=np.zeros((nrow_ThisChunk,VS.MS.NChanOrig,4),Solver.VS.ThisDataChunk["data"].dtype)
@@ -1031,7 +1052,7 @@ def main(OP=None,MSName=None):
     NpShared.DelAll(IdSharedMem)
 
 def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2,ConfigJacobianAntenna,GD):
-    print>>log, ModColor.Str("Initialising Kalman filter with Levenberg-Maquardt estimate")
+    log.print( ModColor.Str("Initialising Kalman filter with Levenberg-Maquardt estimate"))
     dtInit=float(options.InitLMdt)
     VSInit=ClassVisServer.ClassVisServer(options.MSName,ColName=options.InCol,
                                          TVisSizeMin=dtInit,
@@ -1127,7 +1148,7 @@ def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2,ConfigJacobianAnte
     indFlag=np.where((rmsAnt-Mean_rmsAnt)/Mean_rmsAnt>Thr)[0]
     if indFlag.size>0:
         Stations=np.array(SolverInit.VS.MS.StationNames)
-        print>>log, "Antenna %s have abnormal noise (Numbers %s)"%(str(Stations[indFlag]),str(indFlag))
+        log.print( "Antenna %s have abnormal noise (Numbers %s)"%(str(Stations[indFlag]),str(indFlag)))
     
     indTake=np.where((rmsAnt-Mean_rmsAnt)/Mean_rmsAnt<Thr)[0]
      
@@ -1137,7 +1158,7 @@ def GiveNoise(options,DicoSelectOptions,IdSharedMem,SM,PM,PM2,ConfigJacobianAnte
     GG=np.mean(np.mean(np.mean(np.abs(G[0,:]),axis=0),axis=0),axis=0)
     GGprod= np.dot( np.dot(GG,np.ones((2,2),float)*TrueMeanRMSAnt) , GG.T)
     rms=np.mean(GGprod)
-    print>>log, "Estimated rms: %f Jy"%(rms)
+    log.print( "Estimated rms: %f Jy"%(rms))
     return rms,SolverInit.G
 
 
@@ -1169,23 +1190,26 @@ if __name__=="__main__":
     #os.system('clear')
 
     logo.print_logo()
-    sys.excepthook = _exc_handler
-
-
+    if len(sys.argv)<2:
+        raise RuntimeError('At least one parset name or option must be supplied')
+        
     ParsetFile=sys.argv[1]
 
     TestParset=ReadCFG.Parset(ParsetFile)
     if TestParset.Success==True:
         #global Parset
         Parset=TestParset
-        print >>log,ModColor.Str("Successfully read %s parset"%ParsetFile)
+        log.print(ModColor.Str("Successfully read %s parset"%ParsetFile))
 
     OP=read_options()
     options=OP.GiveOptionObject()
 
     if options.DoBar=="0":
-        from killMS.Other.progressbar import ProgressBar
+        from DDFacet.Other.progressbar import ProgressBar
         ProgressBar.silent=1
+
+    if options.DebugPdb==1:
+        sys.excepthook = _exc_handler
 
     
     #main(OP=OP)
@@ -1202,9 +1226,9 @@ if __name__=="__main__":
             ll=l.replace("\n","")
             MSName.append(ll)
         lMS=MSName
-        print>>log, "In batch mode, running killMS on the following MS:"
+        log.print( "In batch mode, running killMS on the following MS:")
         for MS in lMS:
-            print>>log, "  %s"%MS
+            log.print( "  %s"%MS)
     else:
         lMS=options.MSName
 
@@ -1230,14 +1254,14 @@ if __name__=="__main__":
                             os.makedirs(DirName)
                         FileName="%s/killMS.%s.sols.npz"%(DirName,SolsName)
 
-                    print>>log,"Checking %s"%FileName
+                    log.print("Checking %s"%FileName)
                     if os.path.isfile(FileName):
-                        print>>log,ModColor.Str("Solution file %s exist"%FileName)
-                        print>>log,ModColor.Str("   SKIPPING")
+                        log.print(ModColor.Str("Solution file %s exist"%FileName))
+                        log.print(ModColor.Str("   SKIPPING"))
                         continue
 
                 ss="kMS.py %s --MSName=%s"%(BaseParset,MSName)
-                print>>log,"Running %s"%ss
+                log.print("Running %s"%ss)
                 os.system(ss)
                 if options.RemoveDDFCache:
                     os.system("rm -rf %s*ddfcache"%MSName)
@@ -1245,13 +1269,13 @@ if __name__=="__main__":
             main(OP=OP,MSName=MSName)
         toc = time.time()     
         elapsed = toc - tic
-        print>>log, ModColor.Str("Dataset(s) calibrated successfully in " \
+        log.print( ModColor.Str("Dataset(s) calibrated successfully in " \
                                  "{0:02.0f}h{1:02.0f}m{2:02.0f}s".format(
                                  (elapsed // 60) // 60,
                                  (elapsed // 60) % 60,
-                                 elapsed % 60))
+                                 elapsed % 60)))
     except:
-        # print>>log, traceback.format_exc()
+        # log.print( traceback.format_exc())
         if IdSharedMem is not None:
             from killMS.Array import NpShared
             NpShared.DelAll(IdSharedMem)

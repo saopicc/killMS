@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
+from __future__ import print_function
 
 import subprocess
 import os
@@ -29,6 +30,18 @@ from distutils.command.build import build
 from os.path import join as pjoin
 import sys
 
+try:
+    import six
+except ImportError as e:
+    raise ImportError("Six not installed. Please install Python 2.x compatibility package six before running DDFacet install. "
+                        "You should not see this message unless you are not running pip install (19.x) -- run pip install!")
+try:
+    import pybind11
+except ImportError as e:
+    raise ImportError("Pybind11 not installed. Please install C++ binding package pybind11 before running DDFacet install. "
+                        "You should not see this message unless you are not running pip install (19.x) -- run pip install!")
+
+
 pkg='killMS'
 __version__ = "2.7.0.0"
 build_root=os.path.dirname(__file__)
@@ -36,7 +49,14 @@ build_root=os.path.dirname(__file__)
 def backend(compile_options):
 
     if compile_options is not None:
-        print >> sys.stderr, "Compiling extension libraries with user defined options: '%s'"%compile_options
+        print("Compiling extension libraries with user defined options: '%s'"%compile_options, file=sys.stderr)
+    if six.PY3:
+        compile_options += " -DENABLE_PYTHON_2=OFF "
+        compile_options += " -DENABLE_PYTHON_3=ON "
+    elif six.PY2:
+        compile_options += " -DENABLE_PYTHON_2=ON "
+        compile_options += " -DENABLE_PYTHON_3=OFF "
+
     path = pjoin(build_root, pkg, 'cbuild')
     try:
         subprocess.check_call(["mkdir", path])
@@ -91,39 +111,14 @@ def readme():
 def requirements():
     # TODO - same as in latest DDFacet, need to systemically work out what is needed @cyriltasse
     # but this the safest assumption for now
-    requirements = [("nose >= 1.3.7", "nose >= 1.3.7"),
-                    ("Cython >= 0.25.2", "Cython >= 0.25.2"),
-                    ("numpy>=1.15.1", "numpy>=1.15.1"), # Ubuntu 18.04
-                    ("sharedarray @ git+https://gitlab.com/bennahugo/shared-array.git@master", "sharedarray @ git+https://gitlab.com/bennahugo/shared-array.git@master"),
-                    ("Polygon2 >= 2.0.8", "Polygon2 >= 2.0.8"),
-                    ("pyFFTW >= 0.10.4", "pyFFTW >= 0.10.4"),
-                    ("astropy >= 3.0", "astropy >= 2.0.11"),
-                    ("deap >= 1.0.1", "deap >= 1.0.1"),
-                    ("ptyprocess>=0.5", "ptyprocess<=0.5"), #workaround for ipdb on py2
-                    ("ipdb >= 0.10.3", "ipdb <= 0.10.3"),
-                    ("python-casacore <= 3.0.0", "python-casacore <= 3.0.0"),
-                    ("pyephem >= 3.7.6.0", "pyephem >= 3.7.6.0"),
-                    ("numexpr >= 2.6.2", "numexpr >= 2.6.2"),
-                    ("matplotlib >= 2.0.0", "matplotlib >= 2.0.0"),
-                    ("scipy >= 0.16.0", "scipy >= 0.16.0"),
-                    ("astLib >= 0.8.0", "astLib >= 0.8.0"),
-                    ("psutil >= 5.2.2", "psutil >= 5.2.2"),
-                    ("py-cpuinfo >= 3.2.0", "py-cpuinfo >= 3.2.0"),
-                    ("tables >= 3.3.0", "tables >= 3.3.0"),
-                    ("prettytable >= 0.7.2", "prettytable >= 0.7.2"),
-                    ("pybind11 >= 2.2.2", "pybind11 >= 2.2.2"),
-                    ("pyfits >= 3.5", "pyfits >= 3.5"), #kittens dependency, do not remove
-                    ("configparser >= 3.7.1", "configparser >= 3.5.0"),
-                    ("pandas <=0.23.3", "pandas >=0.23.3"),
-                    ("ruamel.yaml >= 0.15.92", "ruamel.yaml >= 0.15.92"),
-                    ("DDFacet >= 0.3.0", "DDFacet >= 0.3.0")] 
+    requirements = [("DDFacet >= 0.5.0", "DDFacet >= 0.3.0")] 
     try:
         import six
-    except ImportError, e:
+    except ImportError as e:
         raise ImportError("Six not installed. Please install Python 2.x compatibility package six before running KillMS install. "
                           "You should not see this message unless you are not running pip install -- run pip install!")
 
-    py3_requirements, py2_requirements = zip(*requirements)
+    py3_requirements, py2_requirements = list(zip(*requirements))
     install_requirements = py2_requirements if six.PY2 else py3_requirements
 
     return install_requirements
@@ -148,7 +143,7 @@ setup(name=pkg,
                 'build': custom_build,
                 'sdist': custom_sdist,
                },
-      python_requires='<3.0',
+      #python_requires='<3.0',
       packages=[pkg],
       install_requires=requirements(),
       include_package_data=True,

@@ -1,3 +1,6 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import numpy as np
 import optparse
 import pickle
@@ -19,8 +22,8 @@ class ClassCovMat():
         for key, value in kwargs.items(): setattr(self, key, value)
         self.DictName="DATA"
         self.TBins=10
-        print>>log,"I am the machine that compute the weights based"
-        print>>log,"  on the (nt x nt)_iAnt:* matrix "
+        log.print("I am the machine that compute the weights based")
+        log.print("  on the (nt x nt)_iAnt:* matrix ")
         
     def giveWeigthParallel(self):
         self.DATA=shared_dict.attach(self.DictName)
@@ -35,7 +38,7 @@ class ClassCovMat():
         APP.awaitJobResults("giveWeigthAnt:*", progress="CalcWeight")
 
     def Finalise(self):
-        print>>log,"Finalising..."
+        log.print("Finalising...")
         nrow,nch,npol=self.DATA["data"].shape 
         ntu=self.DATA["times_unique"].size
         nbl=nrow/ntu

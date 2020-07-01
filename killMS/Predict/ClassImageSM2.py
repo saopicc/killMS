@@ -18,6 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import numpy as np
 from DDFacet.Imager.ClassDeconvMachine import ClassImagerDeconv
 from pyrap.images import image
@@ -27,7 +30,7 @@ from killMS.Other import ModColor
 
 from DDFacet.Other import logger
 log=logger.getLogger("ClassImageSM")
-from killMS.Other.progressbar import ProgressBar
+from DDFacet.Other.progressbar import ProgressBar
 from DDFacet.ToolsDir.GiveEdges import GiveEdges
 #from DDFacet.Imager.ClassModelMachine import ClassModelMachine
 #print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
@@ -56,20 +59,20 @@ class ClassPreparePredict(ClassImagerDeconv):
 
         self.FileDicoModel="%s.DicoModel"%self.BaseImageName
         if self.GD["GDkMS"]["ImageSkyModel"]["DicoModel"] is not None:
-            print>>log,ModColor.Str("Using %s instead of %s"%(self.GD["GDkMS"]["ImageSkyModel"]["DicoModel"],self.FileDicoModel))
+            log.print(ModColor.Str("Using %s instead of %s"%(self.GD["GDkMS"]["ImageSkyModel"]["DicoModel"],self.FileDicoModel)))
             self.FileDicoModel=self.GD["GDkMS"]["ImageSkyModel"]["DicoModel"]
-
+            
         self.ModelImageName="%s.model.fits"%self.BaseImageName
 
         self.VS=VS
 
         if self.GD["CF"]["wmax"]==0:
-            print>>log,"Computing wmax from UVW column"
+            log.print("Computing wmax from UVW column")
             t=table(self.VS.ListMS[0].MSName,ack=False)
             u,v,w=t.getcol("UVW").T
             t.close()
             self.GD["CF"]["wmax"]=np.max(np.abs(w))
-            print>>log,"  found a wmax=%f meters"%self.GD["CF"]["wmax"]
+            log.print("  found a wmax=%f meters"%self.GD["CF"]["wmax"])
             
 
 
@@ -127,12 +130,11 @@ class ClassPreparePredict(ClassImagerDeconv):
             self.MM.CleanMaskedComponants(self.GD["GDkMS"]["ImageSkyModel"]["MaskImage"])
         #self.ModelImage=self.MM.GiveModelImage(np.mean(self.VS.MS.ChanFreq))
         model_freqs=self.VS.FreqBandChannelsDegrid[0]
-        original_freqs=self.VS.FreqBandChannels[0]
-        self.MM.setFreqMachine(original_freqs, model_freqs)
+        # original_freqs=self.VS.FreqBandChannels[0]
+        # self.MM.setFreqMachine(original_freqs, model_freqs)
         ModelImage=self.MM.GiveModelImage(model_freqs)
         
-        print>> log, "model image @%s MHz (min,max) = (%f, %f)" % (
-            str(model_freqs / 1e6), ModelImage.min(), ModelImage.max())
+        log.print( "model image @%s MHz (min,max) = (%f, %f)" % (str(model_freqs / 1e6), ModelImage.min(), ModelImage.max()))
 
         # # From ModelImage
         # print "im!!!!!!!!!!!!!!!!!!!!!!!"
@@ -186,6 +188,22 @@ class ClassPreparePredict(ClassImagerDeconv):
         ClusterCat.ra=NodesCat.ra
         ClusterCat.dec=NodesCat.dec
 
+        NN=ClusterCat.shape[0]
+        Cat=np.zeros((NN,),dtype=[('Name','|S200'),('ra',np.float),('dec',np.float),('Sref',np.float),('I',np.float),('Q',np.float),\
+                                  ('U',np.float),('V',np.float),('RefFreq',np.float),('alpha',np.float),('ESref',np.float),\
+                                  ('Ealpha',np.float),('kill',np.int),('Cluster',np.int),('Type',np.int),('Gmin',np.float),\
+                                  ('Gmaj',np.float),('Gangle',np.float),("Select",np.int),('l',np.float),('m',np.float),
+                                  ("Exclude",bool)])
+        Cat=Cat.view(np.recarray)
+        Cat.RefFreq=1.
+        Cat.ra[:]=ClusterCat.ra
+        Cat.dec[:]=ClusterCat.dec
+        Cat.I[:]=ClusterCat.SumI[:]
+        Cat.Cluster=np.arange(NN)
+        Cat.Sref[:]=ClusterCat.SumI[:]
+        self.SourceCat=Cat
+
+        
         self.DicoImager=self.FacetMachine.DicoImager
         self.ClusterCat=ClusterCat
         self.ClusterCat.SumI=0.
@@ -194,7 +212,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         #ind=np.where(self.ClusterCat.SumI!=0)[0]
         #self.ClusterCat=self.ClusterCat[ind].copy()
         #NFacets=self.ClusterCat.shape[0]
-        #print>>log, "  There are %i non-zero facets"%NFacets
+        #log.print( "  There are %i non-zero facets"%NFacets)
 
         NFacets=len(self.FacetMachine.DicoImager)
         lFacet=np.zeros((NFacets,),np.float32)
@@ -224,7 +242,7 @@ class ClassPreparePredict(ClassImagerDeconv):
             
         #     #self.FacetMachine.SpacialWeigth[iFacet]=NpShared.ToShared("%sSpacialWeight_%3.3i"%(self.IdSharedMem,iFacet),self.FacetMachine.SpacialWeigth[iFacet])
         #     self.FacetMachine.SpacialWeigth[iFacet]=self.FacetMachine._CF[iFacet]["SW"]
-        # print>>log, "  Splitting model image"
+        # log.print( "  Splitting model image")
         # self.BuildGridsParallel()
         self.FacetMachine.BuildFacetNormImage()
         self.FacetMachine.setModelImage(ModelImage)
@@ -236,8 +254,9 @@ class ClassPreparePredict(ClassImagerDeconv):
         NFacets=self.ClusterCat.shape[0]
         self.SM.NDir=self.NDirs
         self.SM.Dirs=self.Dirs
-        print>>log, "  There are %i non-zero directions"%self.SM.NDir
+        log.print( "  There are %i non-zero directions"%self.SM.NDir)
         self.SM.ClusterCat=self.ClusterCat
+        self.SM.SourceCat=self.SourceCat
         self.SM.DicoJonesDirToFacet=self.DicoJonesDirToFacet
         self.SM.GD=self.FacetMachine.GD
         self.SM.DicoImager=self.FacetMachine.DicoImager
@@ -251,7 +270,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.SM.Path={"cf_dict_path":self.FacetMachine._CF.path}
         #self.SM.ChanMappingDegrid=self.VS.FreqBandChannelsDegrid[0]
         self.SM.ChanMappingDegrid=self.VS.DicoMSChanMappingDegridding[0]
-
+        self.SM._model_dict=self.FacetMachine._model_dict
         # import pprint
         # pprint.pprint(self.DicoJonesDirToFacet)
 
@@ -264,7 +283,7 @@ class ClassPreparePredict(ClassImagerDeconv):
 
 
     def PrepareGridMachinesMapping(self):
-        print>>log, "  Make the solution-directions to gridmachine mapping"
+        log.print( "  Make the solution-directions to gridmachine mapping")
         ListGrid=[]
 
 
@@ -308,7 +327,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         Keep=np.zeros((self.NDirs,),bool)
         for iDirJones in sorted(DicoJonesDirToFacet.keys()):
             if self.DicoJonesDirToFacet[iDirJones]["SumFlux"]==0:
-                print>>log,"  Remove Jones direction %i"%(iDirJones)
+                log.print("  Remove Jones direction %i"%(iDirJones))
             else:
                 D[iDirNew]=self.DicoJonesDirToFacet[iDirJones]
                 iDirNew+=1
@@ -320,13 +339,14 @@ class ClassPreparePredict(ClassImagerDeconv):
 
         self.Dirs=self.DicoJonesDirToFacet.keys()
         self.NDirs=len(self.Dirs)
-        
-        NpShared.PackListArray("%sGrids"%(self.IdSharedMem),ListGrid)
+
+        # NpShared.PackListArray("%sGrids"%(self.IdSharedMem),ListGrid)
+            
         return True
 
 
       # def BuildGridsParallel(self):
-      #   print>>log, "  Building the grids"
+      #   log.print( "  Building the grids")
       #   ListGrid=[]
 
 
@@ -438,7 +458,7 @@ class ClassPreparePredict(ClassImagerDeconv):
       #   Keep=np.zeros((self.NDirs,),bool)
       #   for iDirJones in sorted(DicoJonesDirToFacet.keys()):
       #       if self.DicoJonesDirToFacet[iDirJones]["SumFlux"]==0:
-      #           print>>log,"  Remove Jones direction %i"%(iDirJones)
+      #           log.print("  Remove Jones direction %i"%(iDirJones))
       #       else:
       #           D[iDirNew]=self.DicoJonesDirToFacet[iDirJones]
       #           iDirNew+=1

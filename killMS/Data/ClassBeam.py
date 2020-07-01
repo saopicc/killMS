@@ -18,10 +18,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 
 import numpy as np
-import ClassMS
+from . import ClassMS
 from pyrap.tables import table
 from DDFacet.Other import logger
 log=logger.getLogger("ClassBeam")
@@ -37,7 +40,7 @@ class ClassBeam():
         self.DtBeamMin=self.GD["Beam"]["DtBeamMin"]
 
     def GiveMeanBeam(self):
-        print>>log, "Calculate mean beam for covariance estimate ... "
+        log.print( "Calculate mean beam for covariance estimate ... ")
         t=table(self.MSName,ack=False)
         times=t.getcol("TIME")
         t.close()
@@ -48,7 +51,7 @@ class ClassBeam():
         return AbsMean
     # def SetLOFARBeam(self,LofarBeam):
     #     self.BeamMode,self.DtBeamMin,self.BeamRAs,self.BeamDECs = LofarBeam
-    #     print>>log, "Set LOFARBeam in %s Mode"%self.BeamMode
+    #     log.print( "Set LOFARBeam in %s Mode"%self.BeamMode)
     #     useArrayFactor=("A" in self.BeamMode)
     #     useElementBeam=("E" in self.BeamMode)
     #     self.MS.LoadSR(useElementBeam=useElementBeam,useArrayFactor=useArrayFactor)
@@ -63,7 +66,7 @@ class ClassBeam():
         elif self.GD["Beam"]["BeamModel"]=="FITS":
             self.MS.LoadFITSBeam()
 
-        #print>>log, "  Update beam [Dt = %3.1f min] ... "%self.DtBeamMin
+        #log.print( "  Update beam [Dt = %3.1f min] ... "%self.DtBeamMin)
         DtBeamSec=self.DtBeamMin*60
         tmin,tmax=times[0],times[-1]
         TimesBeam=np.arange(tmin,tmax,DtBeamSec).tolist()

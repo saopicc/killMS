@@ -19,6 +19,9 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 #!/usr/bin/env python
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import optparse
 import sys
@@ -160,7 +163,7 @@ class PlotMachine():
                 for iAnt,Name in enumerate(StationNames):
                     if options.FlagStations in Name:
                         indStations[iAnt]=-1
-                        print>>log,"Flagging station %s"%Name
+                        log.print("Flagging station %s"%Name)
                     else:
                         StationNamesSel.append(Name)
                 indStations=indStations[indStations!=-1]
@@ -219,7 +222,7 @@ class PlotMachine():
 
         self.Mask=None
         if 'MaskedSols' in SolsDico.keys():
-            print>>log,"Some solutions are masked"
+            log.print("Some solutions are masked")
             M=SolsDico['MaskedSols']
             # Sols.G[M==1]=np.nan
             self.Mask=M

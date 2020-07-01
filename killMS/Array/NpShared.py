@@ -18,6 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 #import sharedarray.SharedArray as SharedArray
 import SharedArray
 from killMS.Other import ModColor
@@ -35,7 +38,8 @@ def ToShared(Name,A):
     try:
         a=SharedArray.create(Name,A.shape,dtype=A.dtype)
     except:
-        print>>log, ModColor.Str("File %s exists, delete it..."%Name)
+        log.print( ModColor.Str("File %s exists, delete it..."%Name))
+        #DelArray(Name.decode("byte"))
         DelArray(Name)
         a=SharedArray.create(Name,A.shape,dtype=A.dtype)
 
@@ -53,7 +57,7 @@ def ListNames():
     T=ClassTimeIt.ClassTimeIt("   SharedToDico")
     
     ll=list(SharedArray.list())
-    return [AR.name for AR in ll]
+    return [(AR.name).decode("ascii") for AR in ll]
     
 def DelAll(key=None):
     ll=ListNames()
@@ -72,12 +76,12 @@ def GiveArray(Name):
 
 def DicoToShared(Prefix,Dico,DelInput=False):
     DicoOut={}
-    print>>log, ModColor.Str("DicoToShared: start [prefix = %s]"%Prefix)
+    log.print( ModColor.Str("DicoToShared: start [prefix = %s]"%Prefix))
     for key in Dico.keys():
         if type(Dico[key])!=np.ndarray: continue
         #print "%s.%s"%(Prefix,key)
         ThisKeyPrefix="%s.%s"%(Prefix,key)
-        print>>log, ModColor.Str("  %s -> %s"%(key,ThisKeyPrefix))
+        log.print( ModColor.Str("  %s -> %s"%(key,ThisKeyPrefix)))
         ar=Dico[key]
         Shared=ToShared(ThisKeyPrefix,ar)
         #T.timeit("getarray %s"%ThisKeyPrefix)
@@ -87,13 +91,13 @@ def DicoToShared(Prefix,Dico,DelInput=False):
             
     if DelInput:
         del(Dico)
-    print>>log, ModColor.Str("DicoToShared: done")
+    log.print( ModColor.Str("DicoToShared: done"))
 
     return DicoOut
 
 
 def SharedToDico(Prefix):
-    print>>log, ModColor.Str("SharedToDico: start [prefix = %s]"%Prefix)
+    log.print( ModColor.Str("SharedToDico: start [prefix = %s]"%Prefix))
     T=ClassTimeIt.ClassTimeIt("   SharedToDico")
     T.disable()
     Lnames=ListNames()
@@ -104,11 +108,11 @@ def SharedToDico(Prefix):
     T.timeit("1")
     for Sharedkey in keys:
         key=Sharedkey.split(".")[-1]
-        print>>log, ModColor.Str("  %s -> %s"%(Sharedkey,key))
+        log.print( ModColor.Str("  %s -> %s"%(Sharedkey,key)))
         Shared=GiveArray(Sharedkey)
         DicoOut[key]=Shared
     T.timeit("2a")
-    print>>log, ModColor.Str("SharedToDico: done")
+    log.print( ModColor.Str("SharedToDico: done"))
 
 
     return DicoOut
@@ -116,14 +120,14 @@ def SharedToDico(Prefix):
 class SharedDicoDescriptor():
     def __init__(self,prefixName,Dico):
         self.prefixName=prefixName
-        self.DicoKeys=Dico.keys()
+        self.DicoKeys=list(Dico.keys())
 
 
 def SharedObjectToDico(SObject):
     if SObject==None: return None
     Prefix=SObject.prefixName
     Fields=SObject.DicoKeys
-    print>>log, ModColor.Str("SharedToDico: start [prefix = %s]"%Prefix)
+    log.print( ModColor.Str("SharedToDico: start [prefix = %s]"%Prefix))
     T=ClassTimeIt.ClassTimeIt("   SharedToDico")
     T.disable()
 
@@ -131,11 +135,11 @@ def SharedObjectToDico(SObject):
     T.timeit("1")
     for field in Fields:
         Sharedkey="%s.%s"%(Prefix,field)
-        #print>>log, ModColor.Str("  %s -> %s"%(Sharedkey,key))
+        #log.print( ModColor.Str("  %s -> %s"%(Sharedkey,key)))
         Shared=GiveArray(Sharedkey)
         DicoOut[field]=Shared
     T.timeit("2a")
-    print>>log, ModColor.Str("SharedToDico: done")
+    log.print( ModColor.Str("SharedToDico: done"))
 
 
     return DicoOut

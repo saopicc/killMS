@@ -18,10 +18,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import pylab
 import numpy as np
 from Plot import GiveRectSubplot
-import GiveNXNYPanels
+from . import GiveNXNYPanels
 
 def test():
 
@@ -154,7 +157,7 @@ class ClassMplWidget():
 
             if x<0: x=0
             if x>=N: x=N-1
-            #print>>log, (x0,x1,xi,N,"->",x)
+            #log.print( (x0,x1,xi,N,"->",x))
             return int(x)
 
         def StrValPixel(self,x,y):
@@ -166,8 +169,8 @@ class ClassMplWidget():
             xi=self.toPix(x0,x1,x,data.shape[0])
             yi=self.toPix(y0,y1,y,data.shape[1])
             val= data[xi,yi]
-            #print>>log, ax.get_xlim()
-            #print>>log, (x,y,xi,yi,val)
+            #log.print( ax.get_xlim())
+            #log.print( (x,y,xi,yi,val))
             return "(%i,%i): %5.4f" % (xi,yi,val)
     
 
@@ -179,7 +182,7 @@ class ClassMplWidget():
             data=args[0]
 
         if self.CurrentIIm==-1:#not("Plot" in self.DicoAxis[self.CurrentIAx].keys()):
-            #print>>log, ModColor.Str("   Axis [%i]: new im: %i"%(self.CurrentIAx,self.CurrentIIm),"blue")
+            #log.print( ModColor.Str("   Axis [%i]: new im: %i"%(self.CurrentIAx,self.CurrentIIm),"blue"))
             if (self.CurrentIIm==-1): self.CurrentIIm=0
             if not("Im" in self.DicoAxis[self.CurrentIAx].keys()): self.DicoAxis[self.CurrentIAx]["Im"]=[]
             self.DicoAxis[self.CurrentIAx]["data"]=data
@@ -228,8 +231,8 @@ class ClassMplWidget():
         ylim=ymin,ymax
         #T.timeit("stuf0")
         if (self.DicoAxis[self.CurrentIAx]["NLines"]==0)|(self.CurrentIPlot>=self.DicoAxis[self.CurrentIAx]["NLines"]):
-            #print>>log, ModColor.Str("   new line: %i"%self.CurrentIPlot,"green")
-            #print>>log, ModColor.Str("   Axis [%i]: new plot: %i"%(self.CurrentIAx,self.CurrentIPlot),"green")
+            #log.print( ModColor.Str("   new line: %i"%self.CurrentIPlot,"green"))
+            #log.print( ModColor.Str("   Axis [%i]: new plot: %i"%(self.CurrentIAx,self.CurrentIPlot),"green"))
             self.DicoAxis[self.CurrentIAx]["NLines"]+=1
             if (self.CurrentIPlot==-1): self.CurrentIPlot=0
             if not("Plot" in self.DicoAxis[self.CurrentIAx].keys()): self.DicoAxis[self.CurrentIAx]["Plot"]=[]
@@ -260,7 +263,7 @@ class ClassMplWidget():
         #    self.CurrentIPlot=0
         ThisPlot=self.DicoAxis[self.CurrentIAx]["Plot"][self.CurrentIPlot]
         self.CurrentIPlot+=1
-        #print>>log, "   CurrentIPlot: %i"%self.CurrentIPlot
+        #log.print( "   CurrentIPlot: %i"%self.CurrentIPlot)
         self.DicoAxis[self.CurrentIAx]["CurrentIPlot"]=self.CurrentIPlot
         #self.updateThread2(ThisPlot,data)
 
@@ -294,7 +297,7 @@ class ClassMplWidget():
 
     def savefig(self):
         filename="%s_%4.4i.png"%(self.SaveName,self.CounterSave)
-        #print>>log, "   Saving figure in %s"%filename
+        #log.print( "   Saving figure in %s"%filename)
         self.fig.savefig(filename,dpi=100)
         #self.CounterSave+=1
 
@@ -322,12 +325,12 @@ class ClassMplWidget():
         if not("Im" in self.DicoAxis[axis].keys()): return
         if self.CurrentIIm==len(self.DicoAxis[axis]["Im"]):
             self.CurrentIIm=0
-        print>>log, ("set_clim",vmin,vmax)
+        log.print( ("set_clim",vmin,vmax))
         ThisPlot=self.DicoAxis[axis]["Im"][self.CurrentIIm]
         ThisPlot.set_clim(vmin,vmax)
         self.DicoAxis[axis]["lims"]=vmin,vmax
         if vmin==None:
-            print>>log, vmin
+            log.print( vmin)
             return
         self.update(ThisPlot)
 

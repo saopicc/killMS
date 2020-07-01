@@ -18,11 +18,18 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import numpy as np
-try:
-    from killMS.Gridder import _pyGridder
-except:
-    from killMS.cbuild.Gridder import _pyGridder
+import six
+# if six.PY2:
+#     try:
+#         from killMS.Gridder import _pyGridder
+#     except:
+#         from killMS.cbuild.Gridder import _pyGridder
+
+        
 from DDFacet.Other import logger
 from killMS.Other import ModColor
 log=logger.getLogger("ClassWeighting")
@@ -76,24 +83,24 @@ class ClassWeighting():
             npix+=1
 
         #npix=npixIm
-        xc,yc=npix/2,npix/2
+        xc,yc=npix//2,npix//2
 
 
         VisWeights=np.float64(VisWeights)
         #VisWeights.fill(1.)
 
-
+        
         
         if Weighting=="Briggs":
-            print>>log, "Weighting in Briggs mode"
-            print>>log, "Calculating imaging weights with Robust=%3.1f on an [%i,%i] grid"%(Robust,npix,npix)
+            log.print( "Weighting in Briggs mode")
+            log.print( "Calculating imaging weights with Robust=%3.1f on an [%i,%i] grid"%(Robust,npix,npix))
             Mode=0
         elif Weighting=="Uniform":
-            print>>log, "Weighting in Uniform mode"
-            print>>log, "Calculating imaging weights on an [%i,%i] grid"%(npix,npix)
+            log.print( "Weighting in Uniform mode")
+            log.print( "Calculating imaging weights on an [%i,%i] grid"%(npix,npix))
             Mode=1
         elif Weighting=="Natural":
-            print>>log, "Weighting in Natural mode"
+            log.print( "Weighting in Natural mode")
             return VisWeights
         else:
             raise ValueError("Expected Briggs, Uniform or Natural, got {0:s} for --Weighting".format(Weighting))

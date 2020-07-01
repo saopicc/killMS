@@ -18,6 +18,9 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import numpy as np
 from SkyModel.Sky import ClassSM
@@ -168,7 +171,7 @@ def WriteBBSCat(OutFile,Cat):
         sI=str(Cat.I[i])
         sAlpha=str(Cat.alpha[i])#0#str(np.random.randn(1)[0]*0.2-0.8)
         ss="%s, POINT, %s,  %s, %s, 0.0, 0.0, 0.0, 7.38000e+07, [%s], 0, 0.00000e+00, 0.0"%(Names[i],SRa,SDec,sI,sAlpha)
-        print ss
+        print(ss)
         f.write(ss+'\n')        
     f.close()
 
@@ -203,8 +206,8 @@ class MakeMultipleObs():
             sCat.append(CatName)
             sSM.append(D["SM"])
 
-        print ", ".join(sCat)
-        print ", ".join(sSM)
+        print(", ".join(sCat))
+        print(", ".join(sSM))
         
 
     def MakeSM_MS0(self):
@@ -223,7 +226,7 @@ class MakeMultipleObs():
                 SI=D["SI"]
             BBSprintRandomSM(Ns,Diam,(rac,decc),OutFile=SMName,ra_dec_offset=(0,0),SI=SI,Mode=Mode)
             sExec="MakeModel.py --SkyModel=%s --NCluster=%i --CMethod=4 --DoPlot=0"%(SMName,Nc)
-            print sExec
+            print(sExec)
             os.system(sExec)
 
 
@@ -248,7 +251,7 @@ class MakeMultipleObs():
 
             # #os.system("cp -r %s/LOFAR_* %s"%(self.MSTemplateName,self.DicoMS["MS0Name"]))
             # ss="%s "%ProgTables + "antennafielddir=%s/AntennaFields "%StaticMetaDataDir + "antennaset=%s antennasetfile=%s/AntennaSets.conf "%(antennaset,StaticMetaDataDir) + "ihbadeltadir=%s/iHBADeltas "%StaticMetaDataDir + "ms=%s overwrite=1"%(D["dirMS0Name"])
-            # print ss
+            # print(ss)
             # os.system(ss)
 
             #ss="%s antennafielddir=/home/tasse/sources/StaticMetaData antennaset=LBA_INNER antennasetfile=/home/tasse/sources/AntennaSets.conf ihbadeltadir=/home/tasse/sources/StaticMetaData ms=%s overwrite=1"%(ProgTables,D["dirMS0Name"])
@@ -257,7 +260,7 @@ class MakeMultipleObs():
             ss="%s antennaset=LBA_INNER ms=%s overwrite=1"%(ProgTables,D["dirMS0Name"])
 
 #            ss="%s antennafielddir=/home/cyril.tasse/source/LOFARBeamData/AntennaFields antennaset=LBA_INNER antennasetfile=/home/cyril.tasse/source/LOFARBeamData/AntennaSets.conf ihbadeltadir=/home/cyril.tasse/source/LOFARBeamData/iHBADeltas ms=%s overwrite=1"%(ProgTables,D["dirMS0Name"])
-            print ss
+            print(ss)
             os.system(ss)
 
 # makebeamtables antennafielddir=/home/cyril.tasse/source/LOFARBeamData/AntennaFields antennaset=LBA_INNER antennasetfile=/home/cyril.tasse/source/LOFARBeamData/AntennaSets.conf ihbadeltadir=/home/cyril.tasse/source/LOFARBeamData/iHBADeltas ms=/data/tasse/Simul/Pointing00/Template_0000.MS_p0 overwrite=1
@@ -328,8 +331,8 @@ class MakeMultipleObs():
                 D["ListMS"].append(outn)
 
                 ss="cp -r %s %s "%(dirMS0Name,outn)
-                print "make ",outn,", at f=",freq
-                print "       %s"%ss
+                print("make ",outn,", at f=",freq)
+                print("       %s"%ss)
                 #os.system("cp -r /media/6B5E-87D0/MS/SimulTec/Simul_one.beam_off.gauss.MS.tsel "+outn)
                 os.system(ss)
                 ta_spectral=table(outn+'/SPECTRAL_WINDOW/',ack=False,readonly=False)

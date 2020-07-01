@@ -18,8 +18,11 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import numpy as np
-import ClassMS
+from . import ClassMS
 from pyrap.tables import table
 from DDFacet.Other import logger
 log=logger.getLogger("ClassVisServer")
@@ -31,7 +34,7 @@ from killMS.Array import ModLinAlg
 logger.setSilent(["NpShared"])
 #from Sky.PredictGaussPoints_NumExpr3 import ClassPredictParallel as ClassPredict 
 #from Sky.PredictGaussPoints_NumExpr3 import ClassPredict as ClassPredict 
-import ClassWeighting
+from . import ClassWeighting
 from killMS.Other import reformat
 import os
 from killMS.Other.ModChanEquidistant import IsChanEquidistant
@@ -131,12 +134,28 @@ class ClassVisServer():
         self.NTChunk=len(self.TimesInt)-1
         self.MS=MS
         
+        self.DicoMergeStations={}
+        if self.GD and self.GD["Compression"]["MergeStations"] is not None:
+            MergeStations=self.GD["Compression"]["MergeStations"]
+            ListMergeNames=[]
+            ListMergeStations=[]
+            for Name in MergeStations:
+                for iAnt in range(MS.na):
+                    if Name in MS.StationNames[iAnt]:
+                        ListMergeStations.append(iAnt)
+                        ListMergeNames.append(MS.StationNames[iAnt])
+                        
+            log.print("Merging into a single station %s"%str(ListMergeNames))
+            self.DicoMergeStations["ListMergeNames"]=ListMergeNames
+            self.DicoMergeStations["ListBLMerge"]=[(a0,a1) for a0 in ListMergeStations for a1 in ListMergeStations if a0!=a1]
+            self.DicoMergeStations["ListMergeStations"]=ListMergeStations
+                        
 
 
         ######################################################
         ## Taken from ClassLOFARBeam in DDFacet
         
-        ChanWidth=self.MS.ChanWidth.ravel()[0]
+        ChanWidth=abs(self.MS.ChanWidth.ravel()[0])
         ChanFreqs=self.MS.ChanFreq.flatten()
         if self.GD!=None:
             NChanJones=self.GD["Solvers"]["NChanSols"]
@@ -152,17 +171,17 @@ class ClassVisServer():
 
 
         MeanFreqJonesChan=(FreqDomains[:,0]+FreqDomains[:,1])/2.
-        print>>log,"Center of frequency domains [MHz]: %s"%str((MeanFreqJonesChan/1e6).tolist())
+        log.print("Center of frequency domains [MHz]: %s"%str((MeanFreqJonesChan/1e6).tolist()))
         DFreq=np.abs(self.MS.ChanFreq.reshape((self.MS.NSPWChan,1))-MeanFreqJonesChan.reshape((1,NChanJones)))
         self.VisToSolsChanMapping=np.argmin(DFreq,axis=1)
-        print>>log,("VisToSolsChanMapping %s"%str(self.VisToSolsChanMapping))
+        log.print(("VisToSolsChanMapping %s"%str(self.VisToSolsChanMapping)))
 
         
         self.SolsToVisChanMapping=[]
         for iChanSol in range(NChanJones):
             ind=np.where(self.VisToSolsChanMapping==iChanSol)[0] 
             self.SolsToVisChanMapping.append((ind[0],ind[-1]+1))
-        print>>log,("SolsToVisChanMapping %s"%str(self.SolsToVisChanMapping))
+        log.print(("SolsToVisChanMapping %s"%str(self.SolsToVisChanMapping)))
         
 
         # ChanDegrid
@@ -181,7 +200,7 @@ class ClassVisServer():
         DChan=np.abs(MS.ChanFreq.reshape((NChanMS,1))-FreqChanDegridding.reshape((1,NChanDegrid)))
         ThisMappingDegrid=np.argmin(DChan,axis=1)
         self.MappingDegrid=ThisMappingDegrid
-        print>>log,"Mapping degrid: %s"%str(self.MappingDegrid)
+        log.print("Mapping degrid: %s"%str(self.MappingDegrid))
         #NpShared.ToShared("%sMappingDegrid"%self.IdSharedMem,self.MappingDegrid)
 
         ######################################################
@@ -223,7 +242,7 @@ class ClassVisServer():
         #uvw,WEIGHT,flags=self.GiveAllUVW()
         VisWeights=np.ones((uvw.shape[0],self.MS.ChanFreq.size),dtype=np.float32)
         if np.max(VisWeights)==0.:
-            print>>log,"All imaging weights are 0, setting them to ones"
+            log.print("All imaging weights are 0, setting them to ones")
             VisWeights.fill(1)
 
         if self.SM.Type=="Image":
@@ -237,16 +256,16 @@ class ClassVisServer():
 
         if self.WeightUVMinMax is not None:
             uvmin,uvmax=self.WeightUVMinMax
-            print >>log,'Giving full weight to data in range %f - %f km' % (uvmin, uvmax)
+            log.print('Giving full weight to data in range %f - %f km' % (uvmin, uvmax))
             uvmin*=1000
             uvmax*=1000
             filter=(uvdist<uvmin) | (uvdist>uvmax)
-            print >>log,'Downweighting %i out of %i visibilities' % (np.sum(filter),len(uvdist))
+            log.print('Downweighting %i out of %i visibilities' % (np.sum(filter),len(uvdist)))
             VisWeights[filter]*=self.WTUV
 
         MeanW=np.mean(VisWeights[VisWeights!=0.])
         VisWeights/=MeanW
-        print >>log, 'Min weight is %f max is %f' % (np.min(VisWeights),np.max(VisWeights))
+        log.print('Min weight is %f max is %f' % (np.min(VisWeights),np.max(VisWeights)))
         #VisWeight[VisWeight==0.]=1.
         self.VisWeights=VisWeights
 
@@ -256,7 +275,7 @@ class ClassVisServer():
 
     def GiveNextVis(self):
 
-        #print>>log, "GiveNextVis"
+        #log.print( "GiveNextVis")
 
         t0_bef,t1_bef=self.CurrentVisTimes_SinceStart_Sec
         t0_sec,t1_sec=t1_bef,t1_bef+60.*self.dTimesVisMin
@@ -268,9 +287,9 @@ class ClassVisServer():
         self.CurrentVisTimes_SinceStart_Minutes = t0_sec/60.,t1_sec/60.
         self.CurrentVisTimes_SinceStart_Sec     = t0_sec,t1_sec
 
-        #print>>log,("(t0_sec,t1_sec,t1_bef,t1_bef+60.*self.dTimesVisMin)",t0_sec,t1_sec,t1_bef,t1_bef+60.*self.dTimesVisMin)
-        #print>>log,("(its_t0,its_t1)",its_t0,its_t1)
-        #print>>log,("self.CurrentVisTimes_SinceStart_Minutes",self.CurrentVisTimes_SinceStart_Minutes)
+        #log.print(("(t0_sec,t1_sec,t1_bef,t1_bef+60.*self.dTimesVisMin)",t0_sec,t1_sec,t1_bef,t1_bef+60.*self.dTimesVisMin))
+        #log.print(("(its_t0,its_t1)",its_t0,its_t1))
+        #log.print(("self.CurrentVisTimes_SinceStart_Minutes",self.CurrentVisTimes_SinceStart_Minutes))
 
         if (t0_sec>=its_t1):
             return "EndChunk"
@@ -290,6 +309,9 @@ class ClassVisServer():
         Tmax=self.ThisDataChunk["times"][-1]
         # time selection
         indRowsThisChunk=np.where((self.ThisDataChunk["times"]>=t0_sec)&(self.ThisDataChunk["times"]<t1_sec))[0]
+        # np.save("indRowsThisChunk.npy",indRowsThisChunk)
+        # indRowsThisChunk=np.load("indRowsThisChunk.npy")
+        
         if indRowsThisChunk.shape[0]==0:
             if t0_sec>=Tmax:
                 return "EndChunk"
@@ -412,7 +434,7 @@ class ClassVisServer():
         fFlagged=np.count_nonzero(DATA["flags"])/float(DATA["flags"].size)
         #print fFlagged
         if fFlagged>0.9:
-            # print>>log, "AllFlaggedThisTime [%f%%]"%(fFlagged*100)
+            # log.print( "AllFlaggedThisTime [%f%%]"%(fFlagged*100))
             return "AllFlaggedThisTime"
         #if fFlagged==0.:
         #    stop
@@ -470,7 +492,7 @@ class ClassVisServer():
         self.fracNVisPerAnt=np.ones_like(NVisPerAnt)
         NVis=flags[flags==0].size
         if NVis==0:
-            print>>log, ModColor.Str("Hummm - All the data is flagged!!!")
+            log.print( ModColor.Str("Hummm - All the data is flagged!!!"))
             return
         
         if self.DicoSelectOptions[Field] is not None:
@@ -492,7 +514,7 @@ class ClassVisServer():
                 NVisPerAnt[iAnt]=np.where((A0==iAnt)|(A1==iAnt))[0].size
 
             self.fracNVisPerAnt=NVisPerAnt/np.max(NVisPerAnt)
-            print>>log,"Fraction of data per antenna for covariance estimate: %s"%str(self.fracNVisPerAnt.tolist())
+            log.print("Fraction of data per antenna for covariance estimate: %s"%str(self.fracNVisPerAnt.tolist()))
 
 
             u,v,w=uvw.T
@@ -500,15 +522,18 @@ class ClassVisServer():
             Compactness=np.zeros((self.MS.na,),np.float32)
             for iAnt in range(self.MS.na):
                 ind=np.where((A0==iAnt)|(A1==iAnt))[0]
+                if ind.size==0:
+                    Compactness[iAnt]=1.e-3
+                    continue
                 Compactness[iAnt]=np.mean(d[ind])
             self.Compactness=Compactness/np.max(Compactness)
-            print>>log,"Compactness: %s"%str(self.Compactness.tolist())
+            log.print("Compactness: %s"%str(self.Compactness.tolist()))
 
 
 
             
             NVisSel=flags[flags==0].size
-            print>>log,"Total fraction of remaining data after uv-cut: %5.2f %%"%(100*NVisSel/float(NVis))
+            log.print("Total fraction of remaining data after uv-cut: %5.2f %%"%(100*NVisSel/float(NVis)))
 
 
     def LoadNextVisChunk(self):
@@ -516,7 +541,7 @@ class ClassVisServer():
 
         # bug out when we hit the buffers
         if self.CurrentMemTimeChunk >= self.NTChunk:
-            print>>log, ModColor.Str("Reached end of observations")
+            log.print( ModColor.Str("Reached end of observations"))
             self.ReInitChunkCount()
             return "EndOfObservation"
 
@@ -524,14 +549,14 @@ class ClassVisServer():
         iT0,iT1=self.CurrentMemTimeChunk,self.CurrentMemTimeChunk+1
         self.CurrentMemTimeChunk+=1
 
-        print>>log, "Reading next data chunk in [%5.2f, %5.2f] hours (column %s)"%(self.TimesInt[iT0],self.TimesInt[iT1],MS.ColName)
+        log.print( "Reading next data chunk in [%5.2f, %5.2f] hours (column %s)"%(self.TimesInt[iT0],self.TimesInt[iT1],MS.ColName))
         self.have_data = MS.ReadData(t0=self.TimesInt[iT0],t1=self.TimesInt[iT1],ReadWeight=True)
 
         if not self.have_data:
-            print>>log, "this data chunk is empty"
+            log.print( "this data chunk is empty")
             return "Empty"
 
-        #print>>log, "    Rows= [%i, %i]"%(MS.ROW0,MS.ROW1)
+        #log.print( "    Rows= [%i, %i]"%(MS.ROW0,MS.ROW1))
         #print float(MS.ROW0)/MS.nbl,float(MS.ROW1)/MS.nbl
 
         ###############################
@@ -574,11 +599,12 @@ class ClassVisServer():
         # flags[ind,:,:]=1
         
         Equidistant=IsChanEquidistant(freqs)
-        if Equidistant:
-            print>>log, "Channels are equidistant, can go fast"
-        else:
-            print>>log, ModColor.Str("Channels are not equidistant, cannot go fast")
-
+        if freqs.size>1:
+            if Equidistant:
+                log.print( "Channels are equidistant, can go fast")
+            else:
+                log.print( ModColor.Str("Channels are not equidistant, cannot go fast"))
+        
         MS=self.MS
 
 
@@ -586,7 +612,7 @@ class ClassVisServer():
             u,v,w=uvw.T
             wmax=self.GD["GDImage"]["CF"]["wmax"]
             wmaxkm=wmax/1000.
-            print>>log, "Flagging baselines with w > %f km"%(wmaxkm)
+            log.print( "Flagging baselines with w > %f km"%(wmaxkm))
             C=299792458.
             fmax=self.MS.ChanFreq.ravel()[-1]
 
@@ -594,7 +620,7 @@ class ClassVisServer():
             flags[ind,:,:]=1
 
             f=ind.size/float(flags.shape[0])
-            print>>log, "  w-Flagged %5.1f%% of the data"%(100*f)
+            log.print( "  w-Flagged %5.1f%% of the data"%(100*f))
 
 
 
@@ -614,7 +640,7 @@ class ClassVisServer():
             ind=np.where((MS.A0==A)|(MS.A1==A))[0]
             fA=MS.flag_all[ind].ravel()
             if ind.size==0:
-                print>>log, "Antenna #%2.2i[%s] is not in the MS"%(A,MS.StationNames[A])
+                log.print( "Antenna #%2.2i[%s] is not in the MS"%(A,MS.StationNames[A]))
                 self.FlagAntNumber.append(A)
                 continue
                 
@@ -622,8 +648,8 @@ class ClassVisServer():
             
             Frac=nf/float(fA.size)
             if Frac>self.ThresholdFlag:
-                print>>log, "Taking antenna #%2.2i[%s] out of the solve (~%4.1f%% of flagged data, more than %4.1f%%)"%\
-                    (A,MS.StationNames[A],Frac*100,self.ThresholdFlag*100)
+                log.print( "Taking antenna #%2.2i[%s] out of the solve (~%4.1f%% of flagged data, more than %4.1f%%)"%\
+                    (A,MS.StationNames[A],Frac*100,self.ThresholdFlag*100))
                 self.FlagAntNumber.append(A)
                 
         if self.CalcGridBasedFlags:
@@ -657,8 +683,8 @@ class ClassVisServer():
                 else:
                     Frac=nf/float(fA.size)
                 if Frac>self.ThresholdFlag:
-                    print>>log, "Taking antenna #%2.2i[%s] out of the solve (~%4.1f%% of out-grid data, more than %4.1f%%)"%\
-                        (A,MS.StationNames[A],Frac*100,self.ThresholdFlag*100)
+                    log.print( "Taking antenna #%2.2i[%s] out of the solve (~%4.1f%% of out-grid data, more than %4.1f%%)"%\
+                               (A,MS.StationNames[A],Frac*100,self.ThresholdFlag*100))
                     self.FlagAntNumber.append(A)
 
 
@@ -669,8 +695,12 @@ class ClassVisServer():
             for Name in FlagAnts:
                 for iAnt in range(MS.na):
                     if Name in MS.StationNames[iAnt]:
-                        print>>log, "Taking antenna #%2.2i[%s] out of the solve"%(iAnt,MS.StationNames[iAnt])
+                        log.print( "Taking antenna #%2.2i[%s] out of the solve"%(iAnt,MS.StationNames[iAnt]))
                         self.FlagAntNumber.append(iAnt)
+
+
+
+                        
         if "DistMaxToCore" in self.DicoSelectOptions.keys():
             DMax=self.DicoSelectOptions["DistMaxToCore"]*1e3
             X,Y,Z=MS.StationPos.T
@@ -679,7 +709,7 @@ class ClassVisServer():
             ind=np.where(D>DMax)[0]
 
             for iAnt in ind.tolist():
-                print>>log,"Taking antenna #%2.2i[%s] out of the solve (distance to core: %.1f km)"%(iAnt,MS.StationNames[iAnt],D[iAnt]/1e3)
+                log.print("Taking antenna #%2.2i[%s] out of the solve (distance to core: %.1f km)"%(iAnt,MS.StationNames[iAnt],D[iAnt]/1e3))
                 self.FlagAntNumber.append(iAnt)
             
 
@@ -708,7 +738,7 @@ class ClassVisServer():
         # Building uvw infos
         #################################################
         #################################################
-        # print>>log, "Building uvw infos .... "
+        # log.print( "Building uvw infos .... ")
         # Luvw=np.zeros((MS.times.size,MS.na,3),uvw.dtype)
         # AntRef=0
         # indexTimes=np.zeros((times.size,),np.int64)
@@ -748,7 +778,7 @@ class ClassVisServer():
         #     #Luvw.append(ThisUVW)
         #     indexTimes[ind]=iTime
         #     iTime+=1
-        # print>>log, "     .... Done "
+        # log.print( "     .... Done ")
         #################################################
         #################################################
 
@@ -824,28 +854,28 @@ class ClassVisServer():
         DoPreApplyJones=False
         if self.GD!=None:
             if self.GD["Beam"]["BeamAt"].lower() == "tessel":
-                print>>log,"Estimating Beam directions at the center of the tesselated areas"
+                log.print("Estimating Beam directions at the center of the tesselated areas")
                 RA,DEC=self.SM.ClusterCat.ra,self.SM.ClusterCat.dec
             elif self.GD["Beam"]["BeamAt"].lower() == "facet":
-                print>>log,"Estimating Beam directions at the center of the individual facets areas"
+                log.print("Estimating Beam directions at the center of the individual facets areas")
                 RA=np.array([self.SM.DicoImager[iFacet]["RaDec"][0] for iFacet in range(len(self.SM.DicoImager))])
                 DEC=np.array([self.SM.DicoImager[iFacet]["RaDec"][1] for iFacet in range(len(self.SM.DicoImager))])
             else:
                 raise RuntimeError("incorrect BeamAt setting: use Facet or Tessel")
-            if self.GD["Beam"]["BeamModel"]!=None:
+            if self.GD["Beam"]["BeamModel"] is not None:
                 if self.GD["Beam"]["BeamModel"]=="LOFAR":
                     NDir=RA.size
                     self.DtBeamMin=self.GD["Beam"]["DtBeamMin"]
                     useArrayFactor=("A" in self.GD["Beam"]["LOFARBeamMode"])
                     useElementBeam=("E" in self.GD["Beam"]["LOFARBeamMode"])
                     self.MS.LoadSR(useElementBeam=useElementBeam,useArrayFactor=useArrayFactor)
-                    print>>log, "Update LOFAR beam in %i directions [Dt = %3.1f min] ... "%(NDir,self.DtBeamMin)
+                    log.print( "Update LOFAR beam in %i directions [Dt = %3.1f min] ... "%(NDir,self.DtBeamMin))
                     DtBeamSec=self.DtBeamMin*60
                     tmin,tmax=np.min(times)-MS.dt/2.,np.max(times)+MS.dt/2.
                     # TimesBeam=np.arange(np.min(times),np.max(times),DtBeamSec).tolist()
                     # if not(tmax in TimesBeam): TimesBeam.append(tmax)
                     NTimesBeam=round((tmax-tmin)/DtBeamSec)
-                    NTimesBeam=np.max([2,NTimesBeam])
+                    NTimesBeam=int(np.max([2,NTimesBeam]))
 
 
                     TimesBeam=np.linspace(np.min(times)-1,np.max(times)+1,NTimesBeam).tolist()
@@ -935,7 +965,7 @@ class ClassVisServer():
                     ListDicoPreApply.append(DicoBeam)
 
                     DoPreApplyJones=True
-                    print>>log, "       .... done Update LOFAR beam "
+                    log.print( "       .... done Update LOFAR beam ")
                 elif self.GD["Beam"]["BeamModel"] == "FITS":
                     NDir = RA.size
                     self.DtBeamMin = self.GD["Beam"]["DtBeamMin"]
@@ -950,8 +980,7 @@ class ClassVisServer():
                     FreqDomains = fitsbeam.getFreqDomains()
                     nfreq_dom = FreqDomains.shape[0]
 
-                    print>> log, "Update FITS beam in %i dirs, %i times, %i freqs ... " % (
-                        NDir, len(TimesBeam), nfreq_dom)
+                    log.print( "Update FITS beam in %i dirs, %i times, %i freqs ... " % (NDir, len(TimesBeam), nfreq_dom))
 
                     T0s = TimesBeam[:-1]
                     T1s = TimesBeam[1:]
@@ -1003,13 +1032,80 @@ class ClassVisServer():
                     ListDicoPreApply.append(DicoBeam)
 
                     DoPreApplyJones = True
-                    print>> log, "       .... done Update LOFAR beam "
+                    log.print( "       .... done Update FITS beam ")
+                elif self.GD["Beam"]["BeamModel"] == "GMRT":
+                    NDir = RA.size
+                    self.DtBeamMin = self.GD["Beam"]["DtBeamMin"]
+
+                    from DDFacet.Data.ClassGMRTBeam import ClassGMRTBeam
+                    # make fake opts dict (DDFacet clss expects slightly different option names)
+                    opts = self.GD["Beam"]
+                    opts["NBand"] = opts["NChanBeamPerMS"]
+                    gmrtbeam = ClassGMRTBeam(self.MS, opts)
+
+                    TimesBeam = np.array(gmrtbeam.getBeamSampleTimes(times))
+                    FreqDomains = gmrtbeam.getFreqDomains()
+                    nfreq_dom = FreqDomains.shape[0]
+
+                    log.print( "Update GMRT beam in %i dirs, %i times, %i freqs ... " % (NDir, len(TimesBeam), nfreq_dom))
+
+                    T0s = TimesBeam[:-1]
+                    T1s = TimesBeam[1:]
+                    Tm = (T0s + T1s) / 2.
+
+                    self.BeamTimes = TimesBeam
+
+                    Beam = np.zeros((Tm.size, NDir, self.MS.na, FreqDomains.shape[0], 2, 2), np.complex64)
+                    for itime, tm in enumerate(Tm):
+                        Beam[itime] = gmrtbeam.GiveInstrumentBeam(tm, RA, DEC)
+
+                    DicoBeam = {}
+                    DicoBeam["t0"] = T0s
+                    DicoBeam["t1"] = T1s
+                    DicoBeam["tm"] = Tm
+                    DicoBeam["Jones"] = Beam
+                    DicoBeam["FreqDomain"] = FreqDomains
+
+                    ###### Normalise
+                    rac, decc = self.MS.radec
+                    if self.GD["Beam"]["CenterNorm"] == 1:
+
+                        Beam = DicoBeam["Jones"]
+                        Beam0 = np.zeros((Tm.size, 1, self.MS.na, nfreq_dom, 2, 2), np.complex64)
+                        for itime, tm in enumerate(Tm):
+                            Beam0[itime] = gmrtbeam.evaluateBeam(tm, np.array([rac]), np.array([decc]))
+
+                        DicoBeamCenter = {}
+                        DicoBeamCenter["t0"] = T0s
+                        DicoBeamCenter["t1"] = T1s
+                        DicoBeamCenter["tm"] = Tm
+                        DicoBeamCenter["Jones"] = Beam0
+                        DicoBeamCenter["FreqDomain"] = FreqDomains
+                        Beam0inv = ModLinAlg.BatchInverse(Beam0)
+                        nt, nd, _, _, _, _ = Beam.shape
+                        Ones = np.ones((nt, nd, 1, 1, 1, 1), np.float32)
+                        Beam0inv = Beam0inv * Ones
+                        DicoBeam["Jones"] = ModLinAlg.BatchDot(Beam0inv, Beam)
+
+                    ######
+
+
+
+
+                    # nt,nd,na,nch,_,_= Beam.shape
+                    # Beam=np.mean(Beam,axis=3).reshape((nt,nd,na,1,2,2))
+
+                    # DicoBeam["ChanMap"]=np.zeros((nch))
+                    ListDicoPreApply.append(DicoBeam)
+
+                    DoPreApplyJones = True
+                    log.print( "       .... done Update GMRT beam ")
 
             if self.GD["PreApply"]["PreApplySols"][0]!="":
                 ModeList=self.GD["PreApply"]["PreApplyMode"]
                 if ModeList==[""]: ModeList=["AP"]*len(self.GD["PreApply"]["PreApplySols"])
                 for SolFile,Mode in zip(self.GD["PreApply"]["PreApplySols"],ModeList):
-                    print>>log, "Loading solution file %s in %s mode"%(SolFile,Mode)
+                    log.print( "Loading solution file %s in %s mode"%(SolFile,Mode))
 
                     if (SolFile!="")&(not(".npz" in SolFile)):
                         Method=SolFile
@@ -1043,11 +1139,15 @@ class ClassVisServer():
                     ListDicoPreApply.append(DicoSols)
                     DoPreApplyJones=True
 
+
+                    
             
         if DoPreApplyJones:
             DicoJones=ListDicoPreApply[0]
             DomainsMachine=self.DomainsMachine
-            
+
+            if self.SM.Type=="Image":
+                DomainsMachine.setFacetToDirMapping([self.SM.DicoImager[iFacet]["iDirJones"] for iFacet in range(len(self.SM.DicoImager))])
             for DicoJones1 in ListDicoPreApply[1::]:
                 DicoJones=DomainsMachine.MergeJones(DicoJones1,DicoJones)
             
@@ -1123,7 +1223,7 @@ class ClassVisServer():
                 #SmearMapMachine.BuildSmearMapping(DATA)
                 FinalMapping,fact=SmearMapMachine.BuildSmearMappingParallel(DATA)
                 np.save(MapName,FinalMapping)
-                print>>log, ModColor.Str("  Effective compression [DeGrid]:   %.2f%%"%fact,col="green")
+                log.print( ModColor.Str("  Effective compression [DeGrid]:   %.2f%%"%fact,col="green"))
 
             Map=NpShared.ToShared("%sMappingSmearing.DeGrid"%(self.IdSharedMem),FinalMapping)
 
