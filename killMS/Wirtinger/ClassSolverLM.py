@@ -74,8 +74,8 @@ class ClassSolverLM(ClassJacobianAntenna):
             self.L_JHJinv.append(JHJinv)
 
     def doLMStep(self,Gains):
-            
-        
+        # if self.iAnt==55:
+        #     print(self.iAnt,Gains)
         T=ClassTimeIt.ClassTimeIt("doLMStep")
         T.disable()
 
@@ -182,24 +182,33 @@ class ClassSolverLM(ClassJacobianAntenna):
         
         
         # #print self.iAnt
-        # if self.iAnt==57:
-        #     f=(self.DicoData["flags_flat"]==0)
+        # if True:#self.iAnt==55:
+        #     f=(self.DicoData[flags_key]==0)
         #     import pylab
-        #     pylab.figure(1)
+        #     fig=pylab.figure(1)
         #     pylab.clf()
         #     pylab.subplot(1,3,1)
         #     pylab.plot(np.abs(z[f])[::1]**2)#[::11])
-        #     pylab.ylim(0,800)
+        #     #pylab.ylim(0,800)
         #     pylab.subplot(1,3,2)
         #     pylab.plot(np.abs(Jx[f])[::1]**2)#[::11])
-        #     pylab.ylim(0,800)
+        #     #pylab.ylim(0,800)
         #     pylab.subplot(1,3,3)
         #     pylab.plot(zr[f][::1])#[::11])
-        #     pylab.ylim(-30,30)
+        #     #pylab.ylim(-30,30)
         #     pylab.draw()
-        #     pylab.show(False)
+        #     pylab.show(block=False)
         #     pylab.pause(0.1)
-        #     #stop
+        #     iF=0
+        #     while True:
+        #         fName="Graph_%i_%i.png"%(self.iAnt,iF)
+        #         import os
+        #         if not os.path.isfile(fName):
+        #             break
+        #         else:
+        #             iF+=1
+        #     fig.savefig(fName)
+
 
 
         # # pylab.figure(2)

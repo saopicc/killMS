@@ -201,6 +201,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         Cat.I[:]=ClusterCat.SumI[:]
         Cat.Cluster=np.arange(NN)
         Cat.Sref[:]=ClusterCat.SumI[:]
+
         self.SourceCat=Cat
 
         
@@ -257,6 +258,8 @@ class ClassPreparePredict(ClassImagerDeconv):
         log.print( "  There are %i non-zero directions"%self.SM.NDir)
         self.SM.ClusterCat=self.ClusterCat
         self.SM.SourceCat=self.SourceCat
+        self.SM.SourceCat.I[:]=self.ClusterCat.SumI[:]
+        
         self.SM.DicoJonesDirToFacet=self.DicoJonesDirToFacet
         self.SM.GD=self.FacetMachine.GD
         self.SM.DicoImager=self.FacetMachine.DicoImager

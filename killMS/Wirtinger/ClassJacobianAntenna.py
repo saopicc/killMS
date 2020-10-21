@@ -174,7 +174,7 @@ class ClassJacobianAntenna():
         self.SM_Compress=SM_Compress
         self.AverageMachine=None
         self.DoCompress=False
-        self.DoMergeStations=(self.GD["Compression"]["MergeStations"] is not None)
+        self.DoMergeStations = ((self.GD["Compression"]["MergeStations"] is not None) and (self.GD["Compression"]["MergeStations"]!=""))
         if self.SM_Compress or self.DoMergeStations:
             self.AverageMachine=ClassAverageMachine.ClassAverageMachine(self.GD,
                                                                         self.PM_Compress,
@@ -481,6 +481,7 @@ class ClassJacobianAntenna():
 
     def CalcJacobianAntenna(self,GainsIn):
         if not(self.HasKernelMatrix): stop
+        #if np.count_nonzero(np.isnan(GainsIn))>0: stop
         iAnt=self.iAnt
         NDir=self.NDir
 
@@ -568,7 +569,7 @@ class ClassJacobianAntenna():
             nrow,_=J.shape
             self.nrow_nonflagged=nrow
             JH=J.T.conj()
-            if type(self.Rinv_flat)!=type(None):
+            if self.Rinv_flat is not None:
                 Rinv=self.Rinv_flat[polIndex][flags==0].reshape((nrow,1))
 
                 if self.TypeDot=="Numpy":
@@ -585,8 +586,9 @@ class ClassJacobianAntenna():
                     J_T=J.T.copy()
                     JTc=self.LJacobTc[polIndex]#.copy()
                     JHJ=NpDotSSE.dot_A_BT(JTc,J_T)
-                
-
+                    
+            if np.count_nonzero(np.isnan(JHJ))>0: stop
+            
             self.L_JHJ.append(self.CType(JHJ))
             
         if self.DoMergeStations:
@@ -595,7 +597,7 @@ class ClassJacobianAntenna():
 
         # self.JHJinv=np.linalg.inv(self.JHJ)
         # self.JHJinv=np.diag(np.diag(self.JHJinv))
-
+        
     def CalcKernelMatrix(self,rms=0.):
         # Out[28]: ['freqs', 'times', 'A1', 'A0', 'flags', 'uvw', 'data']
         T=ClassTimeIt.ClassTimeIt("CalcKernelMatrix Ant=%i"%self.iAnt)
@@ -862,7 +864,8 @@ class ClassJacobianAntenna():
             flags_key="flags"
             flags_flat_key="flags_flat"
             
-
+        flags_orig_key="flags"
+        flags_orig_flat_key="flags_flat"
 
         NDir=self.SM.NDir
         for iDir in range(NDir):
@@ -870,14 +873,18 @@ class ClassJacobianAntenna():
             K=self.K_XX[iDir,:,:]
 
             indRow,indChan=np.where(K==0)
-            self.DicoData[flags_key][indRow,indChan,:]=1
+            self.DicoData[flags_key][iDir][indRow,indChan,:]=1
+            #self.DicoData[flags_orig_key][indRow,indChan,:]=1
 
 
             
         DicoData=self.DicoData
         nr,nch = K.shape
-        flags_flat=np.rollaxis(DicoData[flags_key],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
+        flags_flat = np.rollaxis(DicoData[flags_key],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
         DicoData[flags_flat_key][flags_flat]=1
+        #nr,nch = self.K_YY_AllChan[0,:,self.ch0:self.ch1]#K.shape
+        #flags_flat=np.rollaxis(DicoData[flags_orig_key],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
+        #DicoData[flags_orig_flat_key][flags_flat]=1
 
 
         self.DataAllFlagged=False

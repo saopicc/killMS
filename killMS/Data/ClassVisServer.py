@@ -472,6 +472,7 @@ class ClassVisServer():
         #t1=np.max(DATA["times"])-self.MS.F_tstart
         #self.TEST_TLIST+=sorted(list(set(DATA["times"].tolist())))
 
+        
         return DATA
 
     def setGridProps(self,Cell,nx):
@@ -852,7 +853,7 @@ class ClassVisServer():
 
         ListDicoPreApply=[]
         DoPreApplyJones=False
-        if self.GD!=None:
+        if self.GD is not None:
             if self.GD["Beam"]["BeamAt"].lower() == "tessel":
                 log.print("Estimating Beam directions at the center of the tesselated areas")
                 RA,DEC=self.SM.ClusterCat.ra,self.SM.ClusterCat.dec

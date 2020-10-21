@@ -156,8 +156,11 @@ class ClassWirtingerSolver():
 
         self.SM_Compress=None
         if (self.GD["Compression"]["CompressionMode"] is not None) or self.GD["Compression"]["CompressionDirFile"]:
+            log.print(ModColor.Str("Using compression with Mode = %s"%self.GD["Compression"]["CompressionMode"]))
+            
             if self.GD["Compression"]["CompressionMode"] and self.GD["Compression"]["CompressionMode"].lower()=="auto":
                 self.SM_Compress=ClassSM.ClassSM(SM)
+
             else:
                 ClusterCat=np.load(self.GD["Compression"]["CompressionDirFile"])
                 ClusterCat=ClusterCat.view(np.recarray)
@@ -818,7 +821,7 @@ class ClassWirtingerSolver():
 
         
 
-        Parallel=True
+        Parallel=False
 
 
         ListAntSolve=[i for i in range(self.VS.MS.na) if not(i in self.VS.FlagAntNumber)]
@@ -888,7 +891,7 @@ class ClassWirtingerSolver():
             if SkipMode:
                 print(iiCount)
                 iiCount+=1
-                if iiCount<10: continue
+                if iiCount<=383: continue
 
 
             t0,t1=self.VS.CurrentVisTimes_MS_Sec
@@ -1288,14 +1291,16 @@ class WorkerAntennaLM(multiprocessing.Process):
         self.exit.set()
     def run(self):
 
-        while not self.kill_received:# and not self.work_queue.qsize()==0:
+        # while not self.kill_received:# and not self.work_queue.qsize()==0:
+        #     iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get()
+        while not self.kill_received and not self.work_queue.qsize()==0:
             #iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get(True,2)
-            iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get()
+            #iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get()
             # print(iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors)
-            # try:
-            #     iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get()
-            # except:
-            #     break
+            try:
+                iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get()
+            except:
+                break
             # #self.e.wait()
 
             ch0,ch1=self.JonesToVisChanMapping[iChanSol]

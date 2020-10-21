@@ -511,6 +511,9 @@ class ClassMS():
         # pylab.plot(time_all[::111],vis[::111,512,0].real)
         # pylab.show()
 
+        fnan=np.isnan(vis_all)
+        vis_all[fnan]=0.
+        flag_all[fnan]=1
         
         self.flag_all=flag_all
         self.uvw_dt=None
