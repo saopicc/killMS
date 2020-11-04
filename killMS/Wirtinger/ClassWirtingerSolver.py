@@ -820,7 +820,7 @@ class ClassWirtingerSolver():
     def doNextTimeSolve_Parallel(self,OnlyOne=False,SkipMode=False,Parallel=True):
 
         
-
+        
         Parallel=False
 
 
@@ -1291,8 +1291,13 @@ class WorkerAntennaLM(multiprocessing.Process):
         self.exit.set()
     def run(self):
 
+        ####################
+        # Parallel
         # while not self.kill_received:# and not self.work_queue.qsize()==0:
         #     iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get()
+
+        ####################
+        # Serial
         while not self.kill_received and not self.work_queue.qsize()==0:
             #iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get(True,2)
             #iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get()
@@ -1302,6 +1307,7 @@ class WorkerAntennaLM(multiprocessing.Process):
             except:
                 break
             # #self.e.wait()
+        ####################
 
             ch0,ch1=self.JonesToVisChanMapping[iChanSol]
 

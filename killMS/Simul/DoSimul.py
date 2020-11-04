@@ -266,11 +266,11 @@ class ClassSimul():
 
         # make scalar
         Sols.G[:,:,:,:,1,1]=Sols.G[:,:,:,:,0,0]
-
-        # unity
-        Sols.G.fill(0)
-        Sols.G[:,:,:,:,0,0]=1.
-        Sols.G[:,:,:,:,1,1]=1.
+        
+        # # unity
+        # Sols.G.fill(0)
+        # Sols.G[:,:,:,:,0,0]=1.
+        # Sols.G[:,:,:,:,1,1]=1.
 
         # # Sols.G[:,:,:,1:,0,0]=0.01
         # # Sols.G[:,:,:,1:,1,1]=0.01
@@ -314,7 +314,7 @@ class ClassSimul():
             self.SolsCluster=SolsCluster
 
         # ################################
-
+        
         return Sols
 
     def GiveJones(self):
@@ -346,9 +346,9 @@ class ClassSimul():
         # G[:,:,:,:,1,1]=1
 
         nt,nd,na,nch,_,_=G.shape
-#        G=np.random.randn(*G.shape)+1j*np.random.randn(*G.shape)
-    
-    
+        # G=np.random.randn(*G.shape)+1j*np.random.randn(*G.shape)
+        
+        
         useArrayFactor=True
         useElementBeam=False
         if ApplyBeam:
@@ -365,10 +365,10 @@ class ClassSimul():
             DicoBeam["t0"]=np.zeros((Tm.size,),np.float64)
             DicoBeam["t1"]=np.zeros((Tm.size,),np.float64)
             DicoBeam["tm"]=np.zeros((Tm.size,),np.float64)
-    
+            
             rac,decc=MS.radec
-
-
+            
+            
             def GB(time,ra,dec):
                 Beam = np.zeros((ra.shape[0], self.MS.na, self.MS.NSPWChan, 2, 2), dtype=np.complex)
                 # Beam[...,0,0]=1
@@ -539,6 +539,7 @@ class ClassSimul():
         PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones,Noise=Noise,
                                                VariableFunc=None)
         print(Jones["Beam"].ravel()[0])
+        
         # PredictData=PM5.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones)
 
         # import pylab

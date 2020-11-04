@@ -873,9 +873,10 @@ class ClassJacobianAntenna():
             K=self.K_XX[iDir,:,:]
 
             indRow,indChan=np.where(K==0)
-            self.DicoData[flags_key][iDir][indRow,indChan,:]=1
+            self.DicoData[flags_key][indRow,indChan,:]=1
+            #stop
             #self.DicoData[flags_orig_key][indRow,indChan,:]=1
-
+            
 
             
         DicoData=self.DicoData

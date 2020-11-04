@@ -295,13 +295,12 @@ def main(OP=None,MSName=None):
         
     options=OP.GiveOptionObject()
 
-    ## I've carefully moved the import statements around so that numpy is not yet imported at this
-    ## point. This gives us a chance to set the OPENBLAS thread variables and such.
-    ## But in case of someone messing around with imports in the future, leave this check here
-    if 'numpy' in sys.modules:
-        raise RuntimeError("numpy already imported. This is a bug -- it shouldn't be imported yet")
-
-    os.environ['OPENBLAS_NUM_THREADS'] = os.environ['OPENBLAS_MAX_THREADS'] = str(options.NThread)
+    # ## I've carefully moved the import statements around so that numpy is not yet imported at this
+    # ## point. This gives us a chance to set the OPENBLAS thread variables and such.
+    # ## But in case of someone messing around with imports in the future, leave this check here
+    # if 'numpy' in sys.modules:
+    #     raise RuntimeError("numpy already imported. This is a bug -- it shouldn't be imported yet")
+    # os.environ['OPENBLAS_NUM_THREADS'] = os.environ['OPENBLAS_MAX_THREADS'] = str(options.NThread)
 
     # now do all the other imports
 
@@ -468,7 +467,7 @@ def main(OP=None,MSName=None):
         if options.MinFacetSize:
             GDPredict["Facets"]["DiamMin"]=options.MinFacetSize
 
-        if options.Decorrelation is not None and options.Decorrelation is not "":
+        if options.Decorrelation is not None and options.Decorrelation != "":
             log.print(ModColor.Str("Overwriting DDF parset decorrelation mode [%s] with kMS option [%s]"\
                                     %(GDPredict["RIME"]["DecorrMode"],options.Decorrelation)))
             GDPredict["RIME"]["DecorrMode"]=options.Decorrelation
@@ -692,9 +691,9 @@ def main(OP=None,MSName=None):
             SaveSols=True
             if options.SubOnly==0:
                 if options.Parallel:
-                    #Solver.doNextTimeSolve_Parallel(Parallel=True)
-                    Solver.doNextTimeSolve_Parallel(Parallel=True,
-                                                    SkipMode=True)
+                    Solver.doNextTimeSolve_Parallel(Parallel=True)
+                    #Solver.doNextTimeSolve_Parallel(Parallel=True,
+                    #                                SkipMode=True)
                 else:
                     #Solver.doNextTimeSolve_Parallel(SkipMode=True)
                     Solver.doNextTimeSolve()#SkipMode=True)
