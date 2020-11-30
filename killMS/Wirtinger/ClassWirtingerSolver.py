@@ -159,25 +159,28 @@ class ClassWirtingerSolver():
             log.print(ModColor.Str("Using compression with Mode = %s"%self.GD["Compression"]["CompressionMode"]))
             
             if self.GD["Compression"]["CompressionMode"] and self.GD["Compression"]["CompressionMode"].lower()=="auto":
-                self.SM_Compress=ClassSM.ClassSM(SM)
-
+                ClusterCat=SM.ClusterCat#[1:2]
+                #self.SM_Compress=ClassSM.ClassSM(SM)
+                
             else:
                 ClusterCat=np.load(self.GD["Compression"]["CompressionDirFile"])
-                ClusterCat=ClusterCat.view(np.recarray)
-                SourceCat=np.zeros((ClusterCat.shape[0],),dtype=[('Name', 'S200'), ('ra', '<f8'), ('dec', '<f8'), ('Sref', '<f8'),
-                                                                 ('I', '<f8'), ('Q', '<f8'), ('U', '<f8'), ('V', '<f8'), ('RefFreq', '<f8'),
-                                                                 ('alpha', '<f8'), ('ESref', '<f8'), ('Ealpha', '<f8'), ('kill', '<i8'),
-                                                                 ('Cluster', '<i8'), ('Type', '<i8'), ('Gmin', '<f8'), ('Gmaj', '<f8'),
-                                                                 ('Gangle', '<f8'), ('Select', '<i8'), ('l', '<f8'), ('m', '<f8'), ('Exclude', '<i8')])
-                SourceCat=SourceCat.view(np.recarray)
-                SourceCat.ra[:]=ClusterCat.ra[:]
-                SourceCat.dec[:]=ClusterCat.dec[:]
-                SourceCat.RefFreq[:]=100.e6
-                SourceCat.I[:]=1.
-                SourceCat.Cluster=np.arange(ClusterCat.shape[0])
-                np.save("dummy.npy",SourceCat)
-                self.SM_Compress=ClassSM.ClassSM("dummy.npy")
                 
+            ClusterCat=ClusterCat.view(np.recarray)
+            SourceCat=np.zeros((ClusterCat.shape[0],),dtype=[('Name', 'S200'), ('ra', '<f8'), ('dec', '<f8'), ('Sref', '<f8'),
+                                                             ('I', '<f8'), ('Q', '<f8'), ('U', '<f8'), ('V', '<f8'), ('RefFreq', '<f8'),
+                                                             ('alpha', '<f8'), ('ESref', '<f8'), ('Ealpha', '<f8'), ('kill', '<i8'),
+                                                             ('Cluster', '<i8'), ('Type', '<i8'), ('Gmin', '<f8'), ('Gmaj', '<f8'),
+                                                             ('Gangle', '<f8'), ('Select', '<i8'), ('l', '<f8'), ('m', '<f8'), ('Exclude', '<i8')])
+            SourceCat=SourceCat.view(np.recarray)
+            SourceCat.ra[:]=ClusterCat.ra[:]
+            SourceCat.dec[:]=ClusterCat.dec[:]
+            SourceCat.RefFreq[:]=100.e6
+            SourceCat.I[:]=1.
+            SourceCat.Cluster=np.arange(ClusterCat.shape[0])
+            np.save("SM_Compress.npy",SourceCat)
+            self.SM_Compress=ClassSM.ClassSM("SM_Compress.npy")
+            self.SM_Compress.Calc_LM(self.VS.MS.rac,self.VS.MS.decc)
+                        
                 
         if self.PolMode=="IDiag":
             npolx=2
@@ -821,7 +824,8 @@ class ClassWirtingerSolver():
 
         
         
-        Parallel=False
+        Parallel=True
+        #Parallel=False
 
 
         ListAntSolve=[i for i in range(self.VS.MS.na) if not(i in self.VS.FlagAntNumber)]
@@ -1293,21 +1297,22 @@ class WorkerAntennaLM(multiprocessing.Process):
 
         ####################
         # Parallel
-        # while not self.kill_received:# and not self.work_queue.qsize()==0:
-        #     iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get()
+        while not self.kill_received:# and not self.work_queue.qsize()==0:
+            iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get()
 
-        ####################
-        # Serial
-        while not self.kill_received and not self.work_queue.qsize()==0:
-            #iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get(True,2)
-            #iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get()
-            # print(iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors)
-            try:
-                iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get()
-            except:
-                break
-            # #self.e.wait()
-        ####################
+            
+        # ####################
+        # # Serial
+        # while not self.kill_received and not self.work_queue.qsize()==0:
+        #     #iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get(True,2)
+        #     #iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get()
+        #     # print(iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors)
+        #     try:
+        #         iAnt,iChanSol,DoCalcEvP,ThisTime,rms,DoEvP,DoFullPredict,SharedDicoDescriptors = self.work_queue.get()
+        #     except:
+        #         break
+        #     # #self.e.wait()
+        # ####################
 
             ch0,ch1=self.JonesToVisChanMapping[iChanSol]
 

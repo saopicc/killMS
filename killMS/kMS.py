@@ -37,6 +37,7 @@ if "PYTHONPATH_FIRST" in os.environ.keys() and int(os.environ["PYTHONPATH_FIRST"
 
 # # ##############################
 # # Catch numpy warning
+# import numpy as np
 # np.seterr(all='raise')
 # import warnings
 # warnings.filterwarnings('error')

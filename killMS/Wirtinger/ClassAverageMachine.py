@@ -37,45 +37,54 @@ class ClassAverageMachine():
         KOut=np.zeros((NDir,NDirAvg,NpOut,Npol),K.dtype)
         
         IndList=[(np.where((A0==ThisA0)&(A1==ThisA1))[0]) for (ThisA0,ThisA1) in A0A1]
+
+        f=DicoData["flags"]
+        fp=f[:,:,0,0].copy()
         
         for iDirAvg in range(NDirAvg):
-            K_Compress=self.PM_Compress.predictKernelPolCluster(DicoData,self.SM_Compress,iDirection=iDirAvg)
+            K_Compress=self.PM_Compress.predictKernelPolCluster(DicoData,
+                                                                self.SM_Compress,
+                                                                iDirection=iDirAvg)
             for iDir in range(NDir):
-                p=K[iDir,:,:]
-                pp=p*K_Compress[:,:,0].conj()
+                p=K[iDir,:,:].copy()
+                w=np.ones(p.shape,np.float64)
+                w[p==0]=0.
+                w[fp]=0.
+                p[fp]=0.
+
+                #w.fill(1.)
+                k_rephase=K_Compress[:,:,0].conj()
+                #print("!!")
+                pp=w*p*k_rephase
                 for iBl,ind in enumerate(IndList):
-                    KOut[iDir,iDirAvg,iBl,0]=np.mean(pp[ind])
-        
+                    # KOut[iDir,iDirAvg,iBl,0]=np.mean(pp[ind])
+                    sw=np.sum(w[ind,:])
+                    #print("!!")
+                    if sw==0: continue
+                    ppp=pp[ind,:]
+                    #print(pp[ind,:].size,sw)
+                    KOut[iDir,iDirAvg,iBl,0]=np.sum(ppp)/sw
+                    
         KOut=KOut.reshape((NDir,NDirAvg*NpOut,Npol))
+     
+        
         KOut[:,:,3]=KOut[:,:,0]
+        n0,n1,_=KOut.shape
+
+        # Mask=(KOut[:,:,0].reshape((n0,n1,1))==0)
+        # _,n0,n1=Mask.shape
+        # MaskMergeDir=np.ones((NDirAvg,1,1),Mask.dtype)*np.any(Mask,axis=0).reshape((1,n0,n1))
+        # Mask=MaskMergeDir
+        # KOut[:,:,0][Mask[:,:,0]]=0.
+        # KOut[:,:,3][Mask[:,:,0]]=0.
         
         return KOut
 
     
     
-    def MergeAntennaJacobian(self,DicoData,LJacob):
-        A0=DicoData["A0_Avg"]
-        A1=DicoData["A1_Avg"]
-
-        LJacobOut=[]
-        indBlNonMerge=DicoData["indBlNonMerge"]
-        indBlMerge=DicoData["indBlMerge"]
-        if indBlMerge.size==0: return LJacob
-        for J in LJacob:
-            n4vis,NDir=J.shape
-            JOut=np.zeros((indBlNonMerge.size+1,NDir),dtype=J.dtype)
-            j=J[indBlMerge,:]
-            w=1.-DicoData["flags_flat_avg"].flat[indBlMerge].reshape((-1,1))
-            sw=np.sum(w)
-            JOut[0,:]=np.sum(j*w,axis=0)/sw
-            JOut[1:,:]=J[indBlNonMerge,:]
-            LJacobOut.append(JOut)
-        return LJacobOut
-    
-    def AverageDataVector(self,DicoData):
+    def AverageDataVector(self,DicoData,Mask=None,Stop=False,K=None,KCompress=None):
         A0=DicoData["A0"].ravel()
         A1=DicoData["A1"].ravel()
-        
 
         NpBlBlocks=DicoData["NpBlBlocks"][0]
         A0A1=sorted(list(set([(A0[i],A1[i]) for i in range(A0.size)])))
@@ -87,32 +96,79 @@ class ClassAverageMachine():
         DicoData["A0_Avg"]=np.array([A0A1[i][0] for i in range(len(A0A1))]*NDirAvg)
         DicoData["A1_Avg"]=np.array([A0A1[i][1] for i in range(len(A0A1))]*NDirAvg)
         
-        
         d=DicoData["data"]
         f=DicoData["flags"]
         nr,nch,_,_=d.shape
         
-        DOut = np.zeros((NDirAvg,NpOut,1,1),d.dtype)
+        DOut = np.zeros((NDirAvg,NpOut,self.NJacobBlocks_X,self.NJacobBlocks_Y),d.dtype)
         FOut=np.zeros(DOut.shape,f.dtype)
 
+        # _,n0,n1=Mask.shape
+        # MaskMergeDir=np.ones((NDirAvg,1,1),Mask.dtype)*np.any(Mask,axis=0).reshape((1,n0,n1))
+        # Mask=MaskMergeDir
+
+        Mask=np.any(K==0,axis=0)
+        
         for iDirAvg in range(NDirAvg):
             K_Compress=self.PM_Compress.predictKernelPolCluster(DicoData,self.SM_Compress,iDirection=iDirAvg)
-            dp=d[:,:,0,0]*K_Compress[:,:,0].conj()
-            
+            #print("!!")
+            dp=d[:,:,0,0].copy()*K_Compress[:,:,0].conj()
+            fp=f[:,:,0,0].copy()
+            dp[Mask]=0.
+            fp[Mask]=1
             for iBl,ind in enumerate(IndList):
-                if np.min(f[ind])==1:
+                if np.min(fp[ind])==1:
+                    #print("All flaged bl=%i, iDirAvg=%i"%(iBl,iDirAvg))
                     FOut[iDirAvg,iBl,0]=1
+                    #stop
                     continue
-                w=(1-f[ind])
-                DOut[iDirAvg,iBl,0]=np.sum(dp[ind].ravel()*w.ravel())/np.float32(np.sum(w))
-        
-        DicoData["flags_avg"]=FOut
-        DicoData["data_avg"]=DOut
+                dps=dp[ind].ravel()
+                fps=fp[ind].ravel()
+                ws=np.float32((1-fps)).ravel()
+                #ws[dps==0]=0.
+                #print("!!")
+                #ws.fill(1.)
+                #ws[Mask[iDirAvg,ind,:].ravel()]=0.
+                sws=np.sum(ws)
+                if sws==0: continue
+                # print("sws",ws.size,sws)
+                # if ws.size!=sws: stop
+                DOut[iDirAvg,iBl,0]=np.sum(dps*ws)/np.float32(sws)
+                # if iBl==0:
+                #     print("!!!!!?",iDirAvg)
+                    
+                # if Stop and iBl==0:
+                #     import pylab
+                #     S0=np.sum(dp[ind])
+                #     S1=np.sum(K[0,ind,:])
+                #     print("S0S1",np.abs(S0-S1))
+                #     print("S0S1b",DOut[iDirAvg,iBl,0],)
+                #     # pylab.clf()
+                #     # pylab.subplot(1,2,1)
+                #     # pylab.imshow(dp[ind].real,interpolation="nearest")
+                #     # pylab.subplot(1,2,2)
+                #     # pylab.imshow(K[iDirAvg,ind,:].real,interpolation="nearest")
+                #     # pylab.suptitle("iBl=%i , iDir=%i, %s, %s"%(iBl,iDirAvg,S0,S1))
+                #     # pylab.draw()
+                #     # pylab.show(block=False)
+                #     # pylab.pause(5)
+
+                
+
+                
+        NChOut=1
+        DicoData["flags_avg"]=FOut.reshape((NDirAvg*NpOut,NChOut,self.NJacobBlocks_X,self.NJacobBlocks_Y))
+        DicoData["data_avg"]=DOut.reshape((NDirAvg*NpOut,NChOut,self.NJacobBlocks_X,self.NJacobBlocks_Y))
         
         DicoData["flags_flat_avg"]=np.rollaxis(FOut,2).reshape(self.NJacobBlocks_X,NDirAvg*NpOut*self.NJacobBlocks_Y)
         DicoData["data_flat_avg"]=np.rollaxis(DOut,2).reshape(self.NJacobBlocks_X,NDirAvg*NpOut*self.NJacobBlocks_Y)
-        #print(DicoData["flags_avg"].shape,DicoData["data_avg"].shape,DicoData["flags_flat_avg"].shape,DicoData["data_flat_avg"].shape)
-
+        
+        # print(DicoData["flags_avg"].shape,DicoData["data_avg"].shape,DicoData["flags_flat_avg"].shape,DicoData["data_flat_avg"].shape)
+        # stop
+        
+        # if Stop:
+        #     stop
+        # print("Stop",Stop)
         
         if self.DicoMergeStations:
             indBlMerge=[]
@@ -164,3 +220,22 @@ class ClassAverageMachine():
         DicoData["flags_flat_avg_merged"]=flags_flat_avg_merged
         DicoData["data_flat_avg_merged"]=data_flat_avg_merged
 
+    
+    def MergeAntennaJacobian(self,DicoData,LJacob):
+        A0=DicoData["A0_Avg"]
+        A1=DicoData["A1_Avg"]
+
+        LJacobOut=[]
+        indBlNonMerge=DicoData["indBlNonMerge"]
+        indBlMerge=DicoData["indBlMerge"]
+        if indBlMerge.size==0: return LJacob
+        for J in LJacob:
+            n4vis,NDir=J.shape
+            JOut=np.zeros((indBlNonMerge.size+1,NDir),dtype=J.dtype)
+            j=J[indBlMerge,:]
+            w=1.-DicoData["flags_flat_avg"].flat[indBlMerge].reshape((-1,1))
+            sw=np.sum(w)
+            JOut[0,:]=np.sum(j*w,axis=0)/sw
+            JOut[1:,:]=J[indBlNonMerge,:]
+            LJacobOut.append(JOut)
+        return LJacobOut

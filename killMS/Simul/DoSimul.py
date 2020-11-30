@@ -197,7 +197,6 @@ class ClassSimul():
             if itime>0: 
                 print("eq in time")
                 continue
-
             
             # continue
             print(itime,"/",NSols)
@@ -267,10 +266,10 @@ class ClassSimul():
         # make scalar
         Sols.G[:,:,:,:,1,1]=Sols.G[:,:,:,:,0,0]
         
-        # # unity
-        # Sols.G.fill(0)
-        # Sols.G[:,:,:,:,0,0]=1.
-        # Sols.G[:,:,:,:,1,1]=1.
+        # unity
+        Sols.G.fill(0)
+        Sols.G[:,:,:,:,0,0]=1.
+        Sols.G[:,:,:,:,1,1]=1.
 
         # # Sols.G[:,:,:,1:,0,0]=0.01
         # # Sols.G[:,:,:,1:,1,1]=0.01
@@ -498,7 +497,7 @@ class ClassSimul():
 
     def DoSimul(self):
     
-        Noise=0.001
+        Noise=0.0#01
         MS=self.MS
         SM=self.SM
         VS=self.VS
@@ -564,26 +563,28 @@ class ClassSimul():
     
         MS.data=PredictData
     
-    
-    
+
     
         #VS.MS.SaveVis(Col="DATA")
         #VS.MS.SaveVis(Col="CORRECTED_DATA")
         VS.MS.SaveVis(Col="CORRECTED_DATA")
         #VS.MS.SaveVis(Col="CORRECTED_DATA")
 
-        # t=table(self.MSName,readonly=False)
-        # f=t.getcol("FLAG")
-        # f.fill(0)
-        # r=np.random.rand(*(f.shape[0:2]))
-        # ff=(r<0.3)
-        # # indr,indf=np.where(ff)
-        # # f[indr,indf,:]=True
-        # # # MS.flag_all=f
-        # # # MS.data[f]=1.e10
-        # t.putcol("FLAG",f)
-        # t.putcol("FLAG_BACKUP",f)
-        # t.close()
+        t=table(self.MSName,readonly=False)
+        f=t.getcol("FLAG")
+        f.fill(0)
+        #r=np.random.rand(*(f.shape[0:2]))
+        #ff=(r<0.3)
+        # indr,indf=np.where(ff)
+        # f[indr,indf,:]=True
+        # # MS.flag_all=f
+        # # MS.data[f]=1.e10
+        t.putcol("FLAG",f)
+        #t.putcol("FLAG_BACKUP",f)
+        w=t.getcol("IMAGING_WEIGHT")
+        w.fill(1)
+        t.putcol("IMAGING_WEIGHT",w)
+        t.close()
 
         
         Sols=self.Sols

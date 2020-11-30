@@ -79,6 +79,8 @@ class ClassSolverLM(ClassJacobianAntenna):
         T=ClassTimeIt.ClassTimeIt("doLMStep")
         T.disable()
 
+        # Gains.fill(1.)
+        
 #         A=np.random.randn(10000,100)+1j*np.random.randn(10000,100)
 #         B=np.random.randn(10000,100)+1j*np.random.randn(10000,100)
 #         AT=A.T#.conj().copy()
@@ -194,21 +196,22 @@ class ClassSolverLM(ClassJacobianAntenna):
         #     pylab.plot(np.abs(Jx[f])[::1]**2)#[::11])
         #     #pylab.ylim(0,800)
         #     pylab.subplot(1,3,3)
-        #     pylab.plot(zr[f][::1])#[::11])
+        #     pylab.plot(np.abs(zr[f])[::1])#[::11])
         #     #pylab.ylim(-30,30)
         #     pylab.draw()
         #     pylab.show(block=False)
         #     pylab.pause(0.1)
-        #     iF=0
-        #     while True:
-        #         fName="Graph_%i_%i.png"%(self.iAnt,iF)
-        #         import os
-        #         if not os.path.isfile(fName):
-        #             break
-        #         else:
-        #             iF+=1
-        #     fig.savefig(fName)
-
+            
+            # iF=0
+            # while True:
+            #     fName="Graph_%i_%i.png"%(self.iAnt,iF)
+            #     import os
+            #     if not os.path.isfile(fName):
+            #         break
+            #     else:
+            #         iF+=1
+            # fig.savefig(fName)
+            
 
 
         # # pylab.figure(2)

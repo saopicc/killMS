@@ -258,7 +258,8 @@ class ClassPreparePredict(ClassImagerDeconv):
         log.print( "  There are %i non-zero directions"%self.SM.NDir)
         self.SM.ClusterCat=self.ClusterCat
         self.SM.SourceCat=self.SourceCat
-        self.SM.SourceCat.I[:]=self.ClusterCat.SumI[:]
+        
+        # self.SM.SourceCat.I[:]=self.ClusterCat.SumI[:]
         
         self.SM.DicoJonesDirToFacet=self.DicoJonesDirToFacet
         self.SM.GD=self.FacetMachine.GD
@@ -274,6 +275,8 @@ class ClassPreparePredict(ClassImagerDeconv):
         #self.SM.ChanMappingDegrid=self.VS.FreqBandChannelsDegrid[0]
         self.SM.ChanMappingDegrid=self.VS.DicoMSChanMappingDegridding[0]
         self.SM._model_dict=self.FacetMachine._model_dict
+        self.SM.MapClusterCatOrigToCut=self.MapClusterCatOrigToCut
+        
         # import pprint
         # pprint.pprint(self.DicoJonesDirToFacet)
 
@@ -329,17 +332,25 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.NDirs=self.ClusterCat.shape[0]
         Keep=np.zeros((self.NDirs,),bool)
         for iDirJones in sorted(DicoJonesDirToFacet.keys()):
+            #print(self.DicoJonesDirToFacet[iDirJones]["SumFlux"])
             if self.DicoJonesDirToFacet[iDirJones]["SumFlux"]==0:
+            #if False:#self.DicoJonesDirToFacet[iDirJones]["SumFlux"]<1e-1:
                 log.print("  Remove Jones direction %i"%(iDirJones))
+                #print("  !!!!!!!!!!!!!!!!!!!!!!!")
             else:
                 D[iDirNew]=self.DicoJonesDirToFacet[iDirJones]
                 iDirNew+=1
                 Keep[iDirJones]=1
+
+        #Keep.fill(0)
+        #Keep[1:5]=1
+        
         self.MapClusterCatOrigToCut=Keep
 
         self.DicoJonesDirToFacet=D
         self.ClusterCat=self.ClusterCat[Keep].copy()
-
+        # self.SourceCat=self.SourceCat[Keep].copy()
+        
         self.Dirs=self.DicoJonesDirToFacet.keys()
         self.NDirs=len(self.Dirs)
 

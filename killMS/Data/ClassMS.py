@@ -512,9 +512,10 @@ class ClassMS():
         # pylab.show()
 
         fnan=np.isnan(vis_all)
+        
         vis_all[fnan]=0.
         flag_all[fnan]=1
-        
+
         self.flag_all=flag_all
         self.uvw_dt=None
 
@@ -569,7 +570,7 @@ class ClassMS():
             data[:,:,-1]=self.data[:,:,-1]
             self.data=data
             self.flag_all=flag_all
-        
+
         if "IMAGING_WEIGHT" in table_all.colnames():
             log.print("Flagging the zeros-weighted visibilities")
             fw=table_all.getcol("IMAGING_WEIGHT",row0,nRowRead)[SPW==self.ListSPW[0]][:,self.ChanSlice]

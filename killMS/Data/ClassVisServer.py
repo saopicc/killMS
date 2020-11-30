@@ -414,6 +414,7 @@ class ClassVisServer():
         if self.ReadUVWDT: duvw_dt=duvw_dt[ind]
                 
         DATA["flags"]=flags
+        DATA["rac_decc"]=np.array([self.MS.rac,self.MS.decc])
         DATA["uvw"]=uvw
         DATA["data"]=data
         DATA["A0"]=A0
@@ -444,8 +445,8 @@ class ClassVisServer():
         #
         # # PM=ClassPredict(NCPU=self.NCPU,IdMemShared=self.IdSharedMem)
         # # DATA["Kp"]=PM.GiveKp(DATA,self.SM)
-
-        #stop
+        
+        
 
 
         self.ClearSharedMemory()
@@ -668,8 +669,8 @@ class ClassVisServer():
             # freqs=MS.ChanFreq
             # x=d.reshape((d.size,1))*(freqs.reshape((1,freqs.size))/C)*S
             # fA_all=(x>(nx/2))
-            ###
-
+            # ###
+            
             C=3e8
             freqs=MS.ChanFreq.flatten()
             x=d.reshape((d.size,1))*(freqs.reshape((1,freqs.size))/C)*CellRad
