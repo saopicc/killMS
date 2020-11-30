@@ -545,10 +545,6 @@ class ClassJacobianAntenna():
 
         for J in LJacob:
             J.shape=(n4vis*self.NJacobBlocks_Y,NDir*self.NJacobBlocks_Y)
-
-
-
-
             
         if self.DoCompress:
             flags_key="flags_flat_avg"
@@ -854,7 +850,10 @@ class ClassJacobianAntenna():
             
             
         if self.DoCompress:
+            
+            T.reinit()
             k=self.AverageMachine.AverageKernelMatrix(self.DicoData,self.K_XX_AllChan)
+            T.timeit("AverageKernelMatrix")
             
             self.K_XX_AllChan_Avg[:,:,0]=k[:,:,0]
             self.K_YY_AllChan_Avg[:]=self.K_XX_AllChan_Avg[:]
@@ -863,6 +862,7 @@ class ClassJacobianAntenna():
                                                   Mask=(self.K_XX_AllChan==0),
                                                   Stop=(self.iAnt==13),
                                                   K=self.K_XX_AllChan)
+            T.timeit("AverageDataVector")
             
             # if True:#self.iAnt==13:
                 

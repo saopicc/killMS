@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 import numpy as np
+from killMS.Other import ClassTimeIt
+import scipy.ndimage
 
 class ClassAverageMachine():
     def __init__(self,
@@ -22,6 +24,8 @@ class ClassAverageMachine():
         self.NJacobBlocks_X,self.NJacobBlocks_Y=1,1
         
     def AverageKernelMatrix(self,DicoData,K):
+        T=ClassTimeIt.ClassTimeIt("AverageKernelMatrix")
+        T.disable()
         #A0,A1=DicoData[""]
         A0=DicoData["A0"]
         A1=DicoData["A1"]
@@ -31,40 +35,70 @@ class ClassAverageMachine():
         NpBlBlocks=DicoData["NpBlBlocks"][0]
         A0A1=sorted(list(set([(A0[i],A1[i]) for i in range(A0.size)])))
         
-        
         NpOut=len(A0A1)
         NDirAvg=self.SM_Compress.NDir
         KOut=np.zeros((NDir,NDirAvg,NpOut,Npol),K.dtype)
+        KOut0=np.zeros((NDir,NDirAvg,NpOut,Npol),K.dtype)
         
         IndList=[(np.where((A0==ThisA0)&(A1==ThisA1))[0]) for (ThisA0,ThisA1) in A0A1]
 
         f=DicoData["flags"]
         fp=f[:,:,0,0].copy()
-        
+        T.timeit("stuff")
+
+        Labels=np.zeros((Np,Npol),np.int64)
+        for iBl,ind in enumerate(IndList):
+            Labels[ind,:]=iBl
+            
         for iDirAvg in range(NDirAvg):
             K_Compress=self.PM_Compress.predictKernelPolCluster(DicoData,
                                                                 self.SM_Compress,
                                                                 iDirection=iDirAvg)
+            T.timeit("K_Compress")
+            k_rephase=K_Compress[:,:,0].conj()
+
             for iDir in range(NDir):
-                p=K[iDir,:,:].copy()
+                p=K[iDir,:,:]#.copy()
                 w=np.ones(p.shape,np.float64)
                 w[p==0]=0.
                 w[fp]=0.
-                p[fp]=0.
+                #p[fp]=0.
 
                 #w.fill(1.)
-                k_rephase=K_Compress[:,:,0].conj()
                 #print("!!")
                 pp=w*p*k_rephase
-                for iBl,ind in enumerate(IndList):
-                    # KOut[iDir,iDirAvg,iBl,0]=np.mean(pp[ind])
-                    sw=np.sum(w[ind,:])
-                    #print("!!")
-                    if sw==0: continue
-                    ppp=pp[ind,:]
-                    #print(pp[ind,:].size,sw)
-                    KOut[iDir,iDirAvg,iBl,0]=np.sum(ppp)/sw
-                    
+                #pp.fill(1)
+                #sw=
+
+                Sr=scipy.ndimage.sum(pp.real,labels=Labels,index=np.arange(len(IndList)))
+                Si=scipy.ndimage.sum(pp.imag,labels=Labels,index=np.arange(len(IndList)))
+                Sw=scipy.ndimage.sum(w,labels=Labels,index=np.arange(len(IndList)))
+
+                ind0=np.where(Sw>0)[0]
+                if ind0.size==0: continue
+                KOut0[iDir,iDirAvg,ind0,0]=(Sr+1j*Si)[ind0]/Sw[ind0]
+                
+                #if Sw.min()>0: stop
+                
+                # for iBl,ind in enumerate(IndList):
+                #     # KOut[iDir,iDirAvg,iBl,0]=np.mean(pp[ind])
+                #     sw=np.sum(w[ind,:])
+                #     #print("0",iBl,sw)
+                #     # print("!!")
+                #     if sw==0: continue
+                #     ppp=pp[ind,:]
+                #     #print(pp[ind,:].size,sw)
+                #     #print("1",iBl,np.sum(ppp))
+                #     KOut[iDir,iDirAvg,iBl,0]=np.sum(ppp)/sw
+                #     #KOut[iDir,iDirAvg,iBl,0]=sw
+                # #print(KOut[iDir,iDirAvg].flat[:],KOut0[iDir,iDirAvg].flat[:],KOut[iDir,iDirAvg].flat[:]-KOut0[iDir,iDirAvg].flat[:])
+                # #print(KOut[iDir,iDirAvg].flat[:]-KOut0[iDir,iDirAvg].flat[:])
+                # #print("===============")
+                # #if KOut[iDir,iDirAvg].max()>0.: stop
+                
+            T.timeit("Avg")
+        #KOut0[np.isnan(KOut0)]=0.
+        KOut=KOut0
         KOut=KOut.reshape((NDir,NDirAvg*NpOut,Npol))
      
         
