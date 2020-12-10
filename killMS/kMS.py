@@ -160,6 +160,7 @@ def read_options():
 
     OP.OptionGroup("* Weighting scheme","Weighting")
     OP.add_option('Resolution',type="float",help='Resolution in arcsec. Default is %default')
+    OP.add_option('WeightInCol',type="str",help='Weighting column to take into account to weight the visibilities in the solver. Default is %default')
     OP.add_option('Weighting',type="str",help='Weighting scheme. Default is %default')
     OP.add_option('Robust',type="float",help='Briggs Robust parameter. Default is %default')
     OP.add_option('WeightUVMinMax',help='Baseline length selection in km for full weight. For example WeightUVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default')

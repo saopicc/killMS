@@ -1137,7 +1137,7 @@ class ClassWirtingerSolver():
                         pylab.title("Channel=%i"%iChanSol)
                         #pylab.ylim(0,2)
                         pylab.draw()
-                        pylab.show(False)
+                        pylab.show(block=False)
                         pylab.pause(0.1)
                         
     

@@ -1175,6 +1175,10 @@ class ClassJacobianAntenna():
                 
                 Rinv=1./R
                 Weights=W.reshape((W_nrows,W_nch,1))*np.ones((1,1,self.npolData))
+
+                # DicoData["Rinv"]=Rinv
+                # DicoData["R"]=R
+                # DicoData["Weights"]=Weights
                 
                 self.R_flat=np.rollaxis(R,2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
                 self.Rinv_flat=np.rollaxis(Rinv,2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)

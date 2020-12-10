@@ -216,6 +216,7 @@ class ClassVisServer():
 
 
     def CalcWeigths(self,FOV=5.):
+
         if self.VisWeights!=None: return
         
         uvw,WEIGHT,flags=self.GiveAllUVW()
@@ -240,7 +241,16 @@ class ClassVisServer():
 
         ######################
         #uvw,WEIGHT,flags=self.GiveAllUVW()
-        VisWeights=np.ones((uvw.shape[0],self.MS.ChanFreq.size),dtype=np.float32)
+
+        if self.GD is not None:
+            if self.GD["Weighting"]["WeightInCol"] is not None and self.GD["Weighting"]["WeightInCol"]!="":
+                log.print("Using column %s to compute the weights"%self.GD["Weighting"]["WeightInCol"])
+                VisWeights=WEIGHT
+            else:
+                VisWeights=np.ones((uvw.shape[0],self.MS.ChanFreq.size),dtype=np.float32)
+        else:
+            VisWeights=np.ones((uvw.shape[0],self.MS.ChanFreq.size),dtype=np.float32)
+        
         if np.max(VisWeights)==0.:
             log.print("All imaging weights are 0, setting them to ones")
             VisWeights.fill(1)
@@ -317,6 +327,7 @@ class ClassVisServer():
                 return "EndChunk"
             else:
                 return "AllFlaggedThisTime"
+            
         DATA={}
         DATA["indRowsThisChunk"]=indRowsThisChunk
         for key in D.keys():
@@ -342,7 +353,6 @@ class ClassVisServer():
         if self.ReadUVWDT: duvw_dt=DATA["UVW_dt"]
 
         # IndexTimesThisChunk=DATA["IndexTimesThisChunk"]
-
 
         for Field in self.DicoSelectOptions.keys():
             if Field=="UVRangeKm":
@@ -424,10 +434,9 @@ class ClassVisServer():
         DATA["W"]=W
         DATA["Map_VisToJones_Time"]=Map_VisToJones_Time
         DATA["indRowsThisChunk"]=indRowsThisChunk
+        
         if self.ReadUVWDT: DATA["UVW_dt"]=duvw_dt
                                 
-
-
         #DATA["UVW_dt"]=self.MS.Give_dUVW_dt(times,A0,A1)
         
         if DATA["flags"].size==0:
@@ -437,6 +446,7 @@ class ClassVisServer():
         if fFlagged>0.9:
             # log.print( "AllFlaggedThisTime [%f%%]"%(fFlagged*100))
             return "AllFlaggedThisTime"
+        
         #if fFlagged==0.:
         #    stop
         # it0=np.min(DATA["IndexTimesThisChunk"])
@@ -445,9 +455,6 @@ class ClassVisServer():
         #
         # # PM=ClassPredict(NCPU=self.NCPU,IdMemShared=self.IdSharedMem)
         # # DATA["Kp"]=PM.GiveKp(DATA,self.SM)
-        
-        
-
 
         self.ClearSharedMemory()
         DATA=self.PutInShared(DATA)
@@ -1233,9 +1240,17 @@ class ClassVisServer():
     def GiveAllUVW(self):
         t=self.MS.GiveMainTable()
         uvw=t.getcol("UVW")
-        WEIGHT=t.getcol("WEIGHT")
+        if self.GD is not None:
+            if self.GD["Weighting"]["WeightInCol"] is not None and self.GD["Weighting"]["WeightInCol"]!="":
+                WEIGHT=t.getcol(self.GD["Weighting"]["WeightInCol"])
+            else:
+                WEIGHT=t.getcol("WEIGHT")
+        else:
+            WEIGHT=t.getcol("WEIGHT")
+
         F=t.getcol("FLAG")
         t.close()
+
         return uvw,WEIGHT,F
 
 

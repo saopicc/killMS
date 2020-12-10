@@ -142,6 +142,8 @@ class ClassAverageMachine():
         # Mask=MaskMergeDir
 
         Mask=np.any(K==0,axis=0)
+
+#        stop
         
         for iDirAvg in range(NDirAvg):
             K_Compress=self.PM_Compress.predictKernelPolCluster(DicoData,self.SM_Compress,iDirection=iDirAvg)
