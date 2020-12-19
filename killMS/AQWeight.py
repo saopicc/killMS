@@ -21,6 +21,7 @@ from killMS.Weights import W_DiagBL
 from killMS.Weights import W_AntFull
 #from killMS.Weights import W_Jones
 from killMS.Weights import W_Imag
+from killMS.Weights import W_ImagCov
 
 def read_options():
     desc="""Run MCMC """
@@ -34,7 +35,7 @@ def read_options():
     group.add_option('--WeightCol',type=str,help='',default=None)
     group.add_option('--SolsFile',type=str,help='',default=None)
     group.add_option('--SolsDir',type=str,help='',default=None)
-    group.add_option('--CovType',type=str,help='',default="VarImag")
+    group.add_option('--CovType',type=str,help='',default="ImagCov")
     group.add_option('--TBinBox',type=int,help='',default=20)
     group.add_option('--ds9reg',type=str,help='',default="")
     group.add_option('--FileCoords',type=str,help='',default="")
@@ -87,7 +88,20 @@ class AQW():
                                                BeamModel=None,
                                                BeamNBand=1)
             self.CovMachine.StackAll()
-            
+        elif self.CovType=="ImagCov":
+            self.CovMachine=W_ImagCov.ClassCovMat(ListMSName=self.ListMSName,
+                                                  ColName=self.DataCol,
+                                                  ModelName=self.PredictCol,
+                                                  UVRange=[.1,1000.], 
+                                                  ColWeights=self.WeightCol, 
+                                                  SolsName=self.SolsFile,
+                                                  FileCoords=self.FileCoords,
+                                                  SolsDir=self.SolsDir,
+                                                  NCPU=0,
+                                                  BeamModel=None,
+                                                  BeamNBand=1)
+            self.CovMachine.StackAll()
+
             #self.CovMachine.setMS(self.MS0)
             #self.CovMachine.setDirs()
 
