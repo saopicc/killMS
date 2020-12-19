@@ -398,6 +398,9 @@ class ClassCovMat(object):
             FOut="%s.Weights.npy"%self.DicoDATA["MSName"]
             
             log.print("    saving weights as %s"%FOut)
+            self.DicoDATA.reload()
+            # print(self.DicoDATA["WOUT"])
+            self.DicoDATA["WOUT"]/=np.median(self.DicoDATA["WOUT"])
             np.save(FOut,self.DicoDATA["WOUT"])
             
             # for iTime in range(self.NTimes):
@@ -442,7 +445,8 @@ class ClassCovMat(object):
         RMS=self.DicoDATA["RMS"]
         w=1./(RMS**2+(sig0)**2+(sig1)**2)
         for ich in range(nch):
-            WOUT[:,ich]=w[:]
+            #self.DicoDATA["WOUT"][indRow][:,ich]=w[:]
+            self.DicoDATA["WOUT"].flat[indRow*nch+ich]=w[:]
 
         
     def Stack_SingleTimeAnt(self,iTime,iAnt):
