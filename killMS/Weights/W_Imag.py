@@ -427,7 +427,7 @@ class ClassCovMat(object):
         for iAnt in range(self.na):
             pylab.plot(self.DicoGrids["GridSTD"][iAnt])
         pylab.draw()
-        pylab.show(block=False)
+        pylab.show(block=True)
         pylab.pause(0.1)
 
 
@@ -492,7 +492,9 @@ class ClassCovMat(object):
         chfreq=self.DicoMSInfos[iMS]["ChanFreq"].reshape((1,-1,1))
         chfreq_mean=np.mean(chfreq)
         kk  = np.exp(-2.*np.pi*1j* chfreq/const.c.value *(u0*l + v0*m + w0*(n-1)) ) # Phasing term
-
+        
+        # kk.fill(1.)
+        
         # #ind=np.where((A0s==0)&(A1s==10))[0]
         # ind=np.where((A0s!=1000))[0]
         # import pylab
@@ -563,17 +565,21 @@ class ClassCovMat(object):
                 
 
         dd0=dcorr[:,:,0] * kk[:,:,0]
-        ds0 = np.sum(dd0.real**2) # with Jones
+        ds0 = np.sum(dd0.real[f[:,:,0]==0]**2) # with Jones
         ws0 = np.sum((1-f[:,:,0]))
 
         dd1=dcorr[:,:,-1] * kk[:,:,-1]
-        ds1 = np.sum(dd1.real**2) # with Jones
+        ds1 = np.sum(dd1.real[f[:,:,-1]==0]**2) # with Jones
         ws1 = np.sum((1-f[:,:,-1]))
 
         ss=(ws0+ws1)
+        
+        dd=np.concatenate([dd0[f[:,:,0]==0].ravel(),dd1[f[:,:,-1]==0].ravel()])
+        dd=dd0[f[:,:,0]==0].ravel()
         if ss>0:
             #self.DicoGrids["GridSTD"][iAnt, iTime] = np.sqrt((ds0+ds1))/ss
             self.DicoGrids["GridSTD"][iAnt, iTime] = scipy.stats.median_abs_deviation(dd0.ravel(),scale="normal")
+            #self.DicoGrids["GridSTD"][iAnt, iTime] = scipy.stats.median_abs_deviation(dd.ravel(),scale="normal")
             
 
     def NormJones(self, G):
