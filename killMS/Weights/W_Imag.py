@@ -424,7 +424,7 @@ class ClassCovMat(object):
         for iAnt in range(self.na):
             pylab.plot(self.DicoGrids["GridSTD"][iAnt])
         pylab.draw()
-        pylab.show(block=False)
+        pylab.show(block=True)
         pylab.pause(0.1)
 
 
