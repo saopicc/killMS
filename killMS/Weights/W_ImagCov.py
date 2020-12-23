@@ -24,6 +24,7 @@ from astropy.io import fits
 from astropy.wcs import WCS
 from DDFacet.ToolsDir.rad2hmsdms import rad2hmsdms
 import scipy.stats
+from killMS.Array import ModLinAlg
 
 def AngDist(ra0,ra1,dec0,dec1):
     AC=np.arccos
@@ -39,15 +40,17 @@ def AngDist(ra0,ra1,dec0,dec1):
     return AC(D)
 
 def test():
-    CW=ClassCovMat(ListMSName=["0000.MS"],
+    CW=ClassCovMat(ListMSName=["1563189318_sdp_l0-A3528S_corr.ms.tsel2"],
+                   FileCoords="a3528-beam_ds9.Cyril.WeightKMS_fixBeam.npy.ClusterCat.npy",
+                   #ListMSName=["0000.MS"],
+                   #FileCoords="Target.txt.ClusterCat.npy",
                    ColName="CORRECTED_DATA",
                    ModelName="DDF_PREDICT",
                    UVRange=[.1,1000.], 
                    ColWeights=None, 
                    SolsName=None,
-                   FileCoords="Target.txt.ClusterCat.npy",
                    SolsDir=None,
-                   NCPU=6,
+                   NCPU=0,
                    BeamModel=None,
                    BeamNBand=1)   
     CW.StackAll()
@@ -75,6 +78,8 @@ class ClassCovMat(object):
         self.SolsName=SolsName
         self.NCPU=NCPU
         self.BeamModel=BeamModel
+        self.StepFreq=100
+        self.StepTime=1
         
         if ListMSName is None:
             print(ModColor.Str("WORKING IN REPLOT MODE"), file=log)
@@ -110,8 +115,16 @@ class ClassCovMat(object):
         self.DicoDATA = shared_dict.create("DATA")
         self.DicoGrids = shared_dict.create("Grids")
         self.DicoGrids["GridSTD"] = np.zeros((self.NTimes, self.na,self.na), np.complex128)
+        self.DicoGrids["GridSTD"] = np.zeros((self.NTimes, self.na,self.na), np.complex128)
+        
+        self.DicoGrids["DomainEdges_Freq"] = np.int64(np.linspace(0,self.NChan,int(self.NChan/self.StepFreq)+1))
+        #self.DicoGrids["DomainEdges_Time"] = np.int64(np.linspace(0,self.NTimes-1,int(self.NTimes/self.StepTime)+1))
+        DT=self.times.max()-self.times.min()
+        DTSol=np.min([self.StepTime*self.dt,DT])
+        self.DicoGrids["DomainEdges_Time"] = np.linspace(self.times.min()-1e-6,self.times.max()+1e-6,int(DT/DTSol)+1)
 
-
+        log.print("  DomainEdges_Freq: %s"%(str(self.DicoGrids["DomainEdges_Freq"])))
+        log.print("  DomainEdges_Time: %s"%(str(self.DicoGrids["DomainEdges_Time"])))
         
 
         self.DoJonesCorr_kMS =False
@@ -140,7 +153,8 @@ class ClassCovMat(object):
         tf0 = table("%s::SPECTRAL_WINDOW"%self.ListMSName[0], ack=False)
         self.ChanWidth = tf0.getcol("CHAN_WIDTH").ravel()[0]
         tf0.close()
-        self.times = np.unique(t0.getcol("TIME"))
+        self.times = np.sort(np.unique(t0.getcol("TIME")))
+        self.dt=(self.times[1::]-self.times[0:-1]).min()
         t0.close()
 
         ta = table("%s::ANTENNA"%self.ListMSName[0], ack=False)
@@ -247,8 +261,12 @@ class ClassCovMat(object):
             dp=t.getcol(self.ModelName)
             flag[dp==0]=1
             data-=dp
-            del(dp)
-            
+            data_p=dp
+            #del(dp)
+
+        data[flag==1]=0
+        data_p[flag==1]=0
+        
         if self.ColWeights:
             print("  Reading weight column %s"%(self.ColWeights), file=log)
             weights   = t.getcol(self.ColWeights)
@@ -276,7 +294,7 @@ class ClassCovMat(object):
         self.DicoDATA["iMS"]=self.iCurrentMS
         self.DicoDATA["MSName"]=self.ListMSName[self.iCurrentMS]
         self.DicoDATA["data"]=data
-        
+        self.DicoDATA["data_p"]=data_p
 
         self.DicoDATA["WOUT"]=np.zeros((data.shape[0],data.shape[1]),np.float64)
         self.DicoDATA["weights"]=weights
@@ -390,18 +408,47 @@ class ClassCovMat(object):
         while self.iCurrentMS<self.nMS:
             if self.LoadNextMS()=="NotRead": continue
             print("Making dynamic spectra...", file=log)
-            for iTime in range(self.NTimes):
-                APP.runJob("Stack_SingleTime:%d"%(iTime), 
-                           self.Stack_SingleTime,
-                           args=(iTime,))#,serial=True)
+            # for iTime in range(self.NTimes):
+            #     APP.runJob("Stack_SingleTime:%d"%(iTime), 
+            #                self.Stack_SingleTime,
+            #                args=(iTime,))#,serial=True)
+            # APP.awaitJobResults("Stack_SingleTime:*", progress="Append MS %i"%self.DicoDATA["iMS"])
+
+            FF=self.DicoGrids["DomainEdges_Freq"]
+            TT=self.DicoGrids["DomainEdges_Time"]
+            for iTime in range(TT.size-1):
+                for iFreq in range(FF.size-1):
+                    #print(iTime,iFreq)
+                    APP.runJob("Stack_SingleTime:%d:%d"%(iTime,iFreq), 
+                               self.Stack_SingleTime,
+                               args=(iTime,iFreq))#,serial=True)
+
             APP.awaitJobResults("Stack_SingleTime:*", progress="Append MS %i"%self.DicoDATA["iMS"])
+
+            
             FOut="%s.Weights.npy"%self.DicoDATA["MSName"]
             
-            log.print("    saving weights as %s"%FOut)
             self.DicoDATA.reload()
+            
             # print(self.DicoDATA["WOUT"])
             #self.DicoDATA["WOUT"]/=np.median(self.DicoDATA["WOUT"])
-            #np.save(FOut,self.DicoDATA["WOUT"])
+            
+            w=self.DicoDATA["WOUT"]
+
+            w/=np.median(w)
+            w[w<=0]=0
+            w[w>2.]=2
+            
+            log.print("    saving weights as %s"%FOut)
+            np.save(FOut,self.DicoDATA["WOUT"])
+            
+            import pylab
+            pylab.clf()
+            pylab.hist(w[:,0].ravel())
+            pylab.draw()
+            pylab.show()
+            
+            #np.save(FOut,self.DicoGrids["GridSTD"])
             
             # for iTime in range(self.NTimes):
             #     self.Stack_SingleTime(iTime)
@@ -420,20 +467,28 @@ class ClassCovMat(object):
     def Finalise(self):
         self.killWorkers()
         
-        
-        
-        import pylab
-        pylab.clf()
-        for iT in range(self.NTimes)[::10]:
-            pylab.clf()
-            pylab.imshow(np.abs(self.DicoGrids["GridSTD"][iT]))
-            pylab.colorbar()
-            pylab.draw()
-            pylab.show(block=False)
-            pylab.pause(0.5)
+        # C=self.DicoGrids["GridSTD"]
+
+        # import pylab
+        # f=pylab.figure(0)
+        # ind=range(C.shape[0])
+        # for iT in ind:
+        #     #print("%i / %i"%(iT,len(ind)))
+        #     f.clf()
+        #     pylab.imshow(np.log10(np.abs(C[iT])))
+        #     pylab.draw()
+        #     f.savefig("png/Fig%5.5i.png"%iT)
+
+        # for iT in range(self.NTimes)[::10]:
+        #     pylab.clf()
+        #     pylab.imshow(np.abs(self.DicoGrids["GridSTD"][iT]))
+        #     pylab.colorbar()
+        #     pylab.draw()
+        #     pylab.show(block=False)
+        #     pylab.pause(0.5)
 
 
-    def Stack_SingleTime(self,iTime):
+    def Stack_SingleTime(self,iTime,iFreq):
             
 
         ra=self.PosArray.ra[0]
@@ -443,11 +498,28 @@ class ClassCovMat(object):
         n  = np.sqrt(1. - l**2. - m**2.)
         self.DicoDATA.reload()
         self.DicoGrids.reload()
-        indRow = np.where((self.DicoDATA["times"]==self.times[iTime]))[0]
-        f   = self.DicoDATA["flag"][indRow, :, :]
-        d   = self.DicoDATA["data"][indRow, :, :]
+        
+        #indRow = np.where((self.DicoDATA["times"]==self.times[iTime]))[0]
+        ch0,ch1=self.DicoGrids["DomainEdges_Freq"][iFreq],self.DicoGrids["DomainEdges_Freq"][iFreq+1]
+        #print(ch0,ch1)
+        t0,t1=self.DicoGrids["DomainEdges_Time"][iTime],self.DicoGrids["DomainEdges_Time"][iTime+1]
+        try:
+            indRow=np.where((self.DicoDATA["times"]>=t0)&(self.DicoDATA["times"]<t1))[0]
+        except:
+            print(it0,it1)
+            print(it0,it1)
+            print(it0,it1)
+            print(it0,it1)
+            print(it0,it1)
+            print(it0,it1)
+            print(it0,it1)
+            #indRow = np.where((self.DicoDATA["times"]==self.times[it0]))[0]
+        
+        f   = self.DicoDATA["flag"][indRow, ch0:ch1, :]
+        d   = self.DicoDATA["data"][indRow, ch0:ch1, :]
+        dp   = self.DicoDATA["data_p"][indRow, ch0:ch1, :]
         nrow,nch,_=d.shape
-        weights   = (self.DicoDATA["weights"][indRow, :]).reshape((nrow,nch,1))
+        weights   = (self.DicoDATA["weights"][indRow, ch0:ch1]).reshape((nrow,nch,1))
         A0s = self.DicoDATA["A0"][indRow]
         A1s = self.DicoDATA["A1"][indRow]
         u0  = self.DicoDATA["u"][indRow].reshape((-1,1,1))
@@ -477,7 +549,7 @@ class ClassCovMat(object):
         
         DicoMSInfos      = self.DicoMSInfos
         
-        _,nch,_=self.DicoDATA["data"].shape
+        #_,nch,_=self.DicoDATA["data"].shape
 
         dcorr=d
         dcorr[f==1]=0
@@ -530,57 +602,97 @@ class ClassCovMat(object):
                 dcorr[:,indCh,:] = 1./J0 * dcorr[:,indCh,:] * 1./J1.conj()
 
 
-        dcorr *= kk
-        def Give_r(iAnt,pol):
+        RMS=scipy.stats.median_abs_deviation((dcorr[dcorr!=0]).ravel(),scale="normal")
+        df=(dcorr[dcorr!=0]).ravel()
+        if df.size>100:
+            RMS=np.sqrt(np.sum(df*df.conj())/df.size)
+        
+        dp[dp==0]=1.
+        #dcorr/=dp# *= kk
+        def Give_r(din,iAnt,pol):
             ind=np.where(A0s==iAnt)[0]
-            d0=dcorr[ind,:,pol].ravel()
+            d0=din[ind,:,pol].ravel()
             ind=np.where(A1s==iAnt)[0]
-            d1=dcorr[ind,:,pol].conj().ravel()
+            d1=din[ind,:,pol].conj().ravel()
             return np.concatenate([d0,d1]).ravel()
         
-        def Give_R(pol):
-            r0=Give_r(0,pol)
+        def Give_R(din,pol):
+            r0=Give_r(din,0,pol)
             
             R=np.zeros((r0.size,self.na),dtype=r0.dtype)
             R[:,0]=r0
             for iAnt in range(1,self.na):
-                R[:,iAnt]=Give_r(iAnt,pol)
+                R[:,iAnt]=Give_r(din,iAnt,pol)
             return R
 
-        R=Give_R(0)+Give_R(-1)
-            
+        R=(Give_R(dcorr,0)+Give_R(dcorr,-1))#/2.
         Rf=np.ones(R.shape,np.float64)
         Rf[R==0]=0
+        if (Rf[Rf==1]).size<100:
+            return
 
         C=np.dot(R.T.conj(),R)
         Cn=np.dot(Rf.T,Rf)
         Cn[Cn==0]=1.
         C/=Cn
-        self.DicoGrids["GridSTD"][iTime, :,:]=C[:,:]
+
+        Rp=(Give_R(dp,0)+Give_R(dp,-1))#/2.
+        Rpf=np.ones(Rp.shape,np.float64)
+        Rpf[Rp==0]=0
+        Cp=np.dot(Rp.T.conj(),Rp)
+        Cpn=np.dot(Rpf.T,Rpf)
+        Cpn[Cpn==0]=1.
+        Cp/=Cpn
+        
+        
+        # RMS=self.DicoDATA["RMS"]**2
+        
+        
+        II=np.diag(RMS**2*np.ones((self.na,),C.dtype))
+
+        C=C-II
+        diagC=np.diag(C)
+        ind=np.where(diagC<=0.)[0]
+        for i in ind:
+            C[i,i]=0.
+        
+        C/=Cp
+        C=ModLinAlg.sqrtSVD(C[:,:])
+            
+        #self.DicoGrids["GridSTD"][iTime, :,:]=ModLinAlg.sqrtSVD(C[:,:])
+
+        #C=ModLinAlg.invSVD(self.DicoGrids["GridSTD"][iTime, :,:])
+        C=np.abs(C)
+        Want=np.sum(C,axis=0)
+
+        _,nch,_=self.DicoDATA["data"].shape
+        WOUT=self.DicoDATA["WOUT"][indRow,ch0:ch1]
+        A0s = self.DicoDATA["A0"][indRow]
+        A1s = self.DicoDATA["A1"][indRow]
 
         
-        # dd0=dcorr[:,:,0] * kk[:,:,0]
-        # ds0 = np.sum(dd0.real**2) # with Jones
-        # ws0 = np.sum((1-f[:,:,0]))
+        # w0=Want[A0s]
+        # w1=Want[A1s]
+        # w=w0*w1
+        # w/=np.median(w)
+        # w[w<=0]=0
+        # w[w>2.]=2
 
-        # dd1=dcorr[:,:,-1] * kk[:,:,-1]
-        # ds1 = np.sum(dd1.real**2) # with Jones
-        # ws1 = np.sum((1-f[:,:,-1]))
+        V=C[A0s,A1s]
+        ind=(V==0)
+        V[ind]=1e10
+        w=1./V
+        w[ind]=0
+        
+        #w/=np.median(w)
+        #w[w<=0]=0
+        #w[w>2.]=2
 
-        # ss=(ws0+ws1)
-        # if ss>0:
-        #     #self.DicoGrids["GridSTD"][iAnt, iTime] = np.sqrt((ds0+ds1))/ss
-        #     self.DicoGrids["GridSTD"][iAnt, iTime] = scipy.stats.median_abs_deviation(dd0.ravel(),scale="normal")
-            
-        # indRow = np.where(self.DicoDATA["times"]==self.times[iTime])[0]
-        # _,nch,_=self.DicoDATA["data"].shape
-        # WOUT=self.DicoDATA["WOUT"][indRow]
-        # A0s = self.DicoDATA["A0"][indRow]
-        # A1s = self.DicoDATA["A1"][indRow]
-        # sig0=self.DicoGrids["GridSTD"][A0s, iTime]
-        # sig1=self.DicoGrids["GridSTD"][A1s, iTime]
-        # RMS=self.DicoDATA["RMS"]
-        # w=1./(RMS**2+(sig0)**2+(sig1)**2)
+        for ii,iRow in enumerate(indRow):
+            for ich in np.arange(ch0,ch1):
+                self.DicoDATA["WOUT"][iRow,ich]=w[ii]
+                #print(ich)
+                
         # for ich in range(nch):
         #     #self.DicoDATA["WOUT"][indRow][:,ich]=w[:]
         #     self.DicoDATA["WOUT"].flat[indRow*nch+ich]=w[:]
