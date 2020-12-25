@@ -46,7 +46,6 @@ from pyrap.tables import table
 import glob
 from SkyModel.Array import RecArrayOps
 
-
 def main(options=None):
     #MSName="0000.MS"
     #SMName="MultiFreqs2.restored.corr.pybdsm.point.sky_in.npy"
@@ -87,12 +86,13 @@ def main(options=None):
     #ll=sorted(glob.glob("SimulHighRes.MS_p0"))
     #ll=sorted(glob.glob("SimulLowRes.MS_p0"))
     
+    np.random.seed(50)
     CS0=ClassSimul(ll[0],SMName)
     Sols=CS0.GiveSols()
     
     for l in ll:
         # CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
-        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False)
+        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False,Cr=CS0.Cr)
 
         if CS0.DoClusterJones:
             CS.SolsCluster=CS0.SolsCluster
@@ -102,14 +102,15 @@ def main(options=None):
 
 class ClassSimul():
 
-    def __init__(self,MSName,SMName,Sols=None,ApplyBeam=True):
+    def __init__(self,MSName,SMName,Sols=None,ApplyBeam=True,Cr=None):
         self.MSName=MSName
         self.SMName=SMName
         self.Sols=Sols
         self.ApplyBeam=ApplyBeam
         self.ChanMap=None
         self.DoClusterDirs=False
-
+        self.Cr=Cr
+        
         self.Init()
         nuc=self.VS.MS.ChanFreq.ravel()
         dnu=self.VS.MS.ChanWidth.ravel()[0]
@@ -249,11 +250,53 @@ class ClassSimul():
                         #Sols.G[itime,iAnt,iDir,1,1]=g0
 
 
+        C=np.zeros((na,na),dtype=np.complex64)
+        std_g=0.001
+        I=np.diag(std_g*np.ones((na,),np.float32))**2
+        C+=I
 
-        # Equalise in time
-        for itime in range(NSols):
-            Sols.G[itime,:,:,:,0,0]=Sols.G[0,:,:,:,0,0]
-            Sols.G[itime,:,:,:,1,1]=Sols.G[0,:,:,:,1,1]
+        dn=3
+        # for i in range(na):
+        #     if i+dn<na:
+        #         C[i,i+dn]=1.#std_g**2
+                
+        C[0,10]=1.
+        
+        C=(C+C.T)/2.
+        Cs=ModLinAlg.sqrtSVD(C)
+        np.save("C.npy",C)
+        gm=np.ones((na,1),np.complex64)
+        Sols.G.fill(0)
+        
+        g0=np.dot(Cs,np.random.randn(na,1))+gm
+        g0*=g0[0].conj()/np.abs(g0[0])
+        #Cr=np.dot((g0-gm),(g0-gm).T.conj())
+        Cr=np.dot((g0),(g0).T.conj())-1
+        
+        np.save("Cr.npy",Cr)
+        self.Cr=Cr
+        
+        import pylab
+        pylab.clf()
+        pylab.subplot(1,2,1)
+        pylab.imshow(np.abs(C),interpolation="nearest")
+        pylab.subplot(1,2,2)
+        pylab.imshow(np.abs(Cr),interpolation="nearest")
+        pylab.draw()
+        pylab.show()
+        
+        for itime in range(0,NSols):
+            for ich in range(nch):
+                for iAnt in range(na):
+                    for iDir in range(nd):
+                        Sols.G[itime,ich,iAnt,iDir,0,0]=g0.flat[iAnt]
+                        Sols.G[itime,ich,iAnt,iDir,1,1]=g0.flat[iAnt]
+
+                        
+        # # Equalise in time
+        # for itime in range(NSols):
+        #     Sols.G[itime,:,:,:,0,0]=Sols.G[0,:,:,:,0,0]
+        #     Sols.G[itime,:,:,:,1,1]=Sols.G[0,:,:,:,1,1]
 
         # equalise in freq
         for ich in range(1,nch):
@@ -266,10 +309,10 @@ class ClassSimul():
         # make scalar
         Sols.G[:,:,:,:,1,1]=Sols.G[:,:,:,:,0,0]
         
-        # unity
-        Sols.G.fill(0)
-        Sols.G[:,:,:,:,0,0]=1.
-        Sols.G[:,:,:,:,1,1]=1.
+        # # unity
+        # Sols.G.fill(0)
+        # Sols.G[:,:,:,:,0,0]=1.
+        # Sols.G[:,:,:,:,1,1]=1.
 
         # # Sols.G[:,:,:,1:,0,0]=0.01
         # # Sols.G[:,:,:,1:,1,1]=0.01
@@ -497,7 +540,7 @@ class ClassSimul():
 
     def DoSimul(self):
     
-        Noise=0.0#1
+        Noise=.01
         MS=self.MS
         SM=self.SM
         VS=self.VS
@@ -570,7 +613,17 @@ class ClassSimul():
         VS.MS.SaveVis(Col="CORRECTED_DATA")
         #VS.MS.SaveVis(Col="CORRECTED_DATA")
 
+        
         t=table(self.MSName,readonly=False)
+        
+        dp=t.getcol("DDF_PREDICT")
+        dp.fill(0)
+        dp[:,:,0]=1.
+        dp[:,:,-1]=1.
+        t.putcol("DDF_PREDICT",dp)
+
+        t.putcol("DATA",MS.data-dp)
+        
         f=t.getcol("FLAG")
         f.fill(0)
         #r=np.random.rand(*(f.shape[0:2]))
@@ -582,8 +635,28 @@ class ClassSimul():
         t.putcol("FLAG",f)
         #t.putcol("FLAG_BACKUP",f)
         w=t.getcol("IMAGING_WEIGHT")
+
+
+
+
         w.fill(1)
         t.putcol("IMAGING_WEIGHT",w)
+
+        # ###############################
+        w.fill(0)
+        A0s = t.getcol("ANTENNA1")
+        A1s = t.getcol("ANTENNA2")
+        C2=self.Cr#np.dot(self.Cr.T.conj(),self.Cr)
+        V=C2[A0s,A1s]
+        ind=(V==0)
+        V[ind]=1e10
+        w0=1./(V+Noise**2)
+        w0[ind]=0
+        
+        for ich in np.arange(w.shape[1]):
+            w[:,ich]=np.abs(w0)
+        np.save("WSim.npy",w)
+        
         t.close()
 
         

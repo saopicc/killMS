@@ -35,13 +35,15 @@ def invertLU(A):
     lu,piv=scipy.linalg.lu_factor(A)
     return scipy.linalg.lu_solve((lu,piv),np.eye(A.shape[0],A.shape[0]))
 
-def sqrtSVD(A):
+def sqrtSVD(A,Rank=None):
     #u,s,v=np.linalg.svd(A+np.random.randn(*A.shape)*(1e-6*A.max()))
     A=(A+A.T)/2.
     thr=1e-8
     u,s,v=np.linalg.svd(A+np.random.randn(*A.shape)*(thr*A.max()))
     s[s<0.]=0.
     ssq=np.diag(np.sqrt(s))
+    if Rank is not None:
+        ssq[Rank:]=0
     Asq=np.dot(np.dot(u,ssq),v)
     return Asq
 

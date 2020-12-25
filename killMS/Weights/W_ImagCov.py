@@ -40,13 +40,13 @@ def AngDist(ra0,ra1,dec0,dec1):
     return AC(D)
 
 def test():
-    CW=ClassCovMat(ListMSName=["1563189318_sdp_l0-A3528S_corr.ms.tsel2"],
-                   FileCoords="a3528-beam_ds9.Cyril.WeightKMS_fixBeam.npy.ClusterCat.npy",
-                   #ListMSName=["0000.MS"],
-                   #FileCoords="Target.txt.ClusterCat.npy",
+    CW=ClassCovMat(#ListMSName=["1563189318_sdp_l0-A3528S_corr.ms.tsel2"],
+                   #FileCoords="a3528-beam_ds9.Cyril.WeightKMS_fixBeam.npy.ClusterCat.npy",
+                   ListMSName=["0000.MS"],
+                   FileCoords="Target.txt.ClusterCat.npy",
                    ColName="CORRECTED_DATA",
                    ModelName="DDF_PREDICT",
-                   UVRange=[.1,1000.], 
+                   UVRange=[0.1,1000.], 
                    ColWeights=None, 
                    SolsName=None,
                    SolsDir=None,
@@ -79,7 +79,7 @@ class ClassCovMat(object):
         self.NCPU=NCPU
         self.BeamModel=BeamModel
         self.StepFreq=100
-        self.StepTime=1
+        self.StepTime=1000
         
         if ListMSName is None:
             print(ModColor.Str("WORKING IN REPLOT MODE"), file=log)
@@ -112,17 +112,21 @@ class ClassCovMat(object):
         self.NDir=self.PosArray.shape[0]
 
 
+
+        
         self.DicoDATA = shared_dict.create("DATA")
         self.DicoGrids = shared_dict.create("Grids")
-        self.DicoGrids["GridSTD"] = np.zeros((self.NTimes, self.na,self.na), np.complex128)
-        self.DicoGrids["GridSTD"] = np.zeros((self.NTimes, self.na,self.na), np.complex128)
         
-        self.DicoGrids["DomainEdges_Freq"] = np.int64(np.linspace(0,self.NChan,int(self.NChan/self.StepFreq)+1))
+        dChan=np.min([self.StepFreq,self.NChan])
+        self.DicoGrids["DomainEdges_Freq"] = np.int64(np.linspace(0,self.NChan,int(self.NChan/dChan)+1))
         #self.DicoGrids["DomainEdges_Time"] = np.int64(np.linspace(0,self.NTimes-1,int(self.NTimes/self.StepTime)+1))
         DT=self.times.max()-self.times.min()
         DTSol=np.min([self.StepTime*self.dt,DT])
         self.DicoGrids["DomainEdges_Time"] = np.linspace(self.times.min()-1e-6,self.times.max()+1e-6,int(DT/DTSol)+1)
 
+        self.DicoGrids["GridC2"] = np.zeros((self.DicoGrids["DomainEdges_Time"].size-1,self.DicoGrids["DomainEdges_Freq"].size-1, self.na,self.na), np.complex128)
+        self.DicoGrids["GridC"] = np.zeros((self.DicoGrids["DomainEdges_Time"].size-1,self.DicoGrids["DomainEdges_Freq"].size-1, self.na,self.na), np.complex128)
+        
         log.print("  DomainEdges_Freq: %s"%(str(self.DicoGrids["DomainEdges_Freq"])))
         log.print("  DomainEdges_Time: %s"%(str(self.DicoGrids["DomainEdges_Time"])))
         
@@ -442,11 +446,11 @@ class ClassCovMat(object):
             log.print("    saving weights as %s"%FOut)
             np.save(FOut,self.DicoDATA["WOUT"])
             
-            import pylab
-            pylab.clf()
-            pylab.hist(w[:,0].ravel())
-            pylab.draw()
-            pylab.show()
+            # import pylab
+            # pylab.clf()
+            # pylab.hist(w[:,0].ravel())
+            # pylab.draw()
+            # pylab.show()
             
             #np.save(FOut,self.DicoGrids["GridSTD"])
             
@@ -467,17 +471,92 @@ class ClassCovMat(object):
     def Finalise(self):
         self.killWorkers()
         
-        # C=self.DicoGrids["GridSTD"]
+        C2=np.abs(self.DicoGrids["GridC2"])
+        C=np.abs(self.DicoGrids["GridC"])
 
-        # import pylab
+        Cr=np.load("Cr.npy")
+        Cr2=(np.dot(Cr.T.conj(),Cr))
+        Crn=np.ones_like(Cr)
+        Crn[Cr==0]=0
+        Crn2=np.abs(np.dot(Crn.T.conj(),Crn))
+        Cr2/=Crn2
+        # Cr=np.abs(np.load("Cr.npy"))
+        # Cr2=np.abs(np.dot(Cr.T.conj(),Cr))
+        # Crn=np.ones_like(Cr)
+        # Crn[Cr==0]=0
+        # Crn2=np.abs(np.dot(Crn.T.conj(),Crn))
+        # Cr2/=Crn2
+        
+        import pylab
+
+
+        sqrtCr2=ModLinAlg.sqrtSVD(Cr2)
+        sqrtCr2_2=np.dot(sqrtCr2.T.conj(),sqrtCr2)
+
+        
+        # pylab.clf()
+        # pylab.subplot(2,3,1)
+        # pylab.imshow(np.abs(Cr))#,vmin=v0,vmax=v1)
+        # pylab.title("Cr")
+        # pylab.colorbar()
+        # pylab.subplot(2,3,2)
+        # pylab.imshow(np.abs(Cr2))#,vmin=v0,vmax=v1)
+        # pylab.title("Cr2")
+        # pylab.colorbar()
+        # pylab.subplot(2,3,3)
+        # pylab.imshow(np.abs(sqrtCr2))#,vmin=v0,vmax=v1)
+        # pylab.title("sqrt(Cr2)")
+        # pylab.colorbar()
+        # pylab.subplot(2,3,4)
+        # pylab.imshow(np.abs(sqrtCr2_2))#,vmin=v0,vmax=v1)
+        # pylab.title("sqrt(Cr2)2")
+        # pylab.colorbar()
+        # pylab.draw()
+        # pylab.show()
+        # return
+
+
         # f=pylab.figure(0)
-        # ind=range(C.shape[0])
-        # for iT in ind:
-        #     #print("%i / %i"%(iT,len(ind)))
-        #     f.clf()
-        #     pylab.imshow(np.log10(np.abs(C[iT])))
-        #     pylab.draw()
-        #     f.savefig("png/Fig%5.5i.png"%iT)
+        # Nt=C.shape[0]
+        # Nf=C.shape[1]
+        # for iT in range(Nt):
+        #     for iF in range(Nf):
+        #         f.clf()
+        #         v0,v1=Cr.min(),Cr.max()
+                
+        #         pylab.subplot(2,3,1)
+        #         pylab.imshow(np.abs(Cr2))#,vmin=v0,vmax=v1)
+        #         pylab.title("Cr2 Sim")
+        #         pylab.colorbar()
+        #         pylab.subplot(2,3,2)
+        #         pylab.imshow(np.abs(C2[iT,iF]))#,vmin=v0,vmax=v1)
+        #         pylab.title("C2 Solve")
+        #         pylab.colorbar()
+        #         pylab.subplot(2,3,3)
+        #         pylab.imshow(np.abs(Cr2)-np.abs(C2[iT,iF]))#,vmin=v0,vmax=v1)
+        #         pylab.title("diff")
+        #         pylab.colorbar()
+
+        #         v0,v1=Cr.min(),Cr.max()
+        #         pylab.subplot(2,3,4)
+        #         pylab.imshow(np.abs(Cr))#,vmin=v0,vmax=v1)
+        #         pylab.title("Sim sq")
+        #         pylab.colorbar()
+        #         #c=np.abs(ModLinAlg.sqrtSVD(Ca2[iT,iF]))
+                
+        #         c=ModLinAlg.sqrtSVD(Cr2)
+        #         pylab.subplot(2,3,5)
+        #         pylab.imshow(np.abs(c))#,vmin=v0,vmax=v1)
+        #         pylab.title("Solve sq")
+        #         pylab.colorbar()
+        #         pylab.subplot(2,3,6)
+        #         pylab.imshow(np.abs(c)-np.abs(Cr))#,vmin=v0,vmax=v1)
+        #         pylab.title("Diff sq")
+        #         pylab.colorbar()
+        #         pylab.draw()
+        #         pylab.show()
+        #         #pylab.pause(0.1)
+        #         #f.savefig("png/Fig%5.5i.png"%iT)
 
         # for iT in range(self.NTimes)[::10]:
         #     pylab.clf()
@@ -525,8 +604,52 @@ class ClassCovMat(object):
         u0  = self.DicoDATA["u"][indRow].reshape((-1,1,1))
         v0  = self.DicoDATA["v"][indRow].reshape((-1,1,1))
         w0  = self.DicoDATA["w"][indRow].reshape((-1,1,1))
+        times=self.DicoDATA["times"][indRow]
+        NTimesBin=np.unique(times).size
+        
+        i_TimeBin=np.int64(np.argmin(np.abs(times.reshape((-1,1))-np.sort(np.unique(times)).reshape((1,-1))),axis=1).reshape(-1,1))*np.ones((1,nch))
+        i_ch=np.int64((np.arange(nch).reshape(1,-1))*np.ones((nrow,1)))
+        i_A0=A0s.reshape((-1,1))*np.ones((1,nch))
+        i_A1=A1s.reshape((-1,1))*np.ones((1,nch))
 
+        
+        i_TimeBin=np.int64(i_TimeBin).ravel()
+        i_ch=np.int64(i_ch).ravel()
+        i_A0=np.int64(i_A0).ravel()
+        i_A1=np.int64(i_A1).ravel()
+        na=self.na
+        
+        def Give_R(din):
+            d0=(din[:,:,0]+din[:,:,-1])/2.
+            R=np.zeros((NTimesBin*nch*na,na),din.dtype)
+            
+            ind0=i_TimeBin * nch*na**2 + i_ch * na**2 + i_A0 * na + i_A1
+            ind1=i_TimeBin * nch*na**2 + i_ch * na**2 + i_A1 * na + i_A0
+            
+            R.flat[ind0]=d0.flat[:]
+            R.flat[ind1]=d0.conj().flat[:]
+            f0=np.ones((R.shape),dtype=np.float64)
+            f0[R==0]=0
 
+            # import pylab
+            # R_=R.reshape((NTimesBin,nch,na,na))
+            # Rf_=f0.reshape((NTimesBin,nch,na,na))
+            # for iT in range(NTimesBin):
+            #     for iF in range(nch):
+            #         print(iT,iF)
+            #         C=R_[iT,iF]
+            #         Cn=Rf_[iT,iF]
+            #         pylab.clf()
+            #         pylab.subplot(1,2,1)
+            #         pylab.imshow(np.abs(C))
+            #         pylab.subplot(1,2,2)
+            #         pylab.imshow(Cn)
+            #         pylab.draw()
+            #         pylab.show(block=False)
+            #         pylab.pause(0.1)
+            #         stop
+            return R,f0
+        
         iMS  = self.DicoDATA["iMS"]
         
         chfreq=self.DicoMSInfos[iMS]["ChanFreq"].reshape((1,-1,1))
@@ -605,64 +728,119 @@ class ClassCovMat(object):
         RMS=scipy.stats.median_abs_deviation((dcorr[dcorr!=0]).ravel(),scale="normal")
         df=(dcorr[dcorr!=0]).ravel()
         if df.size>100:
-            RMS=np.sqrt(np.sum(df*df.conj())/df.size)
+            RMS=np.sqrt(np.abs(np.sum(df*df.conj()))/df.size)
         
         dp[dp==0]=1.
-        #dcorr/=dp# *= kk
-        def Give_r(din,iAnt,pol):
-            ind=np.where(A0s==iAnt)[0]
-            d0=din[ind,:,pol].ravel()
-            ind=np.where(A1s==iAnt)[0]
-            d1=din[ind,:,pol].conj().ravel()
-            return np.concatenate([d0,d1]).ravel()
         
-        def Give_R(din,pol):
-            r0=Give_r(din,0,pol)
-            
-            R=np.zeros((r0.size,self.na),dtype=r0.dtype)
-            R[:,0]=r0
-            for iAnt in range(1,self.na):
-                R[:,iAnt]=Give_r(din,iAnt,pol)
-            return R
-
-        R=(Give_R(dcorr,0)+Give_R(dcorr,-1))#/2.
-        Rf=np.ones(R.shape,np.float64)
-        Rf[R==0]=0
-        if (Rf[Rf==1]).size<100:
-            return
-
+        # #dcorr/=dp# *= kk
+        # def Give_r(din,iAnt,pol):
+        #     ind=np.where(A0s==iAnt)[0]
+        #     d0=din[ind,:,pol].ravel()
+        #     ind=np.where(A1s==iAnt)[0]
+        #     d1=din[ind,:,pol].conj().ravel()
+        #     return np.concatenate([d0,d1]).ravel()
+        # def Give_R(din,pol):
+        #     r0=Give_r(din,0,pol)
+        #     R=np.zeros((r0.size,self.na),dtype=r0.dtype)
+        #     R[:,0]=r0
+        #     for iAnt in range(1,self.na):
+        #         R[:,iAnt]=Give_r(din,iAnt,pol)
+        #     Rf=np.ones(R.shape,np.float64)
+        #     Rf[R==0]=0
+        #     return R,Rf
+        # R=(Give_R(dcorr,0)+Give_R(dcorr,-1))/2.
+        
+        #        if (Rf[Rf==1]).size<100:
+        #            return
+        R,Rf=Give_R(dcorr)
+        
         C=np.dot(R.T.conj(),R)
         Cn=np.dot(Rf.T,Rf)
         Cn[Cn==0]=1.
         C/=Cn
 
-        Rp=(Give_R(dp,0)+Give_R(dp,-1))#/2.
-        Rpf=np.ones(Rp.shape,np.float64)
-        Rpf[Rp==0]=0
+        #Rp=(Give_R(dp,0)+Give_R(dp,-1))/2.
+        Rp,Rpf=Give_R(dp)
+        
+        #Rpf=np.ones(Rp.shape,np.float64)
+        #Rpf[Rp==0]=0
+        
         Cp=np.dot(Rp.T.conj(),Rp)
         Cpn=np.dot(Rpf.T,Rpf)
         Cpn[Cpn==0]=1.
         Cp/=Cpn
+
+        # print(np.unique(Cn))
+        # print(np.unique(Cn))
+        # print(np.unique(Cn))
         
         
         # RMS=self.DicoDATA["RMS"]**2
         
         
-        II=np.diag(RMS**2*np.ones((self.na,),C.dtype))
+        # II=np.diag(RMS**2*np.ones((self.na,),C.dtype))
+        # C=C-II
 
-        C=C-II
+        #C=self.na*C
+
+        # # ################################
+        # Cr=np.load("Cr.npy")
+        # Cr2=np.abs(np.dot(Cr.T.conj(),Cr))
+        # Crn=np.ones_like(Cr)
+        # Crn[Cr==0]=0
+        # Crn2=np.abs(np.dot(Crn.T.conj(),Crn))
+        # Cr2/=Crn2
+        
+        # R_=R.reshape((NTimesBin,nch,na,na))
+        # Rf_=Rf.reshape((NTimesBin,nch,na,na))
+        # import pylab
+        # pylab.clf()
+        # pylab.subplot(2,3,1)
+        # pylab.imshow(Cr2)#,vmin=v0,vmax=v1)
+        # pylab.title("Cr2 Sim")
+        # pylab.colorbar()
+        # pylab.subplot(2,3,2)
+        # pylab.imshow(np.abs(C))#,vmin=v0,vmax=v1)
+        # pylab.title("C2 Solve")
+        # pylab.colorbar()
+        # pylab.subplot(2,3,3)
+        # pylab.imshow(np.abs(Cr2)-np.abs(C))#,vmin=v0,vmax=v1)
+        # pylab.title("diff")
+        
+        # pylab.subplot(2,3,4)
+        # pylab.imshow(np.abs(Cr))#,vmin=v0,vmax=v1)
+        # pylab.title("Cr Sim")
+        # pylab.colorbar()
+        # c=R_[0,0]
+        # c2=c#np.abs(np.dot(c.T.conj(),c))
+        # pylab.subplot(2,3,5)
+        # pylab.imshow(np.abs(c))#,vmin=v0,vmax=v1)
+        # pylab.title("single timefreq")
+        # pylab.colorbar()
+        # pylab.draw()
+        # pylab.show(block=False)
+        # pylab.pause(0.1)
+        # stop
+        # # ################################
+        
         diagC=np.diag(C)
         ind=np.where(diagC<=0.)[0]
         for i in ind:
             C[i,i]=0.
         
-        C/=Cp
-        C=ModLinAlg.sqrtSVD(C[:,:])
+        #C/=Cp
             
-        #self.DicoGrids["GridSTD"][iTime, :,:]=ModLinAlg.sqrtSVD(C[:,:])
+
+        C=np.abs(C)
+        sqrtC=ModLinAlg.sqrtSVD(C[:,:],Rank=1)
+        #sqrtC=ModLinAlg.sqrtSVD(C[:,:])
+        #C=np.abs(np.dot(sqrtC.T.conj(),sqrtC))
+
+        #C=sqrtC
+        self.DicoGrids["GridC2"][iTime, iFreq, :,:]=C[:,:]
+        self.DicoGrids["GridC"][iTime, iFreq, :,:]=sqrtC[:,:]
 
         #C=ModLinAlg.invSVD(self.DicoGrids["GridSTD"][iTime, :,:])
-        C=np.abs(C)
         Want=np.sum(C,axis=0)
 
         _,nch,_=self.DicoDATA["data"].shape
@@ -678,10 +856,31 @@ class ClassCovMat(object):
         # w[w<=0]=0
         # w[w>2.]=2
 
+        # # ###############################
+        # Cr=np.load("Cr.npy")
+        # Cr2=np.dot(Cr.T.conj(),Cr)
+        # C=Cr2
+        # sqrtC=np.abs(Cr)
+        # sqrtC=np.abs(ModLinAlg.sqrtSVD(Cr2,Rank=1))
+        # # ###############################
+
+        R_=R.reshape((NTimesBin,nch,na,na))
+        Rf_=Rf.reshape((NTimesBin,nch,na,na))
+        V=np.sum(np.sum(R_*R_.conj(),axis=0),axis=0)
+        Vn=np.sum(np.sum(Rf_*Rf_.conj(),axis=0),axis=0)
+        Vn[V==0]=1.
+        V/=Vn
+        C=V
+        
         V=C[A0s,A1s]
+        #V=sqrtC[A0s,A0s]+sqrtC[A1s,A1s]
+        #V=C[A0s,A0s]+C[A1s,A1s]
+        #V=sqrtC[A0s,A1s]
         ind=(V==0)
         V[ind]=1e10
-        w=1./V
+        
+        RMS=0.
+        w=1./np.abs(np.abs(V)+RMS**2)
         w[ind]=0
         
         #w/=np.median(w)
