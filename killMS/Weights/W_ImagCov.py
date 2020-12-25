@@ -79,7 +79,7 @@ class ClassCovMat(object):
         self.NCPU=NCPU
         self.BeamModel=BeamModel
         self.StepFreq=100
-        self.StepTime=1000
+        self.StepTime=10
         
         if ListMSName is None:
             print(ModColor.Str("WORKING IN REPLOT MODE"), file=log)
