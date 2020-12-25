@@ -78,8 +78,8 @@ class ClassCovMat(object):
         self.SolsName=SolsName
         self.NCPU=NCPU
         self.BeamModel=BeamModel
-        self.StepFreq=100
-        self.StepTime=1000
+        self.StepFreq=2
+        self.StepTime=10
         
         if ListMSName is None:
             print(ModColor.Str("WORKING IN REPLOT MODE"), file=log)
@@ -843,7 +843,7 @@ class ClassCovMat(object):
         #C=ModLinAlg.invSVD(self.DicoGrids["GridSTD"][iTime, :,:])
         Want=np.sum(C,axis=0)
 
-        _,nch,_=self.DicoDATA["data"].shape
+        _,nch,_=self.DicoDATA["data"][indRow,ch0:ch1].shape
         WOUT=self.DicoDATA["WOUT"][indRow,ch0:ch1]
         A0s = self.DicoDATA["A0"][indRow]
         A1s = self.DicoDATA["A1"][indRow]
