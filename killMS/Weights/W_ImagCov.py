@@ -828,7 +828,7 @@ class ClassCovMat(object):
         for i in ind:
             C[i,i]=0.
         
-        #C/=Cp
+        C/=Cp
             
 
         C=np.abs(C)
