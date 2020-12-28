@@ -288,11 +288,11 @@ def main(options=None):
                     G=Sols.G[:,iChan,:,iDir,:,:]
                     J=G[:,iAnt,:,:]
 
-                    ax.plot(Sols.t0,op0(J[:,0,0]),color=Lcol0[iSol],alpha=Lalpha0[iSol],ls=Lls[iSol],marker=marker)
-                    ax.plot(Sols.t0,op0(J[:,1,1]),color=Lcol0_off[iSol],alpha=Lalpha0[iSol],ls=Lls_off[iSol],marker=marker)
+                    ax.plot(Sols.t0,op0(J[:,0,0]),color=Lcol0[iSol],alpha=Lalpha0[iSol],ls=Lls[iSol])#,marker=marker)
+                    ax.plot(Sols.t0,op0(J[:,1,1]),color=Lcol0_off[iSol],alpha=Lalpha0[iSol],ls=Lls_off[iSol])#,marker=marker)
                     if PlotDiag[0]:
-                        ax.plot(Sols.t0,op0(J[:,1,0]),color=Lcol0[iSol],alpha=Lalpha0[iSol],ls=Lls[iSol],marker=marker)
-                        ax.plot(Sols.t0,op0(J[:,0,1]),color=Lcol0_off[iSol],alpha=Lalpha0[iSol],ls=Lls_off[iSol],marker=marker)
+                        ax.plot(Sols.t0,op0(J[:,1,0]),color=Lcol0[iSol],alpha=Lalpha0[iSol],ls=Lls[iSol])#,marker=marker)
+                        ax.plot(Sols.t0,op0(J[:,0,1]),color=Lcol0_off[iSol],alpha=Lalpha0[iSol],ls=Lls_off[iSol])#,marker=marker)
 #<<<<<<< HEAD
                     if options.PlotMode=="P":
                         ax.set_ylim(ylim0)

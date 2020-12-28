@@ -571,8 +571,10 @@ class ClassVisServer():
         ###############################
         MS=self.MS
 
-        self.TimeMemChunkRange_sec=MS.times_all[0],MS.times_all[-1]
-
+        #self.TimeMemChunkRange_sec=MS.times_all[0],MS.times_all[-1]
+        self.TimeMemChunkRange_sec=self.TimesInt[iT0]*3600.,self.TimesInt[iT1]*3600.
+        
+        #log.print(("!!!!!!!",self.TimeMemChunkRange_sec))
         times=MS.times_all
         data=MS.data
         A0=MS.A0
