@@ -864,7 +864,10 @@ class ClassWirtingerSolver():
         T0,T1=self.VS.TimeMemChunkRange_sec[0],self.VS.TimeMemChunkRange_sec[1]
         DT=(T1-T0)
         dt=self.VS.TVisSizeMin*60.
-        nt=int(DT/float(dt))+1
+        nt=int(DT/float(dt))
+        if DT/float(dt)-nt>1.:
+            nt+=1
+        log.print("DT=%f, dt=%f, nt=%f"%(DT,dt,nt))
         
 
         self.pBAR= ProgressBar(Title="Solving ")

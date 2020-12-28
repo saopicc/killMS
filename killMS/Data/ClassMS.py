@@ -401,16 +401,25 @@ class ClassMS():
             #ind0=np.argmin(np.abs(t0-self.F_times))
             #ind1=np.argmin(np.abs(t1-self.F_times))
 
-            ind0=np.where((t0-self.F_times)<=0)[0][0]
-            row0=ind0*self.nbl
+            
+            # ind0=np.where((t0-self.F_times)<=0)[0][0]
+            # row0=ind0*self.nbl
+            # ind1=np.where((t1-self.F_times)<0)[0]
+            # if ind1.size==0:
+            #     row1=self.F_nrows
+            # else:
+            #     ind1=ind1[0]
+            #     row1=ind1*self.nbl
 
-            ind1=np.where((t1-self.F_times)<0)[0]
-            if ind1.size==0:
+            ind=np.where((self.F_times_all>=t0)&(self.F_times_all<t1))[0]
+            row0=ind[0]
+            ind1=row0+ind.size
+            
+            if ind.size==0:
                 row1=self.F_nrows
             else:
-                ind1=ind1[0]
-                row1=ind1*self.nbl
-
+                row1=ind1
+                
         # print("!!!!!!!=======")
         # row0,row1=1207458, 1589742
         self.ROW0=row0
