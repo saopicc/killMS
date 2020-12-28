@@ -40,10 +40,10 @@ def AngDist(ra0,ra1,dec0,dec1):
     return AC(D)
 
 def test():
-    CW=ClassCovMat(#ListMSName=["1563189318_sdp_l0-A3528S_corr.ms.tsel2"],
-                   #FileCoords="a3528-beam_ds9.Cyril.WeightKMS_fixBeam.npy.ClusterCat.npy",
-                   ListMSName=["0000.MS"],
-                   FileCoords="Target.txt.ClusterCat.npy",
+    CW=ClassCovMat(ListMSName=["1563189318_sdp_l0-A3528S_corr.ms.tsel2"],
+                   FileCoords="a3528-beam_ds9.Cyril.WeightKMS_fixBeam.npy.ClusterCat.npy",
+                   #ListMSName=["0000.MS"],
+                   #FileCoords="Target.txt.ClusterCat.npy",
                    ColName="CORRECTED_DATA",
                    ModelName="DDF_PREDICT",
                    UVRange=[0.1,1000.], 
@@ -78,8 +78,8 @@ class ClassCovMat(object):
         self.SolsName=SolsName
         self.NCPU=NCPU
         self.BeamModel=BeamModel
-        self.StepFreq=100
-        self.StepTime=10
+        self.StepFreq=10#2000
+        self.StepTime=1
         
         if ListMSName is None:
             print(ModColor.Str("WORKING IN REPLOT MODE"), file=log)
@@ -474,18 +474,19 @@ class ClassCovMat(object):
         C2=np.abs(self.DicoGrids["GridC2"])
         C=np.abs(self.DicoGrids["GridC"])
 
-        Cr=np.load("Cr.npy")
-        Cr2=(np.dot(Cr.T.conj(),Cr))
-        Crn=np.ones_like(Cr)
-        Crn[Cr==0]=0
-        Crn2=np.abs(np.dot(Crn.T.conj(),Crn))
-        Cr2/=Crn2
-        # Cr=np.abs(np.load("Cr.npy"))
-        # Cr2=np.abs(np.dot(Cr.T.conj(),Cr))
+        # Cr=np.load("Cr.npy")
+        # Cr2=(np.dot(Cr.T.conj(),Cr))
         # Crn=np.ones_like(Cr)
         # Crn[Cr==0]=0
         # Crn2=np.abs(np.dot(Crn.T.conj(),Crn))
         # Cr2/=Crn2
+        
+        # # Cr=np.abs(np.load("Cr.npy"))
+        # # Cr2=np.abs(np.dot(Cr.T.conj(),Cr))
+        # # Crn=np.ones_like(Cr)
+        # # Crn[Cr==0]=0
+        # # Crn2=np.abs(np.dot(Crn.T.conj(),Crn))
+        # # Cr2/=Crn2
         
         import pylab
 
@@ -606,8 +607,16 @@ class ClassCovMat(object):
         w0  = self.DicoDATA["w"][indRow].reshape((-1,1,1))
         times=self.DicoDATA["times"][indRow]
         NTimesBin=np.unique(times).size
-        
-        i_TimeBin=np.int64(np.argmin(np.abs(times.reshape((-1,1))-np.sort(np.unique(times)).reshape((1,-1))),axis=1).reshape(-1,1))*np.ones((1,nch))
+        if NTimesBin==0:
+            return
+        try:
+            i_TimeBin=np.int64(np.argmin(np.abs(times.reshape((-1,1))-np.sort(np.unique(times)).reshape((1,-1))),axis=1).reshape(-1,1))*np.ones((1,nch))
+        except:
+            print(iTime,iFreq)
+            print(iTime,iFreq)
+            print(iTime,iFreq)
+            print(iTime,iFreq)
+            
         i_ch=np.int64((np.arange(nch).reshape(1,-1))*np.ones((nrow,1)))
         i_A0=A0s.reshape((-1,1))*np.ones((1,nch))
         i_A1=A1s.reshape((-1,1))*np.ones((1,nch))
@@ -827,8 +836,9 @@ class ClassCovMat(object):
         ind=np.where(diagC<=0.)[0]
         for i in ind:
             C[i,i]=0.
+            
         
-        C/=Cp
+        # C/=Cp
             
 
         C=np.abs(C)
@@ -843,7 +853,7 @@ class ClassCovMat(object):
         #C=ModLinAlg.invSVD(self.DicoGrids["GridSTD"][iTime, :,:])
         Want=np.sum(C,axis=0)
 
-        _,nch,_=self.DicoDATA["data"].shape
+        _,nch,_=self.DicoDATA["data"][indRow,ch0:ch1].shape
         WOUT=self.DicoDATA["WOUT"][indRow,ch0:ch1]
         A0s = self.DicoDATA["A0"][indRow]
         A1s = self.DicoDATA["A1"][indRow]
@@ -864,8 +874,16 @@ class ClassCovMat(object):
         # sqrtC=np.abs(ModLinAlg.sqrtSVD(Cr2,Rank=1))
         # # ###############################
 
+        Rp,Rpf=Give_R(dp)
+        
         R_=R.reshape((NTimesBin,nch,na,na))
-        Rf_=Rf.reshape((NTimesBin,nch,na,na))
+        Rf_=Rf.reshape((NTimesBin,nch,na,na))  
+        Rp_=Rp.reshape((NTimesBin,nch,na,na))
+        Rpf_=Rpf.reshape((NTimesBin,nch,na,na))
+        Rp_[Rf_==0]=1.
+        Rp/=np.abs(Rp)
+        # R_/=Rp_
+        
         V=np.sum(np.sum(R_*R_.conj(),axis=0),axis=0)
         Vn=np.sum(np.sum(Rf_*Rf_.conj(),axis=0),axis=0)
         Vn[V==0]=1.
@@ -880,7 +898,7 @@ class ClassCovMat(object):
         V[ind]=1e10
         
         RMS=0.
-        w=1./np.abs(np.abs(V)+RMS**2)
+        w=(1./np.abs(np.abs(V)))#+RMS**2)
         w[ind]=0
         
         #w/=np.median(w)
