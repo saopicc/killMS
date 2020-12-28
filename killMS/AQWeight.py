@@ -36,7 +36,7 @@ def read_options():
     group.add_option('--WeightCol',type=str,help='',default=None)
     group.add_option('--SolsFile',type=str,help='',default=None)
     group.add_option('--SolsDir',type=str,help='',default=None)
-    group.add_option('--CovType',type=str,help='',default="ImagCov")
+    group.add_option('--CovType',type=str,help='',default="TimeCov")
     group.add_option('--TBinBox',type=int,help='',default=20)
     group.add_option('--ds9reg',type=str,help='',default="")
     group.add_option('--FileCoords',type=str,help='',default="")
@@ -103,7 +103,7 @@ class AQW():
                                                   BeamNBand=1)
             self.CovMachine.StackAll()
         elif self.CovType=="TimeCov":
-            self.CovMachine=W_ImagCov.ClassCovMat(ListMSName=self.ListMSName,
+            self.CovMachine=W_TimeCov.ClassCovMat(ListMSName=self.ListMSName,
                                                   ColName=self.DataCol,
                                                   ModelName=self.PredictCol,
                                                   UVRange=[.1,1000.], 
