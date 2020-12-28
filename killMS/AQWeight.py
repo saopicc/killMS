@@ -22,6 +22,7 @@ from killMS.Weights import W_AntFull
 #from killMS.Weights import W_Jones
 from killMS.Weights import W_Imag
 from killMS.Weights import W_ImagCov
+from killMS.Weights import W_TimeCov
 
 def read_options():
     desc="""Run MCMC """
@@ -89,6 +90,19 @@ class AQW():
                                                BeamNBand=1)
             self.CovMachine.StackAll()
         elif self.CovType=="ImagCov":
+            self.CovMachine=W_ImagCov.ClassCovMat(ListMSName=self.ListMSName,
+                                                  ColName=self.DataCol,
+                                                  ModelName=self.PredictCol,
+                                                  UVRange=[.1,1000.], 
+                                                  ColWeights=self.WeightCol, 
+                                                  SolsName=self.SolsFile,
+                                                  FileCoords=self.FileCoords,
+                                                  SolsDir=self.SolsDir,
+                                                  NCPU=0,
+                                                  BeamModel=None,
+                                                  BeamNBand=1)
+            self.CovMachine.StackAll()
+        elif self.CovType=="TimeCov":
             self.CovMachine=W_ImagCov.ClassCovMat(ListMSName=self.ListMSName,
                                                   ColName=self.DataCol,
                                                   ModelName=self.PredictCol,
