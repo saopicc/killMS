@@ -491,8 +491,8 @@ class ClassCovMat(object):
         import pylab
 
 
-        sqrtCr2=ModLinAlg.sqrtSVD(Cr2)
-        sqrtCr2_2=np.dot(sqrtCr2.T.conj(),sqrtCr2)
+        # sqrtCr2=ModLinAlg.sqrtSVD(Cr2)
+        # sqrtCr2_2=np.dot(sqrtCr2.T.conj(),sqrtCr2)
 
         
         # pylab.clf()

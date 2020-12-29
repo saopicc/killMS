@@ -26,11 +26,23 @@ from DDFacet.ToolsDir.rad2hmsdms import rad2hmsdms
 import scipy.stats
 from killMS.Array import ModLinAlg
 
+# # ##############################
+# # Catch numpy warning
+# import numpy as np
+# np.seterr(all='raise')
+# import warnings
+# warnings.filterwarnings('error')
+# #with warnings.catch_warnings():
+# #    warnings.filterwarnings('error')
+# # ##############################
+
+
 def AngDist(ra0,ra1,dec0,dec1):
     AC=np.arccos
     C=np.cos
     S=np.sin
     D=S(dec0)*S(dec1)+C(dec0)*C(dec1)*C(ra0-ra1)
+    
     if type(D).__name__=="ndarray":
         D[D>1.]=1.
         D[D<-1.]=-1.
@@ -40,10 +52,10 @@ def AngDist(ra0,ra1,dec0,dec1):
     return AC(D)
 
 def test():
-    CW=ClassCovMat(#ListMSName=["1563189318_sdp_l0-A3528S_corr.ms.tsel2"],
-                   #FileCoords="a3528-beam_ds9.Cyril.WeightKMS_fixBeam.npy.ClusterCat.npy",
-                   ListMSName=["0000.MS"],
-                   FileCoords="Target.txt.ClusterCat.npy",
+    CW=ClassCovMat(ListMSName=["1563189318_sdp_l0-A3528S_corr.ms.tsel2"],
+                   FileCoords="a3528-beam_ds9.Cyril.WeightKMS_fixBeam.npy.ClusterCat.npy",
+                   #ListMSName=["0000.MS"],
+                   #FileCoords="Target.txt.ClusterCat.npy",
                    ColName="CORRECTED_DATA",
                    ModelName="DDF_PREDICT",
                    UVRange=[0.1,1000.], 
@@ -412,11 +424,6 @@ class ClassCovMat(object):
         while self.iCurrentMS<self.nMS:
             if self.LoadNextMS()=="NotRead": continue
             print("Making dynamic spectra...", file=log)
-            # for iTime in range(self.NTimes):
-            #     APP.runJob("Stack_SingleTime:%d"%(iTime), 
-            #                self.Stack_SingleTime,
-            #                args=(iTime,))#,serial=True)
-            # APP.awaitJobResults("Stack_SingleTime:*", progress="Append MS %i"%self.DicoDATA["iMS"])
 
             FF=self.DicoGrids["DomainEdges_Freq"]
             TT=self.DicoGrids["DomainEdges_Time"]
@@ -424,8 +431,7 @@ class ClassCovMat(object):
                 for iA1 in range(iA0+1,self.na):
                     APP.runJob("Stack_SingleTime:%d:%d"%(iA0,iA1), 
                                self.Stack_SingleTime,
-                               args=(iA0,iA1),
-                               serial=True)
+                               args=(iA0,iA1))#,serial=True)
 
             APP.awaitJobResults("Stack_SingleTime:*", progress="Append MS %i"%self.DicoDATA["iMS"])
 
@@ -441,16 +447,17 @@ class ClassCovMat(object):
 
             w/=np.median(w)
             w[w<=0]=0
-            w[w>2.]=2
+            wmax=2
+            w[w>wmax]=wmax
             
             log.print("    saving weights as %s"%FOut)
             np.save(FOut,self.DicoDATA["WOUT"])
             
-            # import pylab
-            # pylab.clf()
-            # pylab.hist(w[:,0].ravel())
-            # pylab.draw()
-            # pylab.show()
+            import pylab
+            pylab.clf()
+            pylab.hist(w[:,0].ravel())
+            pylab.draw()
+            pylab.show()
             
             #np.save(FOut,self.DicoGrids["GridSTD"])
             
@@ -471,99 +478,6 @@ class ClassCovMat(object):
     def Finalise(self):
         self.killWorkers()
         
-        C2=np.abs(self.DicoGrids["GridC2"])
-        C=np.abs(self.DicoGrids["GridC"])
-
-        Cr=np.load("Cr.npy")
-        Cr2=(np.dot(Cr.T.conj(),Cr))
-        Crn=np.ones_like(Cr)
-        Crn[Cr==0]=0
-        Crn2=np.abs(np.dot(Crn.T.conj(),Crn))
-        Cr2/=Crn2
-        # Cr=np.abs(np.load("Cr.npy"))
-        # Cr2=np.abs(np.dot(Cr.T.conj(),Cr))
-        # Crn=np.ones_like(Cr)
-        # Crn[Cr==0]=0
-        # Crn2=np.abs(np.dot(Crn.T.conj(),Crn))
-        # Cr2/=Crn2
-        
-        import pylab
-
-
-        sqrtCr2=ModLinAlg.sqrtSVD(Cr2)
-        sqrtCr2_2=np.dot(sqrtCr2.T.conj(),sqrtCr2)
-        
-        # pylab.clf()
-        # pylab.subplot(2,3,1)
-        # pylab.imshow(np.abs(Cr))#,vmin=v0,vmax=v1)
-        # pylab.title("Cr")
-        # pylab.colorbar()
-        # pylab.subplot(2,3,2)
-        # pylab.imshow(np.abs(Cr2))#,vmin=v0,vmax=v1)
-        # pylab.title("Cr2")
-        # pylab.colorbar()
-        # pylab.subplot(2,3,3)
-        # pylab.imshow(np.abs(sqrtCr2))#,vmin=v0,vmax=v1)
-        # pylab.title("sqrt(Cr2)")
-        # pylab.colorbar()
-        # pylab.subplot(2,3,4)
-        # pylab.imshow(np.abs(sqrtCr2_2))#,vmin=v0,vmax=v1)
-        # pylab.title("sqrt(Cr2)2")
-        # pylab.colorbar()
-        # pylab.draw()
-        # pylab.show()
-        # return
-
-
-        # f=pylab.figure(0)
-        # Nt=C.shape[0]
-        # Nf=C.shape[1]
-        # for iT in range(Nt):
-        #     for iF in range(Nf):
-        #         f.clf()
-        #         v0,v1=Cr.min(),Cr.max()
-                
-        #         pylab.subplot(2,3,1)
-        #         pylab.imshow(np.abs(Cr2))#,vmin=v0,vmax=v1)
-        #         pylab.title("Cr2 Sim")
-        #         pylab.colorbar()
-        #         pylab.subplot(2,3,2)
-        #         pylab.imshow(np.abs(C2[iT,iF]))#,vmin=v0,vmax=v1)
-        #         pylab.title("C2 Solve")
-        #         pylab.colorbar()
-        #         pylab.subplot(2,3,3)
-        #         pylab.imshow(np.abs(Cr2)-np.abs(C2[iT,iF]))#,vmin=v0,vmax=v1)
-        #         pylab.title("diff")
-        #         pylab.colorbar()
-
-        #         v0,v1=Cr.min(),Cr.max()
-        #         pylab.subplot(2,3,4)
-        #         pylab.imshow(np.abs(Cr))#,vmin=v0,vmax=v1)
-        #         pylab.title("Sim sq")
-        #         pylab.colorbar()
-        #         #c=np.abs(ModLinAlg.sqrtSVD(Ca2[iT,iF]))
-                
-        #         c=ModLinAlg.sqrtSVD(Cr2)
-        #         pylab.subplot(2,3,5)
-        #         pylab.imshow(np.abs(c))#,vmin=v0,vmax=v1)
-        #         pylab.title("Solve sq")
-        #         pylab.colorbar()
-        #         pylab.subplot(2,3,6)
-        #         pylab.imshow(np.abs(c)-np.abs(Cr))#,vmin=v0,vmax=v1)
-        #         pylab.title("Diff sq")
-        #         pylab.colorbar()
-        #         pylab.draw()
-        #         pylab.show()
-        #         #pylab.pause(0.1)
-        #         #f.savefig("png/Fig%5.5i.png"%iT)
-
-        # for iT in range(self.NTimes)[::10]:
-        #     pylab.clf()
-        #     pylab.imshow(np.abs(self.DicoGrids["GridSTD"][iT]))
-        #     pylab.colorbar()
-        #     pylab.draw()
-        #     pylab.show(block=False)
-        #     pylab.pause(0.5)
 
 
     def Stack_SingleTime(self,iA0,iA1):
@@ -612,7 +526,8 @@ class ClassCovMat(object):
             
             ind0=i_ch * NTimesBin + i_TimeBin
             
-            R.flat[ind0]=d0.flat[:]
+            R.flat[:]=d0.flat[ind0]
+            R=d0.T
             
             Rf=np.ones((R.shape),dtype=np.float64)
             Rf[R==0]=0
@@ -637,150 +552,58 @@ class ClassCovMat(object):
         dp[dp==0]=1.
         
         R,Rf=Give_R(dcorr)
+        Rp,Rpf=Give_R(dp)
+        Rp[Rpf==0]=1.
+        #Rp/=np.abs(Rp)
+        R/=Rp
+
+        if np.max(np.abs(R))==0: return
         
         C=np.dot(R.T.conj(),R)
         Cn=np.dot(Rf.T,Rf)
         Cn[Cn==0]=1.
         C/=Cn
         
-        import pylab
-        pylab.clf()
-        pylab.imshow(Cr2)
-        pylab.title("Cr2 Sim")
-        pylab.colorbar()
-        pylab.title(iA0,iA1)
-        pylab.draw()
-        pylab.show(block=False)
-        pylab.pause(0.1)
-        stop
+        # import pylab
+        # pylab.clf()
+        # pylab.subplot(2,2,1)
+        # pylab.imshow(np.abs(C),aspect="auto",interpolation="nearest")
+        # pylab.colorbar()
+        # pylab.title("%i, %i"%(iA0,iA1))
+        # pylab.subplot(2,2,2)
+        # pylab.imshow(np.abs(R),aspect="auto",interpolation="nearest")
+        # pylab.colorbar()
+        # pylab.subplot(2,2,3)
+        # pylab.imshow(np.abs(Cn),aspect="auto",interpolation="nearest")
+        # pylab.colorbar()
+        # pylab.title("%i, %i"%(iA0,iA1))
+        # pylab.subplot(2,2,4)
+        # pylab.imshow(np.abs(Rf),aspect="auto",interpolation="nearest")
+        # pylab.colorbar()
+        # pylab.draw()
+        # pylab.show(block=False)
+        # pylab.pause(0.1)
+        # return
+    
         # ################################
 
         Cp=np.dot(Rp.T.conj(),Rp)
         Cpn=np.dot(Rpf.T,Rpf)
         Cpn[Cpn==0]=1.
         Cp/=Cpn
-
-        # print(np.unique(Cn))
-        # print(np.unique(Cn))
-        # print(np.unique(Cn))
-        
-        
-        # RMS=self.DicoDATA["RMS"]**2
-        
-        
-        # II=np.diag(RMS**2*np.ones((self.na,),C.dtype))
-        # C=C-II
-
-        #C=self.na*C
-
-        # # ################################
-        # Cr=np.load("Cr.npy")
-        # Cr2=np.abs(np.dot(Cr.T.conj(),Cr))
-        # Crn=np.ones_like(Cr)
-        # Crn[Cr==0]=0
-        # Crn2=np.abs(np.dot(Crn.T.conj(),Crn))
-        # Cr2/=Crn2
-        
-        # R_=R.reshape((NTimesBin,nch,na,na))
-        # Rf_=Rf.reshape((NTimesBin,nch,na,na))
-        # import pylab
-        # pylab.clf()
-        # pylab.subplot(2,3,1)
-        # pylab.imshow(Cr2)#,vmin=v0,vmax=v1)
-        # pylab.title("Cr2 Sim")
-        # pylab.colorbar()
-        # pylab.subplot(2,3,2)
-        # pylab.imshow(np.abs(C))#,vmin=v0,vmax=v1)
-        # pylab.title("C2 Solve")
-        # pylab.colorbar()
-        # pylab.subplot(2,3,3)
-        # pylab.imshow(np.abs(Cr2)-np.abs(C))#,vmin=v0,vmax=v1)
-        # pylab.title("diff")
-        
-        # pylab.subplot(2,3,4)
-        # pylab.imshow(np.abs(Cr))#,vmin=v0,vmax=v1)
-        # pylab.title("Cr Sim")
-        # pylab.colorbar()
-        # c=R_[0,0]
-        # c2=c#np.abs(np.dot(c.T.conj(),c))
-        # pylab.subplot(2,3,5)
-        # pylab.imshow(np.abs(c))#,vmin=v0,vmax=v1)
-        # pylab.title("single timefreq")
-        # pylab.colorbar()
-        # pylab.draw()
-        # pylab.show(block=False)
-        # pylab.pause(0.1)
-        # stop
-        # # ################################
-        
-        diagC=np.diag(C)
-        ind=np.where(diagC<=0.)[0]
-        for i in ind:
-            C[i,i]=0.
-        
         C/=Cp
             
 
         C=np.abs(C)
-        sqrtC=ModLinAlg.sqrtSVD(C[:,:],Rank=1)
-        #sqrtC=ModLinAlg.sqrtSVD(C[:,:])
-        #C=np.abs(np.dot(sqrtC.T.conj(),sqrtC))
+        invC=ModLinAlg.invSVD(C[:,:])
+    
+        w=np.abs(np.sum(invC,axis=0))
 
-        #C=sqrtC
-        self.DicoGrids["GridC2"][iTime, iFreq, :,:]=C[:,:]
-        self.DicoGrids["GridC"][iTime, iFreq, :,:]=sqrtC[:,:]
-
-        #C=ModLinAlg.invSVD(self.DicoGrids["GridSTD"][iTime, :,:])
-        Want=np.sum(C,axis=0)
-
-        _,nch,_=self.DicoDATA["data"][indRow,ch0:ch1].shape
         WOUT=self.DicoDATA["WOUT"][indRow,ch0:ch1]
-        A0s = self.DicoDATA["A0"][indRow]
-        A1s = self.DicoDATA["A1"][indRow]
-
         
-        # w0=Want[A0s]
-        # w1=Want[A1s]
-        # w=w0*w1
-        # w/=np.median(w)
-        # w[w<=0]=0
-        # w[w>2.]=2
-
-        # # ###############################
-        # Cr=np.load("Cr.npy")
-        # Cr2=np.dot(Cr.T.conj(),Cr)
-        # C=Cr2
-        # sqrtC=np.abs(Cr)
-        # sqrtC=np.abs(ModLinAlg.sqrtSVD(Cr2,Rank=1))
-        # # ###############################
-
-        R_=R.reshape((NTimesBin,nch,na,na))
-        Rf_=Rf.reshape((NTimesBin,nch,na,na))
-        V=np.sum(np.sum(R_*R_.conj(),axis=0),axis=0)
-        Vn=np.sum(np.sum(Rf_*Rf_.conj(),axis=0),axis=0)
-        Vn[V==0]=1.
-        V/=Vn
-        C=V
-        
-        V=C[A0s,A1s]
-        #V=sqrtC[A0s,A0s]+sqrtC[A1s,A1s]
-        #V=C[A0s,A0s]+C[A1s,A1s]
-        #V=sqrtC[A0s,A1s]
-        ind=(V==0)
-        V[ind]=1e10
-        
-        RMS=0.
-        w=1./np.abs(np.abs(V)+RMS**2)
-        w[ind]=0
-        
-        #w/=np.median(w)
-        #w[w<=0]=0
-        #w[w>2.]=2
-
         for ii,iRow in enumerate(indRow):
             for ich in np.arange(ch0,ch1):
                 self.DicoDATA["WOUT"][iRow,ich]=w[ii]
-                #print(ich)
                 
         # for ich in range(nch):
         #     #self.DicoDATA["WOUT"][indRow][:,ich]=w[:]
