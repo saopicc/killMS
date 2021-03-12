@@ -177,7 +177,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         NodesCat=NodesCat.view(np.recarray)
 
         self.NDir=NodesCat.shape[0]
-
+        
         ClusterCat=np.zeros((self.NDir,),dtype=[('Name','|S200'),
                                                 ('ra',np.float),('dec',np.float),
                                                 ('l',np.float),('m',np.float),
@@ -208,7 +208,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.DicoImager=self.FacetMachine.DicoImager
         self.ClusterCat=ClusterCat
         self.ClusterCat.SumI=0.
-
+        
 
         #ind=np.where(self.ClusterCat.SumI!=0)[0]
         #self.ClusterCat=self.ClusterCat[ind].copy()
@@ -330,6 +330,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.NDirsOrig=self.ClusterCat.shape[0]
 
         self.NDirs=self.ClusterCat.shape[0]
+
         Keep=np.zeros((self.NDirs,),bool)
         for iDirJones in sorted(DicoJonesDirToFacet.keys()):
             #print(self.DicoJonesDirToFacet[iDirJones]["SumFlux"])
