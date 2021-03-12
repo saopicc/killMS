@@ -1114,6 +1114,28 @@ class ClassMS():
             t.addcols(desc) 
             t.close()
     
+    def Rotate(self,DATA,RotateType=["uvw","vis"],Sense="ToTarget",DataFieldName="data"):
+        #DDFacet.ToolsDir.ModRotate.Rotate(self,radec)
+        if Sense=="ToTarget":
+            ra0,dec0=self.OldRadec
+            ra1,dec1=self.NewRadec
+        elif Sense=="ToPhaseCenter":
+            ra0,dec0=self.NewRadec
+            ra1,dec1=self.OldRadec
+
+        StrRAOld  = rad2hmsdms(ra0,Type="ra").replace(" ",":")
+        StrDECOld = rad2hmsdms(dec0,Type="dec").replace(" ",".")
+        StrRA  = rad2hmsdms(ra1,Type="ra").replace(" ",":")
+        StrDEC = rad2hmsdms(dec1,Type="dec").replace(" ",".")
+        print("Rotate %s [Mode = %s]"%(",".join(RotateType),Sense), file=log)
+        print("     from [%s, %s] [%f %f]"%(StrRAOld,StrDECOld,ra0,dec0), file=log)
+        print("       to [%s, %s] [%f %f]"%(StrRA,StrDEC,ra1,dec1), file=log)
+        
+        DDFacet.ToolsDir.ModRotate.Rotate2(ra0,dec0,ra1,dec1,DATA["uvw"],DATA[DataFieldName],self.wavelength_chan,
+                                           RotateType=RotateType)
+
+
+
     def RotateMS(self,radec):
         import ModRotate
         ModRotate.Rotate(self,radec)
