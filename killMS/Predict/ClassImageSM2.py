@@ -334,8 +334,8 @@ class ClassPreparePredict(ClassImagerDeconv):
         Keep=np.zeros((self.NDirs,),bool)
         for iDirJones in sorted(DicoJonesDirToFacet.keys()):
             #print(self.DicoJonesDirToFacet[iDirJones]["SumFlux"])
-            if self.DicoJonesDirToFacet[iDirJones]["SumFlux"]==0:
-            #if False:#self.DicoJonesDirToFacet[iDirJones]["SumFlux"]<1e-1:
+            #if self.DicoJonesDirToFacet[iDirJones]["SumFlux"]==0:
+            if self.DicoJonesDirToFacet[iDirJones]["SumFlux"]<1e-1:
                 log.print("  Remove Jones direction %i"%(iDirJones))
                 #print("  !!!!!!!!!!!!!!!!!!!!!!!")
             else:

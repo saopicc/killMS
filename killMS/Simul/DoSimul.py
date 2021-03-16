@@ -250,48 +250,43 @@ class ClassSimul():
                         #Sols.G[itime,iAnt,iDir,1,1]=g0
 
 
-        C=np.zeros((na,na),dtype=np.complex64)
-        std_g=0.001
-        I=np.diag(std_g*np.ones((na,),np.float32))**2
-        C+=I
-
-        dn=3
-        # for i in range(na):
-        #     if i+dn<na:
-        #         C[i,i+dn]=1.#std_g**2
-                
-        C[0,10]=1.
+        # #######################
+        # C=np.zeros((na,na),dtype=np.complex64)
+        # std_g=0.001
+        # I=np.diag(std_g*np.ones((na,),np.float32))**2
+        # C+=I
+        # dn=3
+        # # for i in range(na):
+        # #     if i+dn<na:
+        # #         C[i,i+dn]=1.#std_g**2
+        # C[0,10]=1.
+        # C=(C+C.T)/2.
+        # Cs=ModLinAlg.sqrtSVD(C)
+        # np.save("C.npy",C)
+        # gm=np.ones((na,1),np.complex64)
+        # Sols.G.fill(0)
+        # g0=np.dot(Cs,np.random.randn(na,1))+gm
+        # g0*=g0[0].conj()/np.abs(g0[0])
+        # #Cr=np.dot((g0-gm),(g0-gm).T.conj())
+        # Cr=np.dot((g0),(g0).T.conj())-1
+        # np.save("Cr.npy",Cr)
+        # self.Cr=Cr
+        # import pylab
+        # pylab.clf()
+        # pylab.subplot(1,2,1)
+        # pylab.imshow(np.abs(C),interpolation="nearest")
+        # pylab.subplot(1,2,2)
+        # pylab.imshow(np.abs(Cr),interpolation="nearest")
+        # pylab.draw()
+        # pylab.show()
+        # for itime in range(0,NSols):
+        #     for ich in range(nch):
+        #         for iAnt in range(na):
+        #             for iDir in range(nd):
+        #                 Sols.G[itime,ich,iAnt,iDir,0,0]=g0.flat[iAnt]
+        #                 Sols.G[itime,ich,iAnt,iDir,1,1]=g0.flat[iAnt]
+        # #######################
         
-        C=(C+C.T)/2.
-        Cs=ModLinAlg.sqrtSVD(C)
-        np.save("C.npy",C)
-        gm=np.ones((na,1),np.complex64)
-        Sols.G.fill(0)
-        
-        g0=np.dot(Cs,np.random.randn(na,1))+gm
-        g0*=g0[0].conj()/np.abs(g0[0])
-        #Cr=np.dot((g0-gm),(g0-gm).T.conj())
-        Cr=np.dot((g0),(g0).T.conj())-1
-        
-        np.save("Cr.npy",Cr)
-        self.Cr=Cr
-        
-        import pylab
-        pylab.clf()
-        pylab.subplot(1,2,1)
-        pylab.imshow(np.abs(C),interpolation="nearest")
-        pylab.subplot(1,2,2)
-        pylab.imshow(np.abs(Cr),interpolation="nearest")
-        pylab.draw()
-        pylab.show()
-        
-        for itime in range(0,NSols):
-            for ich in range(nch):
-                for iAnt in range(na):
-                    for iDir in range(nd):
-                        Sols.G[itime,ich,iAnt,iDir,0,0]=g0.flat[iAnt]
-                        Sols.G[itime,ich,iAnt,iDir,1,1]=g0.flat[iAnt]
-
                         
         # # Equalise in time
         # for itime in range(NSols):
@@ -309,10 +304,10 @@ class ClassSimul():
         # make scalar
         Sols.G[:,:,:,:,1,1]=Sols.G[:,:,:,:,0,0]
         
-        # # unity
-        # Sols.G.fill(0)
-        # Sols.G[:,:,:,:,0,0]=1.
-        # Sols.G[:,:,:,:,1,1]=1.
+        # unity
+        Sols.G.fill(0)
+        Sols.G[:,:,:,:,0,0]=1.
+        Sols.G[:,:,:,:,1,1]=1.
 
         # # Sols.G[:,:,:,1:,0,0]=0.01
         # # Sols.G[:,:,:,1:,1,1]=0.01
@@ -612,17 +607,15 @@ class ClassSimul():
         #VS.MS.SaveVis(Col="CORRECTED_DATA")
         VS.MS.SaveVis(Col="CORRECTED_DATA")
         #VS.MS.SaveVis(Col="CORRECTED_DATA")
-
         
         t=table(self.MSName,readonly=False)
-        
-        dp=t.getcol("DDF_PREDICT")
-        dp.fill(0)
-        dp[:,:,0]=1.
-        dp[:,:,-1]=1.
-        t.putcol("DDF_PREDICT",dp)
+        # dp=t.getcol("DDF_PREDICT")
+        # dp.fill(0)
+        # dp[:,:,0]=1.
+        # dp[:,:,-1]=1.
+        # t.putcol("DDF_PREDICT",dp)
+        # t.putcol("DATA",MS.data-dp)
 
-        t.putcol("DATA",MS.data-dp)
         
         f=t.getcol("FLAG")
         f.fill(0)
@@ -642,20 +635,19 @@ class ClassSimul():
         w.fill(1)
         t.putcol("IMAGING_WEIGHT",w)
 
-        # ###############################
-        w.fill(0)
-        A0s = t.getcol("ANTENNA1")
-        A1s = t.getcol("ANTENNA2")
-        C2=self.Cr#np.dot(self.Cr.T.conj(),self.Cr)
-        V=C2[A0s,A1s]
-        ind=(V==0)
-        V[ind]=1e10
-        w0=1./(V+Noise**2)
-        w0[ind]=0
-        
-        for ich in np.arange(w.shape[1]):
-            w[:,ich]=np.abs(w0)
-        np.save("WSim.npy",w)
+        # # ###############################
+        # w.fill(0)
+        # A0s = t.getcol("ANTENNA1")
+        # A1s = t.getcol("ANTENNA2")
+        # C2=self.Cr#np.dot(self.Cr.T.conj(),self.Cr)
+        # V=C2[A0s,A1s]
+        # ind=(V==0)
+        # V[ind]=1e10
+        # w0=1./(V+Noise**2)
+        # w0[ind]=0
+        # for ich in np.arange(w.shape[1]):
+        #     w[:,ich]=np.abs(w0)
+        # np.save("WSim.npy",w)
         
         t.close()
 

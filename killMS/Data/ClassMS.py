@@ -39,11 +39,14 @@ import DDFacet.ToolsDir.ModRotate
 class ClassMS():
     def __init__(self,MSname,Col="DATA",zero_flag=True,ReOrder=False,EqualizeFlag=False,DoPrint=True,DoReadData=True,
                  TimeChunkSize=None,GetBeam=False,RejectAutoCorr=False,SelectSPW=None,DelStationList=None,Field=0,DDID=0,
-                 ReadUVWDT=False,ChanSlice=None,GD=None):
+                 ReadUVWDT=False,ChanSlice=None,GD=None,
+                 ToRADEC=None):
 
 
         if MSname=="": exit()
         self.GD=GD
+        self.ToRADEC = ToRADEC
+            
         self.ReadUVWDT=ReadUVWDT
         MSname=reformat.reformat(os.path.abspath(MSname),LastSlash=False)
         self.MSName=MSname
@@ -517,6 +520,10 @@ class ClassMS():
                 #vis_all[np.isnan(vis_all)]=0.
                 self.data=vis_all
 
+        if self.ToRADEC is not None:
+            DATA={"uvw":uvw,"data":self.data}
+            self.Rotate(DATA,RotateType=["uvw","vis"])
+
         # import pylab
         # pylab.plot(time_all[::111],vis[::111,512,0].real)
         # pylab.show()
@@ -816,6 +823,30 @@ class ClassMS():
         self.StrRA  = rad2hmsdms(self.rarad,Type="ra").replace(" ",":")
         self.StrDEC = rad2hmsdms(self.decrad,Type="dec").replace(" ",".")
 
+        if self.ToRADEC is not None:
+            ranew, decnew = rarad, decrad
+            # get RA/Dec from first MS, or else parse as coordinate string
+            if self.ToRADEC == "align":
+                stop
+                if first_ms is not None:
+                    ranew, decnew = first_ms.rarad, first_ms.decrad
+                which = "the common phase centre"
+            else:
+                which = "%s %s"%tuple(self.ToRADEC)
+                SRa,SDec=self.ToRADEC
+                srah,sram,sras=SRa.split(":")
+                sdecd,sdecm,sdecs=SDec.split(":")
+                ranew=(np.pi/180)*15.*(float(srah)+float(sram)/60.+float(sras)/3600.)
+                decnew=(np.pi/180)*np.sign(float(sdecd))*(abs(float(sdecd))+float(sdecm)/60.+float(sdecs)/3600.)
+            # only enable rotation if coordinates actually change
+            if ranew != rarad or decnew != decrad:
+                print(ModColor.Str("MS %s will be rephased to %s"%(self.MSName,which)), file=log)
+                self.OldRadec = rarad,decrad
+                self.NewRadec = ranew,decnew
+                rarad,decrad = ranew,decnew
+            else:
+                self.ToRADEC = None
+                
         T.timeit()
         # self.StrRADEC=(rad2hmsdms(self.rarad,Type="ra").replace(" ",":")\
         #                ,rad2hmsdms(self.decrad,Type="dec").replace(" ","."))
@@ -1132,7 +1163,7 @@ class ClassMS():
         print("     from [%s, %s] [%f %f]"%(StrRAOld,StrDECOld,ra0,dec0), file=log)
         print("       to [%s, %s] [%f %f]"%(StrRA,StrDEC,ra1,dec1), file=log)
         
-        DDFacet.ToolsDir.ModRotate.Rotate2(ra0,dec0,ra1,dec1,DATA["uvw"],DATA[DataFieldName],self.wavelength_chan,
+        DDFacet.ToolsDir.ModRotate.Rotate2(ra0,dec0,ra1,dec1,DATA["uvw"],DATA[DataFieldName],self.wavelength_chan.ravel(),
                                            RotateType=RotateType)
 
 

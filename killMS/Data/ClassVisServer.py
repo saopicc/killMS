@@ -126,8 +126,12 @@ class ClassVisServer():
             ReadUVWDT=(("T" in DecorrMode) or ("F" in DecorrMode))
             
         self.ReadUVWDT=ReadUVWDT
-        MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False,ReadUVWDT=ReadUVWDT,GD=self.GD,**kwargs)
-
+        ToRaDec=None
+        if self.GD is not None and "GDImage" in list(self.GD.keys()):
+            ToRaDec=self.GD["GDImage"]["Image"]["PhaseCenterRADEC"]
+        
+        MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False,ReadUVWDT=ReadUVWDT,GD=self.GD,ToRADEC=ToRaDec,**kwargs)
+        
         TimesInt=np.arange(0,MS.DTh,self.TMemChunkSize).tolist()
         if not(MS.DTh+1./3600 in TimesInt): TimesInt.append(MS.DTh+1./3600)
         self.TimesInt=TimesInt

@@ -1222,7 +1222,7 @@ class ClassJacobianAntenna():
                 self.Rinv_flat=DicoData["Rinv_flat"]
                 self.R_flat=DicoData["R_flat"]
                 self.Weights_flat=DicoData["Weights_flat"]
-
+            
             #print("DATA From shared")
             #print(np.max(DicoData["A0"]))
             #np.save("testA0",DicoData["A0"])
