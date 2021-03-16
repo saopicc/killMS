@@ -34,6 +34,7 @@ from DDFacet.Other import logger
 log=logger.getLogger("ClassMS")
 from killMS.Other import ClassTimeIt
 from DDFacet.Other.progressbar import ProgressBar
+import DDFacet.ToolsDir.ModRotate
 
 class ClassMS():
     def __init__(self,MSname,Col="DATA",zero_flag=True,ReOrder=False,EqualizeFlag=False,DoPrint=True,DoReadData=True,
