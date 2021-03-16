@@ -34,6 +34,7 @@ from DDFacet.Other import logger
 log=logger.getLogger("ClassMS")
 from killMS.Other import ClassTimeIt
 from DDFacet.Other.progressbar import ProgressBar
+import DDFacet.ToolsDir.ModRotate
 
 class ClassMS():
     def __init__(self,MSname,Col="DATA",zero_flag=True,ReOrder=False,EqualizeFlag=False,DoPrint=True,DoReadData=True,
@@ -44,9 +45,7 @@ class ClassMS():
 
         if MSname=="": exit()
         self.GD=GD
-        self.ToRADEC = self.GD["Image"]["PhaseCenterRADEC"]
-        if not self.ToRADEC:
-            self.ToRADEC = None
+        self.ToRADEC = ToRADEC
             
         self.ReadUVWDT=ReadUVWDT
         MSname=reformat.reformat(os.path.abspath(MSname),LastSlash=False)
@@ -524,7 +523,7 @@ class ClassMS():
         if self.ToRADEC is not None:
             DATA={"uvw":uvw,"data":self.data}
             self.Rotate(DATA,RotateType=["uvw","vis"])
-            
+
         # import pylab
         # pylab.plot(time_all[::111],vis[::111,512,0].real)
         # pylab.show()
@@ -1164,7 +1163,7 @@ class ClassMS():
         print("     from [%s, %s] [%f %f]"%(StrRAOld,StrDECOld,ra0,dec0), file=log)
         print("       to [%s, %s] [%f %f]"%(StrRA,StrDEC,ra1,dec1), file=log)
         
-        DDFacet.ToolsDir.ModRotate.Rotate2(ra0,dec0,ra1,dec1,DATA["uvw"],DATA[DataFieldName],self.wavelength_chan,
+        DDFacet.ToolsDir.ModRotate.Rotate2(ra0,dec0,ra1,dec1,DATA["uvw"],DATA[DataFieldName],self.wavelength_chan.ravel(),
                                            RotateType=RotateType)
 
 

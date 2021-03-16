@@ -127,8 +127,9 @@ class ClassVisServer():
             
         self.ReadUVWDT=ReadUVWDT
         ToRaDec=None
-        if self.GDImag is not None:
-            ToRADEC=self.GDImag["Image"]["PhaseCenterRADEC"]
+        if self.GD is not None and "GDImage" in list(self.GD.keys()):
+            ToRaDec=self.GD["GDImage"]["Image"]["PhaseCenterRADEC"]
+        
         MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False,ReadUVWDT=ReadUVWDT,GD=self.GD,ToRADEC=ToRaDec,**kwargs)
         
         TimesInt=np.arange(0,MS.DTh,self.TMemChunkSize).tolist()
