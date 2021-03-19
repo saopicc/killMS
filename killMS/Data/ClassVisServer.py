@@ -944,7 +944,7 @@ class ClassVisServer():
                     self.DomainsMachine.AverageInFreq(DicoBeam,FreqDomainsOut)
 
                     ###### Normalise
-                    rac,decc=self.MS.radec
+                    rac,decc=self.MS.OriginalRadec
                     if self.GD["Beam"]["CenterNorm"]==1:
 
                         Beam=DicoBeam["Jones"]
