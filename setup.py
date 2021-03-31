@@ -27,14 +27,10 @@ from setuptools import setup
 from setuptools.command.install import install
 from setuptools.command.sdist import sdist
 from distutils.command.build import build
+from setuptools.command.build_ext import build_ext
 from os.path import join as pjoin
 import sys
 
-try:
-    import six
-except ImportError as e:
-    raise ImportError("Six not installed. Please install Python 2.x compatibility package six before running DDFacet install. "
-                        "You should not see this message unless you are not running pip install (19.x) -- run pip install!")
 try:
     import pybind11
 except ImportError as e:
@@ -43,20 +39,19 @@ except ImportError as e:
 
 
 pkg='killMS'
-__version__ = "2.7.0.0"
+__version__ = "3.0.0.0"
 build_root=os.path.dirname(__file__)
 
 def backend(compile_options):
 
     if compile_options is not None:
-        print("Compiling extension libraries with user defined options: '%s'"%compile_options, file=sys.stderr)
-    if six.PY3:
-        compile_options += " -DENABLE_PYTHON_2=OFF "
-        compile_options += " -DENABLE_PYTHON_3=ON "
-    elif six.PY2:
-        compile_options += " -DENABLE_PYTHON_2=ON "
-        compile_options += " -DENABLE_PYTHON_3=OFF "
-
+        print("Compiling extension libraries with user defined options: '%s'"%compile_options)
+    else:
+        compile_options = ""
+    
+    compile_options += " -DENABLE_PYTHON_2=OFF "
+    compile_options += " -DENABLE_PYTHON_3=ON "
+    
     path = pjoin(build_root, pkg, 'cbuild')
     try:
         subprocess.check_call(["mkdir", path])
@@ -91,6 +86,18 @@ class custom_build(build):
         backend(self.compopts)
         build.run(self)
 
+class custom_build_ext(build_ext):
+    build.user_options = build.user_options + [
+        ('compopts=', None, 'Any additional compile options passed to CMake')
+    ]
+    def initialize_options(self):
+        build_ext.initialize_options(self)
+        self.compopts = None
+
+    def run(self):
+        backend(self.compopts)
+        build_ext.run(self)
+
 class custom_sdist(sdist):
     def run(self):
         bpath = pjoin(build_root, pkg, 'cbuild')
@@ -109,17 +116,10 @@ def readme():
         return f.read()
 
 def requirements():
-    # TODO - same as in latest DDFacet, need to systemically work out what is needed @cyriltasse
-    # but this the safest assumption for now
-    requirements = [("DDFacet >= 0.5.0", "DDFacet >= 0.3.0")] 
-    try:
-        import six
-    except ImportError as e:
-        raise ImportError("Six not installed. Please install Python 2.x compatibility package six before running KillMS install. "
-                          "You should not see this message unless you are not running pip install -- run pip install!")
-
-    py3_requirements, py2_requirements = list(zip(*requirements))
-    install_requirements = py2_requirements if six.PY2 else py3_requirements
+    install_requirements = [
+        "DDFacet >= 0.5.0; python_version >= '3'",
+        "bdsf > 1.8.15; python_version >= '3'"
+    ]
 
     return install_requirements
 
@@ -142,8 +142,9 @@ setup(name=pkg,
       cmdclass={'install': custom_install,
                 'build': custom_build,
                 'sdist': custom_sdist,
+                'build_ext': custom_build_ext
                },
-      #python_requires='<3.0',
+      python_requires='>=3.0,<3.7',
       packages=[pkg],
       install_requires=requirements(),
       include_package_data=True,
