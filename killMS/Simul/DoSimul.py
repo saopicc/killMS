@@ -75,7 +75,8 @@ def main(options=None):
     #SMName="ModelRandom00.many.1off.txt.npy"
     SMName="ModelRandom00.txt.npy"
 
-    ll=sorted(glob.glob("000?.MS"))
+
+    ll=sorted(glob.glob("0000.p*.MS"))
     #ll=sorted(glob.glob("0000.MS"))
     #ll=sorted(glob.glob("BOOTES24_SB100-109.2ch8s.ms.tsel"))
     
@@ -92,7 +93,7 @@ def main(options=None):
     
     for l in ll:
         # CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True)
-        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=False,Cr=CS0.Cr)
+        CS=ClassSimul(l,SMName,Sols=Sols,ApplyBeam=True,Cr=CS0.Cr)
 
         if CS0.DoClusterJones:
             CS.SolsCluster=CS0.SolsCluster
@@ -108,8 +109,9 @@ class ClassSimul():
         self.Sols=Sols
         self.ApplyBeam=ApplyBeam
         self.ChanMap=None
-        self.DoClusterDirs=False
+        self.DoClusterDirs=True
         self.Cr=Cr
+        self.BeamAt="facet"
         
         self.Init()
         nuc=self.VS.MS.ChanFreq.ravel()
@@ -137,7 +139,7 @@ class ClassSimul():
 
         ApplyBeam=self.ApplyBeam
         na=MS.na
-        nd=SM.NDir
+        nd=SM.SourceCat.shape[0]#NDir
 
         ###############################
         # NSols=80
@@ -288,10 +290,10 @@ class ClassSimul():
         # #######################
         
                         
-        # # Equalise in time
-        # for itime in range(NSols):
-        #     Sols.G[itime,:,:,:,0,0]=Sols.G[0,:,:,:,0,0]
-        #     Sols.G[itime,:,:,:,1,1]=Sols.G[0,:,:,:,1,1]
+        # Equalise in time
+        for itime in range(NSols):
+            Sols.G[itime,:,:,:,0,0]=Sols.G[0,:,:,:,0,0]
+            Sols.G[itime,:,:,:,1,1]=Sols.G[0,:,:,:,1,1]
 
         # equalise in freq
         for ich in range(1,nch):
@@ -304,13 +306,13 @@ class ClassSimul():
         # make scalar
         Sols.G[:,:,:,:,1,1]=Sols.G[:,:,:,:,0,0]
         
-        # unity
-        Sols.G.fill(0)
-        Sols.G[:,:,:,:,0,0]=1.
-        Sols.G[:,:,:,:,1,1]=1.
+        # # unity
+        # Sols.G.fill(0)
+        # Sols.G[:,:,:,:,0,0]=1.
+        # Sols.G[:,:,:,:,1,1]=1.
 
-        # # Sols.G[:,:,:,1:,0,0]=0.01
-        # # Sols.G[:,:,:,1:,1,1]=0.01
+        # Sols.G[:,:,:,1:,0,0]=0.01
+        # Sols.G[:,:,:,1:,1,1]=0.01
 
         # ################################
         # Merge nodes
@@ -334,6 +336,7 @@ class ClassSimul():
             SolsCluster.t0=Sols.t0
             SolsCluster.t1=Sols.t1
             SolsCluster.tm=Sols.tm
+            
             for iDir in np.unique(indC):
                 ind=np.where(indC==iDir)[0]
                 for i in range(ind.size):
@@ -360,6 +363,9 @@ class ClassSimul():
         else:
             Sols=self.Sols
 
+
+
+            
         MS=self.MS
         SM=self.SM
         VS=self.VS
@@ -367,6 +373,17 @@ class ClassSimul():
         na=MS.na
         nd=SM.NDir
 
+        if self.BeamAt=="facet":
+            NDir=SM.SourceCat.shape[0]
+            SM.SourceCat.Cluster=np.arange(NDir)
+            SM.Dirs=SM.SourceCat.Cluster
+            SM.NDir=NDir
+            SM.ClusterCat=np.zeros((NDir,),SM.ClusterCat.dtype)
+            SM.ClusterCat=SM.ClusterCat.view(np.recarray)
+            SM.ClusterCat.ra=SM.SourceCat.ra
+            SM.ClusterCat.dec=SM.SourceCat.dec
+
+        
         Jones={}
         Jones["t0"]=Sols.t0
         Jones["t1"]=Sols.t1
@@ -377,12 +394,13 @@ class ClassSimul():
 
         # G[:,:,:,:,0,0]/=np.abs(G[:,:,:,:,0,0])
         # G[:,:,:,:,1,1]=G[:,:,:,:,0,0]
-
         # G.fill(0)
         # G[:,:,:,:,0,0]=1
         # G[:,:,:,:,1,1]=1
-
+        
         nt,nd,na,nch,_,_=G.shape
+        
+        
         # G=np.random.randn(*G.shape)+1j*np.random.randn(*G.shape)
         
         
@@ -390,9 +408,10 @@ class ClassSimul():
         useElementBeam=False
         if ApplyBeam:
             print(ModColor.Str("Apply Beam"))
-            MS.LoadSR(useElementBeam=False,useArrayFactor=True)
+            MS.LoadSR(useElementBeam=useElementBeam,useArrayFactor=useArrayFactor)
             RA=SM.ClusterCat.ra
             DEC=SM.ClusterCat.dec
+
             NDir=RA.size
             Tm=Sols.tm
             T0s=Sols.t0
@@ -403,7 +422,7 @@ class ClassSimul():
             DicoBeam["t1"]=np.zeros((Tm.size,),np.float64)
             DicoBeam["tm"]=np.zeros((Tm.size,),np.float64)
             
-            rac,decc=MS.radec
+            rac,decc=MS.OriginalRadec
             
             
             def GB(time,ra,dec):
@@ -431,12 +450,17 @@ class ClassSimul():
                 nd,_,_,_,_=Beam.shape
                 Ones=np.ones((nd, 1, 1, 1, 1),np.float32)
                 Beam0inv=Beam0inv*Ones
+                nd_,na_,nf_,_,_=Beam.shape
+                # Beam_=np.ones((nd_,na_,nf_),np.float32)*(1+np.arange(nd_).reshape((-1,1,1)))
+                # Beam.fill(0)
+                # Beam[:,:,:,0,0]=Beam_[:,:,:]
+                # Beam[:,:,:,1,1]=Beam_[:,:,:]
                 Beam=ModLinAlg.BatchDot(Beam0inv,Beam)
                 ######
 
                 
                 DicoBeam["Jones"][itime]=Beam
-                
+
             nt,nd,na,nch,_,_= DicoBeam["Jones"].shape
 
             #m=np.mean(np.abs(DicoBeam["Jones"][:,1,:,:,:,:]))
@@ -457,7 +481,7 @@ class ClassSimul():
             Ones=np.ones((1, 1, 1, nch, 1, 1),np.float32)
             G=G*Ones
             G=ModLinAlg.BatchDot(G,DicoBeam["Jones"])
-
+            
             # #################"
 
             # G[:,:,:,:,0,0]=1
@@ -471,7 +495,7 @@ class ClassSimul():
 
             print("Done")
     
-    
+
         # #################
         # Multiple Channel
         self.ChanMap=range(nch)
@@ -519,7 +543,7 @@ class ClassSimul():
         self.DoClusterJones=0
         ###################
         if self.DoClusterDirs:
-            self.kMS_ClusterDirCat=np.load("ModelImage.txt.ClusterCat.npy")
+            self.kMS_ClusterDirCat=np.load("ModelRandom01.txt.ClusterCat.npy")
             self.kMS_ClusterDirCat=self.kMS_ClusterDirCat.view(np.recarray)
             self.kMS_ClusterDirCat
             if not("l" in self.kMS_ClusterDirCat.dtype.fields.keys()):
@@ -573,7 +597,8 @@ class ClassSimul():
         #                                        VariableFunc=VariableFunc)
 
         
-        PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones,Noise=Noise,
+        PredictData=PM.predictKernelPolCluster(VS.ThisDataChunk,SM,ApplyTimeJones=Jones,
+                                               Noise=Noise,
                                                VariableFunc=None)
         print(Jones["Beam"].ravel()[0])
         

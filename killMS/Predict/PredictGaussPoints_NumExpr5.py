@@ -705,7 +705,6 @@ class ClassPredict():
                                 ImToGrid=False,ChanMapping=ChanMapping)
             T.timeit("2: Predict")
             # get() is substracting
-
             if ApplyTimeJones is not None and self._BeamAtFacet:
                 ParamJonesList=self.GiveParamJonesList(ApplyTimeJones,A0,A1)
                 ParamJonesList=ParamJonesList+[iFacet]
@@ -718,6 +717,7 @@ class ClassPredict():
                 # print iFacet,sra,sdec
                 
                 predict.ApplyJones(ColOutDir,ParamJonesList)
+
 
             DataOut-=ColOutDir
             ColOutDir.fill(0)

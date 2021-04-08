@@ -83,7 +83,7 @@ class ClassBeam():
             Beam[itime]=self.MS.GiveBeam(ThisTime,RA,DEC)
     
         ###### Normalise
-        rac,decc=self.MS.radec
+        rac,decc=self.MS.OriginalRadec
         if self.GD["Beam"]["CenterNorm"]==1:
             for itime in range(Tm.size):
                 ThisTime=Tm[itime]

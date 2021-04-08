@@ -105,7 +105,6 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.LoadModel()
 
     def LoadModel(self):
-
         
         # ClassModelMachine,DicoModel=GiveModelMachine(self.FileDicoModel)
         # try:
@@ -115,8 +114,6 @@ class ClassPreparePredict(ClassImagerDeconv):
         #     DicoModel["SolveParam"]=self.GD["GAClean"]["GASolvePars"]
         # self.MM=ClassModelMachine(self.GD)
         # self.MM.FromDico(DicoModel)
-        
-
 
         # From DicoModel
         ModConstructor = ClassModModelMachine(self.GD)
@@ -203,17 +200,16 @@ class ClassPreparePredict(ClassImagerDeconv):
         Cat.Sref[:]=ClusterCat.SumI[:]
 
         self.SourceCat=Cat
-
+        
         
         self.DicoImager=self.FacetMachine.DicoImager
         self.ClusterCat=ClusterCat
         self.ClusterCat.SumI=0.
-        
 
-        #ind=np.where(self.ClusterCat.SumI!=0)[0]
-        #self.ClusterCat=self.ClusterCat[ind].copy()
-        #NFacets=self.ClusterCat.shape[0]
-        #log.print( "  There are %i non-zero facets"%NFacets)
+        # ind=np.where(self.ClusterCat.SumI!=0)[0]
+        # self.ClusterCat=self.ClusterCat[ind].copy()
+        # NFacets=self.ClusterCat.shape[0]
+        # log.print( "  There are %i non-zero facets"%NFacets)
 
         NFacets=len(self.FacetMachine.DicoImager)
         lFacet=np.zeros((NFacets,),np.float32)
@@ -223,15 +219,15 @@ class ClassPreparePredict(ClassImagerDeconv):
             lFacet[iFacet]=l
             mFacet[iFacet]=m
 
-
         NDir=ClusterCat.l.size
         d=np.sqrt((ClusterCat.l.reshape((NDir,1))-lFacet.reshape((1,NFacets)))**2+
                   (ClusterCat.m.reshape((NDir,1))-mFacet.reshape((1,NFacets)))**2)
         idDir=np.argmin(d,axis=0)
+        
         for iFacet in range(NFacets):
             self.FacetMachine.DicoImager[iFacet]["iDirJones"]=idDir[iFacet]
-
-            
+            # print(iFacet,idDir[iFacet])
+        
         from DDFacet.Other.AsyncProcessPool import APP
         APP.startWorkers()
         #self.VS.CalcWeightsBackground()
