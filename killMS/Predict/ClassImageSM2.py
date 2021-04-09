@@ -333,8 +333,9 @@ class ClassPreparePredict(ClassImagerDeconv):
         
         from killMS.Data import ClassBeam
 
-        self.GD["Beam"]["BeamModel"]=self.GD["Beam"]["Model"]
-        BeamMachine=ClassBeam.ClassBeam(self.VS.ListMS[0].MSName,self.GD,self.SM,ColName=self.GD["Data"]["ColName"])
+        #self.GD["Beam"]["BeamModel"]=self.GD["Beam"]["Model"]
+        log.print("Compute mean beam for direction removal...")
+        BeamMachine=ClassBeam.ClassBeam(self.VS.ListMS[0].MSName,self.GD["GDkMS"],self.SM)#,ColName=self.GD["Data"]["ColName"])
         AbsMeanBeam=BeamMachine.GiveMeanBeam()
         AbsMeanBeamAnt=np.mean(AbsMeanBeam[:,:,0,0,0],axis=1)
 
