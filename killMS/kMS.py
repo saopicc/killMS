@@ -444,25 +444,24 @@ def main(OP=None,MSName=None):
         GDPredict=DDFacet.Other.MyPickle.Load(FileDicoModel)["GD"]
         GDPredict["Output"]["Mode"] = "Predict"
 
-        if options.BeamModel is not None and options.BeamModel.lower()=="same":
-            log.print(ModColor.Str("Setting kMS beam model from DDF parset..."))
-            GD["Beam"]['BeamModel']=options.BeamModel=GDPredict["Beam"]["Model"]
-            GD["Beam"]['NChanBeamPerMS']=options.NChanBeamPerMS=GDPredict["Beam"]["NBand"]
-            GD["Beam"]['BeamAt']=options.BeamAt = GDPredict["Beam"]["At"] # tessel/facet
-            GD["Beam"]['LOFARBeamMode']=options.LOFARBeamMode = GDPredict["Beam"]["LOFARBeamMode"]     # A/AE
-            GD["Beam"]['DtBeamMin']=options.DtBeamMin = GDPredict["Beam"]["DtBeamMin"]
-            GD["Beam"]['CenterNorm']=options.CenterNorm = GDPredict["Beam"]["CenterNorm"]
-            
-            GD["Beam"]['FITSFile']=options.FITSFile = GDPredict["Beam"]["FITSFile"]
-            GD["Beam"]['FITSParAngleIncDeg']=options.FITSParAngleIncDeg = GDPredict["Beam"]["FITSParAngleIncDeg"]
-            GD["Beam"]['FITSLAxis']=options.FITSLAxis        = GDPredict["Beam"]["FITSLAxis"]
-            GD["Beam"]['FITSMAxis']=options.FITSMAxis        = GDPredict["Beam"]["FITSMAxis"]
-            GD["Beam"]['FITSFeed']=options.FITSFeed	 = GDPredict["Beam"]["FITSFeed"] 
-            GD["Beam"]['FITSVerbosity']=options.FITSVerbosity	 = GDPredict["Beam"]["FITSVerbosity"]
-            GD["Beam"]["FeedAngle"]=options.FeedAngle	 = GDPredict["Beam"]["FeedAngle"]
-            GD["Beam"]["ApplyPJones"]=options.ApplyPJones             = GDPredict["Beam"]["ApplyPJones"]
-            GD["Beam"]["FlipVisibilityHands"]=options.FlipVisibilityHands     = GDPredict["Beam"]["FlipVisibilityHands"]
-            GD["Beam"]['FITSFeedSwap']=options.FITSFeedSwap=GDPredict["Beam"]["FITSFeedSwap"]
+        # if options.BeamModel is not None and options.BeamModel.lower()=="same":
+        #     log.print(ModColor.Str("Setting kMS beam model from DDF parset..."))
+        #     GD["Beam"]['BeamModel']=options.BeamModel=GDPredict["Beam"]["Model"]
+        #     GD["Beam"]['NChanBeamPerMS']=options.NChanBeamPerMS=GDPredict["Beam"]["NBand"]
+        #     GD["Beam"]['BeamAt']=options.BeamAt = GDPredict["Beam"]["At"] # tessel/facet
+        #     GD["Beam"]['LOFARBeamMode']=options.LOFARBeamMode = GDPredict["Beam"]["LOFARBeamMode"]     # A/AE
+        #     GD["Beam"]['DtBeamMin']=options.DtBeamMin = GDPredict["Beam"]["DtBeamMin"]
+        #     GD["Beam"]['CenterNorm']=options.CenterNorm = GDPredict["Beam"]["CenterNorm"]
+        #     GD["Beam"]['FITSFile']=options.FITSFile = GDPredict["Beam"]["FITSFile"]
+        #     GD["Beam"]['FITSParAngleIncDeg']=options.FITSParAngleIncDeg = GDPredict["Beam"]["FITSParAngleIncDeg"]
+        #     GD["Beam"]['FITSLAxis']=options.FITSLAxis        = GDPredict["Beam"]["FITSLAxis"]
+        #     GD["Beam"]['FITSMAxis']=options.FITSMAxis        = GDPredict["Beam"]["FITSMAxis"]
+        #     GD["Beam"]['FITSFeed']=options.FITSFeed	 = GDPredict["Beam"]["FITSFeed"] 
+        #     GD["Beam"]['FITSVerbosity']=options.FITSVerbosity	 = GDPredict["Beam"]["FITSVerbosity"]
+        #     GD["Beam"]["FeedAngle"]=options.FeedAngle	 = GDPredict["Beam"]["FeedAngle"]
+        #     GD["Beam"]["ApplyPJones"]=options.ApplyPJones             = GDPredict["Beam"]["ApplyPJones"]
+        #     GD["Beam"]["FlipVisibilityHands"]=options.FlipVisibilityHands     = GDPredict["Beam"]["FlipVisibilityHands"]
+        #     GD["Beam"]['FITSFeedSwap']=options.FITSFeedSwap=GDPredict["Beam"]["FITSFeedSwap"]
             
             
             
@@ -498,9 +497,15 @@ def main(OP=None,MSName=None):
         #GDPredict["Caching"]["ResetCache"]=1
         if options.MaxFacetSize:
             GDPredict["Facets"]["DiamMax"]=options.MaxFacetSize
+        else:
+            OP.options.ImageSkyModel_MaxFacetSize=OP.DicoConfig["ImageSkyModel"]["MaxFacetSize"]=GDPredict["Facets"]["DiamMax"]
+
         if options.MinFacetSize:
             GDPredict["Facets"]["DiamMin"]=options.MinFacetSize
+        else:
+            OP.options.ImageSkyModel_MinFacetSize=OP.DicoConfig["ImageSkyModel"]["MinFacetSize"]=GDPredict["Facets"]["DiamMin"]
 
+            
         if options.Decorrelation is not None and options.Decorrelation != "":
             log.print(ModColor.Str("Overwriting DDF parset decorrelation mode [%s] with kMS option [%s]"\
                                     %(GDPredict["RIME"]["DecorrMode"],options.Decorrelation)))
@@ -508,6 +513,8 @@ def main(OP=None,MSName=None):
         else:
             GD["SkyModel"]["Decorrelation"]=DoSmearing=options.Decorrelation=GDPredict["RIME"]["DecorrMode"]
             log.print(ModColor.Str("Decorrelation mode will be [%s]" % DoSmearing))
+
+        OP.ToParset(ParsetName)
 
         # if options.Decorrelation != GDPredict["DDESolutions"]["DecorrMode"]:
         #     log.print(ModColor.Str("Decorrelation modes for DDFacet and killMS are different [%s vs %s respectively]"\)
