@@ -327,6 +327,13 @@ class ClassPreparePredict(ClassImagerDeconv):
 
         self.NDirs=self.ClusterCat.shape[0]
 
+        
+        # from killMS.Data import ClassBeam
+        # BeamMachine=ClassBeam.ClassBeam(self.VS.MSName,self.GD,self.SM)
+        # AbsMeanBeam=BeamMachine.GiveMeanBeam()
+        # AbsMeanBeamAnt=np.mean(AbsMeanBeam[:,:,0,0,0],axis=1)
+        
+        
         Keep=np.zeros((self.NDirs,),bool)
         for iDirJones in sorted(DicoJonesDirToFacet.keys()):
             #print(self.DicoJonesDirToFacet[iDirJones]["SumFlux"])
@@ -346,6 +353,9 @@ class ClassPreparePredict(ClassImagerDeconv):
 
         self.DicoJonesDirToFacet=D
         self.ClusterCat=self.ClusterCat[Keep].copy()
+
+
+        
         # self.SourceCat=self.SourceCat[Keep].copy()
         
         self.Dirs=self.DicoJonesDirToFacet.keys()
