@@ -334,16 +334,18 @@ class ClassPreparePredict(ClassImagerDeconv):
         from killMS.Data import ClassBeam
 
         self.GD["Beam"]["BeamModel"]=self.GD["Beam"]["Model"]
+        self.GD["Beam"]["BeamModel"]=self.GD["Beam"]["Model"]
         BeamMachine=ClassBeam.ClassBeam(self.VS.ListMS[0].MSName,self.GD,self.SM,ColName=self.GD["Data"]["ColName"])
         AbsMeanBeam=BeamMachine.GiveMeanBeam()
         AbsMeanBeamAnt=np.mean(AbsMeanBeam[:,:,0,0,0],axis=1)
-
+        stop
         
         Keep=np.zeros((self.NDirs,),bool)
 
         AppFlux=np.array([self.DicoJonesDirToFacet[iDirJones]["SumFlux"]*(AbsMeanBeamAnt[iDirJones])**2 for iDirJones in sorted(DicoJonesDirToFacet.keys())])
         MaxAppFlux=AppFlux.max()
         Th=1e-2
+        
         for iDirJones in sorted(DicoJonesDirToFacet.keys()):
             #print(self.DicoJonesDirToFacet[iDirJones]["SumFlux"])
             #if self.DicoJonesDirToFacet[iDirJones]["SumFlux"]==0:
