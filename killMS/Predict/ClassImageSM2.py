@@ -228,6 +228,9 @@ class ClassPreparePredict(ClassImagerDeconv):
             self.FacetMachine.DicoImager[iFacet]["iDirJones"]=idDir[iFacet]
             # print(iFacet,idDir[iFacet])
         
+        self.SM.ClusterCat=self.ClusterCat
+        self.SM.SourceCat=self.SourceCat
+        
         from DDFacet.Other.AsyncProcessPool import APP
         APP.startWorkers()
         #self.VS.CalcWeightsBackground()
@@ -328,18 +331,25 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.NDirs=self.ClusterCat.shape[0]
 
         
-        # from killMS.Data import ClassBeam
-        # BeamMachine=ClassBeam.ClassBeam(self.VS.MSName,self.GD,self.SM)
-        # AbsMeanBeam=BeamMachine.GiveMeanBeam()
-        # AbsMeanBeamAnt=np.mean(AbsMeanBeam[:,:,0,0,0],axis=1)
-        
+        from killMS.Data import ClassBeam
+
+        self.GD["Beam"]["BeamModel"]=self.GD["Beam"]["Model"]
+        BeamMachine=ClassBeam.ClassBeam(self.VS.ListMS[0].MSName,self.GD,self.SM,ColName=self.GD["Data"]["ColName"])
+        AbsMeanBeam=BeamMachine.GiveMeanBeam()
+        AbsMeanBeamAnt=np.mean(AbsMeanBeam[:,:,0,0,0],axis=1)
+
         
         Keep=np.zeros((self.NDirs,),bool)
+
+        AppFlux=np.array([self.DicoJonesDirToFacet[iDirJones]["SumFlux"]*(AbsMeanBeamAnt[iDirJones])**2 for iDirJones in sorted(DicoJonesDirToFacet.keys())])
+        MaxAppFlux=AppFlux.max()
+        Th=1e-2
         for iDirJones in sorted(DicoJonesDirToFacet.keys()):
             #print(self.DicoJonesDirToFacet[iDirJones]["SumFlux"])
             #if self.DicoJonesDirToFacet[iDirJones]["SumFlux"]==0:
-            if self.DicoJonesDirToFacet[iDirJones]["SumFlux"]<1e-1:
-                log.print("  Remove Jones direction %i"%(iDirJones))
+            
+            if AppFlux[iDirJones]<MaxAppFlux*Th:
+                log.print(ModColor.Str("  Remove Jones direction %i [%f < %f Jy [Th = %f of Max %f Jy]]"%(iDirJones,AppFlux[iDirJones],MaxAppFlux*Th,Th,MaxAppFlux)))
                 #print("  !!!!!!!!!!!!!!!!!!!!!!!")
             else:
                 D[iDirNew]=self.DicoJonesDirToFacet[iDirJones]
