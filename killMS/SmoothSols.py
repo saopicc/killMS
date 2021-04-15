@@ -52,7 +52,8 @@ from pyrap.tables import table
 # warnings.filterwarnings('error')
 # # ##############################
 from killMS.Other.ClassTimeIt import ClassTimeIt
-from killMS.Other.least_squares import least_squares
+#from killMS.Other.least_squares import least_squares
+from scipy.optimize import least_squares
 import copy
 from pyrap.tables import table
 SaveName="last_InterPol.obj"
@@ -108,7 +109,7 @@ class ClassInterpol():
         self.RemoveMedianAmp=RemoveMedianAmp
         
         log.print("Loading %s"%self.InSolsName)
-        self.DicoFile=dict(np.load(self.InSolsName))
+        self.DicoFile=dict(np.load(self.InSolsName,allow_pickle=True))
         self.Sols=self.DicoFile["Sols"].view(np.recarray)
         if "MaskedSols" in self.DicoFile.keys():
             MaskFreq=np.logical_not(np.all(np.all(np.all(self.DicoFile["MaskedSols"][...,0,0],axis=0),axis=1),axis=1))
@@ -421,7 +422,7 @@ class ClassInterpol():
             return r
 
         #print _f_resid(TEC0CPhase0,A0,A1,ggmeas)
-
+        
         Sol=least_squares(_f_resid,
                           TEC0CPhase0.ravel(),
                           #method="trf",

@@ -31,7 +31,7 @@ from killMS.Other import ModColor
 from DDFacet.Other import logger
 import matplotlib.gridspec as gridspec
 log=logger.getLogger("killMS")
-logger.itsLog.logger.setLevel(logger.logging.CRITICAL)
+#logger.itsLog.logger.setLevel(logger.logging.CRITICAL)
 from itertools import product as ItP
 
 sys.path=[name for name in sys.path if not(("pyrap" in name)&("/usr/local/lib/" in name))]
@@ -46,12 +46,12 @@ sys.path=[name for name in sys.path if not(("pyrap" in name)&("/usr/local/lib/" 
 
 
 if "nocol" in sys.argv:
-    print "nocol"
+    print("nocol")
     ModColor.silent=1
 if "nox" in sys.argv:
     import matplotlib
     matplotlib.use('agg')
-    print ModColor.Str(" == !NOX! ==")
+    print(ModColor.Str(" == !NOX! =="))
 
 import time
 import os
@@ -89,7 +89,7 @@ def GiveNXNYPanels(Ns,ratio=800/500):
 from killMS.Array import ModLinAlg
 
 def NormMatrices(G):
-    print "no norm"
+    print("no norm")
     return G
     nt,nch,na,_,_=G.shape
 
@@ -143,7 +143,7 @@ class PlotMachine():
         nSol=len(FilesList)
         t0=None
         for FileName in FilesList:
-            SolsDico=dict(np.load(FileName))
+            SolsDico=dict(np.load(FileName,allow_pickle=True))
             Sols=SolsDico["Sols"]
             Sols=Sols.view(np.recarray)
             
@@ -200,7 +200,7 @@ class PlotMachine():
 
 
                 
-                print SolsOut.G.shape
+                print(SolsOut.G.shape)
                 
         nt,nch,na,nd,_,_=LSols[0].G.shape
         if options.DoResid!=-1:
@@ -246,7 +246,7 @@ class PlotMachine():
             self.Plot(self.LSols,iDir)
     
     def Plot(self,LSols,iDir=0):
-        print iDir
+        print(iDir)
         op0=np.abs
         op1=np.angle
         #op0=np.real

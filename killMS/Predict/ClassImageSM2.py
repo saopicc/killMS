@@ -334,29 +334,40 @@ class ClassPreparePredict(ClassImagerDeconv):
         from killMS.Data import ClassBeam
 
         #self.GD["Beam"]["BeamModel"]=self.GD["Beam"]["Model"]
-        log.print("Compute mean beam for direction removal...")
-        BeamMachine=ClassBeam.ClassBeam(self.VS.ListMS[0].MSName,self.GD["GDkMS"],self.SM)#,ColName=self.GD["Data"]["ColName"])
-        AbsMeanBeam=BeamMachine.GiveMeanBeam()
-        AbsMeanBeamAnt=np.mean(AbsMeanBeam[:,:,0,0,0],axis=1)
-        
-        Keep=np.zeros((self.NDirs,),bool)
+        Th=0#1e-2
 
-        AppFlux=np.array([self.DicoJonesDirToFacet[iDirJones]["SumFlux"]*(AbsMeanBeamAnt[iDirJones])**2 for iDirJones in sorted(DicoJonesDirToFacet.keys())])
-        MaxAppFlux=AppFlux.max()
-        Th=1e-2
+        Keep=np.zeros((self.NDirs,),bool)
         
+        if Th>0:
+            log.print("Compute mean beam for direction removal...")
+            BeamMachine=ClassBeam.ClassBeam(self.VS.ListMS[0].MSName,self.GD["GDkMS"],self.SM)#,ColName=self.GD["Data"]["ColName"])
+            AbsMeanBeam=BeamMachine.GiveMeanBeam(NTimes=10)
+            AbsMeanBeamAnt=np.mean(AbsMeanBeam[:,:,0,0,0],axis=1)
+        
+
+            AppFlux=np.array([self.DicoJonesDirToFacet[iDirJones]["SumFlux"]*(AbsMeanBeamAnt[iDirJones])**2 for iDirJones in sorted(DicoJonesDirToFacet.keys())])
+        else:
+            AppFlux=np.array([self.DicoJonesDirToFacet[iDirJones]["SumFlux"] for iDirJones in sorted(DicoJonesDirToFacet.keys())])
+        MaxAppFlux=AppFlux.max()
+
+        HasRemoved=0
         for iDirJones in sorted(DicoJonesDirToFacet.keys()):
             #print(self.DicoJonesDirToFacet[iDirJones]["SumFlux"])
             #if self.DicoJonesDirToFacet[iDirJones]["SumFlux"]==0:
             
-            if AppFlux[iDirJones]<MaxAppFlux*Th:
+            if AppFlux[iDirJones]<=MaxAppFlux*Th:
                 log.print(ModColor.Str("  Remove Jones direction %i [%f < %f Jy [Th = %f of Max %f Jy]]"%(iDirJones,AppFlux[iDirJones],MaxAppFlux*Th,Th,MaxAppFlux)))
+                HasRemoved=1
                 #print("  !!!!!!!!!!!!!!!!!!!!!!!")
             else:
                 D[iDirNew]=self.DicoJonesDirToFacet[iDirJones]
                 iDirNew+=1
                 Keep[iDirJones]=1
 
+        if not HasRemoved:
+            log.print(ModColor.Str("All directions have been kept in the solve"))
+
+                
         #Keep.fill(0)
         #Keep[1:5]=1
         

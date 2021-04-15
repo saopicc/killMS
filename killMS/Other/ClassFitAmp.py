@@ -61,9 +61,10 @@ class ClassFitAmp():
         log.print("Number of Antennas: %i"%self.na)
         log.print("Number of Freqs:    %i"%nu.size)
         log.print("Number of Points:   %i"%(nu.size*self.na**2))
-        W=np.array([np.var(self.G[:,:,iAnt]) for iAnt in range(self.na)])
-        self.W=W/np.sum(W)
-        
+        # W=np.array([np.var(self.G[:,:,iAnt]) for iAnt in range(self.na)])
+        # if np.sum(W)==0: stop
+        # self.W=W/np.sum(W)
+
         
     # def doSmooth(self):
     #     for iTime in range(self.nt):

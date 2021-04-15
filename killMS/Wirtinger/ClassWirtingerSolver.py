@@ -455,6 +455,7 @@ class ClassWirtingerSolver():
             nd=self.SM.ClusterCat.SumI.size
             self.SM.ApparentSumI=np.zeros((nd,),np.float32)
             from killMS.Data import ClassBeam
+            log.print( "Calculate mean beam for covariance estimate... ")
             BeamMachine=ClassBeam.ClassBeam(self.VS.MSName,self.GD,self.SM)
             AbsMeanBeam=BeamMachine.GiveMeanBeam()
             AbsMeanBeamAnt=np.mean(AbsMeanBeam[:,:,0,0,0],axis=1)
