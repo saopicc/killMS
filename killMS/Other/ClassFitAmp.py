@@ -135,7 +135,7 @@ class ClassFitAmp():
                 self.GOut[self.GOut>vmax]=vmax
                 self.GOut[self.GOut<vmin]=vmin
             
-            #self.Plot(iAnt)
+            # self.Plot(iAnt)
 
         if self.LogMode:
             self.GOut=np.exp(self.GOut)
@@ -161,20 +161,25 @@ class ClassFitAmp():
         
         pylab.subplot(2,2,2)
         pylab.imshow(Im_n,vmin=vmin,vmax=vmax,aspect="auto",interpolation="nearest")
-        
+        pylab.colorbar()
+        pylab.title("In Jones")
         
         pylab.subplot(2,2,3)
         pylab.imshow(fIm,vmin=vmin,vmax=vmax,aspect="auto",interpolation="nearest")#fIm0)
+        pylab.colorbar()
+        pylab.title("FitJones")
         
         pylab.subplot(2,2,4)
         #pylab.imshow(Im_n-fIm,vmin=-vmax,vmax=vmax,aspect="auto",interpolation="nearest")#fIm0)
         pylab.imshow(Im_n-fIm,aspect="auto",interpolation="nearest")#fIm0)
+        pylab.colorbar()
+        pylab.title("resid")
 
         pylab.suptitle(iAnt)
         pylab.draw()
-        pylab.show(False)
+        pylab.show(block=False)
         pylab.pause(0.1)
-        stop
+        
         
     
     def doSmoothDeNoise(self):

@@ -334,7 +334,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         from killMS.Data import ClassBeam
 
         #self.GD["Beam"]["BeamModel"]=self.GD["Beam"]["Model"]
-        Th=0#1e-2
+        Th=float(self.GD["GDkMS"]["ImageSkyModel"]["ThSolve"])
 
         Keep=np.zeros((self.NDirs,),bool)
         
