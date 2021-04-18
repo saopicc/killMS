@@ -123,6 +123,7 @@ def read_options():
     OP.add_option('DDFCacheDir')
     OP.add_option('RemoveDDFCache')
     OP.add_option('FilterNegComp')
+    OP.add_option('ThSolve',help="If the tessel has an apparant SumFlux bellow ThSolve*MaxSumFlux (Max over tessels), it will be unsolved (J=1)")
 
     OP.OptionGroup("* Compression","Compression")
     OP.add_option('CompressionMode',help='Only Auto implemented. Default is %default')

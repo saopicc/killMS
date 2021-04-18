@@ -61,9 +61,10 @@ class ClassFitAmp():
         log.print("Number of Antennas: %i"%self.na)
         log.print("Number of Freqs:    %i"%nu.size)
         log.print("Number of Points:   %i"%(nu.size*self.na**2))
-        W=np.array([np.var(self.G[:,:,iAnt]) for iAnt in range(self.na)])
-        self.W=W/np.sum(W)
-        
+        # W=np.array([np.var(self.G[:,:,iAnt]) for iAnt in range(self.na)])
+        # if np.sum(W)==0: stop
+        # self.W=W/np.sum(W)
+
         
     # def doSmooth(self):
     #     for iTime in range(self.nt):
@@ -134,7 +135,7 @@ class ClassFitAmp():
                 self.GOut[self.GOut>vmax]=vmax
                 self.GOut[self.GOut<vmin]=vmin
             
-            #self.Plot(iAnt)
+            # self.Plot(iAnt)
 
         if self.LogMode:
             self.GOut=np.exp(self.GOut)
@@ -160,20 +161,25 @@ class ClassFitAmp():
         
         pylab.subplot(2,2,2)
         pylab.imshow(Im_n,vmin=vmin,vmax=vmax,aspect="auto",interpolation="nearest")
-        
+        pylab.colorbar()
+        pylab.title("In Jones")
         
         pylab.subplot(2,2,3)
         pylab.imshow(fIm,vmin=vmin,vmax=vmax,aspect="auto",interpolation="nearest")#fIm0)
+        pylab.colorbar()
+        pylab.title("FitJones")
         
         pylab.subplot(2,2,4)
         #pylab.imshow(Im_n-fIm,vmin=-vmax,vmax=vmax,aspect="auto",interpolation="nearest")#fIm0)
         pylab.imshow(Im_n-fIm,aspect="auto",interpolation="nearest")#fIm0)
+        pylab.colorbar()
+        pylab.title("resid")
 
         pylab.suptitle(iAnt)
         pylab.draw()
-        pylab.show(False)
+        pylab.show(block=False)
         pylab.pause(0.1)
-        stop
+        
         
     
     def doSmoothDeNoise(self):

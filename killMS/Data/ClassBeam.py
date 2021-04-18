@@ -43,13 +43,13 @@ class ClassBeam():
         self.MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False,GD=GD)
         self.DtBeamMin=self.GD["Beam"]["DtBeamMin"]
 
-    def GiveMeanBeam(self):
-        log.print( "Calculate mean beam for covariance estimate ... ")
+    def GiveMeanBeam(self,NTimes=None):
+        log.print( "Calculate mean beam ... ")
         t=table(self.MSName,ack=False)
         times=t.getcol("TIME")
         t.close()
         
-        DicoBeam=self.GiveBeam(times)
+        DicoBeam=self.GiveBeam(times,NTimes=NTimes)
         J=DicoBeam["Jones"]
         AbsMean=np.mean(np.abs(J),axis=0)
         return AbsMean
@@ -62,7 +62,7 @@ class ClassBeam():
     #     self.ApplyBeam=True
         
         
-    def GiveBeam(self,times):
+    def GiveBeam(self,times,NTimes=None):
         if self.GD["Beam"]["BeamModel"]=="LOFAR":
             useArrayFactor=("A" in self.GD["Beam"]["LOFARBeamMode"])
             useElementBeam=("E" in self.GD["Beam"]["LOFARBeamMode"])
@@ -70,9 +70,17 @@ class ClassBeam():
         elif self.GD["Beam"]["BeamModel"]=="FITS":
             self.MS.LoadFITSBeam()
 
-        #log.print( "  Update beam [Dt = %3.1f min] ... "%self.DtBeamMin)
-        DtBeamSec=self.DtBeamMin*60
+
+        
         tmin,tmax=times[0],times[-1]
+        if NTimes is None:
+            DtBeamSec=self.DtBeamMin*60
+            DtBeamMin=self.DtBeamMin
+        else:
+            DtBeamSec=(tmax-tmin)/(NTimes+1)
+            DtBeamMin=DtBeamSec/60
+        log.print( "  Update beam [Dt = %3.1f min] ... "%DtBeamMin)
+            
         TimesBeam=np.arange(tmin,tmax,DtBeamSec).tolist()
         if not(tmax in TimesBeam): TimesBeam.append(tmax)
         TimesBeam=np.array(TimesBeam)
