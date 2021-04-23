@@ -96,9 +96,9 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.IdSharedMem=IdSharedMem#kwargs["IdSharedMem"]
         self.SM=ClassImageSM()
 
-        if self.GD["GDkMS"]["ImageSkyModel"]["NodesFile"]!=None:
+        if self.GD["GDkMS"]["ImageSkyModel"]["NodesFile"]is not None:
             self.GD["Facets"]["CatNodes"]=self.GD["GDkMS"]["ImageSkyModel"]["NodesFile"]
-            self.GD["DDESolutions"]["DDSols"]=""
+            self.GD["DDESolutions"]["DDSols"]=None
             
         # self.InitFacetMachine()
         self.CreateFacetMachines()
@@ -147,11 +147,12 @@ class ClassPreparePredict(ClassImagerDeconv):
         # #stop
 
         #del(data)
-        self.DicoImager=self.FacetMachine.DicoImager
         
+        self.DicoImager=self.FacetMachine.DicoImager
         
         NFacets=len(self.FacetMachine.DicoImager)
         self.NFacets=NFacets
+        
         #self.NDirs=NFacets
         #self.Dirs=range(self.NDirs)
 
@@ -169,7 +170,7 @@ class ClassPreparePredict(ClassImagerDeconv):
         #DicoFacetName="%s.DicoFacet"%self.BaseImageName
         #DicoFacet=DDFacet.Other.MyPickle.Load(DicoFacetName)
         
-        NodeFile="%s.NodesCat.npy"%self.BaseImageName
+        NodeFile="%s.NodesCat.npy"%self.GD["Output"]["Name"]#BaseImageName
         NodesCat=np.load(NodeFile)
         NodesCat=NodesCat.view(np.recarray)
 
@@ -348,9 +349,11 @@ class ClassPreparePredict(ClassImagerDeconv):
             AppFlux=np.array([self.DicoJonesDirToFacet[iDirJones]["SumFlux"]*(AbsMeanBeamAnt[iDirJones])**2 for iDirJones in sorted(DicoJonesDirToFacet.keys())])
         else:
             AppFlux=np.array([self.DicoJonesDirToFacet[iDirJones]["SumFlux"] for iDirJones in sorted(DicoJonesDirToFacet.keys())])
+            
         MaxAppFlux=AppFlux.max()
 
         HasRemoved=0
+
         for iDirJones in sorted(DicoJonesDirToFacet.keys()):
             #print(self.DicoJonesDirToFacet[iDirJones]["SumFlux"])
             #if self.DicoJonesDirToFacet[iDirJones]["SumFlux"]==0:
