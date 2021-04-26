@@ -133,6 +133,8 @@ class ClassVisServer():
         if ToRaDec=="align":
             log.print(ModColor.Str("kMS does not understand align mode for PhaseCenterRADEC, setting to None..."))
             ToRaDec=None
+            #raise RuntimeError("incorrect BeamAt setting: use Facet or Tessel")
+            
         MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False,ReadUVWDT=ReadUVWDT,GD=self.GD,ToRADEC=ToRaDec,**kwargs)
         
         TimesInt=np.arange(0,MS.DTh,self.TMemChunkSize).tolist()
@@ -871,16 +873,18 @@ class ClassVisServer():
         ListDicoPreApply=[]
         DoPreApplyJones=False
         if self.GD is not None:
-            if self.GD["Beam"]["BeamAt"].lower() == "tessel":
-                log.print("Estimating Beam directions at the center of the tesselated areas")
-                RA,DEC=self.SM.ClusterCat.ra,self.SM.ClusterCat.dec
-            elif self.GD["Beam"]["BeamAt"].lower() == "facet":
-                log.print("Estimating Beam directions at the center of the individual facets areas")
-                RA=np.array([self.SM.DicoImager[iFacet]["RaDec"][0] for iFacet in range(len(self.SM.DicoImager))])
-                DEC=np.array([self.SM.DicoImager[iFacet]["RaDec"][1] for iFacet in range(len(self.SM.DicoImager))])
-            else:
-                raise RuntimeError("incorrect BeamAt setting: use Facet or Tessel")
             if self.GD["Beam"]["BeamModel"] is not None:
+                
+                if self.GD["Beam"]["BeamAt"].lower() == "tessel":
+                    log.print("Estimating Beam directions at the center of the tesselated areas")
+                    RA,DEC=self.SM.ClusterCat.ra,self.SM.ClusterCat.dec
+                elif self.GD["Beam"]["BeamAt"].lower() == "facet":
+                    log.print("Estimating Beam directions at the center of the individual facets areas")
+                    RA=np.array([self.SM.DicoImager[iFacet]["RaDec"][0] for iFacet in range(len(self.SM.DicoImager))])
+                    DEC=np.array([self.SM.DicoImager[iFacet]["RaDec"][1] for iFacet in range(len(self.SM.DicoImager))])
+                else:
+                    raise RuntimeError("incorrect BeamAt setting: use Facet or Tessel")
+                
                 if self.GD["Beam"]["BeamModel"]=="LOFAR":
                     NDir=RA.size
                     self.DtBeamMin=self.GD["Beam"]["DtBeamMin"]
