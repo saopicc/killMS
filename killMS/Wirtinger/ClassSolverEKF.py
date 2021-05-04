@@ -31,6 +31,7 @@ from killMS.Array import ModLinAlg
 from killMS.Other import ClassTimeIt
 #from killMS.Array.Dot import NpDotSSE
 from killMS.Wirtinger.ClassJacobianAntenna import ClassJacobianAntenna
+import killMS.Other.MyPickle
 
 class ClassSolverEKF(ClassJacobianAntenna):
     def __init__(self, *args, **kwargs):
@@ -118,9 +119,11 @@ class ClassSolverEKF(ClassJacobianAntenna):
             T.timeit(iT); iT+=1
 
             YYH=np.abs(yr[ipol,flags])**2
+
             T.timeit(iT); iT+=1
-            #Np=np.where(self.DicoData["flags_flat"]==0)[0].size
-            #Take=(self.DicoData["flags_flat"]==0)
+            # Np=np.where(self.DicoData["flags_flat"]==0)[0].size
+            # Take=(self.DicoData["flags_flat"]==0)
+            
             T.timeit(iT); iT+=1
             R=(self.R_flat[ipol][flags])#Np*rms**2
             
@@ -134,6 +137,7 @@ class ClassSolverEKF(ClassJacobianAntenna):
             #if self.iAnt==0:
             #    print("new",self.iAnt,rms,np.sqrt(kapa),trYYH_R,trJPJH,pa)
         kapaout=np.max([1.,kapaout])
+
         return kapaout
 
     def ApplyK_vec(self,zr,rms,Pa,DoReg=True):
@@ -255,7 +259,8 @@ class ClassSolverEKF(ClassJacobianAntenna):
         #    print(evP.ravel())
         self.rmsFromData=None
         if ind.size==0 or self.DataAllFlagged or self.ZeroSizedData:
-            return Ga.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),Pa,{"std":-1.,"max":-1.,"kapa":-1.}
+            return Ga.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),Pa,{"std":-1.,"max":-1.,"kapa":-1.},0
+        
         if self.DoReg:
             self.setQxInvPol()
         
@@ -276,12 +281,27 @@ class ClassSolverEKF(ClassJacobianAntenna):
         # estimate x
         zr=(z-Jx)
         zr[self.DicoData["flags_flat"]]=0
-
+        
         T.timeit("Resid")
         
-        #kapa=self.CalcKapa_i(zr,Pa,rms)
-        kapa=self.CalcKapa_i_new(zr,Pa,rms)
-
+        kapa=self.CalcKapa_i(zr,Pa,rms)
+        
+        # try:
+        #     kapa=self.CalcKapa_i_new(zr,Pa,rms)
+        #     self.DicoData["Ga"]=Ga
+        #     self.DicoData["zr"]=zr
+        #     self.DicoData["rms"]=rms
+        #     self.DicoData["KernelMat_AllChan"]=self.KernelMat_AllChan
+        #     #killMS.Other.MyPickle.Save(self.DicoData,"DicoData_%i.pickle"%self.iAnt)
+        #     #print(np.array([1])/0)
+        # except:
+        #     self.DicoData["Ga"]=Ga
+        #     self.DicoData["zr"]=zr
+        #     self.DicoData["rms"]=rms
+        #     self.DicoData["Pa"]=Pa
+        #     self.DicoData["KernelMat_AllChan"]=self.KernelMat_AllChan
+        #     killMS.Other.MyPickle.Save(self.DicoData,"DicoData_crash_%i.pickle"%self.iAnt)
+        #     stop
 
         # Weighted std estimate 
         zrs=zr[f]
@@ -358,8 +378,19 @@ class ClassSolverEKF(ClassJacobianAntenna):
         # if self.iAnt==0:
         #     print(x4,Pa_new1,InfoNoise,evPa,Pa)
 
+        # if np.max(np.abs(x4))>10:
+        #     self.DicoData["Ga"]=Ga
+        #     self.DicoData["Jx"]=Jx
+        #     self.DicoData["zr"]=zr
+        #     self.DicoData["rms"]=rms
+        #     self.DicoData["Pa"]=Pa
+        #     self.DicoData["x4"]=x4
+        #     self.DicoData["ch0ch1"]=(self.ch0,self.ch1)
+        #     self.DicoData["KernelMat_AllChan"]=self.KernelMat_AllChan
+        #     killMS.Other.MyPickle.Save(self.DicoData,"DicoData_diverge_%i.pickle"%self.iAnt)
+        #     stop
 
-        return x4.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),Pa_new1,InfoNoise
+        return x4.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y)),Pa_new1,InfoNoise,1
 
 
     def CalcMatrixEvolveCov(self,Gains,P,rms):

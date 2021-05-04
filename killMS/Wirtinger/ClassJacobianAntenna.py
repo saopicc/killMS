@@ -606,8 +606,6 @@ class ClassJacobianAntenna():
         self.NDir=NDir
         self.iAnt=iAnt
 
-
-
         T.timeit("stuff")
         
         self.DicoData=self.GiveData(DATA,iAnt,rms=rms)
@@ -957,7 +955,6 @@ class ClassJacobianAntenna():
         # fft:
         #(840, 4, 1, 1) (840, 4, 1, 1) (1, 3360) (1, 3360) (9, 189, 1)
         #(189, 1, 1, 1) (189, 1, 1, 1) (1, 189) (1, 189)
-
 
         NDir=self.SM.NDir
         _,nr,nch=self.K_XX.shape

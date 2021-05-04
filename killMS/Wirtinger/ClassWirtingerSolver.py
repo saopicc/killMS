@@ -137,6 +137,8 @@ class ClassWirtingerSolver():
         self.DoPBar=DoPBar
         self.GD=GD
         self.Q=None
+        self.PListKeep=[]
+        self.QListKeep=[]
 
         # if BeamProps!=None:
         #     rabeam,decbeam=SM.ClusterCat.ra,SM.ClusterCat.dec
@@ -562,7 +564,7 @@ class ClassWirtingerSolver():
             stop
 
         
-        #print "rms=",self.rms
+        #print("rms=",self.rms)
 
         return True
 
@@ -841,7 +843,6 @@ class ClassWirtingerSolver():
         NCPU=self.NCPU
 
         import time
-        PList=[]
         
                     
 
@@ -876,7 +877,9 @@ class ClassWirtingerSolver():
 
         self.pBAR= ProgressBar(Title="Solving ")
         if not(self.DoPBar): self.pBAR.disable()
+        
         #self.pBAR.disable()
+        
         self.pBAR.render(0,nt)
         NDone=0
         iiCount=0
@@ -884,6 +887,7 @@ class ClassWirtingerSolver():
         if self.SolverType=="KAFCA":
             ThisP=self.P.copy()
             ThisQ=self.Q.copy()
+            
         while True:
             T=ClassTimeIt.ClassTimeIt("ClassWirtinger DATA[%4.4i]"%NDone)
             T.disable()
@@ -901,9 +905,15 @@ class ClassWirtingerSolver():
             #print "done"
             if SkipMode:
                 print(iiCount)
-                iiCount+=1
                 if iiCount<=383: continue
+                iiCount+=1
 
+            # iiCount+=1
+            # print("iiCount",self.VS.CurrentMemTimeChunk,iiCount)
+            # # if self.VS.CurrentMemTimeChunk!=4: continue
+            # # if iiCount<7: continue
+            # print("   doSoleve")
+            
 
             t0,t1=self.VS.CurrentVisTimes_MS_Sec
             tm=(t0+t1)/2.
@@ -1089,7 +1099,7 @@ class ClassWirtingerSolver():
                             #self.Q[iAnt]=(kapaW**2)*self.Q_Init[iAnt]
                             #print kapaW
                             ThisQ[iChanSol,iAnt][:]=(kapaW)*self.Q_Init[iChanSol,iAnt][:]
-                            # print kapaW
+                            #print("kapa",kapaW)
                             # print self.Q[iChanSol,iAnt]
                             # print self.Q_Init[iChanSol,iAnt]
                             # print
@@ -1184,7 +1194,6 @@ class ClassWirtingerSolver():
             #print self.P.ravel()
             #if NDone==1: stop
             
-            if self.SolverType=="KAFCA": PList.append(self.P.copy())
             self.AppendGToSolArray()
             T.timeit("AppendGToSolArray")
 
@@ -1212,7 +1221,11 @@ class ClassWirtingerSolver():
         # end while chunk
 
 
-        if self.SolverType=="KAFCA": np.save("P.%s.npy"%self.GD["Solutions"]['OutSolsName'],np.array(PList))
+        if self.SolverType=="KAFCA":
+            np.save("P.%s.npy"%self.GD["Solutions"]['OutSolsName'],np.array(self.PListKeep))
+            np.savez("P.%s.npz"%self.GD["Solutions"]['OutSolsName'],
+                     ListP=np.array(self.PListKeep),
+                     ListQ=np.array(self.QListKeep))
         if Parallel:
             for ii in range(NCPU):
                 workerlist[ii].shutdown()
@@ -1233,10 +1246,19 @@ class ClassWirtingerSolver():
         self.SolsArray_tm[self.iCurrentSol]=tm
         self.SolsArray_done[self.iCurrentSol]=1
         self.SolsArray_G[self.iCurrentSol][:]=self.G[:]
-
- 
-
-
+        
+        FileName="CurrentSols.npz"
+        #log.print( "Save Solutions in file: %s"%FileName)
+        Sols=self.GiveSols()
+        np.savez(FileName,Sols=Sols,P=self.P,Q=self.Q)
+        
+        if self.SolverType=="KAFCA":
+            self.PListKeep.append(self.P.copy())
+            self.QListKeep.append(self.Q.copy())
+            np.save("P.%s.npy"%self.GD["Solutions"]['OutSolsName'],np.array(self.PListKeep))
+            np.savez("P.%s.npz"%self.GD["Solutions"]['OutSolsName'],
+                     ListP=np.array(self.PListKeep),
+                     ListQ=np.array(self.QListKeep))
 
 
 
@@ -1441,18 +1463,19 @@ class WorkerAntennaLM(multiprocessing.Process):
                 #         ThisP[iAnt,iDir,iDir]=P[iChanSol][iAnt,iDir,iDir]
                 # x,Pout,InfoNoise=JM.doEKFStep(G[iChanSol],ThisP,evP[iChanSol],rms,Gains0Iter=G0Iter)
 
-                x,Pout,InfoNoise=JM.doEKFStep(G[iChanSol],P[iChanSol],evP[iChanSol],rms,Gains0Iter=G0Iter)
+                x,Pout,InfoNoise,HasSolved=JM.doEKFStep(G[iChanSol],P[iChanSol],evP[iChanSol],rms,Gains0Iter=G0Iter)
                 T.timeit("EKFStep")
                 if DoFullPredict: 
                     JM.PredictOrigFormat(G[iChanSol])
                 T.timeit("PredictOrigFormat")
                 rmsFromData=JM.rmsFromData
 
-                if DoEvP:
+                if DoEvP and HasSolved:
                     Pa=EM.Evolve0(x,Pout)#,kapa=kapa)
                     T.timeit("Evolve")
                 else:
                     Pa=P[iChanSol,iAnt].copy()
+                    
                 #_,Pa=EM.Evolve(x,Pout,ThisTime)
 
                 if type(Pa)!=type(None):

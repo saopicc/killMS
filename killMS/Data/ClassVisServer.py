@@ -126,6 +126,7 @@ class ClassVisServer():
             ReadUVWDT=(("T" in DecorrMode) or ("F" in DecorrMode))
             
         self.ReadUVWDT=ReadUVWDT
+        
         ToRaDec=None
         if self.GD is not None and "GDImage" in list(self.GD.keys()):
             ToRaDec=self.GD["GDImage"]["Image"]["PhaseCenterRADEC"]
@@ -134,7 +135,7 @@ class ClassVisServer():
             log.print(ModColor.Str("kMS does not understand align mode for PhaseCenterRADEC, setting to None..."))
             ToRaDec=None
             #raise RuntimeError("incorrect BeamAt setting: use Facet or Tessel")
-            
+        
         MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False,ReadUVWDT=ReadUVWDT,GD=self.GD,ToRADEC=ToRaDec,**kwargs)
         
         TimesInt=np.arange(0,MS.DTh,self.TMemChunkSize).tolist()
@@ -144,6 +145,7 @@ class ClassVisServer():
         self.MS=MS
         
         self.DicoMergeStations={}
+        
         if self.GD and self.GD["Compression"]["MergeStations"] is not None:
             MergeStations=self.GD["Compression"]["MergeStations"]
             ListMergeNames=[]

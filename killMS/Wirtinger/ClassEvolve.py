@@ -39,6 +39,8 @@ class ClassModelEvolution():
 
     def Evolve0(self,Gin,Pa,kapa=1.):
         done=NpShared.GiveArray("%sSolsArray_done"%self.IdSharedMem)
+        
+        
         indDone=np.where(done==1)[0]
         #print kapa
         #print type(NpShared.GiveArray("%sSharedCovariance_Q"%self.IdSharedMem))
@@ -66,7 +68,21 @@ class ClassModelEvolution():
 
         # return Pa+Q
         if indDone.size<2: return Pa+Q
-
+        
+        # #########################
+        # take scans where no solve has been done into account
+        G=NpShared.GiveArray("%sSolsArray_G"%self.IdSharedMem)[indDone][:,self.iChanSol,self.iAnt,:,0,0]
+        Gm=np.mean(G,axis=-1)
+        dG=Gm[:-1]-Gm[1:]
+        done0=NpShared.GiveArray("%sSolsArray_done"%self.IdSharedMem)
+        done1=np.zeros((done0.size,),int)
+        done1[1:1+dG.size]=(dG!=0)
+        done1[0]=1
+        done=(done0&done1)
+        indDone=np.where(done==1)[0]
+        if indDone.size<2: return Pa+Q
+        # #########################
+        
         t0=NpShared.GiveArray("%sSolsArray_t0"%self.IdSharedMem)[indDone]
         t1=NpShared.GiveArray("%sSolsArray_t1"%self.IdSharedMem)[indDone]
         tm=NpShared.GiveArray("%sSolsArray_tm"%self.IdSharedMem)[indDone]
