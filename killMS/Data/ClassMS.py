@@ -35,6 +35,7 @@ log=logger.getLogger("ClassMS")
 from killMS.Other import ClassTimeIt
 from DDFacet.Other.progressbar import ProgressBar
 import DDFacet.ToolsDir.ModRotate
+from DDFacet.Other.PrintList import ListToStr
 
 class ClassMS():
     def __init__(self,MSname,Col="DATA",zero_flag=True,ReOrder=False,EqualizeFlag=False,DoPrint=True,DoReadData=True,
@@ -925,7 +926,9 @@ class ClassMS():
         ll.append("   - Number of baseline = %i"%self.nbl)
         ll.append("   - Number of SPW = %i"%self.NSPW)
         ll.append("   - Number of channels = %i"%self.Nchan)
-        ll.append("   - Chan freqs = %s"%str(self.ChanFreq.flatten().tolist()))
+        
+        s=" ".join(["%.2f"%(x/1e6) for x in self.ChanFreq.flatten()])
+        ll.append("   - Chan freqs = %s"%(ListToStr(s.split(" "),Unit="MHz")))
         
         ss="\n".join(ll)+"\n"
         return ss

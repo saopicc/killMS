@@ -512,7 +512,9 @@ def main(OP=None,MSName=None):
                                     %(GDPredict["RIME"]["DecorrMode"],options.Decorrelation)))
             GDPredict["RIME"]["DecorrMode"]=options.Decorrelation
         else:
+            
             GD["SkyModel"]["Decorrelation"]=DoSmearing=options.Decorrelation=GDPredict["RIME"]["DecorrMode"]
+            OP.options.SkyModel_Decorrelation=options.Decorrelation
             log.print(ModColor.Str("Decorrelation mode will be [%s]" % DoSmearing))
 
         OP.ToParset(ParsetName)
