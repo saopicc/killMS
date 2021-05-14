@@ -992,21 +992,25 @@ class ClassVisServer():
 
                     DoPreApplyJones=True
                     log.print( "       .... done Update LOFAR beam ")
-                elif self.GD["Beam"]["BeamModel"] == "FITS":
+                elif self.GD["Beam"]["BeamModel"] == "FITS" or self.GD["Beam"]["BeamModel"] == "ATCA":
                     NDir = RA.size
                     self.DtBeamMin = self.GD["Beam"]["DtBeamMin"]
 
-                    from DDFacet.Data.ClassFITSBeam import ClassFITSBeam
+                    if self.GD["Beam"]["BeamModel"] == "FITS":
+                        from DDFacet.Data.ClassFITSBeam import ClassFITSBeam as ClassDDFBeam
+                    elif self.GD["Beam"]["BeamModel"] == "ATCA":
+                        from DDFacet.Data.ClassATCABeam import ClassATCABeam as ClassDDFBeam
+                        
                     # make fake opts dict (DDFacet clss expects slightly different option names)
                     opts = self.GD["Beam"]
                     opts["NBand"] = opts["NChanBeamPerMS"]
-                    fitsbeam = ClassFITSBeam(self.MS, opts)
+                    fitsbeam = ClassDDFBeam(self.MS, opts)
 
                     TimesBeam = np.array(fitsbeam.getBeamSampleTimes(times))
                     FreqDomains = fitsbeam.getFreqDomains()
                     nfreq_dom = FreqDomains.shape[0]
 
-                    log.print( "Update FITS beam in %i dirs, %i times, %i freqs ... " % (NDir, len(TimesBeam), nfreq_dom))
+                    log.print( "Update %s beam in %i dirs, %i times, %i freqs ... " % (self.GD["Beam"]["BeamModel"],NDir, len(TimesBeam), nfreq_dom))
 
                     T0s = TimesBeam[:-1]
                     T1s = TimesBeam[1:]
@@ -1059,7 +1063,7 @@ class ClassVisServer():
                     ListDicoPreApply.append(DicoBeam)
 
                     DoPreApplyJones = True
-                    log.print( "       .... done Update FITS beam ")
+                    log.print( "       .... done Update beam ")
                 elif self.GD["Beam"]["BeamModel"] == "GMRT":
                     NDir = RA.size
                     self.DtBeamMin = self.GD["Beam"]["DtBeamMin"]
