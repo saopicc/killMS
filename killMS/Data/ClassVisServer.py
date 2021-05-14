@@ -1004,10 +1004,10 @@ class ClassVisServer():
                     # make fake opts dict (DDFacet clss expects slightly different option names)
                     opts = self.GD["Beam"]
                     opts["NBand"] = opts["NChanBeamPerMS"]
-                    fitsbeam = ClassDDFBeam(self.MS, opts)
+                    ddfbeam = ClassDDFBeam(self.MS, opts)
 
-                    TimesBeam = np.array(fitsbeam.getBeamSampleTimes(times))
-                    FreqDomains = fitsbeam.getFreqDomains()
+                    TimesBeam = np.array(ddfbeam.getBeamSampleTimes(times))
+                    FreqDomains = ddfbeam.getFreqDomains()
                     nfreq_dom = FreqDomains.shape[0]
 
                     log.print( "Update %s beam in %i dirs, %i times, %i freqs ... " % (self.GD["Beam"]["BeamModel"],NDir, len(TimesBeam), nfreq_dom))
@@ -1020,7 +1020,7 @@ class ClassVisServer():
 
                     Beam = np.zeros((Tm.size, NDir, self.MS.na, FreqDomains.shape[0], 2, 2), np.complex64)
                     for itime, tm in enumerate(Tm):
-                        Beam[itime] = fitsbeam.evaluateBeam(tm, RA, DEC)
+                        Beam[itime] = ddfbeam.evaluateBeam(tm, RA, DEC)
 
                     DicoBeam = {}
                     DicoBeam["t0"] = T0s
@@ -1037,7 +1037,7 @@ class ClassVisServer():
                         Beam = DicoBeam["Jones"]
                         Beam0 = np.zeros((Tm.size, 1, self.MS.na, nfreq_dom, 2, 2), np.complex64)
                         for itime, tm in enumerate(Tm):
-                            Beam0[itime] = fitsbeam.evaluateBeam(tm, np.array([rac]), np.array([decc]))
+                            Beam0[itime] = ddfbeam.evaluateBeam(tm, np.array([rac]), np.array([decc]))
 
                         DicoBeamCenter = {}
                         DicoBeamCenter["t0"] = T0s

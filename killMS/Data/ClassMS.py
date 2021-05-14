@@ -241,12 +241,15 @@ class ClassMS():
         t.close()
         self.LOFAR_ANTENNA_FIELD=Dico
 
-    def LoadFITSBeam(self):        
-        from DDFacet.Data.ClassFITSBeam import ClassFITSBeam
+    def LoadDDFBeam(self):
+        if self.GD["Beam"]["BeamModel"] == "FITS":
+            from DDFacet.Data.ClassFITSBeam import ClassFITSBeam as ClassDDFBeam
+        elif self.GD["Beam"]["BeamModel"] == "ATCA":
+            from DDFacet.Data.ClassATCABeam import ClassATCABeam as ClassDDFBeam
         # make fake opts dict (DDFacet clss expects slightly different option names)
         opts = self.GD["Beam"]
         opts["NBand"] = self.NSPWChan
-        self.fitsbeam = ClassFITSBeam(self, opts)
+        self.ddfbeam = ClassDDFBeam(self, opts)
         
     def GiveBeam(self,time,ra,dec):
         Beam = np.zeros((ra.shape[0], self.na, self.NSPWChan, 2, 2), dtype=np.complex)
@@ -256,8 +259,8 @@ class ClassMS():
                 self.SR.setDirection(ra[i],dec[i])
                 Beam[i]=self.SR.evaluate(time)
             #Beam=np.swapaxes(Beam,1,2)
-        elif self.GD["Beam"]["BeamModel"] == "FITS":
-            Beam[...] = self.fitsbeam.evaluateBeam(time, ra, dec)
+        elif self.GD["Beam"]["BeamModel"] == "FITS" or self.GD["Beam"]["BeamModel"] == "ATCA":
+            Beam[...] = self.ddfbeam.evaluateBeam(time, ra, dec)
         return Beam
 
 

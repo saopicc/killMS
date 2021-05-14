@@ -67,8 +67,8 @@ class ClassBeam():
             useArrayFactor=("A" in self.GD["Beam"]["LOFARBeamMode"])
             useElementBeam=("E" in self.GD["Beam"]["LOFARBeamMode"])
             self.MS.LoadSR(useElementBeam=useElementBeam,useArrayFactor=useArrayFactor)
-        elif self.GD["Beam"]["BeamModel"]=="FITS":
-            self.MS.LoadFITSBeam()
+        elif self.GD["Beam"]["BeamModel"]=="FITS" or self.GD["Beam"]["BeamModel"]=="ATCA":
+            self.MS.LoadDDFBeam()
 
 
         
