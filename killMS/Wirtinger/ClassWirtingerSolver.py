@@ -1247,10 +1247,10 @@ class ClassWirtingerSolver():
         self.SolsArray_done[self.iCurrentSol]=1
         self.SolsArray_G[self.iCurrentSol][:]=self.G[:]
         
-        FileName="CurrentSols.npz"
-        #log.print( "Save Solutions in file: %s"%FileName)
-        Sols=self.GiveSols()
-        np.savez(FileName,Sols=Sols,P=self.P,Q=self.Q)
+        # FileName="CurrentSols.npz"
+        # #log.print( "Save Solutions in file: %s"%FileName)
+        # Sols=self.GiveSols()
+        # np.savez(FileName,Sols=Sols)
         
         if self.SolverType=="KAFCA":
             self.PListKeep.append(self.P.copy())
