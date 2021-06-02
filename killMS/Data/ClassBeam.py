@@ -49,7 +49,7 @@ class ClassBeam():
         times=t.getcol("TIME")
         t.close()
         
-        DicoBeam=self.GiveBeam(times,NTimes=NTimes)
+        DicoBeam=self.GiveBeamMeanAllFreq(times,NTimes=NTimes)
         J=DicoBeam["Jones"]
         AbsMean=np.mean(np.abs(J),axis=0)
         return AbsMean
@@ -62,7 +62,7 @@ class ClassBeam():
     #     self.ApplyBeam=True
         
         
-    def GiveBeam(self,times,NTimes=None):
+    def GiveBeamMeanAllFreq(self,times,NTimes=None):
         if self.GD["Beam"]["BeamModel"]=="LOFAR":
             useArrayFactor=("A" in self.GD["Beam"]["LOFARBeamMode"])
             useElementBeam=("E" in self.GD["Beam"]["LOFARBeamMode"])

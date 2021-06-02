@@ -915,7 +915,6 @@ def main(OP=None,MSName=None):
                 JonesMerged=DomainsMachine.MergeJones(Jones,PreApplyJones)
                 DicoJonesMatrices=JonesMerged
 
-
             DomainMachine.AddVisToJonesMapping(JonesMerged,times,freqs)
             JonesMerged["JonesH"]=ModLinAlg.BatchH(JonesMerged["Jones"])
 

@@ -409,6 +409,7 @@ class ClassJacobianAntenna():
         Gains=GainsIn.copy()
         na,nd,_,_=Gains.shape
         #Type="NoGains"
+        
         if Type=="NoGains":
             if self.PolMode=="Scalar":
                 Gains=np.ones((na,nd,1,1),np.complex64)
@@ -420,16 +421,16 @@ class ClassJacobianAntenna():
                 Gains[:,:,1,1]=1
             NameShmData="%sPredictedData"%self.IdSharedMem
             NameShmIndices="%sIndicesData"%self.IdSharedMem
+            
         elif Type=="Gains":
             NameShmData="%sPredictedDataGains"%self.IdSharedMem
             NameShmIndices="%sIndicesDataGains"%self.IdSharedMem
-        
             
         PredictedData=NpShared.GiveArray(NameShmData)
         Indices=NpShared.GiveArray(NameShmIndices)
-
+        
         Ga=self.GiveSubVecGainAnt(Gains).copy()
-
+        
         self.CalcJacobianAntenna(Gains)
         #self.PrepareJHJ_LM()
         zp=self.J_x(Ga)#self.DicoData["data_flat"]#

@@ -79,7 +79,7 @@ class ClassSolverLM(ClassJacobianAntenna):
         T=ClassTimeIt.ClassTimeIt("doLMStep")
         T.disable()
 
-        # Gains.fill(1.)
+        #Gains.fill(1.)
         
 #         A=np.random.randn(10000,100)+1j*np.random.randn(10000,100)
 #         B=np.random.randn(10000,100)+1j*np.random.randn(10000,100)
@@ -188,29 +188,34 @@ class ClassSolverLM(ClassJacobianAntenna):
         #     f=(self.DicoData[flags_key]==0)
         #     import pylab
         #     fig=pylab.figure(1)
+        #     op0=np.abs
+        #     op1=np.real
         #     pylab.clf()
         #     pylab.subplot(1,3,1)
-        #     pylab.plot(np.abs(z[f])[::1]**2)#[::11])
+        #     #pylab.plot(op0(z[f])[::1]**2)#[::11])
+        #     pylab.plot( op1( z[f])[::1] )#[::11])
         #     #pylab.ylim(0,800)
         #     pylab.subplot(1,3,2)
-        #     pylab.plot(np.abs(Jx[f])[::1]**2)#[::11])
+        #     #pylab.plot(op0(Jx[f])[::1]**2)#[::11])
+        #     pylab.plot( op1(Jx[f])[::1] )#[::11])
         #     #pylab.ylim(0,800)
         #     pylab.subplot(1,3,3)
-        #     pylab.plot(np.abs(zr[f])[::1])#[::11])
+        #     #pylab.plot(op0(zr[f])[::1])#[::11])
+        #     pylab.plot( op1(zr[f])[::1] )#[::11])
         #     #pylab.ylim(-30,30)
         #     pylab.draw()
         #     pylab.show(block=False)
         #     pylab.pause(0.1)
             
-            # iF=0
-            # while True:
-            #     fName="Graph_%i_%i.png"%(self.iAnt,iF)
-            #     import os
-            #     if not os.path.isfile(fName):
-            #         break
-            #     else:
-            #         iF+=1
-            # fig.savefig(fName)
+        #     # iF=0
+        #     # while True:
+        #     #     fName="Graph_%i_%i.png"%(self.iAnt,iF)
+        #     #     import os
+        #     #     if not os.path.isfile(fName):
+        #     #         break
+        #     #     else:
+        #     #         iF+=1
+        #     # fig.savefig(fName)
             
 
 
@@ -236,7 +241,7 @@ class ClassSolverLM(ClassJacobianAntenna):
         del(self.LJacob)
         T.timeit("rest")
         # print self.iAnt,np.mean(x1),x1.size,ind.size
-
+        
         xout=dx.reshape((self.NDir,self.NJacobBlocks_X,self.NJacobBlocks_Y))
         # print self.iAnt,xout.ravel()
         return xout,None,InfoNoise

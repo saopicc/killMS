@@ -247,12 +247,18 @@ class ClassMS():
         elif self.GD["Beam"]["BeamModel"] == "ATCA":
             from DDFacet.Data.ClassATCABeam import ClassATCABeam as ClassDDFBeam
         # make fake opts dict (DDFacet clss expects slightly different option names)
-        opts = self.GD["Beam"]
-        opts["NBand"] = self.NSPWChan
+        import copy
+        opts = copy.deepcopy(self.GD["Beam"])
+        opts["NBand"] = self.NSPWChan#self.GD["Beam"]["NChanBeamPerMS"]
         self.ddfbeam = ClassDDFBeam(self, opts)
         
     def GiveBeam(self,time,ra,dec):
-        Beam = np.zeros((ra.shape[0], self.na, self.NSPWChan, 2, 2), dtype=np.complex)
+        
+        #nchBeam=self.GD["Beam"]["NChanBeamPerMS"]
+        #if nchBeam==0:
+        #    nchBeam=self.NSPWChan
+        nchBeam=self.NSPWChan
+        Beam = np.zeros((ra.shape[0], self.na, nchBeam, 2, 2), dtype=np.complex)
         if self.GD["Beam"]["BeamModel"] == "LOFAR":
             #self.LoadSR()
             for i in range(ra.shape[0]):
@@ -420,12 +426,14 @@ class ClassMS():
             #     row1=ind1*self.nbl
 
             ind=np.where((self.F_times_all>=t0)&(self.F_times_all<t1))[0]
-            row0=ind[0]
-            ind1=row0+ind.size
             
             if ind.size==0:
-                row1=self.F_nrows
+                return None
+                # row0=self.ROW1
+                # row1=row0
             else:
+                row0=ind[0]
+                ind1=row0+ind.size
                 row1=ind1
                 
         # print("!!!!!!!=======")
@@ -433,12 +441,12 @@ class ClassMS():
         self.ROW0=row0
         self.ROW1=row1
         self.nRowRead=row1-row0
-        log.print("   Reading rows [%i -> %i]"%(self.ROW0,self.ROW1))
 
         # if chunk is empty, return None
         if self.nRowRead <= 0:
             return None
 
+        log.print("   Reading rows [%i -> %i]"%(self.ROW0,self.ROW1))
         DATA_CHUNK["ROW0"]=row0
         DATA_CHUNK["ROW1"]=row1
         DATA_CHUNK["nRowRead"]=self.nRowRead
@@ -524,10 +532,6 @@ class ClassMS():
                 #vis_all[np.isnan(vis_all)]=0.
                 self.data=vis_all
 
-        if self.ToRADEC is not None:
-            DATA={"uvw":uvw,"data":self.data}
-            self.Rotate(DATA,RotateType=["uvw","vis"])
-
         # import pylab
         # pylab.plot(time_all[::111],vis[::111,512,0].real)
         # pylab.show()
@@ -578,6 +582,11 @@ class ClassMS():
             else:
                 for icol in range(len(self.data)):
                     self.data[icol]=self.data[icol][:,::-1,:]
+
+        if self.ToRADEC is not None:
+            DATA={"uvw":uvw,"data":self.data}
+            self.Rotate(DATA,RotateType=["uvw","vis"])
+            self.data=DATA["data"]
 
         self.NPolOrig=self.data.shape[-1]
         if self.data.shape[-1]!=4:
@@ -781,9 +790,10 @@ class ClassMS():
         if Nchan>1:
             self.DoRevertChans=(self.ChanFreq.flatten()[0]>self.ChanFreq.flatten()[-1])
         if self.DoRevertChans:
-            print(ModColor.Str("  ====================== >> Revert Channel order!"))
+            log.print(ModColor.Str("  ====================== >> Revert Channel order!"))
             wavelength_chan=wavelength_chan[0,::-1]
             self.ChanFreq=self.ChanFreq[0,::-1]
+            self.ChanWidth=-self.ChanWidth[0,::-1]
             self.dFreq=np.abs(self.dFreq)
 
         T.timeit()
@@ -1153,7 +1163,7 @@ class ClassMS():
             t.close()
     
     def Rotate(self,DATA,RotateType=["uvw","vis"],Sense="ToTarget",DataFieldName="data"):
-        #DDFacet.ToolsDir.ModRotate.Rotate(self,radec)
+        # DDFacet.ToolsDir.ModRotate.Rotate(self,radec)
         if Sense=="ToTarget":
             ra0,dec0=self.OldRadec
             ra1,dec1=self.NewRadec
@@ -1165,11 +1175,15 @@ class ClassMS():
         StrDECOld = rad2hmsdms(dec0,Type="dec").replace(" ",".")
         StrRA  = rad2hmsdms(ra1,Type="ra").replace(" ",":")
         StrDEC = rad2hmsdms(dec1,Type="dec").replace(" ",".")
+        
         print("Rotate %s [Mode = %s]"%(",".join(RotateType),Sense), file=log)
         print("     from [%s, %s] [%f %f]"%(StrRAOld,StrDECOld,ra0,dec0), file=log)
         print("       to [%s, %s] [%f %f]"%(StrRA,StrDEC,ra1,dec1), file=log)
         
-        DDFacet.ToolsDir.ModRotate.Rotate2(ra0,dec0,ra1,dec1,DATA["uvw"],DATA[DataFieldName],self.wavelength_chan.ravel(),
+        DDFacet.ToolsDir.ModRotate.Rotate2(ra0,dec0,
+                                           ra1,dec1,
+                                           DATA["uvw"],DATA[DataFieldName],
+                                           self.wavelength_chan.ravel(),
                                            RotateType=RotateType)
 
 
