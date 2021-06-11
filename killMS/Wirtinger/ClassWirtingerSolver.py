@@ -527,11 +527,15 @@ class ClassWirtingerSolver():
             log.print( ModColor.Str("Reached end of data chunk"))
             return "EndChunk"
         if DATA=="AllFlaggedThisTime":
-            #print "AllFlaggedThisTime"
+            #log.print( ModColor.Str("AllFlaggedThisTime"))
             self.AppendGToSolArray()
             self.iCurrentSol+=1
             return "AllFlaggedThisTime"
 
+        log.print( ModColor.Str("Ok declare"))
+        log.print( ModColor.Str("Ok declare"))
+        log.print( ModColor.Str("Ok declare"))
+        
         ## simul
         #d=self.DATA["data"]
         #self.DATA["data"]+=(self.rms/np.sqrt(2.))*(np.random.randn(*d.shape)+1j*np.random.randn(*d.shape))
@@ -829,7 +833,7 @@ class ClassWirtingerSolver():
         
         Parallel=True
         #Parallel=False
-
+        SkipMode=True
 
         ListAntSolve=[i for i in range(self.VS.MS.na) if not(i in self.VS.FlagAntNumber)]
 
@@ -867,9 +871,9 @@ class ClassWirtingerSolver():
         DT=(T1-T0)
         dt=self.VS.TVisSizeMin*60.
         dt=np.min([dt,DT])
-        nt=int(DT/float(dt))
-        if DT/float(dt)-nt>1.:
-            nt+=1
+        nt=int(np.ceil(DT/float(dt)))
+        # if DT/float(dt)-nt>1.:
+        #     nt+=1
         #nt=np.max([1,nt])
         
         log.print("DT=%f, dt=%f, nt=%f"%(DT,dt,nt))
@@ -878,7 +882,7 @@ class ClassWirtingerSolver():
         self.pBAR= ProgressBar(Title="Solving ")
         if not(self.DoPBar): self.pBAR.disable()
         
-        #self.pBAR.disable()
+
         
         self.pBAR.render(0,nt)
         NDone=0
@@ -896,15 +900,24 @@ class ClassWirtingerSolver():
             Res=self.setNextData()
             NDone+=1
             T.timeit("read data")
-            if Res=="EndChunk": break
-            if Res=="AllFlaggedThisTime": continue
+            if Res=="EndChunk":
+                log.print("EndChunk1")
+                log.print("EndChunk1")
+                log.print("EndChunk1")
+                break
+            if Res=="AllFlaggedThisTime":
+                log.print("AllFlaggedThisTime1")
+                log.print("AllFlaggedThisTime1")
+                log.print("AllFlaggedThisTime1")
+                continue
             #print "saving"
             #print "saving"
             #sols=self.GiveSols()
             #np.save("lastSols",sols)
             #print "done"
             if SkipMode:
-                print(iiCount)
+                #print(iiCount)
+                continue
                 if iiCount<=383: continue
                 iiCount+=1
 

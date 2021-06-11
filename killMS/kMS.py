@@ -725,6 +725,7 @@ def main(OP=None,MSName=None):
         if Load=="EndOfObservation":
             break
         if Load == "Empty":
+            Solver.AppendGToSolArray()
             log.print( "skipping rest of processing for this chunk")
             continue
 

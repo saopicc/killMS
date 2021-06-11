@@ -313,6 +313,9 @@ class ClassVisServer():
         #log.print(("(its_t0,its_t1)",its_t0,its_t1))
         #log.print(("self.CurrentVisTimes_SinceStart_Minutes",self.CurrentVisTimes_SinceStart_Minutes))
 
+
+        #print(self.CurrentVisTimes_SinceStart_Minutes)
+        
         if (t0_sec>=its_t1):
             return "EndChunk"
 
@@ -328,7 +331,7 @@ class ClassVisServer():
 
         # Calculate uvw speed for time spearing
 
-        Tmax=self.ThisDataChunk["times"][-1]
+        Tmax=self.TimeMemChunkRange_sec_Since70[1]#self.ThisDataChunk["times"][-1]
         # time selection
         indRowsThisChunk=np.where((self.ThisDataChunk["times"]>=t0_sec)&(self.ThisDataChunk["times"]<t1_sec))[0]
         # np.save("indRowsThisChunk.npy",indRowsThisChunk)
@@ -572,9 +575,11 @@ class ClassVisServer():
 
         log.print( "Reading next data chunk in [%5.2f, %5.2f] hours (column %s)"%(self.TimesInt[iT0],self.TimesInt[iT1],MS.ColName))
         self.have_data = MS.ReadData(t0=self.TimesInt[iT0],t1=self.TimesInt[iT1],ReadWeight=True)
-
+        
         if not self.have_data:
-            log.print( "this data chunk is empty")
+            self.CurrentVisTimes_SinceStart_Sec=self.TimesInt[iT0]*3600.,self.TimesInt[iT1]*3600.
+            self.CurrentVisTimes_MS_Sec=self.TimesInt[iT0]*3600.+self.MS.F_tstart,self.TimesInt[iT1]*3600.+self.MS.F_tstart
+            log.print( ModColor.Str("this data chunk is empty"))
             return "Empty"
 
         #log.print( "    Rows= [%i, %i]"%(MS.ROW0,MS.ROW1))
@@ -585,6 +590,7 @@ class ClassVisServer():
 
         #self.TimeMemChunkRange_sec=MS.times_all[0],MS.times_all[-1]
         self.TimeMemChunkRange_sec=self.TimesInt[iT0]*3600.,self.TimesInt[iT1]*3600.
+        self.TimeMemChunkRange_sec_Since70=self.TimesInt[iT0]*3600.+self.MS.F_tstart,self.TimesInt[iT1]*3600.+self.MS.F_tstart
         
         #log.print(("!!!!!!!",self.TimeMemChunkRange_sec))
         times=MS.times_all
@@ -660,6 +666,10 @@ class ClassVisServer():
         log.print("::::!!!!!!!!!!!!!!!")
         self.ThresholdFlag=1.#0.9
         self.FlagAntNumber=[]
+
+
+        ########################################
+        
         for A in range(MS.na):
             ind=np.where((MS.A0==A)|(MS.A1==A))[0]
             fA=MS.flag_all[ind].ravel()
