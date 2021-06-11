@@ -532,9 +532,6 @@ class ClassWirtingerSolver():
             self.iCurrentSol+=1
             return "AllFlaggedThisTime"
 
-        log.print( ModColor.Str("Ok declare"))
-        log.print( ModColor.Str("Ok declare"))
-        log.print( ModColor.Str("Ok declare"))
         
         ## simul
         #d=self.DATA["data"]
@@ -833,8 +830,8 @@ class ClassWirtingerSolver():
         
         Parallel=True
         #Parallel=False
-        SkipMode=True
-
+        #SkipMode=True
+        
         ListAntSolve=[i for i in range(self.VS.MS.na) if not(i in self.VS.FlagAntNumber)]
 
         work_queue = multiprocessing.Queue()
@@ -901,14 +898,8 @@ class ClassWirtingerSolver():
             NDone+=1
             T.timeit("read data")
             if Res=="EndChunk":
-                log.print("EndChunk1")
-                log.print("EndChunk1")
-                log.print("EndChunk1")
                 break
             if Res=="AllFlaggedThisTime":
-                log.print("AllFlaggedThisTime1")
-                log.print("AllFlaggedThisTime1")
-                log.print("AllFlaggedThisTime1")
                 continue
             #print "saving"
             #print "saving"
@@ -917,7 +908,7 @@ class ClassWirtingerSolver():
             #print "done"
             if SkipMode:
                 #print(iiCount)
-                continue
+                #continue
                 if iiCount<=383: continue
                 iiCount+=1
 
