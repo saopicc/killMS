@@ -540,6 +540,7 @@ class ClassMS():
         
         vis_all[fnan]=0.
         flag_all[fnan]=1
+        flag_all[vis_all==0]=1
 
         self.flag_all=flag_all
         self.uvw_dt=None

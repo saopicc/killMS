@@ -907,10 +907,13 @@ class ClassWirtingerSolver():
             #np.save("lastSols",sols)
             #print "done"
             if SkipMode:
-                #print(iiCount)
+
                 #continue
-                if iiCount<=383: continue
                 iiCount+=1
+                if iiCount<=869:
+                    print(iiCount)
+                    print(iiCount)
+                    continue
 
             # iiCount+=1
             # print("iiCount",self.VS.CurrentMemTimeChunk,iiCount)
@@ -1225,11 +1228,12 @@ class ClassWirtingerSolver():
         # end while chunk
 
 
-        if self.SolverType=="KAFCA":
-            np.save("P.%s.npy"%self.GD["Solutions"]['OutSolsName'],np.array(self.PListKeep))
-            np.savez("P.%s.npz"%self.GD["Solutions"]['OutSolsName'],
-                     ListP=np.array(self.PListKeep),
-                     ListQ=np.array(self.QListKeep))
+        # if self.SolverType=="KAFCA":
+        #     np.save("P.%s.npy"%self.GD["Solutions"]['OutSolsName'],np.array(self.PListKeep))
+        #     np.savez("P.%s.npz"%self.GD["Solutions"]['OutSolsName'],
+        #              ListP=np.array(self.PListKeep),
+        #              ListQ=np.array(self.QListKeep))
+
         if Parallel:
             for ii in range(NCPU):
                 workerlist[ii].shutdown()
@@ -1250,19 +1254,39 @@ class ClassWirtingerSolver():
         self.SolsArray_tm[self.iCurrentSol]=tm
         self.SolsArray_done[self.iCurrentSol]=1
         self.SolsArray_G[self.iCurrentSol][:]=self.G[:]
-        
-        # FileName="CurrentSols.npz"
-        # #log.print( "Save Solutions in file: %s"%FileName)
-        # Sols=self.GiveSols()
-        # np.savez(FileName,Sols=Sols)
-        
+
         if self.SolverType=="KAFCA":
             self.PListKeep.append(self.P.copy())
             self.QListKeep.append(self.Q.copy())
-            np.save("P.%s.npy"%self.GD["Solutions"]['OutSolsName'],np.array(self.PListKeep))
-            np.savez("P.%s.npz"%self.GD["Solutions"]['OutSolsName'],
-                     ListP=np.array(self.PListKeep),
-                     ListQ=np.array(self.QListKeep))
+                
+        NDone=np.count_nonzero(self.SolsArray_done)
+        print(NDone)
+        print(NDone)
+        print(NDone)
+        if NDone>=867:
+            FileName="CurrentSols.npz"
+            log.print( "Save Solutions in file: %s"%FileName)
+            log.print( "Save Solutions in file: %s"%FileName)
+            log.print( "Save Solutions in file: %s"%FileName)
+            Sols=self.GiveSols()
+            np.savez(FileName,Sols=Sols)
+            if self.SolverType=="KAFCA":
+                # np.save("P.%s.npy"%self.GD["Solutions"]['OutSolsName'],np.array(self.PListKeep))
+                FName="P.%s.npz"%self.GD["Solutions"]['OutSolsName']
+                log.print( "Save PQ in file: %s"%FName)
+                log.print( "Save PQ in file: %s"%FName)
+                log.print( "Save PQ in file: %s"%FName)
+                np.savez(FName,
+                         ListP=np.array(self.PListKeep),
+                         ListQ=np.array(self.QListKeep))
+        
+        # if self.SolverType=="KAFCA":
+        #     self.PListKeep.append(self.P.copy())
+        #     self.QListKeep.append(self.Q.copy())
+        #     np.save("P.%s.npy"%self.GD["Solutions"]['OutSolsName'],np.array(self.PListKeep))
+        #     np.savez("P.%s.npz"%self.GD["Solutions"]['OutSolsName'],
+        #              ListP=np.array(self.PListKeep),
+        #              ListQ=np.array(self.QListKeep))
 
 
 
