@@ -1256,12 +1256,10 @@ class ClassWirtingerSolver():
         self.SolsArray_done[self.iCurrentSol]=1
         self.SolsArray_G[self.iCurrentSol][:]=self.G[:]
 
-        if self.SolverType=="KAFCA":
-            self.PListKeep.append(self.P.copy())
-            self.QListKeep.append(self.Q.copy())
-                
-        NDone=np.count_nonzero(self.SolsArray_done)
-        
+        # if self.SolverType=="KAFCA":
+        #     self.PListKeep.append(self.P.copy())
+        #     self.QListKeep.append(self.Q.copy())
+        # NDone=np.count_nonzero(self.SolsArray_done)
         # print(NDone)
         # print(NDone)
         # print(NDone)
