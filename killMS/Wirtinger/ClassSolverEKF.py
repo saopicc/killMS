@@ -246,6 +246,12 @@ class ClassSolverEKF(ClassJacobianAntenna):
             self.CalcKernelMatrix(rms)
             self.SelectChannelKernelMat()
             T.timeit("CalcKernelMatrix")
+
+        # print(self.iAnt,"MMMM",np.max(Gains),np.max(P),np.max(evP))
+        # print(self.iAnt,"MMMM",np.max(Gains),np.max(P),np.max(evP))
+        # print(self.iAnt,"MMMM",np.max(Gains),np.max(P),np.max(evP))
+
+            
         z=self.DicoData["data_flat"]#self.GiveDataVec()
 
         f=(self.DicoData["flags_flat"]==0)
@@ -403,11 +409,15 @@ class ClassSolverEKF(ClassJacobianAntenna):
 #            self.CalcKernelMatrix(rms)
         self.CalcJacobianAntenna(Gains)
         Pa=P[self.iAnt]
+        NPars=Pa.shape[0]
         if self.DataAllFlagged:
-            return Pa
+            # print(self.iAnt,"OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
+            # print(self.iAnt,"OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
+            # print(self.iAnt,"OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
+            PaOnes=np.diag(np.ones((NPars,),self.CType))
+            return PaOnes
         
         self.PrepareJHJ_EKF(Pa,rms)
-        NPars=Pa.shape[0]
         PaOnes=np.diag(np.ones((NPars,),self.CType))
 
         evPa=np.zeros_like(Pa)
@@ -420,6 +430,12 @@ class ClassSolverEKF(ClassJacobianAntenna):
 
         evPa= PaOnes-evPa#(np.diag(np.diag(Pa-Pa_new)))#Pa-Pa_new#np.abs(np.diag(np.diag(Pa-Pa_new)))
         evPa=np.diag(np.diag(evPa))
+        # print("CalcMatrixEvolveCov",self.iAnt,np.diag(evPa).max())
+        # print("CalcMatrixEvolveCov",self.iAnt,np.diag(evPa).max())
+        # print("CalcMatrixEvolveCov",self.iAnt,np.diag(evPa).max())
+        # print("CalcMatrixEvolveCov",self.iAnt,np.diag(evPa).max())
+
+
         #print(evPa.min(),evPa.real.min())
         #print("=========Ev",self.iAnt,evPa)
         #if self.iAnt==0:
