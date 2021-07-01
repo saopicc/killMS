@@ -104,7 +104,6 @@ class ClassModelEvolution():
         nt,_,_,_=G.shape
         NPars=nd*npolx*npoly
         G=G.reshape((nt,NPars))
-        
 
         F=np.ones((NPars,),G.dtype)
         PaOut=np.zeros_like(Pa)
@@ -139,8 +138,8 @@ class ClassModelEvolution():
         # Q=np.diag(np.ones((PaOut.shape[0],)))*(self.sigQ**2)
 
         PaOut=F.reshape((NPars,1))*Pa*F.reshape((1,NPars)).conj()+Q
-        # print F
-        # print Q
+        #print(F)
+        #print(Q)
         # stop
         return PaOut
         

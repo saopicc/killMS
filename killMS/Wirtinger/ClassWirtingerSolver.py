@@ -260,7 +260,7 @@ class ClassWirtingerSolver():
 
 
         Sols=self.SolsArray_Full[0:ind.size].copy()
-
+        
         if Sols.size==0:
             na=self.VS.MS.na
             nd=self.SM.NDir
@@ -276,6 +276,7 @@ class ClassWirtingerSolver():
             Sols.G[0,:,:,:,1,1]=1
             
 
+        Sols=Sols.view(np.recarray)
         Sols.t1[-1]+=1e3
         Sols.t0[0]-=1e3
 
@@ -907,10 +908,13 @@ class ClassWirtingerSolver():
             #np.save("lastSols",sols)
             #print "done"
             if SkipMode:
-                #print(iiCount)
+
                 #continue
-                if iiCount<=383: continue
                 iiCount+=1
+                if iiCount<=869:
+                    print(iiCount)
+                    print(iiCount)
+                    continue
 
             # iiCount+=1
             # print("iiCount",self.VS.CurrentMemTimeChunk,iiCount)
@@ -1225,11 +1229,12 @@ class ClassWirtingerSolver():
         # end while chunk
 
 
-        if self.SolverType=="KAFCA":
-            np.save("P.%s.npy"%self.GD["Solutions"]['OutSolsName'],np.array(self.PListKeep))
-            np.savez("P.%s.npz"%self.GD["Solutions"]['OutSolsName'],
-                     ListP=np.array(self.PListKeep),
-                     ListQ=np.array(self.QListKeep))
+        # if self.SolverType=="KAFCA":
+        #     np.save("P.%s.npy"%self.GD["Solutions"]['OutSolsName'],np.array(self.PListKeep))
+        #     np.savez("P.%s.npz"%self.GD["Solutions"]['OutSolsName'],
+        #              ListP=np.array(self.PListKeep),
+        #              ListQ=np.array(self.QListKeep))
+
         if Parallel:
             for ii in range(NCPU):
                 workerlist[ii].shutdown()
@@ -1250,19 +1255,41 @@ class ClassWirtingerSolver():
         self.SolsArray_tm[self.iCurrentSol]=tm
         self.SolsArray_done[self.iCurrentSol]=1
         self.SolsArray_G[self.iCurrentSol][:]=self.G[:]
-        
-        # FileName="CurrentSols.npz"
-        # #log.print( "Save Solutions in file: %s"%FileName)
-        # Sols=self.GiveSols()
-        # np.savez(FileName,Sols=Sols)
-        
+
         if self.SolverType=="KAFCA":
             self.PListKeep.append(self.P.copy())
             self.QListKeep.append(self.Q.copy())
-            np.save("P.%s.npy"%self.GD["Solutions"]['OutSolsName'],np.array(self.PListKeep))
-            np.savez("P.%s.npz"%self.GD["Solutions"]['OutSolsName'],
-                     ListP=np.array(self.PListKeep),
-                     ListQ=np.array(self.QListKeep))
+                
+        NDone=np.count_nonzero(self.SolsArray_done)
+        
+        # print(NDone)
+        # print(NDone)
+        # print(NDone)
+        # if NDone>=867:
+        #     FileName="CurrentSols.%i.npy"%NDone
+        #     log.print( "Save Solutions in file: %s"%FileName)
+        #     log.print( "Save Solutions in file: %s"%FileName)
+        #     log.print( "Save Solutions in file: %s"%FileName)
+        #     Sols=self.GiveSols()
+            
+        #     np.save(FileName,Sols.G.copy())
+        #     if self.SolverType=="KAFCA":
+        #         # np.save("P.%s.npy"%self.GD["Solutions"]['OutSolsName'],np.array(self.PListKeep))
+        #         FName="P.%s.%i.npz"%(self.GD["Solutions"]['OutSolsName'],NDone)
+        #         log.print( "Save PQ in file: %s"%FName)
+        #         log.print( "Save PQ in file: %s"%FName)
+        #         log.print( "Save PQ in file: %s"%FName)
+        #         np.savez(FName,
+        #                  ListP=np.array(self.PListKeep),
+        #                  ListQ=np.array(self.QListKeep))
+        
+        # if self.SolverType=="KAFCA":
+        #     self.PListKeep.append(self.P.copy())
+        #     self.QListKeep.append(self.Q.copy())
+        #     np.save("P.%s.npy"%self.GD["Solutions"]['OutSolsName'],np.array(self.PListKeep))
+        #     np.savez("P.%s.npz"%self.GD["Solutions"]['OutSolsName'],
+        #              ListP=np.array(self.PListKeep),
+        #              ListQ=np.array(self.QListKeep))
 
 
 
@@ -1430,8 +1457,12 @@ class WorkerAntennaLM(multiprocessing.Process):
                 #T.disable()
                 if DoCalcEvP:
                     evP[iChanSol,iAnt]=JM.CalcMatrixEvolveCov(GPrevious[iChanSol],PPrevious[iChanSol],rms)
-                    #if iAnt==1:
-                    #    print "EVVV",evP[iChanSol]
+                    # if iAnt==51:
+                    #     M=(evP[iChanSol,iAnt]!=0)
+                    #     x=evP[iChanSol,iAnt][M].ravel()
+                    #     print("EVVV",x)
+                    #     print("EVVV",x)
+                    #     print("EVVV",x)
                     T.timeit("Estimate Evolve")
 
                 # EM=ClassModelEvolution(iAnt,
@@ -1466,7 +1497,10 @@ class WorkerAntennaLM(multiprocessing.Process):
                 #     for iDir in range(nd):
                 #         ThisP[iAnt,iDir,iDir]=P[iChanSol][iAnt,iDir,iDir]
                 # x,Pout,InfoNoise=JM.doEKFStep(G[iChanSol],ThisP,evP[iChanSol],rms,Gains0Iter=G0Iter)
-
+                
+                # if iAnt==51:
+                #     print("KKKKK",iAnt,G[iChanSol].max(),P[iChanSol].max(),evP[iChanSol].max())
+                
                 x,Pout,InfoNoise,HasSolved=JM.doEKFStep(G[iChanSol],P[iChanSol],evP[iChanSol],rms,Gains0Iter=G0Iter)
                 T.timeit("EKFStep")
                 if DoFullPredict: 
@@ -1475,7 +1509,12 @@ class WorkerAntennaLM(multiprocessing.Process):
                 rmsFromData=JM.rmsFromData
 
                 if DoEvP and HasSolved:
+                    #Pout0=Pout#.copy()
                     Pa=EM.Evolve0(x,Pout)#,kapa=kapa)
+                    
+                    # if iAnt==51:
+                    #     print("###",iAnt,x.max(),Pa.max(),Pout0.max())
+                        
                     T.timeit("Evolve")
                 else:
                     Pa=P[iChanSol,iAnt].copy()
