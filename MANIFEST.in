@@ -9,6 +9,9 @@ recursive-include killMS/Simul *.py
 recursive-include killMS/Weights *.py
 recursive-include killMS/Wirtinger *.py
 include killMS/*.py
+recursive-include killMS/cmake *.cmake
+recursive-include killMS CMakeLists.txt
+
 
 #backend if exists
 recursive-include killMS/cbuild/ *.so __init__.py
