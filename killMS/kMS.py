@@ -327,7 +327,8 @@ def main(OP=None,MSName=None):
     global IdSharedMem
     IdSharedMem=str(int(os.getpid()))+"."
     DoApplyCal=(options.ApplyToDir!=-2)
-    if type(options.ClipMethod)!=list: stop
+    if type(options.ClipMethod)!=list:
+        raise ValueError("Clipmethod is expected to be a list")
 
     ReWeight=(len(options.ClipMethod)>0)
 
@@ -528,7 +529,10 @@ def main(OP=None,MSName=None):
                                      GD=GD)
 
     print(VS.MS)
-    if not(WriteColName in VS.MS.ColNames):
+    if not(WriteColName in VS.MS.ColNames) and \
+            WriteColName is not None and \
+            WriteColName != "None" and \
+            WriteColName != "":
         log.print( "Column %s not in MS "%WriteColName)
         VS.MS.AddCol(WriteColName,LikeCol="DATA")
         #exit()
@@ -731,19 +735,21 @@ def main(OP=None,MSName=None):
                 SavePredict(ArrayName,FullPredictColName)
 
             if GD["SkyModel"]["FreeFullSub"]:
-                log.print( "Subtracting free predict from data")
-                PredictData=NpShared.GiveArray("%s%s"%(IdSharedMem,"PredictedDataGains"))
-                Solver.VS.ThisDataChunk["data"]-=PredictData
-                log.print( "  save visibilities in %s column"%WriteColName)
-                t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
-                d=VS.MS.ToOrigFreqOrder(Solver.VS.MS.data)
-                if Solver.VS.MS.NPolOrig==2:
-                    dc=d[:,:,0::3]
+                if WriteColName is not None and WriteColName != "None" and WriteColName != "":
+                    log.print( "Subtracting free predict from data")
+                    PredictData=NpShared.GiveArray("%s%s"%(IdSharedMem,"PredictedDataGains"))
+                    Solver.VS.ThisDataChunk["data"]-=PredictData
+                    log.print( "  save visibilities in %s column"%WriteColName)
+                    t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
+                    d=VS.MS.ToOrigFreqOrder(Solver.VS.MS.data)
+                    if Solver.VS.MS.NPolOrig==2:
+                        dc=d[:,:,0::3]
+                    else:
+                        dc=d
+                    t.putcol(WriteColName,dc,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                    t.close()
                 else:
-                    dc=d
-                t.putcol(WriteColName,dc,Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
-                t.close()
-
+                    log.print("No output column specified. Skipping writing visibility data.")
 
             Sols=Solver.GiveSols(SaveStats=True)
             
@@ -1028,19 +1034,22 @@ def main(OP=None,MSName=None):
             # Solver.VS.MS.SaveVis(Col=WriteColName)
 
             if (DoSubstract|DoApplyCal):
-                log.print( "Save visibilities in %s column"%WriteColName)
-                t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
-                nrow_ThisChunk=Solver.VS.MS.ROW1-Solver.VS.MS.ROW0
-                d=np.zeros((nrow_ThisChunk,VS.MS.NChanOrig,4),Solver.VS.ThisDataChunk["data"].dtype)
-                d[:,VS.MS.ChanSlice,:]=VS.MS.ToOrigFreqOrder(Solver.VS.ThisDataChunk["data"])
+                if WriteColName is not None and WriteColName != "None" and WriteColName != "":
+                    log.print( "Save visibilities in %s column"%WriteColName)
+                    t=Solver.VS.MS.GiveMainTable(readonly=False)#table(Solver.VS.MS.MSName,readonly=False,ack=False)
+                    nrow_ThisChunk=Solver.VS.MS.ROW1-Solver.VS.MS.ROW0
+                    d=np.zeros((nrow_ThisChunk,VS.MS.NChanOrig,4),Solver.VS.ThisDataChunk["data"].dtype)
+                    d[:,VS.MS.ChanSlice,:]=VS.MS.ToOrigFreqOrder(Solver.VS.ThisDataChunk["data"])
 
-                if Solver.VS.MS.NPolOrig==2:
-                    dc=d[:,:,0::3]
+                    if Solver.VS.MS.NPolOrig==2:
+                        dc=d[:,:,0::3]
+                    else:
+                        dc=d
+                    t.putcol(WriteColName,dc,Solver.VS.MS.ROW0,nrow_ThisChunk)
+                    #t.putcol("FLAG",VS.MS.ToOrigFreqOrder(Solver.VS.MS.flags_all),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
+                    t.close()
                 else:
-                    dc=d
-                t.putcol(WriteColName,dc,Solver.VS.MS.ROW0,nrow_ThisChunk)
-                #t.putcol("FLAG",VS.MS.ToOrigFreqOrder(Solver.VS.MS.flags_all),Solver.VS.MS.ROW0,Solver.VS.MS.ROW1-Solver.VS.MS.ROW0)
-                t.close()
+                    log.print("No output column specified. Skipping writing visibility data.")
 
                 
     if APP is not None:
