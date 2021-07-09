@@ -39,7 +39,7 @@ except ImportError as e:
 
 
 pkg='killMS'
-__version__ = "3.0.0.0"
+__version__ = "3.0.0.1"
 build_root=os.path.dirname(__file__)
 
 def backend(compile_options):
