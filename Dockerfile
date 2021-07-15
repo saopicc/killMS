@@ -12,7 +12,7 @@ ADD .gitignore /src/killMS/.gitignore
 
 WORKDIR /src
 #build and install
-RUN pip install ./killMS
+RUN python3 -m pip install ./killMS
 RUN kMS.py --help
 RUN pybdsf --version
 
