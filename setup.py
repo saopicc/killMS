@@ -150,7 +150,7 @@ setup(name=pkg,
       include_package_data=True,
       zip_safe=False,
       long_description_content_type='text/markdown',
-      scripts=define_scripts()
+      scripts=define_scripts(),
       extras_require={
           'fits-beam-support': ['meqtrees-cattery'],
       }
