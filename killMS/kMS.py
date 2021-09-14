@@ -151,6 +151,10 @@ def read_options():
     OP.add_option('FITSFeed',type="str",help='FITS feed. xy or rl or None to take from MS. Default is %default')
     OP.add_option('FITSFeedSwap',type="int",default=0,help='Swap the feeds around. Default is %default')
     OP.add_option('FITSVerbosity',type="int",help='Verbosity of debug messages. Default is %default')
+    OP.add_option('FeedAngle',type="float",help='offset feed angle to add to parallactic angle')
+    OP.add_option('ApplyPJones',help='derotate visibility data (only when FITS beam is active and also time sampled)')
+    OP.add_option('FlipVisibilityHands',help='apply anti-diagonal matrix if FITS beam is enabled effectively swapping X and Y or R and L and their respective hands')
+    OP.add_option('FITSFrame', type='str', help=' coordinate frame for FITS beams. Currently, alt-az, equatorial and zenith mounts are supported. #options:altaz|altazgeo|equatorial|zenith . Default is %default')
 
     OP.OptionGroup("* PreApply killMS Solutions","PreApply")
     OP.add_option('PreApplySols',type="str",help='Pre-apply killMS solutions in the predict step. Has to be a list. Default is %default')
