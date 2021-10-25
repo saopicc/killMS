@@ -473,7 +473,7 @@ def main(OP=None,MSName=None):
         if options.MinFacetSize:
             GDPredict["Facets"]["DiamMin"]=options.MinFacetSize
 
-        if options.Decorrelation is not None and options.Decorrelation is not "":
+        if options.Decorrelation is not None and options.Decorrelation!="":
             log.print(ModColor.Str("Overwriting DDF parset decorrelation mode [%s] with kMS option [%s]"\
                                     %(GDPredict["RIME"]["DecorrMode"],options.Decorrelation)))
             GDPredict["RIME"]["DecorrMode"]=options.Decorrelation
