@@ -8,7 +8,7 @@ import pickle
 import numpy as np
 import pylab
 from pyrap.tables import table
-from killMS import Array.ModLinAlg
+from killMS.Array import ModLinAlg
 from DDFacet.Other import logger
 log = logger.getLogger("AQWeight")
 from killMS.Data import ClassMS
@@ -17,10 +17,10 @@ APP=None
 from DDFacet.Other.AsyncProcessPool import APP, WorkerProcessError
 from DDFacet.Other import Multiprocessing
 from DDFacet.Other import ModColor
-from killMS import Weights.W_DiagBL
-from killMS import Weights.W_AntFull
-from killMS import Weights.W_Jones
-from killMS import Weights.W_Imag
+from killMS.Weights import W_DiagBL
+from killMS.Weights import W_AntFull
+from killMS.Weights import W_Jones
+from killMS.Weights import W_Imag
 
 def read_options():
     desc="""Run MCMC """

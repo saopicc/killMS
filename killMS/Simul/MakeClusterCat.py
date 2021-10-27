@@ -276,7 +276,8 @@ class MakeMultipleObs():
 
 
 
-    def MakeMS(self,MSName,(ra,dec)):
+    def MakeMS(self,MSName,pos):
+        ra,dec=pos
         D={}
         MS=self.MSTemplate
 

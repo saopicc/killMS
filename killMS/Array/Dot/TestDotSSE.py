@@ -46,20 +46,20 @@ def test():
 
     C=np.zeros((nyA,nyB),DType)
 
-    print "==================================="
-    print "A",A
-    print "B",B
+    print("===================================")
+    print("A",A)
+    print("B",B)
     if DType==np.complex64:
         IntType=0
     if DType==np.complex128:
         IntType=1
 
-    print "=========="
+    print("==========")
     dotSSE.dot(A,B,C,IntType)
 
-    print "=========="
+    print("==========")
     D=np.dot(A,B.T)
-    print C-D
+    print(C-D)
 
     #A=np.complex64(np.random.rand(2000,100)+1j*np.random.rand(2000,100))
     A=np.complex64( np.ones((50000,100)))
@@ -71,7 +71,7 @@ def test():
     T=ClassTimeIt.ClassTimeIt()
     for i in range(N):
         AA=np.dot(A.T,B)
-        print AA.shape
+        print(AA.shape)
         T.timeit("numpy")
 
     A=A.T.copy()
@@ -81,7 +81,7 @@ def test():
 
         #dotSSE.dot(A,B,C)
         C=NpDotSSE.dot_A_BT(A,B)
-        print C.shape
+        print(C.shape)
         T.timeit("sse")
     #print C
 
