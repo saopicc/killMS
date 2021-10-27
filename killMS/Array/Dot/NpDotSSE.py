@@ -66,16 +66,16 @@ def test():
 
     C=dot_A_BT(A,B.T.copy())
 
-    print "==================================="
-    print "A",A
-    print "B",B
+    print("===================================")
+    print("A",A)
+    print("B",B)
     
-    print "=========="
+    print("==========")
     dotSSE.dot(A,B,C)
-    print C
+    print(C)
 
-    print "=========="
-    print np.dot(A,B.T)
+    print("==========")
+    print(np.dot(A,B.T))
 
 
     # T=ClassTimeIt.ClassTimeIt()

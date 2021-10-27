@@ -120,7 +120,7 @@ class ClassMakeModelImage():
 
         # indy,indx=np.where(IM[0,0]!=0)
         Ns=np.count_nonzero(IM)
-        print "Number of sources",indx.size
+        print("Number of sources",indx.size)
         Alpha=np.random.rand(Ns)*2-1.
         #Alpha[0]=0
         Alpha.fill(0)

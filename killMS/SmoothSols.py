@@ -108,7 +108,7 @@ class ClassInterpol():
         self.RemoveMedianAmp=RemoveMedianAmp
         
         log.print("Loading %s"%self.InSolsName)
-        self.DicoFile=dict(np.load(self.InSolsName))
+        self.DicoFile=dict(np.load(self.InSolsName,allow_pickle=True))
         self.Sols=self.DicoFile["Sols"].view(np.recarray)
         if "MaskedSols" in self.DicoFile.keys():
             MaskFreq=np.logical_not(np.all(np.all(np.all(self.DicoFile["MaskedSols"][...,0,0],axis=0),axis=1),axis=1))

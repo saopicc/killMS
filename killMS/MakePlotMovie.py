@@ -45,12 +45,12 @@ sys.path=[name for name in sys.path if not(("pyrap" in name)&("/usr/local/lib/" 
 
 
 if "nocol" in sys.argv:
-    print "nocol"
+    print("nocol")
     ModColor.silent=1
 if "nox" in sys.argv:
     import matplotlib
     matplotlib.use('agg')
-    print ModColor.Str(" == !NOX! ==")
+    print(ModColor.Str(" == !NOX! =="))
 
 import time
 import os
@@ -87,7 +87,7 @@ def GiveNXNYPanels(Ns,ratio=800/500):
 from killMS.Array import ModLinAlg
 
 def NormMatrices(G):
-    print "no norm"
+    print("no norm")
     return G
     nt,nch,na,_,_=G.shape
 
@@ -218,7 +218,7 @@ def main(options=None):
 
     fig=pylab.figure(0,figsize=(13,8))
     for iTime in range(nt):
-        print "%i/%i"%(iTime,nt)
+        print("%i/%i"%(iTime,nt))
         ampMax=1.5*np.max(np.median(np.abs(LSols[0].G),axis=0))
         if options.PlotMode=="AP":
             op0=np.abs

@@ -77,7 +77,7 @@ def Test():
     #print g_P-np_P
 
 
-    print np.max(np_P-P0)
-    print np.max(np_P-P1)
-    stop
+    print(np.max(np_P-P0))
+    print(np.max(np_P-P1))
+
 
