@@ -2,7 +2,7 @@
 
 ### A direction-dependent radio interferometric calibration package
 
-Copyright (C) 2013-2017  Cyril Tasse, l'Observatoire de Paris,
+Copyright (C) 2013-2021  Cyril Tasse, l'Observatoire de Paris,
 SKA South Africa, Rhodes University
 
 This program is free software; you can redistribute it and/or
