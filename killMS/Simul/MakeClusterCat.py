@@ -116,7 +116,8 @@ def GiveDate(tt):
 
     return d.datetime().isoformat().replace("T","/")
 
-def BBSprintRandomSM(Ns,Ddeg,(ra_mean,dec_mean),OutFile="ModelRandom0",ra_dec_offset=(0,0),SI=None,Mode="Random"):
+def BBSprintRandomSM(Ns,Ddeg,pos,OutFile="ModelRandom0",ra_dec_offset=(0,0),SI=None,Mode="Random"):
+    ra_mean,dec_mean=pos
     ang=Ddeg*np.pi/180
     if Ns!=-1:
         if Mode=="Random":
