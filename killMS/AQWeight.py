@@ -8,6 +8,7 @@ import pickle
 import numpy as np
 import pylab
 from pyrap.tables import table
+from killMS.Array import ModLinAlg
 
 from DDFacet.Other import logger
 log = logger.getLogger("AQWeight")
@@ -24,6 +25,9 @@ from killMS.Weights import W_Imag
 from killMS.Weights import W_ImagCov
 
 from killMS.Weights import W_TimeCov
+from killMS.Weights import W_Jones
+from killMS.Weights import W_Imag
+
 
  
 def read_options():

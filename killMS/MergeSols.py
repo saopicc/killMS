@@ -56,7 +56,7 @@ def GiveMAD(X):
 
 class ClassMergeSols():
     def __init__(self,ListFilesSols):
-        self.ListDictSols=[np.load(FSol) for FSol in sorted(ListFilesSols)]
+        self.ListDictSols=[np.load(FSol,allow_pickle=True) for FSol in sorted(ListFilesSols)]
         self.ListJonesSols=[DictSols["Sols"].view(np.recarray) for DictSols in self.ListDictSols]
         self.SortInFreq()
         self.NSolsFile=len(self.ListDictSols)

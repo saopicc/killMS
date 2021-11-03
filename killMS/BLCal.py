@@ -106,7 +106,7 @@ class ClassBLCal():
 
         C=np.zeros((nt,nch,na,na),dtype=np.float32)
         for iAnt in range(na):
-            print "[%i/%i] -"%(iAnt,na),
+            print("[%i/%i] -"%(iAnt,na))
             for jAnt in range(iAnt,na):
                 if iAnt==jAnt: continue
                 c0=((A0==iAnt)&(A1==jAnt))
@@ -168,7 +168,7 @@ class ClassBLCal():
 
         C=np.load("C.npy")
         for iAnt in range(na):
-            print "[%i/%i] -"%(iAnt,na),
+            print("[%i/%i] -"%(iAnt,na))
             for jAnt in range(iAnt,na):
                 if iAnt==jAnt: continue
                 c0=((A0==iAnt)&(A1==jAnt))

@@ -12,7 +12,7 @@ from scipy.sparse import issparse, csr_matrix
 from scipy.sparse.linalg import LinearOperator
 from scipy.optimize import _minpack, OptimizeResult
 from scipy.optimize._numdiff import approx_derivative, group_columns
-from scipy._lib.six import string_types
+from six import string_types
 
 from scipy.optimize._lsq.trf import trf
 

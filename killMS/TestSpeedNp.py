@@ -19,11 +19,11 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 #!/usr/bin/env python
-import numpy as np
-import timeit
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+import numpy as np
+import timeit
 
 print()
 print(np.__file__)
