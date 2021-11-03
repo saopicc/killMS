@@ -25,7 +25,7 @@ import numpy as np
 from killMS.Array import ModLinAlg
 from DDFacet.Other import logger
 log=logger.getLogger("ClassJonesDomains")
-from DDFacet.Other.PrintList import ListToStr
+#from DDFacet.Other.PrintList import ListToStr
 
 
 
@@ -91,7 +91,7 @@ class ClassJonesDomains():
         DFreq=np.abs(VisFreqs.reshape((NVisChan,1))-MeanFreqJonesChan.reshape((1,NChanJones)))
         VisToJonesChanMapping=np.argmin(DFreq,axis=1)
         Jones["Map_VisToJones_Freq"]=VisToJonesChanMapping
-        log.print( "  VisToJonesChanMapping %s"%ListToStr(VisToJonesChanMapping))
+        #log.print( "  VisToJonesChanMapping %s"%ListToStr(VisToJonesChanMapping))
     
 
 
