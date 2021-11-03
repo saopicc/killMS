@@ -663,7 +663,7 @@ class ClassVisServer():
             # indRowsThisChunk=indRowsThisChunk[ind]
 
 
-        log.print("::::!!!!!!!!!!!!!!!")
+        #log.print("::::!!!!!!!!!!!!!!!")
         self.ThresholdFlag=1.#0.9
         self.FlagAntNumber=[]
 
