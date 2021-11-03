@@ -42,7 +42,7 @@ from killMS.Data import ClassReCluster
 #import MergeJones
 from killMS.Data import ClassJonesDomains
 #from DDFacet.Imager import ClassWeighting as ClassWeightingDDF
-from DDFacet.Other.PrintList import ListToStr
+#from DDFacet.Other.PrintList import ListToStr
 
 
 class ClassVisServer():
@@ -186,14 +186,14 @@ class ClassVisServer():
         log.print("Center of frequency domains [MHz]: %s"%str((MeanFreqJonesChan/1e6).tolist()))
         DFreq=np.abs(self.MS.ChanFreq.reshape((self.MS.NSPWChan,1))-MeanFreqJonesChan.reshape((1,NChanJones)))
         self.VisToSolsChanMapping=np.argmin(DFreq,axis=1)
-        log.print(("VisToSolsChanMapping %s"%ListToStr(self.VisToSolsChanMapping)))
+        #log.print(("VisToSolsChanMapping %s"%ListToStr(self.VisToSolsChanMapping)))
 
         
         self.SolsToVisChanMapping=[]
         for iChanSol in range(NChanJones):
             ind=np.where(self.VisToSolsChanMapping==iChanSol)[0] 
             self.SolsToVisChanMapping.append((ind[0],ind[-1]+1))
-        log.print(("SolsToVisChanMapping %s"%ListToStr(self.SolsToVisChanMapping)))
+        #log.print(("SolsToVisChanMapping %s"%ListToStr(self.SolsToVisChanMapping)))
         
 
         # ChanDegrid
@@ -212,7 +212,7 @@ class ClassVisServer():
         DChan=np.abs(MS.ChanFreq.reshape((NChanMS,1))-FreqChanDegridding.reshape((1,NChanDegrid)))
         ThisMappingDegrid=np.argmin(DChan,axis=1)
         self.MappingDegrid=ThisMappingDegrid
-        log.print("Mapping degrid: %s"%ListToStr(self.MappingDegrid))
+        #log.print("Mapping degrid: %s"%ListToStr(self.MappingDegrid))
         #NpShared.ToShared("%sMappingDegrid"%self.IdSharedMem,self.MappingDegrid)
 
         ######################################################
