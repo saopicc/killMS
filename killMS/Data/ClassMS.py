@@ -34,15 +34,20 @@ from DDFacet.Other import logger
 log=logger.getLogger("ClassMS")
 from killMS.Other import ClassTimeIt
 from DDFacet.Other.progressbar import ProgressBar
+import DDFacet.ToolsDir.ModRotate
+#from DDFacet.Other.PrintList import ListToStr
 
 class ClassMS():
     def __init__(self,MSname,Col="DATA",zero_flag=True,ReOrder=False,EqualizeFlag=False,DoPrint=True,DoReadData=True,
                  TimeChunkSize=None,GetBeam=False,RejectAutoCorr=False,SelectSPW=None,DelStationList=None,Field=0,DDID=0,
-                 ReadUVWDT=False,ChanSlice=None,GD=None):
+                 ReadUVWDT=False,ChanSlice=None,GD=None,
+                 ToRADEC=None):
 
 
         if MSname=="": exit()
         self.GD=GD
+        self.ToRADEC = ToRADEC
+            
         self.ReadUVWDT=ReadUVWDT
         MSname=reformat.reformat(os.path.abspath(MSname),LastSlash=False)
         self.MSName=MSname
@@ -236,23 +241,32 @@ class ClassMS():
         t.close()
         self.LOFAR_ANTENNA_FIELD=Dico
 
-    def LoadFITSBeam(self):        
-        from DDFacet.Data.ClassFITSBeam import ClassFITSBeam
+    def LoadDDFBeam(self):
+        if self.GD["Beam"]["BeamModel"] == "FITS":
+            from DDFacet.Data.ClassFITSBeam import ClassFITSBeam as ClassDDFBeam
+        elif self.GD["Beam"]["BeamModel"] == "ATCA":
+            from DDFacet.Data.ClassATCABeam import ClassATCABeam as ClassDDFBeam
         # make fake opts dict (DDFacet clss expects slightly different option names)
-        opts = self.GD["Beam"]
-        opts["NBand"] = self.NSPWChan
-        self.fitsbeam = ClassFITSBeam(self, opts)
+        import copy
+        opts = copy.deepcopy(self.GD["Beam"])
+        opts["NBand"] = self.NSPWChan#self.GD["Beam"]["NChanBeamPerMS"]
+        self.ddfbeam = ClassDDFBeam(self, opts)
         
     def GiveBeam(self,time,ra,dec):
-        Beam = np.zeros((ra.shape[0], self.na, self.NSPWChan, 2, 2), dtype=np.complex)
+        
+        #nchBeam=self.GD["Beam"]["NChanBeamPerMS"]
+        #if nchBeam==0:
+        #    nchBeam=self.NSPWChan
+        nchBeam=self.NSPWChan
+        Beam = np.zeros((ra.shape[0], self.na, nchBeam, 2, 2), dtype=np.complex)
         if self.GD["Beam"]["BeamModel"] == "LOFAR":
             #self.LoadSR()
             for i in range(ra.shape[0]):
                 self.SR.setDirection(ra[i],dec[i])
                 Beam[i]=self.SR.evaluate(time)
             #Beam=np.swapaxes(Beam,1,2)
-        elif self.GD["Beam"]["BeamModel"] == "FITS":
-            Beam[...] = self.fitsbeam.evaluateBeam(time, ra, dec)
+        elif self.GD["Beam"]["BeamModel"] == "FITS" or self.GD["Beam"]["BeamModel"] == "ATCA":
+            Beam[...] = self.ddfbeam.evaluateBeam(time, ra, dec)
         return Beam
 
 
@@ -401,27 +415,38 @@ class ClassMS():
             #ind0=np.argmin(np.abs(t0-self.F_times))
             #ind1=np.argmin(np.abs(t1-self.F_times))
 
-            ind0=np.where((t0-self.F_times)<=0)[0][0]
-            row0=ind0*self.nbl
+            
+            # ind0=np.where((t0-self.F_times)<=0)[0][0]
+            # row0=ind0*self.nbl
+            # ind1=np.where((t1-self.F_times)<0)[0]
+            # if ind1.size==0:
+            #     row1=self.F_nrows
+            # else:
+            #     ind1=ind1[0]
+            #     row1=ind1*self.nbl
 
-            ind1=np.where((t1-self.F_times)<0)[0]
-            if ind1.size==0:
-                row1=self.F_nrows
+            ind=np.where((self.F_times_all>=t0)&(self.F_times_all<t1))[0]
+            
+            if ind.size==0:
+                return None
+                # row0=self.ROW1
+                # row1=row0
             else:
-                ind1=ind1[0]
-                row1=ind1*self.nbl
-
+                row0=ind[0]
+                ind1=row0+ind.size
+                row1=ind1
+                
         # print("!!!!!!!=======")
         # row0,row1=1207458, 1589742
         self.ROW0=row0
         self.ROW1=row1
         self.nRowRead=row1-row0
-        log.print("   Reading rows [%i -> %i]"%(self.ROW0,self.ROW1))
 
         # if chunk is empty, return None
         if self.nRowRead <= 0:
             return None
 
+        log.print("   Reading rows [%i -> %i]"%(self.ROW0,self.ROW1))
         DATA_CHUNK["ROW0"]=row0
         DATA_CHUNK["ROW1"]=row1
         DATA_CHUNK["nRowRead"]=self.nRowRead
@@ -511,7 +536,12 @@ class ClassMS():
         # pylab.plot(time_all[::111],vis[::111,512,0].real)
         # pylab.show()
 
+        fnan=np.isnan(vis_all)
         
+        vis_all[fnan]=0.
+        flag_all[fnan]=1
+        #flag_all[vis_all==0]=1
+
         self.flag_all=flag_all
         self.uvw_dt=None
 
@@ -554,6 +584,11 @@ class ClassMS():
                 for icol in range(len(self.data)):
                     self.data[icol]=self.data[icol][:,::-1,:]
 
+        if self.ToRADEC is not None:
+            DATA={"uvw":uvw,"data":self.data}
+            self.Rotate(DATA,RotateType=["uvw","vis"])
+            self.data=DATA["data"]
+
         self.NPolOrig=self.data.shape[-1]
         if self.data.shape[-1]!=4:
             log.print(ModColor.Str("Data has only two polarisation, adapting shape"))
@@ -566,7 +601,7 @@ class ClassMS():
             data[:,:,-1]=self.data[:,:,-1]
             self.data=data
             self.flag_all=flag_all
-        
+
         if "IMAGING_WEIGHT" in table_all.colnames():
             log.print("Flagging the zeros-weighted visibilities")
             fw=table_all.getcol("IMAGING_WEIGHT",row0,nRowRead)[SPW==self.ListSPW[0]][:,self.ChanSlice]
@@ -756,9 +791,10 @@ class ClassMS():
         if Nchan>1:
             self.DoRevertChans=(self.ChanFreq.flatten()[0]>self.ChanFreq.flatten()[-1])
         if self.DoRevertChans:
-            print(ModColor.Str("  ====================== >> Revert Channel order!"))
+            log.print(ModColor.Str("  ====================== >> Revert Channel order!"))
             wavelength_chan=wavelength_chan[0,::-1]
             self.ChanFreq=self.ChanFreq[0,::-1]
+            self.ChanWidth=-self.ChanWidth[0,::-1]
             self.dFreq=np.abs(self.dFreq)
 
         T.timeit()
@@ -802,6 +838,30 @@ class ClassMS():
         self.StrRA  = rad2hmsdms(self.rarad,Type="ra").replace(" ",":")
         self.StrDEC = rad2hmsdms(self.decrad,Type="dec").replace(" ",".")
 
+        if self.ToRADEC is not None:
+            ranew, decnew = rarad, decrad
+            # get RA/Dec from first MS, or else parse as coordinate string
+            if self.ToRADEC == "align":
+                stop
+                if first_ms is not None:
+                    ranew, decnew = first_ms.rarad, first_ms.decrad
+                which = "the common phase centre"
+            else:
+                which = "%s %s"%tuple(self.ToRADEC)
+                SRa,SDec=self.ToRADEC
+                srah,sram,sras=SRa.split(":")
+                sdecd,sdecm,sdecs=SDec.split(":")
+                ranew=(np.pi/180)*15.*(float(srah)+float(sram)/60.+float(sras)/3600.)
+                decnew=(np.pi/180)*np.sign(float(sdecd))*(abs(float(sdecd))+float(sdecm)/60.+float(sdecs)/3600.)
+            # only enable rotation if coordinates actually change
+            if ranew != rarad or decnew != decrad:
+                print(ModColor.Str("MS %s will be rephased to %s"%(self.MSName,which)), file=log)
+                self.OldRadec = rarad,decrad
+                self.NewRadec = ranew,decnew
+                rarad,decrad = ranew,decnew
+            else:
+                self.ToRADEC = None
+                
         T.timeit()
         # self.StrRADEC=(rad2hmsdms(self.rarad,Type="ra").replace(" ",":")\
         #                ,rad2hmsdms(self.decrad,Type="dec").replace(" ","."))
@@ -880,7 +940,9 @@ class ClassMS():
         ll.append("   - Number of baseline = %i"%self.nbl)
         ll.append("   - Number of SPW = %i"%self.NSPW)
         ll.append("   - Number of channels = %i"%self.Nchan)
-        ll.append("   - Chan freqs = %s"%str(self.ChanFreq.flatten().tolist()))
+        
+        s=" ".join(["%.2f"%(x/1e6) for x in self.ChanFreq.flatten()])
+        #ll.append("   - Chan freqs = %s"%(ListToStr(s.split(" "),Unit="MHz")))
         
         ss="\n".join(ll)+"\n"
         return ss
@@ -1101,6 +1163,32 @@ class ClassMS():
             t.addcols(desc) 
             t.close()
     
+    def Rotate(self,DATA,RotateType=["uvw","vis"],Sense="ToTarget",DataFieldName="data"):
+        # DDFacet.ToolsDir.ModRotate.Rotate(self,radec)
+        if Sense=="ToTarget":
+            ra0,dec0=self.OldRadec
+            ra1,dec1=self.NewRadec
+        elif Sense=="ToPhaseCenter":
+            ra0,dec0=self.NewRadec
+            ra1,dec1=self.OldRadec
+
+        StrRAOld  = rad2hmsdms(ra0,Type="ra").replace(" ",":")
+        StrDECOld = rad2hmsdms(dec0,Type="dec").replace(" ",".")
+        StrRA  = rad2hmsdms(ra1,Type="ra").replace(" ",":")
+        StrDEC = rad2hmsdms(dec1,Type="dec").replace(" ",".")
+        
+        print("Rotate %s [Mode = %s]"%(",".join(RotateType),Sense), file=log)
+        print("     from [%s, %s] [%f %f]"%(StrRAOld,StrDECOld,ra0,dec0), file=log)
+        print("       to [%s, %s] [%f %f]"%(StrRA,StrDEC,ra1,dec1), file=log)
+        
+        DDFacet.ToolsDir.ModRotate.Rotate2(ra0,dec0,
+                                           ra1,dec1,
+                                           DATA["uvw"],DATA[DataFieldName],
+                                           self.wavelength_chan.ravel(),
+                                           RotateType=RotateType)
+
+
+
     def RotateMS(self,radec):
         import ModRotate
         ModRotate.Rotate(self,radec)

@@ -31,7 +31,7 @@ from killMS.Other import ModColor
 from DDFacet.Other import logger
 import matplotlib.gridspec as gridspec
 log=logger.getLogger("killMS")
-logger.itsLog.logger.setLevel(logger.logging.CRITICAL)
+#logger.itsLog.logger.setLevel(logger.logging.CRITICAL)
 from itertools import product as ItP
 
 sys.path=[name for name in sys.path if not(("pyrap" in name)&("/usr/local/lib/" in name))]
@@ -143,7 +143,7 @@ class PlotMachine():
         nSol=len(FilesList)
         t0=None
         for FileName in FilesList:
-            SolsDico=dict(np.load(FileName))
+            SolsDico=dict(np.load(FileName,allow_pickle=True))
             Sols=SolsDico["Sols"]
             Sols=Sols.view(np.recarray)
             

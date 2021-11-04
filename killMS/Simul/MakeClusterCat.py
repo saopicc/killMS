@@ -45,6 +45,9 @@ ProgTables="makebeamtables"
 # #antennaset="HBA_INNER"
 # StaticMetaDataDir="/home/cyril.tasse/source/LOFARBeamData"
 
+StaticMetaDataDir="/media/tasse/data/VE_Py3_bis/sources/lofar/MAC/Deployment/data/StaticMetaData"
+AntennaSets="/media/tasse/data/VE_Py3_bis/sources/lofar/MAC/Deployment/data/StaticMetaData/AntennaSets.conf"
+
 def test():
 
     # Random catalog
@@ -63,6 +66,13 @@ def test():
     #                       "finfo":(100e6,250e6,10)}
 
     DicoPropPointings[0]={"offset":(0,0),
+                          "Ns":9,
+                          "Nc":0,
+                          "Diam":4,
+                          "finfo":(40e6,60e6,2),
+                          "Mode":"Grid"}
+
+    DicoPropPointings[1]={"offset":(10,5),
                           "Ns":9,
                           "Nc":0,
                           "Diam":4,
@@ -90,7 +100,7 @@ def test():
     #                       "Ns":-1,
     #                       "Nc":0,
     #                       "Diam":1,
-   #                       "SI":np.array([100],dtype=np.float32),
+    #                       "SI":np.array([100],dtype=np.float32),
     #                       "finfo":(70e6,150e6,10)}
     # DicoPropPointings[1]={"offset":(5,5),
     #                       "Ns":-1,
@@ -98,7 +108,7 @@ def test():
     #                       "Diam":1,
     #                       "SI":np.array([100],dtype=np.float32),
     #                       "finfo":(70e6,150e6,10)}
-
+    
     ObsMachine=MakeMultipleObs(DicoPropPointings)
     ObsMachine.MakeSM_MS0()
     ObsMachine.DuplicateMSInFreq()
@@ -113,11 +123,10 @@ def GiveDate(tt):
     time_start_MDJ=dict_time_start_MDJ['m0']['value']
     JD=time_start_MDJ+2400000.5-2415020
     d=ephem.Date(JD)
-
     return d.datetime().isoformat().replace("T","/")
 
-def BBSprintRandomSM(Ns,Ddeg,pos,OutFile="ModelRandom0",ra_dec_offset=(0,0),SI=None,Mode="Random"):
-    ra_mean,dec_mean=pos
+def BBSprintRandomSM(Ns,Ddeg,ra_mean_dec_mean,OutFile="ModelRandom0",ra_dec_offset=(0,0),SI=None,Mode="Random"):
+    ra_mean,dec_mean=ra_mean_dec_mean
     ang=Ddeg*np.pi/180
     if Ns!=-1:
         if Mode=="Random":
@@ -230,8 +239,6 @@ class MakeMultipleObs():
             print(sExec)
             os.system(sExec)
 
-
-
             ModelName=SMName+".npy"
 
             D["SM"]=ModelName
@@ -259,11 +266,13 @@ class MakeMultipleObs():
 
 
             ss="%s antennaset=LBA_INNER ms=%s overwrite=1"%(ProgTables,D["dirMS0Name"])
+            #ss="%s antennaset=LBA_INNER ms=%s antennasetfile=%s overwrite=1"%(ProgTables,D["dirMS0Name"],AntennaSets)
+            ss="%s antennaset=LBA_INNER ms=%s antennasetfile=%s/AntennaSets.conf antennafielddir=%s/AntennaFields overwrite=1"%(ProgTables,D["dirMS0Name"],StaticMetaDataDir,StaticMetaDataDir)
 
 #            ss="%s antennafielddir=/home/cyril.tasse/source/LOFARBeamData/AntennaFields antennaset=LBA_INNER antennasetfile=/home/cyril.tasse/source/LOFARBeamData/AntennaSets.conf ihbadeltadir=/home/cyril.tasse/source/LOFARBeamData/iHBADeltas ms=%s overwrite=1"%(ProgTables,D["dirMS0Name"])
             print(ss)
             os.system(ss)
-
+            
 # makebeamtables antennafielddir=/home/cyril.tasse/source/LOFARBeamData/AntennaFields antennaset=LBA_INNER antennasetfile=/home/cyril.tasse/source/LOFARBeamData/AntennaSets.conf ihbadeltadir=/home/cyril.tasse/source/LOFARBeamData/iHBADeltas ms=/data/tasse/Simul/Pointing00/Template_0000.MS_p0 overwrite=1
 # makebeamtables antennafielddir=/home/cyril.tasse/source/StaticMetaData/AntennaFields antennaset=LBA_INNER antennasetfile=/home/cyril.tasse/source/StaticMetaData/AntennaSets.conf ihbadeltadir=/home/cyril.tasse/source/StaticMetaData/iHBADeltas ms=/data/tasse/Simul/Pointing00/Template_0000.MS_p0 overwrite=1
 
@@ -276,8 +285,8 @@ class MakeMultipleObs():
 
 
 
-    def MakeMS(self,MSName,pos):
-        ra,dec=pos
+    def MakeMS(self,MSName,ra_dec):
+        ra,dec=ra_dec
         D={}
         MS=self.MSTemplate
 
@@ -309,8 +318,9 @@ class MakeMultipleObs():
 
         D["VDSPath"]={"id":0,"val":"."}
         D["WriteImagerColumns"]={"id":0,"val":"T"}
-    
+
         ModParsetType.DictToParset(D,"makems.tmp.cfg")
+        
         os.system("cat makems.tmp.cfg")
         os.system("makems makems.tmp.cfg")
 
@@ -329,7 +339,7 @@ class MakeMultipleObs():
             D["ListMS"]=[]
             for freq in freqs:
                 #outn="%s%4.4i.MS"%(dirMS,iSB)
-                outn="%4.4i.MS"%(iSB)
+                outn="%4.4i.p%2.2i.MS"%(iSB,int(key))
                 D["ListMS"].append(outn)
 
                 ss="cp -r %s %s "%(dirMS0Name,outn)

@@ -41,7 +41,7 @@ def ParsetToDict(fname):
 
 def DictToParset(Dict,fout):
      f=open(fout,"w")
-     ll=sorted(Dict.iteritems(), key=lambda x: x[1]['id'])
+     ll=sorted(Dict.items(), key=lambda x: x[1]['id'])
      Lkeys=[ll[i][0] for i in range(len(ll))]
             
      for key in Lkeys:

@@ -40,19 +40,14 @@ def test(G,f):
     AmpMachine.doSmooth()
 
 
-class ClassFitAmp():
+class ClassClip():
     def __init__(self,gains,nu,Tol=5e-2,Incr=1,RemoveMedianAmp=True,LogMode=False):
         self.nt,self.nf,self.na=gains.shape
-        self.RemoveMedianAmp=RemoveMedianAmp
         self.G=gains.copy()
-        self.LogMode=LogMode
         self.G=np.abs(self.G)
 
-        if self.LogMode:
-            self.G[self.G==0]=1e-6
-            self.G=np.log(self.G)
-            
-        self.GOut=np.zeros_like(self.G)
+        self.GOut=self.G.copy()#np.zeros_like(self.G)
+        
         self.CentralFreqs=self.nu=nu
         self.NFreq=nu.size
         na=self.na
@@ -61,91 +56,25 @@ class ClassFitAmp():
         log.print("Number of Antennas: %i"%self.na)
         log.print("Number of Freqs:    %i"%nu.size)
         log.print("Number of Points:   %i"%(nu.size*self.na**2))
-        # W=np.array([np.var(self.G[:,:,iAnt]) for iAnt in range(self.na)])
-        # if np.sum(W)==0: stop
-        # self.W=W/np.sum(W)
 
-        
-    # def doSmooth(self):
-    #     for iTime in range(self.nt):
-    #         for iFreq in range(self.nf):
-    #             self.doSmoothThisTF(iTime,iFreq)
-    #     return self.GOut
-    # def doSmoothThisTF(self,iTime,iFreq):
-    #     g=self.G[iTime,iFreq].ravel()
-    #     Y=( g.reshape((-1,1)) * g.conj().reshape((1,-1)) )
-    #     for iAnt in range(self.na):
-    #         self.GOut[iTime,iFreq,iAnt]=np.sqrt(np.sum(self.W*Y[iAnt]))
+    def doClip(self):
+        Th=10.
 
-    def doSmooth(self):
-        vmax=2.
-        vmin=.3
-        for iAnt in range(self.na):#[::-1]:
-            for iChan in range(self.nf):
-                # print
-                # print "ichan %i %i (%i,%i)"%(iChan,iAnt,self.nf,self.na)
-                mout=np.zeros((self.nt,),np.float32)
-                ii=0
-                while True:
-                    self.GOut[:,iChan,iAnt]=1.
-                    x=np.arange(self.nt)
-                    y=self.G[:,iChan,iAnt].copy()
-                    m0=( np.abs(y[1::]-y[0:-1])>1e-6 )
-                    m=np.ones_like(y)
-                    m[1::]=m0[:]
-                    ind=np.where((m!=0) & (mout==0))[0]
-                    # print np.count_nonzero(ind)
-                    yc=np.ones_like(y)
-                    if ind.size<2:
-                        break
-                    yc[ind]=y[ind]
-                    xc=x[ind]
-                    z=np.polyfit(x[ind], y[ind], 10)
-                    p = np.poly1d(z)
-                    px=np.abs(p(x))
-                    pp=px/np.mean(px)*np.median(y[ind])
-                    self.GOut[:,iChan,iAnt]=pp
-
-                    # import pylab
-                    # pylab.clf()
-                    # pylab.plot()
-                    
-                    # ##########################
-                    resid=y-pp
-                    rabs=np.abs(resid-np.median(np.abs(resid)))
-                    sig=1.48*np.median(rabs)
-                    s_mout0=np.count_nonzero(mout)
-                    mout[rabs>5.*sig]=1.
-                    s_mout1=np.count_nonzero(mout)
-                    if s_mout0==s_mout1:
-                        self.GOut[:,iChan,iAnt]=np.abs(p(x))
-                        # print iChan,ii,s_mout0
-                        break
-                    ii+=1
-                    ## print ii
-                Ag=np.abs(self.GOut[:,iChan,iAnt])
-                #if Ag.max()/Ag.min()>2: self.GOut[:,iChan,iAnt].fill(np.median(self.G[:,:,iAnt]))
-                if ind.size<2:
-                    continue
-                    
-            if self.RemoveMedianAmp:
-                off=np.median(self.G[:,:,iAnt]-self.GOut[:,:,iAnt],axis=1)
-                self.GOut[:,:,iAnt]=self.GOut[:,:,iAnt]+off.reshape((-1,1))
-            if not self.LogMode:
-                self.GOut[self.GOut>vmax]=vmax
-                self.GOut[self.GOut<vmin]=vmin
+        import scipy.stats
+        MAD=scipy.stats.median_abs_deviation
+        for iAnt in range(self.na):
+            absG=np.abs(self.G[:,:,iAnt])
+            Std=MAD(absG[absG!=0],axis=None)
+            #Std=np.max([0.1,Std])
+            Med=np.median(absG[absG!=0])
+            indx,indy=np.where(absG>(Med+Th*Std))
+            self.GOut[indx,indy,iAnt]=0
             
-            # self.Plot(iAnt)
+            # print(iAnt,Std,indx.size)
+            # if indx.size>0:
+            #     self.Plot(iAnt)
 
-        if self.LogMode:
-            self.GOut=np.exp(self.GOut)
         return self.GOut
-
-    def indUnique(self,a):
-        unq, unq_idx, unq_cnt = np.unique(a, return_inverse=True, return_counts=True)
-        return unq_cnt==1
-
-
 
         
     def Plot(self,iAnt):

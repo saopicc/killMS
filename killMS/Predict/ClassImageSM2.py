@@ -96,16 +96,15 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.IdSharedMem=IdSharedMem#kwargs["IdSharedMem"]
         self.SM=ClassImageSM()
 
-        if self.GD["GDkMS"]["ImageSkyModel"]["NodesFile"]!=None:
+        if self.GD["GDkMS"]["ImageSkyModel"]["NodesFile"]is not None:
             self.GD["Facets"]["CatNodes"]=self.GD["GDkMS"]["ImageSkyModel"]["NodesFile"]
-            self.GD["DDESolutions"]["DDSols"]=""
+            self.GD["DDESolutions"]["DDSols"]=None
             
         # self.InitFacetMachine()
         self.CreateFacetMachines()
         self.LoadModel()
 
     def LoadModel(self):
-
         
         # ClassModelMachine,DicoModel=GiveModelMachine(self.FileDicoModel)
         # try:
@@ -115,8 +114,6 @@ class ClassPreparePredict(ClassImagerDeconv):
         #     DicoModel["SolveParam"]=self.GD["GAClean"]["GASolvePars"]
         # self.MM=ClassModelMachine(self.GD)
         # self.MM.FromDico(DicoModel)
-        
-
 
         # From DicoModel
         ModConstructor = ClassModModelMachine(self.GD)
@@ -150,11 +147,12 @@ class ClassPreparePredict(ClassImagerDeconv):
         # #stop
 
         #del(data)
-        self.DicoImager=self.FacetMachine.DicoImager
         
+        self.DicoImager=self.FacetMachine.DicoImager
         
         NFacets=len(self.FacetMachine.DicoImager)
         self.NFacets=NFacets
+        
         #self.NDirs=NFacets
         #self.Dirs=range(self.NDirs)
 
@@ -172,12 +170,12 @@ class ClassPreparePredict(ClassImagerDeconv):
         #DicoFacetName="%s.DicoFacet"%self.BaseImageName
         #DicoFacet=DDFacet.Other.MyPickle.Load(DicoFacetName)
         
-        NodeFile="%s.NodesCat.npy"%self.BaseImageName
+        NodeFile="%s.NodesCat.npy"%self.GD["Output"]["Name"]#BaseImageName
         NodesCat=np.load(NodeFile)
         NodesCat=NodesCat.view(np.recarray)
 
         self.NDir=NodesCat.shape[0]
-
+        
         ClusterCat=np.zeros((self.NDir,),dtype=[('Name','|S200'),
                                                 ('ra',np.float),('dec',np.float),
                                                 ('l',np.float),('m',np.float),
@@ -201,18 +199,18 @@ class ClassPreparePredict(ClassImagerDeconv):
         Cat.I[:]=ClusterCat.SumI[:]
         Cat.Cluster=np.arange(NN)
         Cat.Sref[:]=ClusterCat.SumI[:]
-        self.SourceCat=Cat
 
+        self.SourceCat=Cat
+        
         
         self.DicoImager=self.FacetMachine.DicoImager
         self.ClusterCat=ClusterCat
         self.ClusterCat.SumI=0.
 
-
-        #ind=np.where(self.ClusterCat.SumI!=0)[0]
-        #self.ClusterCat=self.ClusterCat[ind].copy()
-        #NFacets=self.ClusterCat.shape[0]
-        #log.print( "  There are %i non-zero facets"%NFacets)
+        # ind=np.where(self.ClusterCat.SumI!=0)[0]
+        # self.ClusterCat=self.ClusterCat[ind].copy()
+        # NFacets=self.ClusterCat.shape[0]
+        # log.print( "  There are %i non-zero facets"%NFacets)
 
         NFacets=len(self.FacetMachine.DicoImager)
         lFacet=np.zeros((NFacets,),np.float32)
@@ -222,15 +220,18 @@ class ClassPreparePredict(ClassImagerDeconv):
             lFacet[iFacet]=l
             mFacet[iFacet]=m
 
-
         NDir=ClusterCat.l.size
         d=np.sqrt((ClusterCat.l.reshape((NDir,1))-lFacet.reshape((1,NFacets)))**2+
                   (ClusterCat.m.reshape((NDir,1))-mFacet.reshape((1,NFacets)))**2)
         idDir=np.argmin(d,axis=0)
+        
         for iFacet in range(NFacets):
             self.FacetMachine.DicoImager[iFacet]["iDirJones"]=idDir[iFacet]
-
-            
+            # print(iFacet,idDir[iFacet])
+        
+        self.SM.ClusterCat=self.ClusterCat
+        self.SM.SourceCat=self.SourceCat
+        
         from DDFacet.Other.AsyncProcessPool import APP
         APP.startWorkers()
         #self.VS.CalcWeightsBackground()
@@ -257,6 +258,9 @@ class ClassPreparePredict(ClassImagerDeconv):
         log.print( "  There are %i non-zero directions"%self.SM.NDir)
         self.SM.ClusterCat=self.ClusterCat
         self.SM.SourceCat=self.SourceCat
+        
+        # self.SM.SourceCat.I[:]=self.ClusterCat.SumI[:]
+        
         self.SM.DicoJonesDirToFacet=self.DicoJonesDirToFacet
         self.SM.GD=self.FacetMachine.GD
         self.SM.DicoImager=self.FacetMachine.DicoImager
@@ -271,6 +275,8 @@ class ClassPreparePredict(ClassImagerDeconv):
         #self.SM.ChanMappingDegrid=self.VS.FreqBandChannelsDegrid[0]
         self.SM.ChanMappingDegrid=self.VS.DicoMSChanMappingDegridding[0]
         self.SM._model_dict=self.FacetMachine._model_dict
+        self.SM.MapClusterCatOrigToCut=self.MapClusterCatOrigToCut
+        
         # import pprint
         # pprint.pprint(self.DicoJonesDirToFacet)
 
@@ -324,19 +330,59 @@ class ClassPreparePredict(ClassImagerDeconv):
         self.NDirsOrig=self.ClusterCat.shape[0]
 
         self.NDirs=self.ClusterCat.shape[0]
+
+        
+        from killMS.Data import ClassBeam
+
+        #self.GD["Beam"]["BeamModel"]=self.GD["Beam"]["Model"]
+        Th=float(self.GD["GDkMS"]["ImageSkyModel"]["ThSolve"])
+
         Keep=np.zeros((self.NDirs,),bool)
+        
+        if Th>0:
+            log.print("Compute mean beam for direction removal...")
+            BeamMachine=ClassBeam.ClassBeam(self.VS.ListMS[0].MSName,self.GD["GDkMS"],self.SM)#,ColName=self.GD["Data"]["ColName"])
+            AbsMeanBeam=BeamMachine.GiveMeanBeam(NTimes=10)
+            AbsMeanBeamAnt=np.mean(AbsMeanBeam[:,:,0,0,0],axis=1)
+        
+
+            AppFlux=np.array([self.DicoJonesDirToFacet[iDirJones]["SumFlux"]*(AbsMeanBeamAnt[iDirJones])**2 for iDirJones in sorted(DicoJonesDirToFacet.keys())])
+        else:
+            AppFlux=np.array([self.DicoJonesDirToFacet[iDirJones]["SumFlux"] for iDirJones in sorted(DicoJonesDirToFacet.keys())])
+            
+        MaxAppFlux=AppFlux.max()
+
+        HasRemoved=0
+
         for iDirJones in sorted(DicoJonesDirToFacet.keys()):
-            if self.DicoJonesDirToFacet[iDirJones]["SumFlux"]==0:
-                log.print("  Remove Jones direction %i"%(iDirJones))
+            #print(self.DicoJonesDirToFacet[iDirJones]["SumFlux"])
+            #if self.DicoJonesDirToFacet[iDirJones]["SumFlux"]==0:
+            
+            if AppFlux[iDirJones]<=MaxAppFlux*Th:
+                log.print(ModColor.Str("  Remove Jones direction %i [%f < %f Jy [Th = %f of Max %f Jy]]"%(iDirJones,AppFlux[iDirJones],MaxAppFlux*Th,Th,MaxAppFlux)))
+                HasRemoved=1
+                #print("  !!!!!!!!!!!!!!!!!!!!!!!")
             else:
                 D[iDirNew]=self.DicoJonesDirToFacet[iDirJones]
                 iDirNew+=1
                 Keep[iDirJones]=1
+
+        if not HasRemoved:
+            log.print(ModColor.Str("All directions have been kept in the solve"))
+
+                
+        #Keep.fill(0)
+        #Keep[1:5]=1
+        
         self.MapClusterCatOrigToCut=Keep
 
         self.DicoJonesDirToFacet=D
         self.ClusterCat=self.ClusterCat[Keep].copy()
 
+
+        
+        # self.SourceCat=self.SourceCat[Keep].copy()
+        
         self.Dirs=self.DicoJonesDirToFacet.keys()
         self.NDirs=len(self.Dirs)
 

@@ -37,6 +37,7 @@ if "PYTHONPATH_FIRST" in os.environ.keys() and int(os.environ["PYTHONPATH_FIRST"
 
 # # ##############################
 # # Catch numpy warning
+# import numpy as np
 # np.seterr(all='raise')
 # import warnings
 # warnings.filterwarnings('error')
@@ -122,6 +123,7 @@ def read_options():
     OP.add_option('DDFCacheDir')
     OP.add_option('RemoveDDFCache')
     OP.add_option('FilterNegComp')
+    OP.add_option('ThSolve',help="If the tessel has an apparant SumFlux bellow ThSolve*MaxSumFlux (Max over tessels), it will be unsolved (J=1)")
 
     OP.OptionGroup("* Compression","Compression")
     OP.add_option('CompressionMode',help='Only Auto implemented. Default is %default')
@@ -149,11 +151,11 @@ def read_options():
     OP.add_option('FITSLAxis',type="str",help='L axis of FITS beam. Default is %default')
     OP.add_option('FITSMAxis',type="str",help='L axis of FITS beam. Default is %default')
     OP.add_option('FITSFeed',type="str",help='FITS feed. xy or rl or None to take from MS. Default is %default')
-    OP.add_option('FITSFeedSwap',type="int",default=0,help='Swap the feeds around. Default is %default')
+    OP.add_option('FITSFeedSwap',type="int",help='Swap the feeds around. Default is %default')
     OP.add_option('FITSVerbosity',type="int",help='Verbosity of debug messages. Default is %default')
+    OP.add_option("ApplyPJones",type="int",help='derotate visibility data (only when FITS beam is active and also time sampled)')
+    OP.add_option("FlipVisibilityHands",type="int",help='apply anti-diagonal matrix if FITS beam is enabled effectively swapping X and Y or R and L and their respective hands')
     OP.add_option('FeedAngle',type="float",help='offset feed angle to add to parallactic angle')
-    OP.add_option('ApplyPJones',help='derotate visibility data (only when FITS beam is active and also time sampled)')
-    OP.add_option('FlipVisibilityHands',help='apply anti-diagonal matrix if FITS beam is enabled effectively swapping X and Y or R and L and their respective hands')
     OP.add_option('FITSFrame', type='str', help=' coordinate frame for FITS beams. Currently, alt-az, equatorial and zenith mounts are supported. #options:altaz|altazgeo|equatorial|zenith . Default is %default')
 
     OP.OptionGroup("* PreApply killMS Solutions","PreApply")
@@ -163,6 +165,7 @@ def read_options():
 
     OP.OptionGroup("* Weighting scheme","Weighting")
     OP.add_option('Resolution',type="float",help='Resolution in arcsec. Default is %default')
+    OP.add_option('WeightInCol',type="str",help='Weighting column to take into account to weight the visibilities in the solver. Default is %default')
     OP.add_option('Weighting',type="str",help='Weighting scheme. Default is %default')
     OP.add_option('Robust',type="float",help='Briggs Robust parameter. Default is %default')
     OP.add_option('WeightUVMinMax',help='Baseline length selection in km for full weight. For example WeightUVMinMax=0.1,100 selects baseline with length between 100 m and 100 km. Default is %default')
@@ -299,13 +302,12 @@ def main(OP=None,MSName=None):
         
     options=OP.GiveOptionObject()
 
-    ## I've carefully moved the import statements around so that numpy is not yet imported at this
-    ## point. This gives us a chance to set the OPENBLAS thread variables and such.
-    ## But in case of someone messing around with imports in the future, leave this check here
-    if 'numpy' in sys.modules:
-        raise RuntimeError("numpy already imported. This is a bug -- it shouldn't be imported yet")
-
-    os.environ['OPENBLAS_NUM_THREADS'] = os.environ['OPENBLAS_MAX_THREADS'] = str(options.NThread)
+    # ## I've carefully moved the import statements around so that numpy is not yet imported at this
+    # ## point. This gives us a chance to set the OPENBLAS thread variables and such.
+    # ## But in case of someone messing around with imports in the future, leave this check here
+    # if 'numpy' in sys.modules:
+    #     raise RuntimeError("numpy already imported. This is a bug -- it shouldn't be imported yet")
+    # os.environ['OPENBLAS_NUM_THREADS'] = os.environ['OPENBLAS_MAX_THREADS'] = str(options.NThread)
 
     # now do all the other imports
 
@@ -436,12 +438,40 @@ def main(OP=None,MSName=None):
         else:
             FileDicoModel="%s.DicoModel"%BaseImageName
 
+
+            
         ## OMS: only import it here, because otherwise is pulls in numpy too early, before I can fix
         ## the OPENBLAS threads thing
         import DDFacet.Other.MyPickle
         log.print("Reading model file %s"%FileDicoModel)
         GDPredict=DDFacet.Other.MyPickle.Load(FileDicoModel)["GD"]
         GDPredict["Output"]["Mode"] = "Predict"
+
+        # if options.BeamModel is not None and options.BeamModel.lower()=="same":
+        #     log.print(ModColor.Str("Setting kMS beam model from DDF parset..."))
+        #     GD["Beam"]['BeamModel']=options.BeamModel=GDPredict["Beam"]["Model"]
+        #     GD["Beam"]['NChanBeamPerMS']=options.NChanBeamPerMS=GDPredict["Beam"]["NBand"]
+        #     GD["Beam"]['BeamAt']=options.BeamAt = GDPredict["Beam"]["At"] # tessel/facet
+        #     GD["Beam"]['LOFARBeamMode']=options.LOFARBeamMode = GDPredict["Beam"]["LOFARBeamMode"]     # A/AE
+        #     GD["Beam"]['DtBeamMin']=options.DtBeamMin = GDPredict["Beam"]["DtBeamMin"]
+        #     GD["Beam"]['CenterNorm']=options.CenterNorm = GDPredict["Beam"]["CenterNorm"]
+        #     GD["Beam"]['FITSFile']=options.FITSFile = GDPredict["Beam"]["FITSFile"]
+        #     GD["Beam"]['FITSParAngleIncDeg']=options.FITSParAngleIncDeg = GDPredict["Beam"]["FITSParAngleIncDeg"]
+        #     GD["Beam"]['FITSLAxis']=options.FITSLAxis        = GDPredict["Beam"]["FITSLAxis"]
+        #     GD["Beam"]['FITSMAxis']=options.FITSMAxis        = GDPredict["Beam"]["FITSMAxis"]
+        #     GD["Beam"]['FITSFeed']=options.FITSFeed	 = GDPredict["Beam"]["FITSFeed"] 
+        #     GD["Beam"]['FITSVerbosity']=options.FITSVerbosity	 = GDPredict["Beam"]["FITSVerbosity"]
+        #     GD["Beam"]["FeedAngle"]=options.FeedAngle	 = GDPredict["Beam"]["FeedAngle"]
+        #     GD["Beam"]["ApplyPJones"]=options.ApplyPJones             = GDPredict["Beam"]["ApplyPJones"]
+        #     GD["Beam"]["FlipVisibilityHands"]=options.FlipVisibilityHands     = GDPredict["Beam"]["FlipVisibilityHands"]
+        #     GD["Beam"]['FITSFeedSwap']=options.FITSFeedSwap=GDPredict["Beam"]["FITSFeedSwap"]
+            
+            
+            
+            
+
+
+        
         if not "StokesResidues" in GDPredict["Output"].keys():
             log.print(ModColor.Str("Seems like the DicoModel was built by an older version of DDF"))
             log.print(ModColor.Str("   ... updating keywords"))
@@ -470,16 +500,25 @@ def main(OP=None,MSName=None):
         #GDPredict["Caching"]["ResetCache"]=1
         if options.MaxFacetSize:
             GDPredict["Facets"]["DiamMax"]=options.MaxFacetSize
+        else:
+            OP.options.ImageSkyModel_MaxFacetSize=OP.DicoConfig["ImageSkyModel"]["MaxFacetSize"]=GDPredict["Facets"]["DiamMax"]
+
         if options.MinFacetSize:
             GDPredict["Facets"]["DiamMin"]=options.MinFacetSize
+        else:
+            OP.options.ImageSkyModel_MinFacetSize=OP.DicoConfig["ImageSkyModel"]["MinFacetSize"]=GDPredict["Facets"]["DiamMin"]
 
-        if options.Decorrelation is not None and options.Decorrelation!="":
+        if options.Decorrelation is not None and options.Decorrelation != "":
             log.print(ModColor.Str("Overwriting DDF parset decorrelation mode [%s] with kMS option [%s]"\
                                     %(GDPredict["RIME"]["DecorrMode"],options.Decorrelation)))
             GDPredict["RIME"]["DecorrMode"]=options.Decorrelation
         else:
+            
             GD["SkyModel"]["Decorrelation"]=DoSmearing=options.Decorrelation=GDPredict["RIME"]["DecorrMode"]
+            OP.options.SkyModel_Decorrelation=options.Decorrelation
             log.print(ModColor.Str("Decorrelation mode will be [%s]" % DoSmearing))
+
+        OP.ToParset(ParsetName)
 
         # if options.Decorrelation != GDPredict["DDESolutions"]["DecorrMode"]:
         #     log.print(ModColor.Str("Decorrelation modes for DDFacet and killMS are different [%s vs %s respectively]"\)
@@ -690,6 +729,7 @@ def main(OP=None,MSName=None):
         if Load=="EndOfObservation":
             break
         if Load == "Empty":
+            Solver.AppendGToSolArray()
             log.print( "skipping rest of processing for this chunk")
             continue
 
@@ -701,8 +741,8 @@ def main(OP=None,MSName=None):
             if options.SubOnly==0:
                 if options.Parallel:
                     Solver.doNextTimeSolve_Parallel(Parallel=True)
-                    # Solver.doNextTimeSolve_Parallel(Parallel=True,
-                    #                                 SkipMode=True)
+                    #Solver.doNextTimeSolve_Parallel(Parallel=True,
+                    #                                SkipMode=True)
                 else:
                     #Solver.doNextTimeSolve_Parallel(SkipMode=True)
                     Solver.doNextTimeSolve()#SkipMode=True)
@@ -881,7 +921,6 @@ def main(OP=None,MSName=None):
                 DomainsMachine=ClassJonesDomains.ClassJonesDomains()
                 JonesMerged=DomainsMachine.MergeJones(Jones,PreApplyJones)
                 DicoJonesMatrices=JonesMerged
-
 
             DomainMachine.AddVisToJonesMapping(JonesMerged,times,freqs)
             JonesMerged["JonesH"]=ModLinAlg.BatchH(JonesMerged["Jones"])

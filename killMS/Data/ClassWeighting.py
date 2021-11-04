@@ -51,12 +51,16 @@ def test():
     
 
 class ClassWeighting():
-    def __init__(self,ImShape,CellSizeRad):
+    def __init__(self,
+                 ImShape,
+                 CellSizeRad,
+                 GD=None):
         self.ImShape=ImShape
         self.CellSizeRad=CellSizeRad
+        self.GD=GD
         
     def CalcWeights(self,uvw,VisWeights,flags,freqs,Robust=0,Weighting="Briggs"):
-
+        
 
         #u,v,_=uvw.T
 
@@ -88,6 +92,7 @@ class ClassWeighting():
 
         VisWeights=np.float64(VisWeights)
         #VisWeights.fill(1.)
+
 
         
         

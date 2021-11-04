@@ -40,6 +40,7 @@ IdSharedMem=str(int(os.getpid()))+"."
 from DDFacet.Other import AsyncProcessPool
 from killMS.Other import ClassFitTEC
 from killMS.Other import ClassFitAmp
+from killMS.Other import ClassClip
 import scipy.ndimage.filters
 from pyrap.tables import table
 # # ##############################
@@ -52,7 +53,8 @@ from pyrap.tables import table
 # warnings.filterwarnings('error')
 # # ##############################
 from killMS.Other.ClassTimeIt import ClassTimeIt
-from killMS.Other.least_squares import least_squares
+#from killMS.Other.least_squares import least_squares
+from scipy.optimize import least_squares
 import copy
 from pyrap.tables import table
 SaveName="last_InterPol.obj"
@@ -235,9 +237,15 @@ class ClassInterpol():
 
         if "PolyAmp" in self.InterpMode:
             for iDir in range(nd):
-                APP.runJob("FitThisPolyAmp_%d"%iJob, self.FitThisPolyAmp, args=(iDir,))#,serial=True)
+                APP.runJob("FitThisPolyAmp_%d"%iJob, self.FitThisPolyAmp, args=(iDir,))
                 iJob+=1
             workers_res=APP.awaitJobResults("FitThisPolyAmp*", progress="Smooth Amp")
+
+        if "Clip" in self.InterpMode:
+            for iDir in range(nd):
+                APP.runJob("ClipThisDir_%d"%iJob, self.ClipThisDir, args=(iDir,),serial=True)
+                iJob+=1
+            workers_res=APP.awaitJobResults("ClipThisDir*", progress="Clip Amp")
 
 
         #APP.terminate()
@@ -421,7 +429,7 @@ class ClassInterpol():
             return r
 
         #print _f_resid(TEC0CPhase0,A0,A1,ggmeas)
-
+        
         Sol=least_squares(_f_resid,
                           TEC0CPhase0.ravel(),
                           #method="trf",
@@ -482,6 +490,19 @@ class ClassInterpol():
         #print "Done %i"%iDir
         gf=gf*g/np.abs(g)
         GOut[:,:,:,iDir,0,0]=gf[:,:,:]
+        GOut[:,:,:,iDir,1,1]=gf[:,:,:]
+
+    def ClipThisDir(self,iDir):
+        nt,nch,na,nd,_,_=self.Sols.G.shape
+        GOut=NpShared.GiveArray("%sGOut"%IdSharedMem)
+        # g=GOut[:,:,:,iDir,0,0]
+
+        AmpMachine=ClassClip.ClassClip(self.Sols.G[:,:,:,iDir,0,0],self.CentralFreqs,RemoveMedianAmp=self.RemoveMedianAmp)
+        gf=AmpMachine.doClip()
+        GOut[:,:,:,iDir,0,0]=gf[:,:,:]
+        
+        AmpMachine=ClassClip.ClassClip(self.Sols.G[:,:,:,iDir,1,1],self.CentralFreqs,RemoveMedianAmp=self.RemoveMedianAmp)
+        gf=AmpMachine.doClip()
         GOut[:,:,:,iDir,1,1]=gf[:,:,:]
 
         

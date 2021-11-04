@@ -174,7 +174,7 @@ class ClassJacobianAntenna():
         self.SM_Compress=SM_Compress
         self.AverageMachine=None
         self.DoCompress=False
-        self.DoMergeStations=(self.GD["Compression"]["MergeStations"] is not None)
+        self.DoMergeStations = ((self.GD["Compression"]["MergeStations"] is not None) and (self.GD["Compression"]["MergeStations"]!=""))
         if self.SM_Compress or self.DoMergeStations:
             self.AverageMachine=ClassAverageMachine.ClassAverageMachine(self.GD,
                                                                         self.PM_Compress,
@@ -409,6 +409,7 @@ class ClassJacobianAntenna():
         Gains=GainsIn.copy()
         na,nd,_,_=Gains.shape
         #Type="NoGains"
+        
         if Type=="NoGains":
             if self.PolMode=="Scalar":
                 Gains=np.ones((na,nd,1,1),np.complex64)
@@ -420,16 +421,16 @@ class ClassJacobianAntenna():
                 Gains[:,:,1,1]=1
             NameShmData="%sPredictedData"%self.IdSharedMem
             NameShmIndices="%sIndicesData"%self.IdSharedMem
+            
         elif Type=="Gains":
             NameShmData="%sPredictedDataGains"%self.IdSharedMem
             NameShmIndices="%sIndicesDataGains"%self.IdSharedMem
-        
             
         PredictedData=NpShared.GiveArray(NameShmData)
         Indices=NpShared.GiveArray(NameShmIndices)
-
+        
         Ga=self.GiveSubVecGainAnt(Gains).copy()
-
+        
         self.CalcJacobianAntenna(Gains)
         #self.PrepareJHJ_LM()
         zp=self.J_x(Ga)#self.DicoData["data_flat"]#
@@ -481,6 +482,7 @@ class ClassJacobianAntenna():
 
     def CalcJacobianAntenna(self,GainsIn):
         if not(self.HasKernelMatrix): stop
+        #if np.count_nonzero(np.isnan(GainsIn))>0: stop
         iAnt=self.iAnt
         NDir=self.NDir
 
@@ -544,10 +546,6 @@ class ClassJacobianAntenna():
 
         for J in LJacob:
             J.shape=(n4vis*self.NJacobBlocks_Y,NDir*self.NJacobBlocks_Y)
-
-
-
-
             
         if self.DoCompress:
             flags_key="flags_flat_avg"
@@ -568,7 +566,7 @@ class ClassJacobianAntenna():
             nrow,_=J.shape
             self.nrow_nonflagged=nrow
             JH=J.T.conj()
-            if type(self.Rinv_flat)!=type(None):
+            if self.Rinv_flat is not None:
                 Rinv=self.Rinv_flat[polIndex][flags==0].reshape((nrow,1))
 
                 if self.TypeDot=="Numpy":
@@ -585,8 +583,9 @@ class ClassJacobianAntenna():
                     J_T=J.T.copy()
                     JTc=self.LJacobTc[polIndex]#.copy()
                     JHJ=NpDotSSE.dot_A_BT(JTc,J_T)
-                
-
+                    
+            if np.count_nonzero(np.isnan(JHJ))>0: stop
+            
             self.L_JHJ.append(self.CType(JHJ))
             
         if self.DoMergeStations:
@@ -595,7 +594,7 @@ class ClassJacobianAntenna():
 
         # self.JHJinv=np.linalg.inv(self.JHJ)
         # self.JHJinv=np.diag(np.diag(self.JHJinv))
-
+        
     def CalcKernelMatrix(self,rms=0.):
         # Out[28]: ['freqs', 'times', 'A1', 'A0', 'flags', 'uvw', 'data']
         T=ClassTimeIt.ClassTimeIt("CalcKernelMatrix Ant=%i"%self.iAnt)
@@ -607,8 +606,6 @@ class ClassJacobianAntenna():
         NDir=self.SM.NDir
         self.NDir=NDir
         self.iAnt=iAnt
-
-
 
         T.timeit("stuff")
         
@@ -625,9 +622,9 @@ class ClassJacobianAntenna():
         n4vis=nrows*nchan
         self.n4vis=n4vis
 
-        if self.DoCompress:
-            nrows_Avg,nchan_Avg,_,_=self.DicoData["flags_avg"].shape
-            self.n4vis_Avg=self.n4vis_Avg_AllChan=nrows_Avg*nchan_Avg
+        # if self.DoCompress:
+        #     nrows_Avg,nchan_Avg,_,_=self.DicoData["flags_avg"].shape
+        #     self.n4vis_Avg=self.n4vis_Avg_AllChan=nrows_Avg*nchan_Avg
             
         
         KernelSharedName="%sKernelMat.%2.2i"%(self.IdSharedMem,self.iAnt)
@@ -651,6 +648,7 @@ class ClassJacobianAntenna():
                 if self.DoCompress:
                     self.K_XX_AllChan_Avg=self.KernelMat_AllChan_Avg[0]
                     self.K_YY_AllChan_Avg=self.K_XX_AllChan_Avg
+                    self.n4vis_Avg=self.n4vis_Avg_AllChan=self.NDirAvg * self.DicoData["NpBlBlocks"][0]
                 #self.n4vis=n4vis
                 self.NJacobBlocks_X=1
                 self.NJacobBlocks_Y=1
@@ -731,10 +729,23 @@ class ClassJacobianAntenna():
 
         # ##############################################
         # from SkyModel.Sky import ClassSM
-        # SM=ClassSM.ClassSM("ModelImage.txt.npy")
+        # SM=ClassSM.ClassSM("ModelRandom00.txt.npy")
         # SM.Type="Catalog"
-        # SM.Calc_LM(self.SM.rac,self.SM.decc)
-        # self.KernelMat1=np.zeros((1,NDir,n4vis/nchan,nchan),dtype=self.CType)
+        # rac,decc=self.DATA["rac_decc"]
+        # SM.Calc_LM(rac,decc)
+        # # SM.SourceCat=SM.SourceCat[self.SM.MapClusterCatOrigToCut]
+        # # SM.ClusterCat=SM.ClusterCat[self.SM.MapClusterCatOrigToCut]
+        # SM.NDir=SM.SourceCat.shape[0]
+        # SM.Dirs=SM.Dirs
+        
+        # # Namemm="SM_Compress_%i.npy"%self.iAnt
+        # # np.save(Namemm,self.SM_Compress.SourceCat)
+        # # SM=ClassSM.ClassSM(Namemm)
+        # # #SM.SourceCat.I*=10
+        # # #SM.SourceCat.Sref*=10
+        # # SM.Calc_LM(rac,decc)
+        
+        # self.KernelMat1=np.zeros((1,NDir,n4vis//nchan,nchan),dtype=self.CType)
         # self.K1_XX=self.KernelMat1[0]
         # self.K1_YY=self.K1_XX
         # import pylab
@@ -742,8 +753,9 @@ class ClassJacobianAntenna():
         # pylab.clf()
         # pylab.figure(1)
         # pylab.clf()
-        # pylab.figure(0)
-         
+        # pylab.figure(2)
+        # pylab.clf()
+
         
 
 
@@ -783,59 +795,118 @@ class ClassJacobianAntenna():
             #self.K_YY.append(K_YY)
 
 
-        if self.DoCompress:
-            k=self.AverageMachine.AverageKernelMatrix(self.DicoData,self.K_XX_AllChan)
+            # ######################
+            # if True:#self.iAnt==13:
+            #     K1=self.PM.predictKernelPolCluster(self.DicoData,SM,iDirection=iDir)#,ApplyTimeJones=ApplyTimeJones)
+            #     # K1=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones,ForceNoDecorr=True)
+            #     K1[K==0]=0
+            #     K1_XX=K1[:,:,0]
+            #     K1_YY=K1[:,:,3]
+            #     if self.PolMode=="Scalar":
+            #         K1_XX=(K1_XX+K1_YY)/2.
+            #         K1_YY=K1_XX
+            #     self.K1_XX[iDir,:,:]=K1_XX
+            #     self.K1_YY[iDir,:,:]=K1_YY
+                
+            #     A0=self.DicoData["A0"]
+            #     A1=self.DicoData["A1"]
+            #     ind=np.arange(K1.shape[0])#np.where((A0==0)&(A1==26))[0]
+            #     d1=K[ind,0,0] 
+            #     d0=K1[ind,0,0]
+            #     #op0=np.abs
+            #     op0=np.real
+                
+            #     op1=np.imag
+            #     pylab.figure(0)
+            #     print(iDir)
+            #     pylab.subplot(1,NDir,iDir+1)
+            #     pylab.plot(op0(d0))
+            #     pylab.plot(op0(d1))
+            #     pylab.plot(op0(d0)-op0(d1))
+            #     #pylab.plot(op0(d1)/op0(d0))
+            #     pylab.ylim(-100,100)
+            #     pylab.draw()
+            #     pylab.show(block=False)
+                
+            #     # op1=np.angle
+            #     # pylab.figure(1)
+            #     # pylab.subplot(1,NDir,iDir+1)
+            #     # pylab.plot(op1(d0))
+            #     # pylab.plot(op1(d1))
+            #     # pylab.plot(op1(d0)-op1(d1))
+            #     # #pylab.plot(op1(d1)-op1(d0))
+            #     # pylab.ylim(-np.pi,np.pi)
+                
+            #     # pylab.subplot(2,1,2)
+            #     # #pylab.plot(op1(d0))
+            #     # pylab.plot(op1(d1*d0.conj()))#,ls="--")
+            #     # #pylab.plot(op1(d0*d1.conj()),ls="--")
+            #     # #pylab.ylim(-1,1)
+            #     pylab.draw()
+            #     pylab.show(block=False)
+            #     pylab.pause(0.1)
 
+            
+            
+        if self.DoCompress:
+            
+            T.reinit()
+            k=self.AverageMachine.AverageKernelMatrix(self.DicoData,self.K_XX_AllChan)
+            T.timeit("AverageKernelMatrix")
+            
             self.K_XX_AllChan_Avg[:,:,0]=k[:,:,0]
             self.K_YY_AllChan_Avg[:]=self.K_XX_AllChan_Avg[:]
+            #print("iAnt",self.iAnt)
+            self.AverageMachine.AverageDataVector(self.DicoData,
+                                                  Mask=(self.K_XX_AllChan==0),
+                                                  Stop=(self.iAnt==13),
+                                                  K=self.K_XX_AllChan)
+            T.timeit("AverageDataVector")
             
-        #     ######################
-        #     # K1=self.PM.predictKernelPolCluster(self.DicoData,SM,iDirection=iDir)#,ApplyTimeJones=ApplyTimeJones)
-        #     K1=self.PM.predictKernelPolCluster(self.DicoData,self.SM,iDirection=iDir,ApplyTimeJones=ApplyTimeJones,ForceNoDecorr=True)
-        #     A0=self.DicoData["A0"]
-        #     A1=self.DicoData["A1"]
-        #     ind=np.arange(K1.shape[0])#np.where((A0==0)&(A1==26))[0]
-        #     d1=K[ind,0,0] 
-        #     d0=K1[ind,0,0]
-        #     #op0=np.abs
-        #     op0=np.real
-        #     #op1=np.imag
-        #     pylab.figure(0)
-        #     pylab.subplot(1,NDir,iDir+1)
-        #     pylab.plot(op0(d0))
-        #     pylab.plot(op0(d1))
-        #     #pylab.plot(op0(d1)/op0(d0))
-        #     pylab.ylim(-100,100)
-        #     pylab.draw()
-        #     pylab.show(False)
+            # if True:#self.iAnt==13:
+                
+            #     op0=np.abs
+                
+            #     #k1=self.AverageMachine.AverageKernelMatrix(self.DicoData,self.K1_XX)
+                
+            #     # pylab.figure(2)
+            #     # for iDir in range(NDir):
+            #     #     d0=k[iDir,:,0]
+            #     #     d1=k1[iDir,:,0]
+            #     #     pylab.subplot(1,NDir,iDir+1)
+            #     #     pylab.plot(op0(d0))
+            #     #     pylab.plot(op0(d1))
+            #     #     pylab.plot(op0(d0)-op0(d1))
+            #     #     pylab.legend(("k0","k1","rk"))
+            #     #     #pylab.plot(op0(d0)-op0(d1))
+            #     #     #pylab.plot(op0(d1)/op0(d0))
+            #     # #pylab.ylim(-100,100)
+            #     # pylab.draw()
+            #     # pylab.show(block=False)
+                
+                
+            #     f=np.any(k[:,:,0]==0,axis=0)
+            #     import pylab
+            #     pylab.figure(3)
+            #     d0=np.sum(k[:,:,0],axis=0)
+            #     #d1=np.sum(k1[:,:,0],axis=0)
+            #     dd=self.DicoData["data_flat_avg"][0]
+            #     # d0.flat[f]=0
+            #     # d1.flat[f]=0
+            #     pylab.clf()
+            #     pylab.plot(op0(d0))
+            #     #pylab.plot(op0(d1))
+            #     pylab.plot(op0(dd))
+            #     pylab.plot(op0(dd)-op0(d0))
+            #     #pylab.legend(("k0","k1","d","r"))
+            #     pylab.legend(("k0","d","r"))
+            #     pylab.title(self.iAnt)
+            #     pylab.draw()
+            #     pylab.show(block=False)
+            #     pylab.pause(1)
+                
 
-        #     op1=np.angle
-        #     pylab.figure(1)
-        #     pylab.subplot(1,NDir,iDir+1)
-        #     pylab.plot(op1(d0))
-        #     pylab.plot(op1(d1))
-        #     #pylab.plot(op1(d1)-op1(d0))
-        #     pylab.ylim(-np.pi,np.pi)
-
-        #     # pylab.subplot(2,1,2)
-        #     # #pylab.plot(op1(d0))
-        #     # pylab.plot(op1(d1*d0.conj()))#,ls="--")
-        #     # #pylab.plot(op1(d0*d1.conj()),ls="--")
-        #     # #pylab.ylim(-1,1)
-        #     pylab.draw()
-        #     pylab.show(False)
-            
-        # #     K1_XX=K1[:,:,0]
-        # #     K1_YY=K1[:,:,3]
-        # #     if self.PolMode=="Scalar":
-        # #         K1_XX=(K1_XX+K1_YY)/2.
-        # #         K1_YY=K1_XX
-
-        # #     self.K1_XX[iDir,:,:]=K1_XX
-        # #     self.K1_YY[iDir,:,:]=K1_YY
-        # #     #self.K_XX.append(K_XX)
-        # #     #self.K_YY.append(K_YY)
-
+                
         # #     del(K1,K1_XX,K1_YY)
         # #     del(K,K_XX,K_YY)
         # stop
@@ -845,6 +916,9 @@ class ClassJacobianAntenna():
         #stop
         #gc.collect()
 
+        self.DicoData=NpShared.DicoToShared(self.SharedDataDicoName,self.DicoData)
+        self.SharedDicoDescriptors["SharedAntennaVis"]=NpShared.SharedDicoDescriptor(self.SharedDataDicoName,self.DicoData)
+        
         self.HasKernelMatrix=True
         T.timeit("stuff 4")
 
@@ -862,22 +936,54 @@ class ClassJacobianAntenna():
             flags_key="flags"
             flags_flat_key="flags_flat"
             
+        flags_orig_key="flags"
+        flags_orig_flat_key="flags_flat"
+        
+        DicoData=self.DicoData
+        # print(DicoData["flags"].shape,DicoData["data"].shape,DicoData["flags_flat"].shape,DicoData["data_flat"].shape,self.K_XX.shape)
+        # if self.DoCompress:
+        #     print(DicoData["flags_avg"].shape,DicoData["data_avg"].shape,DicoData["flags_flat_avg"].shape,DicoData["data_flat_avg"].shape)
 
+        # No-Comp:
+        # anal
+        # (840, 4, 1, 1) (840, 4, 1, 1) (1, 3360) (1, 3360) (9, 840, 4)
+        # fft:
+        # (840, 4, 1, 1) (840, 4, 1, 1) (1, 3360) (1, 3360) (9, 840, 4)
+        # Compress
+        # anal    :
+        #(840, 4, 1, 1) (840, 4, 1, 1) (1, 3360) (1, 3360) (9, 189, 1)
+        #(189, 1, 1, 1) (189, 1, 1, 1) (1, 189) (1, 189)
+        # fft:
+        #(840, 4, 1, 1) (840, 4, 1, 1) (1, 3360) (1, 3360) (9, 189, 1)
+        #(189, 1, 1, 1) (189, 1, 1, 1) (1, 189) (1, 189)
 
         NDir=self.SM.NDir
+        _,nr,nch=self.K_XX.shape
         for iDir in range(NDir):
             
             K=self.K_XX[iDir,:,:]
 
             indRow,indChan=np.where(K==0)
+
+            # print("")
+            # print("non-zeroflag:",indRow.size)
+            # print("")
             self.DicoData[flags_key][indRow,indChan,:]=1
 
+            #self.DicoData[flags_key].reshape((NDir*nr,nch,1))[indRow,indChan,:]=1
+            
+            #stop
+            #self.DicoData[flags_orig_key][indRow,indChan,:]=1
+            
 
             
         DicoData=self.DicoData
         nr,nch = K.shape
-        flags_flat=np.rollaxis(DicoData[flags_key],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
+        flags_flat = np.rollaxis(DicoData[flags_key],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
         DicoData[flags_flat_key][flags_flat]=1
+        #nr,nch = self.K_YY_AllChan[0,:,self.ch0:self.ch1]#K.shape
+        #flags_flat=np.rollaxis(DicoData[flags_orig_key],2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
+        #DicoData[flags_orig_flat_key][flags_flat]=1
 
 
         self.DataAllFlagged=False
@@ -893,8 +999,8 @@ class ClassJacobianAntenna():
                 self.DataAllFlagged=True
 
 
-        
-                
+        # print("ok!!!")
+        # stop
 
         # print("SelectChannelKernelMat",np.count_nonzero(DicoData["flags_flat"]),np.count_nonzero(DicoData["flags"]))
 
@@ -1067,6 +1173,10 @@ class ClassJacobianAntenna():
                 
                 Rinv=1./R
                 Weights=W.reshape((W_nrows,W_nch,1))*np.ones((1,1,self.npolData))
+
+                # DicoData["Rinv"]=Rinv
+                # DicoData["R"]=R
+                # DicoData["Weights"]=Weights
                 
                 self.R_flat=np.rollaxis(R,2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
                 self.Rinv_flat=np.rollaxis(Rinv,2).reshape(self.NJacobBlocks_X,nr*nch*self.NJacobBlocks_Y)
@@ -1098,8 +1208,9 @@ class ClassJacobianAntenna():
                 if fracFlagged<0.2:#ind.size==0:
                     self.DataAllFlagged=True
 
-            DicoData=NpShared.DicoToShared(self.SharedDataDicoName,DicoData)
-            self.SharedDicoDescriptors["SharedAntennaVis"]=NpShared.SharedDicoDescriptor(self.SharedDataDicoName,DicoData)
+            # DicoData=NpShared.DicoToShared(self.SharedDataDicoName,DicoData)
+            # self.SharedDicoDescriptors["SharedAntennaVis"]=NpShared.SharedDicoDescriptor(self.SharedDataDicoName,DicoData)
+            
         else:
             DicoData=NpShared.SharedObjectToDico(self.SharedDicoDescriptors["SharedAntennaVis"])
             self.ZeroSizedData=False
@@ -1109,7 +1220,7 @@ class ClassJacobianAntenna():
                 self.Rinv_flat=DicoData["Rinv_flat"]
                 self.R_flat=DicoData["R_flat"]
                 self.Weights_flat=DicoData["Weights_flat"]
-
+            
             #print("DATA From shared")
             #print(np.max(DicoData["A0"]))
             #np.save("testA0",DicoData["A0"])
@@ -1134,6 +1245,9 @@ class ClassJacobianAntenna():
 
 
             DicoData["DicoPreApplyJones"]=DicoJonesMatrices
+
+
+            
             #print(DATA["Map_VisToJones_Time"].max())
             #stop
 
@@ -1169,8 +1283,8 @@ class ClassJacobianAntenna():
         DicoData["freqs_full"]   = self.DATA['freqs']
         DicoData["dfreqs_full"]   = self.DATA['dfreqs']
 
-        if self.DoCompress:
-            self.AverageMachine.AverageDataVector(DicoData)
+        # if self.DoCompress:
+        #     self.AverageMachine.AverageDataVector(DicoData)
 
         return DicoData
 

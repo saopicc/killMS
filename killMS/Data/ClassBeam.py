@@ -31,21 +31,25 @@ log=logger.getLogger("ClassBeam")
 from killMS.Array import ModLinAlg
 
 class ClassBeam():
-    def __init__(self,MSName,GD,SM):
+    def __init__(self,MSName,GD,SM,ColName=None):
         self.GD=GD
         self.SM=SM
         self.MSName=MSName#self.GD["VisData"]["MSName"]
-        self.ColName=self.GD["VisData"]["InCol"]
+        if ColName is not None:
+            self.ColName=ColName
+        else:
+            self.ColName=self.GD["VisData"]["InCol"]
+            
         self.MS=ClassMS.ClassMS(self.MSName,Col=self.ColName,DoReadData=False,GD=GD)
         self.DtBeamMin=self.GD["Beam"]["DtBeamMin"]
 
-    def GiveMeanBeam(self):
-        log.print( "Calculate mean beam for covariance estimate ... ")
+    def GiveMeanBeam(self,NTimes=None):
+        log.print( "Calculate mean beam ... ")
         t=table(self.MSName,ack=False)
         times=t.getcol("TIME")
         t.close()
         
-        DicoBeam=self.GiveBeam(times)
+        DicoBeam=self.GiveBeamMeanAllFreq(times,NTimes=NTimes)
         J=DicoBeam["Jones"]
         AbsMean=np.mean(np.abs(J),axis=0)
         return AbsMean
@@ -58,17 +62,25 @@ class ClassBeam():
     #     self.ApplyBeam=True
         
         
-    def GiveBeam(self,times):
+    def GiveBeamMeanAllFreq(self,times,NTimes=None):
         if self.GD["Beam"]["BeamModel"]=="LOFAR":
             useArrayFactor=("A" in self.GD["Beam"]["LOFARBeamMode"])
             useElementBeam=("E" in self.GD["Beam"]["LOFARBeamMode"])
             self.MS.LoadSR(useElementBeam=useElementBeam,useArrayFactor=useArrayFactor)
-        elif self.GD["Beam"]["BeamModel"]=="FITS":
-            self.MS.LoadFITSBeam()
+        elif self.GD["Beam"]["BeamModel"]=="FITS" or self.GD["Beam"]["BeamModel"]=="ATCA":
+            self.MS.LoadDDFBeam()
 
-        #log.print( "  Update beam [Dt = %3.1f min] ... "%self.DtBeamMin)
-        DtBeamSec=self.DtBeamMin*60
+
+        
         tmin,tmax=times[0],times[-1]
+        if NTimes is None:
+            DtBeamSec=self.DtBeamMin*60
+            DtBeamMin=self.DtBeamMin
+        else:
+            DtBeamSec=(tmax-tmin)/(NTimes+1)
+            DtBeamMin=DtBeamSec/60
+        log.print( "  Update beam [Dt = %3.1f min] ... "%DtBeamMin)
+            
         TimesBeam=np.arange(tmin,tmax,DtBeamSec).tolist()
         if not(tmax in TimesBeam): TimesBeam.append(tmax)
         TimesBeam=np.array(TimesBeam)
@@ -83,7 +95,7 @@ class ClassBeam():
             Beam[itime]=self.MS.GiveBeam(ThisTime,RA,DEC)
     
         ###### Normalise
-        rac,decc=self.MS.radec
+        rac,decc=self.MS.OriginalRadec
         if self.GD["Beam"]["CenterNorm"]==1:
             for itime in range(Tm.size):
                 ThisTime=Tm[itime]
