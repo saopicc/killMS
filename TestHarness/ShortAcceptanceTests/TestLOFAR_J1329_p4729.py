@@ -178,7 +178,7 @@ class TestLOFAR_J1329_p4729(DDFacet.Tests.ShortAcceptanceTests.ClassCompareFITSI
               "--UpdateWeights=0",
               "--ApplyToDir=-2",
               "--ApplyMode=-2",
-              "--WriteColName=None"]
+              "--OutCol=None"]
         cls.__run(args)
 
 if __name__ == '__main__':
