@@ -156,7 +156,7 @@ class TestLOFAR_J1329_p4729(DDFacet.Tests.ShortAcceptanceTests.ClassCompareFITSI
               "--BaseImageName={}".format(basename)]
         cls.__run(args)
 
-        args=["kms.py",
+        args=["kMS.py",
               "--MSName=L242820_SB150_uv.dppp.pre-cal_125145DD7t_150MHz.pre-cal.ms",
               "--Field=0",
               "--SolverType=KAFCA",
