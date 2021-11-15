@@ -35,7 +35,7 @@ import time
 
 import DDFacet.Tests.ShortAcceptanceTests.ClassCompareFITSImage
 
-class TestLOFAR_J1329_p4729_with_kms(DDFacet.Tests.ShortAcceptanceTests.ClassCompareFITSImage.ClassCompareFITSImage):
+class TestLOFAR_J1329_p4729(DDFacet.Tests.ShortAcceptanceTests.ClassCompareFITSImage.ClassCompareFITSImage):
     @classmethod
     def __run(cls, cmdargs, timeout=600):
         p = Popen(cmdargs, 
