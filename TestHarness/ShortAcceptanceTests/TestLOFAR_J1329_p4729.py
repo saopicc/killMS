@@ -180,7 +180,7 @@ class TestLOFAR_J1329_p4729(DDFacet.Tests.ShortAcceptanceTests.ClassCompareFITSI
               "--ApplyToDir=-2",
               "--ApplyMode=-2",
               "--OutCol=None"]
-        cls.__run(args, timeout=3600)
+        cls.__run(args, timeout=3600*6)
 
 if __name__ == '__main__':
     unittest.main()
