@@ -131,7 +131,10 @@ class ClassVisServer():
         ToRaDec=None
         if self.GD is not None and "GDImage" in list(self.GD.keys()):
             ToRaDec=self.GD["GDImage"]["Image"]["PhaseCenterRADEC"]
-        
+
+            if not ToRaDec: # catch empty string
+                ToRaDec=None
+            
         if ToRaDec=="align":
             log.print(ModColor.Str("kMS does not understand align mode for PhaseCenterRADEC, setting to None..."))
             ToRaDec=None
