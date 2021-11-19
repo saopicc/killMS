@@ -141,17 +141,9 @@ class TestLOFAR_J1329_p4729(DDFacet.Tests.ShortAcceptanceTests.ClassCompareFITSI
             f.write('circle(13:45:25.720,+49:46:10.957,832.169")\n')
             f.write('circle(13:31:32.759,+50:06:56.311,832.169")\n')
             f.write('circle(13:21:19.565,+48:37:58.258,832.169")\n')
-            f.write('circle(13:37:36.370,+47:40:09.337,832.169")\n')
-            f.write('circle(13:41:49.433,+46:55:39.438,832.169")\n')
-            f.write('circle(13:36:05.311,+46:04:48.536,832.169")\n')
-            f.write('circle(13:29:37.068,+45:39:16.561,832.169")\n')
-            f.write('circle(13:19:55.809,+46:38:15.724,832.169")\n')
-            f.write('circle(13:11:10.167,+47:37:33.579,832.169")\n')
-            f.write('circle(13:46:18.333,+48:11:13.511,832.169")')
-
         args=["MakeModel.py",
               "--ds9PreClusterFile={}".format(tagfilename),
-              "--NCluster=10",
+              "--NCluster=3",
               "--DoPlot=0",
               "--BaseImageName={}".format(basename)]
         cls.__run(args)
@@ -164,13 +156,13 @@ class TestLOFAR_J1329_p4729(DDFacet.Tests.ShortAcceptanceTests.ClassCompareFITSI
               "--PolMode=Scalar",
               "--BaseImageName={}".format(basename),
               "--dt=30",
-              "--NCPU=16",
-              "--NChanSols=20",
+              "--NCPU=24",
+              "--NChanSols=3",
               "--OutSolsName=DD0",
               "--InCol=SCALED_DATA",
-              "--TChunk=0.25",
+              "--TChunk=0.5",
               "--BeamModel=LOFAR",
-              "--NChanBeamPerMS=10",
+              "--NChanBeamPerMS=3",
               "--DoBar=0",
               "--UVMinMax=0.1,30.0",
               "--WeightUVMinMax=0.1,30.0",
