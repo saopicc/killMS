@@ -42,6 +42,8 @@ class MyOptParse():
         self.DefaultDict=DefaultDict
         self.CurrentGroup=None
         self.DicoGroupDesc=collections.OrderedDict()
+        # remember parameter types so we can generate a schema, if needed
+        self.parameter_types = collections.OrderedDict()
 
     def OptionGroup(self,Name,key=None):
         if self.CurrentGroup!=None:
@@ -68,6 +70,7 @@ class MyOptParse():
             default=self.DefaultDict[self.CurrentGroupKey][Name]
         
         self.CurrentGroup.add_option('--%s'%Name,help=help,type=type,default=default,dest=self.GiveKeyDest(self.CurrentGroupKey,Name))
+        self.parameter_types[Name] = type
 
     def GiveKeyDest(self,GroupKey,Name):
         return "_".join([GroupKey,Name])

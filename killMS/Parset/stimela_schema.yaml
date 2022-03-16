@@ -1,0 +1,282 @@
+MSName:
+  dtype: str
+  required: false
+TChunk:
+  dtype: str
+  required: false
+InCol:
+  dtype: str
+  required: false
+OutCol:
+  dtype: str
+  required: false
+FreePredictColName:
+  dtype: str
+  required: false
+FreePredictGainColName:
+  dtype: str
+  required: false
+Parallel:
+  dtype: int
+  required: false
+SkyModel:
+  dtype: str
+  required: false
+kills:
+  dtype: str
+  required: false
+invert:
+  dtype: str
+  required: false
+Decorrelation:
+  dtype: str
+  required: false
+FreeFullSub:
+  dtype: int
+  required: false
+SkyModelCol:
+  dtype: str
+  required: false
+BaseImageName:
+  dtype: str
+  required: false
+ImagePredictParset:
+  dtype: str
+  required: false
+DicoModel:
+  dtype: str
+  required: false
+OverS:
+  dtype: str
+  required: false
+wmax:
+  dtype: str
+  required: false
+MaskImage:
+  dtype: str
+  required: false
+NodesFile:
+  dtype: str
+  required: false
+MaxFacetSize:
+  dtype: str
+  required: false
+MinFacetSize:
+  dtype: str
+  required: false
+DDFCacheDir:
+  dtype: str
+  required: false
+RemoveDDFCache:
+  dtype: str
+  required: false
+FilterNegComp:
+  dtype: str
+  required: false
+ThSolve:
+  dtype: str
+  required: false
+CompressionMode:
+  dtype: str
+  required: false
+CompressionDirFile:
+  dtype: str
+  required: false
+MergeStations:
+  dtype: str
+  required: false
+UVMinMax:
+  dtype: str
+  required: false
+ChanSlice:
+  dtype: str
+  required: false
+FlagAnts:
+  dtype: str
+  required: false
+DistMaxToCore:
+  dtype: float
+  required: false
+FillFactor:
+  dtype: float
+  required: false
+FieldID:
+  dtype: int
+  required: false
+DDID:
+  dtype: int
+  required: false
+BeamModel:
+  dtype: str
+  required: false
+BeamAt:
+  dtype: str
+  required: false
+LOFARBeamMode:
+  dtype: str
+  required: false
+DtBeamMin:
+  dtype: float
+  required: false
+CenterNorm:
+  dtype: str
+  required: false
+NChanBeamPerMS:
+  dtype: int
+  required: false
+FITSParAngleIncDeg:
+  dtype: float
+  required: false
+FITSFile:
+  dtype: str
+  required: false
+FITSLAxis:
+  dtype: str
+  required: false
+FITSMAxis:
+  dtype: str
+  required: false
+FITSFeed:
+  dtype: str
+  required: false
+FITSFeedSwap:
+  dtype: int
+  required: false
+FITSVerbosity:
+  dtype: int
+  required: false
+ApplyPJones:
+  dtype: int
+  required: false
+FlipVisibilityHands:
+  dtype: int
+  required: false
+FeedAngle:
+  dtype: float
+  required: false
+FITSFrame:
+  dtype: str
+  required: false
+PreApplySols:
+  dtype: str
+  required: false
+PreApplyMode:
+  dtype: str
+  required: false
+Resolution:
+  dtype: float
+  required: false
+WeightInCol:
+  dtype: str
+  required: false
+Weighting:
+  dtype: str
+  required: false
+Robust:
+  dtype: float
+  required: false
+WeightUVMinMax:
+  dtype: str
+  required: false
+WTUV:
+  dtype: float
+  required: false
+DoPlot:
+  dtype: int
+  required: false
+SubOnly:
+  dtype: int
+  required: false
+DoBar:
+  dtype: str
+  required: false
+NCPU:
+  dtype: int
+  required: false
+NThread:
+  dtype: int
+  required: false
+UpdateWeights:
+  dtype: str
+  required: false
+DebugPdb:
+  dtype: int
+  required: false
+ExtSols:
+  dtype: str
+  required: false
+ApplyMode:
+  dtype: str
+  required: false
+ClipMethod:
+  dtype: str
+  required: false
+OutSolsName:
+  dtype: str
+  required: false
+ApplyToDir:
+  dtype: int
+  required: false
+MergeBeamToAppliedSol:
+  dtype: int
+  required: false
+SkipExistingSols:
+  dtype: int
+  required: false
+SolsDir:
+  dtype: str
+  required: false
+SolverType:
+  dtype: str
+  required: false
+PrecisionDot:
+  dtype: str
+  required: false
+PolMode:
+  dtype: str
+  required: false
+dt:
+  dtype: float
+  required: false
+NChanSols:
+  dtype: int
+  required: false
+NIterLM:
+  dtype: int
+  required: false
+LambdaLM:
+  dtype: float
+  required: false
+LambdaTk:
+  dtype: float
+  required: false
+NIterKF:
+  dtype: int
+  required: false
+LambdaKF:
+  dtype: float
+  required: false
+InitLM:
+  dtype: int
+  required: false
+InitLMdt:
+  dtype: float
+  required: false
+CovP:
+  dtype: float
+  required: false
+CovQ:
+  dtype: float
+  required: false
+PowerSmooth:
+  dtype: float
+  required: false
+evPStep:
+  dtype: int
+  required: false
+evPStepStart:
+  dtype: int
+  required: false
+EvolutionSolFile:
+  dtype: str
+  required: false
