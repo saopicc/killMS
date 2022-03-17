@@ -14,7 +14,7 @@ cabs:
         info: "Name of parset to load parameters from (default is to start with global default settings.)"
         policies:
           positional_head: true
-      _include: (killMS.Parset)stimela_schema.yaml
+      _include: (killMS.Parset)killms_stimela_schema.yaml
       # _flatten: 1
       # _flatten_sep: "-"
 

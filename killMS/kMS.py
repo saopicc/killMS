@@ -312,7 +312,7 @@ def main(OP=None,MSName=None):
 
     if options.MSName == "MAKE_SCHEMA":
         import killMS.Parset.generate_stimela_schema 
-        output_name = os.path.dirname(killMS.Parset.generate_stimela_schema.__file__) + "/stimela_schema.yaml"
+        output_name = os.path.dirname(killMS.Parset.generate_stimela_schema.__file__) + "/killms_stimela_schema.yaml"
         killMS.Parset.generate_stimela_schema.generate_schema(OP.parameter_types, output_name)
         sys.exit(0)
 
