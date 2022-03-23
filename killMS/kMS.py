@@ -302,6 +302,21 @@ def main(OP=None,MSName=None):
         
     options=OP.GiveOptionObject()
 
+    # OMS: crude hack for now, can be removed when the more sophisticed DDF Parset is ported here.
+    # I need option type info in order to generate a stimela schema, but this is not defined in the parset.
+    # The type information is only available from the OP (class MyOptParse) object constructed directly
+    # in the code above.
+    # So, as a hack: "kMS.py --MSName MAKE_SCHEMA" will generate the schema file here.
+    # If the DDFacet Parset class is ported to kMS, then this can be replaced by the DDF-style standalone
+    # generate_stimela_schema.py script
+
+    if options.MSName == "MAKE_SCHEMA":
+        import killMS.Parset.generate_stimela_schema 
+        output_name = os.path.dirname(killMS.Parset.generate_stimela_schema.__file__) + "/killms_stimela_schema.yaml"
+        killMS.Parset.generate_stimela_schema.generate_schema(OP.parameter_types, output_name)
+        sys.exit(0)
+
+
     # ## I've carefully moved the import statements around so that numpy is not yet imported at this
     # ## point. This gives us a chance to set the OPENBLAS thread variables and such.
     # ## But in case of someone messing around with imports in the future, leave this check here

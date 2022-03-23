@@ -1,0 +1,28 @@
+cabs:
+  killms:
+    command: kMS.py
+    policies:
+      prefix: '--'
+      # replace:
+      #   '-': '-'
+      explicit_true: true
+      explicit_false: true
+    inputs:
+      parset:
+        dtype: File
+        required: false
+        info: "Name of parset to load parameters from (default is to start with global default settings.)"
+        policies:
+          positional_head: true
+      _include: (killMS.Parset)killms_stimela_schema.yaml
+      # _flatten: 1
+      # _flatten_sep: "-"
+
+test_recipe:
+  steps:
+    kms:
+      cab: killms
+      params:
+        MSName: test.ms
+
+
