@@ -39,7 +39,7 @@ except ImportError as e:
 
 
 pkg='killMS'
-__version__ = "3.0.1.0"
+__version__ = "3.1.0"
 build_root=os.path.dirname(__file__)
 
 def backend(compile_options):
@@ -117,7 +117,7 @@ def readme():
 
 def requirements():
     install_requirements = [
-        "DDFacet >= 0.5.0; python_version >= '3'",
+        "DDFacet >= 0.7.0; python_version >= '3'",
         "bdsf > 1.8.15; python_version >= '3'"
     ]
 
@@ -144,7 +144,7 @@ setup(name=pkg,
                 'sdist': custom_sdist,
                 'build_ext': custom_build_ext
                },
-      python_requires='>=3.0,<3.7',
+      python_requires='>=3.0,<3.9',
       packages=[pkg],
       install_requires=requirements(),
       include_package_data=True,
