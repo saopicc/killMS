@@ -3,9 +3,7 @@ MAINTAINER Ben Hugo "bhugo@ska.ac.za"
 
 #Copy killMS into the image
 ADD killMS /opt/killMS/killMS
-ADD MANIFEST.in /opt/killMS/MANIFEST.in
-ADD setup.py /opt/killMS/setup.py
-ADD setup.cfg /opt/killMS/setup.cfg
+ADD pyproject.toml /opt/killMS/pyproject.toml
 ADD README.md /opt/killMS/README.md
 ADD .git /opt/killMS/.git
 ADD .gitignore /opt/killMS/.gitignore
