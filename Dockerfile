@@ -5,6 +5,7 @@ MAINTAINER Ben Hugo "bhugo@ska.ac.za"
 ADD killMS /opt/killMS/killMS
 ADD pyproject.toml /opt/killMS/pyproject.toml
 ADD README.md /opt/killMS/README.md
+ADD LICENSE.md /opt/killMS/LICENSE.md
 ADD .git /opt/killMS/.git
 ADD .gitignore /opt/killMS/.gitignore
 
