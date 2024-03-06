@@ -1246,8 +1246,7 @@ def _exc_handler(type, value, tb):
 
     sys.excepthook = _exc_handler
 
-
-if __name__=="__main__":
+def driver():
     from killMS.Other import logo
     from killMS.Other import ModColor
     from killMS.Other import MyPickle
@@ -1347,3 +1346,6 @@ if __name__=="__main__":
             from killMS.Array import NpShared
             NpShared.DelAll(IdSharedMem)
         raise
+
+if __name__=="__main__":
+    driver()

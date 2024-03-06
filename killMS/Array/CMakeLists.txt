@@ -5,3 +5,4 @@ execute_process(COMMAND touch __init__.py
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 add_subdirectory(Dot)
+install(FILES __init__.py DESTINATION killMS/cbuild/Array)

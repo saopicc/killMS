@@ -22,12 +22,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 import numpy as np
-import six
-# if six.PY2:
-#     try:
-#         from killMS.Gridder import _pyGridder
-#     except:
-#         from killMS.cbuild.Gridder import _pyGridder
+
+from killMS.cbuild.Gridder import _pyGridder
 
         
 from DDFacet.Other import logger

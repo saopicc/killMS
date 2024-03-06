@@ -49,7 +49,7 @@ double AppendTimeit(){
 /* #### Globals #################################### */
 
 /* ==== Set up the methods table ====================== */
-static PyMethodDef _pyGridder_testMethods[] = {
+static PyMethodDef _pyGridder[] = {
 	{"pyGridderWPol", pyGridderWPol, METH_VARARGS},
 	{"pyGridderPoints", pyGridderPoints, METH_VARARGS},
 	{"pyDeGridderWPol", pyDeGridderWPol, METH_VARARGS},
@@ -59,14 +59,22 @@ static PyMethodDef _pyGridder_testMethods[] = {
 	{NULL, NULL}     /* Sentinel - marks the end of this structure */
 };
 
+static struct PyModuleDef cMod_pyGridder =
+{
+    PyModuleDef_HEAD_INIT,
+    "_pyGridder",    /* name of module */
+    "",          /* module documentation, may be NULL */
+    -1,          /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
+    _pyGridder
+};
+
+
 /* ==== Initialize the C_test functions ====================== */
 // Module name must be _C_arraytest in compile and linked 
-void init_pyGridder()  {
-  (void) Py_InitModule("_pyGridder", _pyGridder_testMethods);
-  import_array();  // Must be present for NumPy.  Called first after above line.
+PyMODINIT_FUNC PyInit__pyGridder(void)
+{
+    return PyModule_Create(&cMod_pyGridder);
 }
-
-
 
 static PyObject *pyWhereMax(PyObject *self, PyObject *args)
 {
