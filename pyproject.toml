@@ -32,6 +32,17 @@ classifiers = [
 
 [project.scripts]
 "kMS.py" = "killMS.__main__:kms_main"
+"AQWeight.py" = "killMS.__main__:aqweight_main"
+"ClipCal.py" = "killMS.__main__:clipcal_main"
+"dsc.py" = "killMS.__main__:dsc_main"
+"grepall.py" = "killMS.__main__:grepall_main"
+"InterpSols.py" = "killMS.__main__:interpsols_main"
+"MakePlotMovie.py" = "killMS.__main__:makeplotmovie_main"
+"MergeSols.py" = "killMS.__main__:mergesols_main"
+"PlotSols.py" = "killMS.__main__:plotsols_main"
+"PlotSolsIm.py" = "killMS.__main__:plotsolsim_main"
+"SmoothSols.py" = "killMS.__main__:smoothsols_main"
+
 
 [tool.scikit-build]
 # The versions of CMake to allow. If CMake is not present on the system or does

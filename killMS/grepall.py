@@ -27,7 +27,7 @@ import os
 import sys
 
 
-if __name__=="__main__":
+def driver():
     name=sys.argv[1]
     typein=sys.argv[2]
     print(sys.argv)
@@ -35,6 +35,9 @@ if __name__=="__main__":
     print(strin)
     os.system(strin)
 
-
+if __name__=="__main__":
+    # do not place any other code here --- cannot be called as a package entrypoint otherwise, see:
+    # https://packaging.python.org/en/latest/specifications/entry-points/
+    driver()
 
 

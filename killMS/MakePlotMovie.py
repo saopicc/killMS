@@ -31,7 +31,7 @@ from killMS.Other import ModColor
 from DDFacet.Other import logger
 import os
 log=logger.getLogger("killMS")
-logger.itsLog.logger.setLevel(logger.logging.CRITICAL)
+log.logger.setLevel(logger.logging.CRITICAL)
 
 sys.path=[name for name in sys.path if not(("pyrap" in name)&("/usr/local/lib/" in name))]
 
@@ -311,9 +311,14 @@ def main(options=None):
     os.system("convert -delay 10 -loop 0 png/*.png %s"%OutFile)
 
 
-if __name__=="__main__":
+def driver():
     read_options()
     f = open(NameSave,'rb')
     options = pickle.load(f)
 
     main(options=options)
+
+if __name__=="__main__":
+    # do not place any other code here --- cannot be called as a package entrypoint otherwise, see:
+    # https://packaging.python.org/en/latest/specifications/entry-points/
+    driver()
