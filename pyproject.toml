@@ -114,7 +114,8 @@ sdist.include = [
 # Files to exclude from the SDist even if they are included by default. Supports
 # gitignore syntax.
 sdist.exclude = [
-    "killMS/cbuild"
+    "killMS/cbuild",
+    "TestHarness"
 ]
 
 # If set to True, try to build a reproducible distribution (Unix and Python 3.9+
