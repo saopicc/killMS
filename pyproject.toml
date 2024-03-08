@@ -1,5 +1,5 @@
 [build-system]
-requires = ["numpy>=1.15.1,<=1.19.5", # until next DDF release
+requires = ["numpy>=1.15.1,<=1.22.0", # need to match DDF in the upper bound, may cause problems if installing into a non-prestine venv
             "pybind11 >= 2.2.2",
             "cython<=0.29.30",
             "cmake",
