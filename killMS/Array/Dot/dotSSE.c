@@ -53,7 +53,9 @@ static struct PyModuleDef dotSSE =
 // Module name must be _C_arraytest in compile and linked 
 PyMODINIT_FUNC PyInit_dotSSE(void)
 {
-    return PyModule_Create(&dotSSE);
+    PyObject * m = PyModule_Create(&dotSSE);
+    import_array();
+    return m;
 }
 
 

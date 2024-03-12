@@ -10,6 +10,7 @@ option(ENABLE_PYTHON_2 "Enables support for Python 2.7" ON)
 option(ENABLE_PYTHON_3 "Enables support for Python 3.x" ON)
 
 #As per http://permalink.gmane.org/gmane.comp.programming.tools.cmake.user/15952
+
 IF(DEFINED CMAKE_BUILD_TYPE)
    IF((CMAKE_BUILD_TYPE STREQUAL "Debug") OR (CMAKE_BUILD_TYPE STREQUAL "Release") OR (CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo") OR (CMAKE_BUILD_TYPE STREQUAL "MinSizeRel"))
       MESSAGE("-- Build type is defined as '${CMAKE_BUILD_TYPE}'")
@@ -23,6 +24,8 @@ ELSE()
 ENDIF()
 IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
   MESSAGE(WARNING "You are compiling the backend in debugging mode... things may be slower than usual. Overriding all optimizations to 'OFF'")
+  set(ENABLE_FAST_MATH "OFF")
+  set(ENABLE_NATIVE_TUNING "OFF")
 ENDIF()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
@@ -60,6 +63,7 @@ set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_RELEASE}")
 set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_RELEASE}")
 message("-- Debug CXXFLAGS are ${CMAKE_CXX_FLAGS_DEBUG}")
 message("-- Release CXXFLAGS are ${CMAKE_CXX_FLAGS_RELEASE}")
+
 
 add_subdirectory(Predict)
 add_subdirectory(Gridder)

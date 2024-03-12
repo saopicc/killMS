@@ -28,6 +28,5 @@ include_directories(${PYTHON_INCLUDE_DIR} ${PYTHON_NUMPY_INCLUDE_DIR} ${PYTHON_N
 add_library(_pyGridder Gridder.c Gridder.h)
 set_target_properties(_pyGridder PROPERTIES PREFIX "") #remove "lib" prefix from library (PEP8 compliance)
 target_link_libraries(_pyGridder ${RT_LIBRARIES} ${PYTHON_LIBRARY})
-
 install(FILES __init__.py DESTINATION killMS/cbuild/Gridder)
 install(TARGETS _pyGridder LIBRARY DESTINATION killMS/cbuild/Gridder)

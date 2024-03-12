@@ -55,7 +55,7 @@ cmake.version = ">=2.8"
 cmake.args = []
 
 # A table of defines to pass to CMake when configuring the project. Additive.
-cmake.define = {ENABLE_NATIVE_TUNING = "OFF", ENABLE_FAST_MATH = "ON", ENABLE_PYTHON_2 = "OFF", ENABLE_PYTHON_3 = "ON"}
+cmake.define = {ENABLE_NATIVE_TUNING = "OFF", ENABLE_FAST_MATH = "ON", ENABLE_PYTHON_2 = "OFF", ENABLE_PYTHON_3 = "ON", CMAKE_EXPORT_COMPILE_COMMANDS = "ON"}
 
 # Verbose printout when building.
 cmake.verbose = false
@@ -203,3 +203,6 @@ minimum-version = "0.8"  # current version
 
 # The build directory. Defaults to a temporary directory, but can be set.
 build-dir = "killMS/cbuild"
+
+# Whether to strip the binaries. True for scikit-build-core 0.5+
+install.strip = false

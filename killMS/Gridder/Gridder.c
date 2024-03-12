@@ -65,7 +65,11 @@ static struct PyModuleDef cMod_pyGridder =
     "_pyGridder",    /* name of module */
     "",          /* module documentation, may be NULL */
     -1,          /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
-    _pyGridder
+    _pyGridder,
+    NULL,
+    NULL,
+    NULL,
+    NULL
 };
 
 
@@ -73,7 +77,9 @@ static struct PyModuleDef cMod_pyGridder =
 // Module name must be _C_arraytest in compile and linked 
 PyMODINIT_FUNC PyInit__pyGridder(void)
 {
-    return PyModule_Create(&cMod_pyGridder);
+    PyObject * m = PyModule_Create(&cMod_pyGridder);
+    import_array();
+    return m;
 }
 
 static PyObject *pyWhereMax(PyObject *self, PyObject *args)
@@ -284,10 +290,10 @@ static PyObject *pyAddArray(PyObject *self, PyObject *args)
 
 static PyObject *pyGridderPoints(PyObject *self, PyObject *args)
 {
-  PyObject *ObjGridIn,*ObjWIn;
+  PyArrayObject *ObjGridIn,*ObjWIn;
   PyArrayObject *np_grid, *np_w, *w,*np_u,*np_v, *np_freqs,*np_flags, *np_uvcell;
-  double R;
-  int Mode;
+  double R = 0.0;
+  int Mode = 0;
   if (!PyArg_ParseTuple(args, "OO!O!O!OdiO!O!", 
 			&ObjGridIn,
 			&PyArray_Type,  &np_flags, 
