@@ -49,7 +49,7 @@ double AppendTimeit(){
 /* #### Globals #################################### */
 
 /* ==== Set up the methods table ====================== */
-static PyMethodDef _pyGridder_testMethods[] = {
+static PyMethodDef _pyGridder[] = {
 	{"pyGridderWPol", pyGridderWPol, METH_VARARGS},
 	{"pyGridderPoints", pyGridderPoints, METH_VARARGS},
 	{"pyDeGridderWPol", pyDeGridderWPol, METH_VARARGS},
@@ -59,14 +59,28 @@ static PyMethodDef _pyGridder_testMethods[] = {
 	{NULL, NULL}     /* Sentinel - marks the end of this structure */
 };
 
+static struct PyModuleDef cMod_pyGridder =
+{
+    PyModuleDef_HEAD_INIT,
+    "_pyGridder",    /* name of module */
+    "",          /* module documentation, may be NULL */
+    -1,          /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
+    _pyGridder,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+};
+
+
 /* ==== Initialize the C_test functions ====================== */
 // Module name must be _C_arraytest in compile and linked 
-void init_pyGridder()  {
-  (void) Py_InitModule("_pyGridder", _pyGridder_testMethods);
-  import_array();  // Must be present for NumPy.  Called first after above line.
+PyMODINIT_FUNC PyInit__pyGridder(void)
+{
+    PyObject * m = PyModule_Create(&cMod_pyGridder);
+    import_array();
+    return m;
 }
-
-
 
 static PyObject *pyWhereMax(PyObject *self, PyObject *args)
 {
@@ -276,10 +290,10 @@ static PyObject *pyAddArray(PyObject *self, PyObject *args)
 
 static PyObject *pyGridderPoints(PyObject *self, PyObject *args)
 {
-  PyObject *ObjGridIn,*ObjWIn;
+  PyArrayObject *ObjGridIn,*ObjWIn;
   PyArrayObject *np_grid, *np_w, *w,*np_u,*np_v, *np_freqs,*np_flags, *np_uvcell;
-  double R;
-  int Mode;
+  double R = 0.0;
+  int Mode = 0;
   if (!PyArg_ParseTuple(args, "OO!O!O!OdiO!O!", 
 			&ObjGridIn,
 			&PyArray_Type,  &np_flags, 

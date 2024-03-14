@@ -25,9 +25,9 @@ from __future__ import print_function
 
 import os
 import sys
-from Other.reformat import *
+from killMS.Other.reformat import *
 
-if __name__=="__main__":
+def driver():
 
 
     imin=sys.argv[1]
@@ -42,6 +42,9 @@ if __name__=="__main__":
     strexec="image2fits in=%s out=%s; ds9 %s"%(imin,imout,imout)
     os.system(strexec)
 
-
+if __name__=="__main__":
+    # do not place any other code here --- cannot be called as a package entrypoint otherwise, see:
+    # https://packaging.python.org/en/latest/specifications/entry-points/
+    driver()
 
 

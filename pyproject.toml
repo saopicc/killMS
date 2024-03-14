@@ -1,6 +1,208 @@
 [build-system]
-requires = ["setuptools", 
-            "wheel",
-            "pybind11", 
-            "numpy", # Ubuntu 18.04
-            ]
+requires = ["numpy>=1.15.1,<=1.22.0", # need to match DDF in the upper bound, may cause problems if installing into a non-prestine venv
+            "pybind11 >= 2.2.2",
+            "cython<=0.29.30",
+            "cmake",
+            "scikit-build-core"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "killMS"
+version = "3.1.0"
+description = "A Wirtinger-based direction-dependent radio interferometric calibration package"
+license = {file = "LICENSE.md"}
+readme = "README.md"
+requires-python = ">=3.8,<3.11"
+dependencies = [
+    "DDFacet[kms-support] >= 0.7.0; python_version >= '3'",
+]
+entrypoints = []
+authors = [{ name = "Cyril Tasse", email = "cyril.tasse@obspm.fr" }]
+maintainers = [{ name = "Benjamin Hugo", email = "bhugo@sarao.ac.za" }]
+urls = { Homepage = "http://github.com/saopicc/killMS"}
+classifiers = [
+    "Development Status :: 5 - Production / Stable",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python",
+    "Topic :: Scientific/Engineering :: Astronomy"
+]
+
+[project.scripts]
+"kMS.py" = "killMS.__main__:kms_main"
+"AQWeight.py" = "killMS.__main__:aqweight_main"
+"ClipCal.py" = "killMS.__main__:clipcal_main"
+"dsc.py" = "killMS.__main__:dsc_main"
+"grepall.py" = "killMS.__main__:grepall_main"
+"InterpSols.py" = "killMS.__main__:interpsols_main"
+"MakePlotMovie.py" = "killMS.__main__:makeplotmovie_main"
+"MergeSols.py" = "killMS.__main__:mergesols_main"
+"PlotSols.py" = "killMS.__main__:plotsols_main"
+"PlotSolsIm.py" = "killMS.__main__:plotsolsim_main"
+"SmoothSols.py" = "killMS.__main__:smoothsols_main"
+
+
+[tool.scikit-build]
+# The versions of CMake to allow. If CMake is not present on the system or does
+# not pass this specifier, it will be downloaded via PyPI if possible. An empty
+# string will disable this check.
+cmake.version = ">=2.8"
+
+# A list of args to pass to CMake when configuring the project. Setting this in
+# config or envvar will override toml. See also ``cmake.define``.
+cmake.args = []
+
+# A table of defines to pass to CMake when configuring the project. Additive.
+cmake.define = {ENABLE_NATIVE_TUNING = "OFF", ENABLE_FAST_MATH = "ON", ENABLE_PYTHON_2 = "OFF", ENABLE_PYTHON_3 = "ON", CMAKE_EXPORT_COMPILE_COMMANDS = "ON"}
+
+# Verbose printout when building.
+cmake.verbose = false
+
+# The build type to use when building the project. Valid options are: "Debug",
+# "Release", "RelWithDebInfo", "MinSizeRel", "", etc.
+cmake.build-type = "ReleaseWithDebugSymbols"
+
+# The source directory to use when building the project. Currently only affects
+# the native builder (not the setuptools plugin).
+cmake.source-dir = "killMS"
+
+# The build targets to use when building the project. Empty builds the default
+# target.
+cmake.targets = []
+
+# The versions of Ninja to allow. If Ninja is not present on the system or does
+# not pass this specifier, it will be downloaded via PyPI if possible. An empty
+# string will disable this check.
+ninja.version = ">=1.5"
+
+# If CMake is not present on the system or is older required, it will be
+# downloaded via PyPI if possible. An empty string will disable this check.
+ninja.make-fallback = true
+
+# The logging level to display, "DEBUG", "INFO", "WARNING", and "ERROR" are
+# possible options.
+logging.level = "WARNING"
+
+# Files to include in the SDist even if they are skipped by default. Supports
+# gitignore syntax.
+sdist.include = [
+    "killMS/Array/**/*.py",
+    "killMS/Array/**/*.h",
+    "killMS/Array/**/*.txt",
+    "killMS/Data/**/*.py",
+    "killMS/Gridder/**/*.py",
+    "killMS/Gridder/**/*.h",
+    "killMS/Gridder/**/*.txt",
+    "killMS/Other/**/*.py",
+    "killMS/Parset/**/*.py",
+    "killMS/Parset/**/*.cfg",
+    "killMS/Plot/**/*.py",
+    "killMS/Predict/**/*.py",
+    "killMS/Predict/**/*.c",
+    "killMS/Predict/**/*.h",
+    "killMS/Predict/**/*.txt",
+    "killMS/Simul/**/*.py",
+    "killMS/Weights/**/*.py",
+    "killMS/Wirtinger/**/*.py",
+    "killMS/*.py",
+    "killMS/cmake/*.cmake",
+    "killMS/CMakeLists.txt"
+]
+
+# Files to exclude from the SDist even if they are included by default. Supports
+# gitignore syntax.
+sdist.exclude = [
+    "killMS/cbuild",
+    "TestHarness"
+]
+
+# If set to True, try to build a reproducible distribution (Unix and Python 3.9+
+# recommended).  ``SOURCE_DATE_EPOCH`` will be used for timestamps, or a fixed
+# value if not set.
+sdist.reproducible = true
+
+# If set to True, CMake will be run before building the SDist.
+sdist.cmake = false
+
+# A list of packages to auto-copy into the wheel. If this is not set, it will
+# default to the first of ``src/<package>``, ``python/<package>``, or
+# ``<package>`` if they exist.  The prefix(s) will be stripped from the package
+# name inside the wheel.
+wheel.packages = [
+    "killMS",
+]
+
+# The Python tags. The default (empty string) will use the default Python
+# version. You can also set this to "cp37" to enable the CPython 3.7+ Stable ABI
+# / Limited API (only on CPython and if the version is sufficient, otherwise
+# this has no effect). Or you can set it to "py3" or "py2.py3" to ignore Python
+# ABI compatibility. The ABI tag is inferred from this tag.
+wheel.py-api = ""
+
+# Fill out extra tags that are not required. This adds "x86_64" and "arm64" to
+# the list of platforms when "universal2" is used, which helps older Pip's
+# (before 21.0.1) find the correct wheel.
+wheel.expand-macos-universal-tags = false
+
+# The install directory for the wheel. This is relative to the platlib root. You
+# might set this to the package name. The original dir is still at
+# SKBUILD_PLATLIB_DIR (also SKBUILD_DATA_DIR, etc. are available). EXPERIMENTAL:
+# An absolute path will be one level higher than the platlib root, giving access
+# to "/platlib", "/data", "/headers", and "/scripts".
+wheel.install-dir = ""
+
+# A list of license files to include in the wheel. Supports glob patterns.
+wheel.license-files = ["LICENSE.md"]
+
+# If set to True (the default), CMake will be run before building the wheel.
+wheel.cmake = true
+
+# Target the platlib or the purelib. If not set, the default is to target the
+# platlib if wheel.cmake is true, and the purelib otherwise.
+wheel.platlib = ""
+
+# A set of patterns to exclude from the wheel. This is additive to the SDist
+# exclude patterns. This applies to the source files, not the final paths.
+# Editable installs may not respect this exclusion.
+wheel.exclude = []
+
+# The build tag to use for the wheel. If empty, no build tag is used.
+wheel.build-tag = ""
+
+# If CMake is less than this value, backport a copy of FindPython. Set to 0
+# disable this, or the empty string.
+backport.find-python = "3.26.1"
+
+# Select the editable mode to use. Can be "redirect" (default) or "inplace".
+editable.mode = "redirect"
+
+# Turn on verbose output for the editable mode rebuilds.
+editable.verbose = true
+
+# Rebuild the project when the package is imported. The build-directory must be
+# set.
+editable.rebuild = false
+
+# The components to install. If empty, all default components are installed.
+install.components = []
+
+# List dynamic metadata fields and hook locations in this table.
+metadata = {}
+
+# Strictly check all config options. If False, warnings will be printed for
+# unknown options. If True, an error will be raised.
+strict-config = true
+
+# Enable early previews of features not finalized yet.
+experimental = false
+
+# If set, this will provide a method for backward compatibility.
+minimum-version = "0.8"  # current version
+
+# The build directory. Defaults to a temporary directory, but can be set.
+build-dir = "killMS/cbuild"
+
+# Whether to strip the binaries. True for scikit-build-core 0.5+
+install.strip = false

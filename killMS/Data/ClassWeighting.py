@@ -22,12 +22,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 import numpy as np
-import six
-# if six.PY2:
-#     try:
-#         from killMS.Gridder import _pyGridder
-#     except:
-#         from killMS.cbuild.Gridder import _pyGridder
+
+from killMS.cbuild.Gridder import _pyGridder
 
         
 from DDFacet.Other import logger
@@ -40,15 +36,13 @@ from killMS.Data import ClassMS
 from pyrap.tables import table
 
 def test():
-    MS=ClassMS.ClassMS("/media/6B5E-87D0/killMS/TEST/Simul/0000.MS")
-    t=table(MS.MSName,ack=False)
-    WEIGHT=t.getcol("WEIGHT")
-    t.close()
+    MS=ClassMS.ClassMS("/home/bhugo/workspace/DDFworkbench/1491291289.1ghz.1.1ghz.4hrs.ms")
     ImShape=(1, 1, 375, 375)
     CellSizeRad=(1./3600)*np.pi/180
     CW=ClassWeighting(ImShape,CellSizeRad)
-    CW.CalcWeights(MS.uvw,WEIGHT,MS)
-    
+    flags = np.zeros((MS.uvw.shape[0], MS.ChanFreq.size,2), dtype=bool)
+    WEIGHT = np.zeros((MS.uvw.shape[0], MS.ChanFreq.size), dtype=np.float32)
+    CW.CalcWeights(MS.uvw, WEIGHT, flags, MS.ChanFreq)
 
 class ClassWeighting():
     def __init__(self,
@@ -126,7 +120,7 @@ class ClassWeighting():
                                      v,
                                      VisWeights,
                                      float(Robust),
-                                     Mode,
+                                     int(Mode),
                                      np.float32(freqs.flatten()),
                                      np.array([cell,cell],np.float64))
 
@@ -158,3 +152,8 @@ class ClassWeighting():
         # stop
         
         return w
+
+
+
+if __name__ == "__main__":
+    test()

@@ -1,23 +1,11 @@
 cmake_minimum_required(VERSION 2.8)
 
 function(build_be PYVER)
-  project(backend_${PYVER})
   #Find necessary modules
-  if ("${PYVER}" EQUAL "27")
-    message("-- Compiling backend against Python 2.7")
-    set(PYREQ_VER 2.7)
-    set(PYABI .cpython-27)
-    find_package(PythonInterp ${PYREQ_VER} EXACT REQUIRED)
-    find_package(PythonLibs ${PYREQ_VER} EXACT REQUIRED)
-  elseif ("${PYVER}" EQUAL "3x")
-    message("-- Compiling backend against Python 3.x")
-    set(PYREQ_VER 3.0)
-    set(PYABI .cpython-30)
-    find_package(PythonInterp ${PYREQ_VER} REQUIRED)    
-    find_package(PythonLibs ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR} EXACT REQUIRED) #must match
-  else ("${PYVER}" EQUAL "27")
-    message(FATAL_ERROR "Version switch ${PYVER} not understood")
-  endif("${PYVER}" EQUAL "27")
+  set(PYREQ_VER 3.0)
+  set(PYABI .cpython-30)
+  find_package(PythonInterp ${PYREQ_VER} REQUIRED)    
+  find_package(PythonLibs ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR} EXACT REQUIRED) #must match
   
   find_package(NumPy REQUIRED)
   find_package(OpenMP REQUIRED)
@@ -50,12 +38,12 @@ function(build_be PYVER)
   add_library(predict${PYVER} predict.c predict.h)
   set_target_properties(predict${PYVER} PROPERTIES PREFIX "") #remove "lib" prefix from library (PEP8 compliance)
   target_link_libraries(predict${PYVER} ${RT_LIBRARIES} ${PYTHON_LIBRARY})
+  install(TARGETS predict${PYVER} LIBRARY DESTINATION killMS/cbuild/Predict)
 endfunction(build_be)
-
-if (${ENABLE_PYTHON_2})
-  build_be("27")
-endif (${ENABLE_PYTHON_2})
 
 if (${ENABLE_PYTHON_3})
   build_be("3x")
 endif (${ENABLE_PYTHON_3})
+
+# ensure __init__ gets propagated to non-editable install
+install(FILES __init__.py DESTINATION killMS/cbuild/Predict)

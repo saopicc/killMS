@@ -24,7 +24,10 @@ from __future__ import print_function
 
 
 import numpy as np
-import dotSSE
+try:
+    from . import dotSSE
+except ImportError:
+    from killMS.cbuild.Array.Dot import dotSSE
 from killMS.Other import ClassTimeIt
 import NpDotSSE
 

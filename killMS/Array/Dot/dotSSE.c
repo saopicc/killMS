@@ -39,11 +39,23 @@ static PyMethodDef dotSSE_Methods[] = {
 	{NULL, NULL}     /* Sentinel - marks the end of this structure */
 };
 
+static struct PyModuleDef dotSSE =
+{
+    PyModuleDef_HEAD_INIT,
+    "dotSSE",    /* name of module */
+    "",          /* module documentation, may be NULL */
+    -1,          /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
+    dotSSE_Methods
+};
+
+
 /* ==== Initialize the C_test functions ====================== */
 // Module name must be _C_arraytest in compile and linked 
-void initdotSSE()  {
-	(void) Py_InitModule("dotSSE", dotSSE_Methods);
-	import_array();  // Must be present for NumPy.  Called first after above line.
+PyMODINIT_FUNC PyInit_dotSSE(void)
+{
+    PyObject * m = PyModule_Create(&dotSSE);
+    import_array();
+    return m;
 }
 
 
