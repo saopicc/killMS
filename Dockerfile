@@ -1,11 +1,8 @@
-FROM bhugo/ddfacet:0.7.0
-MAINTAINER Ben Hugo "bhugo@ska.ac.za"
+FROM bhugo/ddfacet:0.8.0
 
 #Copy killMS into the image
 ADD killMS /opt/killMS/killMS
 ADD pyproject.toml /opt/killMS/pyproject.toml
-# this is only till next ddf release to avoid inplace building ABI incompatibility
-RUN sed -i 's/numpy>=1.15.1,<=1.22.0/numpy>=1.15.1,<=1.19.5/g' /opt/killMS/pyproject.toml 
 ADD README.md /opt/killMS/README.md
 ADD LICENSE.md /opt/killMS/LICENSE.md
 ADD .git /opt/killMS/.git
