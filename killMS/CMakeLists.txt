@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.5)
 project(kmsbackend)
 
 set(BUILD_SHARED_LIBS ON) #we always want shared libs out of this for python extensions
