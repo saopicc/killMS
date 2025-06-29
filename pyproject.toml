@@ -8,7 +8,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "killMS"
-version = "3.2.0"
+version = "3.2.1"
 description = "A Wirtinger-based direction-dependent radio interferometric calibration package"
 license = {file = "LICENSE.md"}
 readme = "README.md"

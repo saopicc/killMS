@@ -1,4 +1,4 @@
-FROM bhugo/ddfacet:0.8.0
+FROM bhugo/ddfacet:0.8.0.1
 
 #Copy killMS into the image
 ADD killMS /opt/killMS/killMS
