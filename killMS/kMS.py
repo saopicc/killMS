@@ -493,6 +493,7 @@ def main(OP=None,MSName=None):
             GDPredict["Output"]["StokesResidues"]="I"
 
         GDPredict["Data"]["MS"]=options.MSName
+        GDPredict["Data"]["Dask"]=False
         if options.DDFCacheDir!='':
             GDPredict["Cache"]["Dir"]=options.DDFCacheDir
 
