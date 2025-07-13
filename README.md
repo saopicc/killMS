@@ -49,18 +49,6 @@ source myvenv/bin/activate
 If you want to run in development mode:
 ```
 (myvenv)$ pip install -e <path to checked out killMS>
-(myvenv)$ cd <path to checked out killMS>
-(myvenv)$ python setup.py build  #this rebuilds the backend
-```
-
-The old build system is still in place - you can still do:
-```
-cd Predict
-make
-cd ../Array/Dot
-make
-cd ../../Gridder
-make
 ```
 
 # Main programs you'll need for DDE calibration and imaging
