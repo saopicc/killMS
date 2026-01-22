@@ -19,11 +19,18 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
-import pkg_resources
 try:
-    __version__ = pkg_resources.require("killMS")[0].version
-except pkg_resources.DistributionNotFound:
-    __version__ = "dev"
+    from importlib.metadata import version, PackageNotFoundError
+    try:
+        __version__ = version("DDFacet")
+    except PackageNotFoundError:
+        __version__ = "dev"
+except (ImportError, ModuleNotFoundError):
+    import pkg_resources
+    try:
+        __version__ = pkg_resources.require("DDFacet")[0].version
+    except pkg_resources.DistributionNotFound:
+        __version__ = "dev"
 
 import os
 # if not defined define.. this is a stopgap to support current workflows
