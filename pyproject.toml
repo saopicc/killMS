@@ -1,5 +1,7 @@
 [build-system]
-requires = ["numpy>=1.15.1,<=1.22.0", # need to match DDF in the upper bound, may cause problems if installing into a non-prestine venv
+requires = [# need to match DDF in the upper bound, may cause problems if installing into a non-prestine venv
+            "numpy >= 1.15.1, <= 2.3.2; python_version >= '3.11' and python_version < '3.13'",
+            "numpy >= 1.15.1, <= 1.22.4; python_version >= '3.8' and python_version < '3.11'",
             "pybind11 >= 2.2.2",
             "cython<=0.29.30",
             "cmake",
@@ -8,11 +10,11 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "killMS"
-version = "3.2.2"
+version = "3.3.0"
 description = "A Wirtinger-based direction-dependent radio interferometric calibration package"
 license = {file = "LICENSE.md"}
 readme = "README.md"
-requires-python = ">=3.8,<3.11"
+requires-python = ">=3.8,<3.13"
 dependencies = [
     "DDFacet[kms-support] >= 0.7.0; python_version >= '3'",
 ]
