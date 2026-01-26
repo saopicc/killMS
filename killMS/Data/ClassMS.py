@@ -258,7 +258,7 @@ class ClassMS():
         #if nchBeam==0:
         #    nchBeam=self.NSPWChan
         nchBeam=self.NSPWChan
-        Beam = np.zeros((ra.shape[0], self.na, nchBeam, 2, 2), dtype=np.complex)
+        Beam = np.zeros((ra.shape[0], self.na, nchBeam, 2, 2), dtype=complex)
         if self.GD["Beam"]["BeamModel"] == "LOFAR":
             #self.LoadSR()
             for i in range(ra.shape[0]):
