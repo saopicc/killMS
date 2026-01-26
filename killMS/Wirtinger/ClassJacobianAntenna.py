@@ -1074,7 +1074,7 @@ class ClassJacobianAntenna():
                 #DicoData["flags_image"]=DicoData["flags"].copy()
                 nr,_,_=DicoData["data"].shape
                 _,nch,_=DATA['data'].shape
-                DicoData["flags_image"]=np.zeros((nr,nch,4),np.bool8)
+                DicoData["flags_image"]=np.zeros((nr,nch,4),np.bool_)
                 #DicoData["flags_image"].fill(0)
 
             nr,nch,_=DicoData["data"].shape
