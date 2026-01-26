@@ -128,10 +128,10 @@ class ClassMakeModelImage():
         im.tofits(OutFile+".fits")
 
         
-        Cat=np.zeros((Ns,),dtype=[('Name','|S200'),('ra',np.float),('dec',np.float),('Sref',np.float),('I',np.float),('Q',np.float),\
-                                  ('U',np.float),('V',np.float),('RefFreq',np.float),('alpha',np.float),('ESref',np.float),\
-                                  ('Ealpha',np.float),('kill',np.int),('Cluster',np.int),('Type',np.int),('Gmin',np.float),\
-                                  ('Gmaj',np.float),('Gangle',np.float),("Select",np.int)])
+        Cat=np.zeros((Ns,),dtype=[('Name','|S200'),('ra',float),('dec',float),('Sref',float),('I',float),('Q',float),\
+                                  ('U',float),('V',float),('RefFreq',float),('alpha',float),('ESref',float),\
+                                  ('Ealpha',float),('kill',int),('Cluster',int),('Type',int),('Gmin',float),\
+                                  ('Gmaj',float),('Gangle',float),("Select",int)])
         Cat=Cat.view(np.recarray)
         
 
