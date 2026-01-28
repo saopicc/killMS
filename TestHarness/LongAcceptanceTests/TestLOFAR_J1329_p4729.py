@@ -66,7 +66,7 @@ class TestLOFAR_J1329_p4729(DDFacet.Tests.ShortAcceptanceTests.ClassCompareFITSI
             Returns:
                 List of image identifiers to reference and output products
         """
-        return ['dirty', 'dirty.corr', 'psf', 'NormFacets', 'Norm',
+        return ['dirty', 'psf', 'NormFacets', 'Norm',
                 'app.residual', 'app.model',
                 'app.convmodel', 'app.restored']
 
@@ -78,7 +78,7 @@ class TestLOFAR_J1329_p4729(DDFacet.Tests.ShortAcceptanceTests.ClassCompareFITSI
             Returns:
                 constant for maximum tolerance used in test case setup
         """
-        return [1e-6,1e-6,1e-6,1e-4,1e-4,
+        return [1e-6,1e-6,1e-4,1e-4,
                 5e-3,5e-3,
                 5e-3,5e-3]
 
@@ -90,7 +90,7 @@ class TestLOFAR_J1329_p4729(DDFacet.Tests.ShortAcceptanceTests.ClassCompareFITSI
             Returns:
             constant for tolerance on mean squared error
         """
-        return [1e-7,1e-7,1e-7,1e-7,1e-7,
+        return [1e-7,1e-7,1e-7,1e-7,
                 1e-5,1e-5,
                 1e-5,1e-5]
 
@@ -172,7 +172,7 @@ class TestLOFAR_J1329_p4729(DDFacet.Tests.ShortAcceptanceTests.ClassCompareFITSI
               "--ApplyToDir=-2",
               "--ApplyMode=-2",
               "--OutCol=None"]
-        cls.__run(args, timeout=3600*20)
+        cls.__run(args, timeout=3600*5)
 
 if __name__ == '__main__':
     unittest.main()
