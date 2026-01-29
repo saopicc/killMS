@@ -426,7 +426,7 @@ class ClassSimul():
             
             
             def GB(time,ra,dec):
-                Beam = np.zeros((ra.shape[0], self.MS.na, self.MS.NSPWChan, 2, 2), dtype=np.complex)
+                Beam = np.zeros((ra.shape[0], self.MS.na, self.MS.NSPWChan, 2, 2), dtype=complex)
                 # Beam[...,0,0]=1
                 # Beam[...,1,1]=1
                 # return Beam

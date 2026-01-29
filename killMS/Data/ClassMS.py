@@ -258,7 +258,7 @@ class ClassMS():
         #if nchBeam==0:
         #    nchBeam=self.NSPWChan
         nchBeam=self.NSPWChan
-        Beam = np.zeros((ra.shape[0], self.na, nchBeam, 2, 2), dtype=np.complex)
+        Beam = np.zeros((ra.shape[0], self.na, nchBeam, 2, 2), dtype=complex)
         if self.GD["Beam"]["BeamModel"] == "LOFAR":
             #self.LoadSR()
             for i in range(ra.shape[0]):
@@ -284,7 +284,7 @@ class ClassMS():
             row1=self.nbl
         A0=self.F_A0[row0:row1]
         A1=self.F_A1[row0:row1]
-        MapOut=np.ones((self.nbl,),dtype=np.bool)
+        MapOut=np.ones((self.nbl,),dtype=bool)
         if FlagAutoCorr:
             ind=np.where(A0==A1)[0]
             MapOut[ind]=False
@@ -353,7 +353,7 @@ class ClassMS():
     #         row1=self.nbl
     #     A0=self.A0[row0:row1]
     #     A1=self.A1[row0:row1]
-    #     MapOut=np.ones((self.nbl,),dtype=np.bool)
+    #     MapOut=np.ones((self.nbl,),dtype=bool)
     #     if FlagAutoCorr:
     #         ind=np.where(A0==A1)[0]
     #         MapOut[ind]=False

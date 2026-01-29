@@ -315,7 +315,7 @@ class ClassWirtingerSolver():
         self.SolsArray_t0=np.zeros((NSols,),dtype=np.float64)
         self.SolsArray_t1=np.zeros((NSols,),dtype=np.float64)
         self.SolsArray_tm=np.zeros((NSols,),dtype=np.float64)
-        self.SolsArray_done=np.zeros((NSols,),dtype=np.bool8)
+        self.SolsArray_done=np.zeros((NSols,),dtype=np.bool_)
         self.SolsArray_G=np.zeros((NSols,nChan,na,nd,npolx,npoly),dtype=np.complex64)
         self.SolsArray_Stats=np.zeros((NSols,nChan,na,4),dtype=np.float32)
 
