@@ -290,7 +290,7 @@ static PyObject *pyAddArray(PyObject *self, PyObject *args)
 
 static PyObject *pyGridderPoints(PyObject *self, PyObject *args)
 {
-  PyArrayObject *ObjGridIn,*ObjWIn;
+  PyObject *ObjGridIn,*ObjWIn;
   PyArrayObject *np_grid, *np_w, *w,*np_u,*np_v, *np_freqs,*np_flags, *np_uvcell;
   double R = 0.0;
   int Mode = 0;
